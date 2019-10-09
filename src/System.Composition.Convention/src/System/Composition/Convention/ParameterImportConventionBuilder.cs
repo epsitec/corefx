@@ -1,11 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Linq.Expressions;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.Composition.Convention
 {
@@ -24,7 +19,7 @@ namespace System.Composition.Convention
         /// <returns>The imported instance.</returns>
         public T Import<T>()
         {
-            return default(T);
+            return default;
         }
 
         /// <summary>
@@ -35,7 +30,7 @@ namespace System.Composition.Convention
         /// <returns>The imported instance.</returns>
         public T Import<T>(Action<ImportConventionBuilder> configure)
         {
-            return default(T);
+            return default;
         }
     }
 }

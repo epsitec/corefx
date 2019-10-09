@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 //-----------------------------------------------------------------------------
 //
@@ -8,11 +9,11 @@
 //  It provides functionality to compare the type/subtype values.
 //
 // Details:
-// Grammar which this class follows - 
+// Grammar which this class follows -
 //
-// Content-type grammar MUST conform to media-type grammar as per 
+// Content-type grammar MUST conform to media-type grammar as per
 // RFC 2616 (ABNF notation):
-// 
+//
 // media-type     = type "/" subtype *( ";" parameter )
 // type           = token
 // subtype        = token
@@ -38,9 +39,9 @@
 // <">            = <US-ASCII double-quote mark (34)>
 // LWS            = [CRLF] 1*( SP | HT )
 // CRLF           = CR LF
-// Linear white space (LWS) MUST NOT be used between the type and subtype, nor 
+// Linear white space (LWS) MUST NOT be used between the type and subtype, nor
 // between an attribute and its value. Leading and trailing LWS are prohibited.
-// 
+//
 //-----------------------------------------------------------------------------
 
 using System;
@@ -55,34 +56,28 @@ namespace System.IO.Packaging
     /// </summary>
     internal sealed class ContentType
     {
-        //------------------------------------------------------
-        //
-        //  Internal Constructors
-        //
-        //------------------------------------------------------
-
         #region Internal Constructors
 
         /// <summary>
-        /// This constructor creates a ContentType object that represents 
-        /// the content-type string. At construction time we validate the 
+        /// This constructor creates a ContentType object that represents
+        /// the content-type string. At construction time we validate the
         /// string as per the grammar specified in RFC 2616.
         /// Note: We allow empty strings as valid input. Empty string should
-        /// we used more as an indication of an absent/unknown ContentType. 
+        /// we used more as an indication of an absent/unknown ContentType.
         /// </summary>
         /// <param name="contentType">content-type</param>
         /// <exception cref="ArgumentNullException">If the contentType parameter is null</exception>
-        /// <exception cref="ArgumentException">If the contentType string has leading or 
+        /// <exception cref="ArgumentException">If the contentType string has leading or
         /// trailing Linear White Spaces(LWS) characters</exception>
         /// <exception cref="ArgumentException">If the contentType string invalid CR-LF characters</exception>
         internal ContentType(string contentType)
         {
             if (contentType == null)
-                throw new ArgumentNullException("contentType");
+                throw new ArgumentNullException(nameof(contentType));
 
-            if (String.CompareOrdinal(contentType, String.Empty) == 0)
+            if (contentType.Length == 0)
             {
-                _contentType = String.Empty;
+                _contentType = string.Empty;
             }
             else
             {
@@ -93,7 +88,7 @@ namespace System.IO.Packaging
                 //We need to make sure that a \r is accompanied by \n
                 ValidateCarriageReturns(contentType);
 
-                //Begin Parsing                
+                //Begin Parsing
                 int semiColonIndex = contentType.IndexOf(SemicolonSeparator);
 
                 if (semiColonIndex == -1)
@@ -119,12 +114,6 @@ namespace System.IO.Packaging
         }
 
         #endregion Internal Constructors
-
-        //------------------------------------------------------
-        //
-        //  Internal Methods
-        //
-        //------------------------------------------------------
 
         #region Internal Properties
 
@@ -153,12 +142,12 @@ namespace System.IO.Packaging
         }
 
         /// <summary>
-        /// Enumerator which iterates over the Parameter and Value pairs which are stored 
+        /// Enumerator which iterates over the Parameter and Value pairs which are stored
         /// in a dictionary. We hand out just the enumerator in order to make this property
         /// ReadOnly
-        /// Consider following Content type - 
+        /// Consider following Content type -
         /// type/subtype ; param1=value1 ; param2=value2 ; param3="value3"
-        /// This will return a enumerator over a dictionary of the parameter/value pairs. 
+        /// This will return an enumerator over a dictionary of the parameter/value pairs.
         /// </summary>
         internal Dictionary<string, string>.Enumerator ParameterValuePairs
         {
@@ -170,16 +159,10 @@ namespace System.IO.Packaging
         }
         #endregion Internal Properties
 
-        //------------------------------------------------------
-        //
-        //  Internal Methods
-        //
-        //------------------------------------------------------
-
         #region Internal Methods
 
         /// <summary>
-        /// This method does a strong comparison of the content types, as parameters are not allowed. 
+        /// This method does a strong comparison of the content types, as parameters are not allowed.
         /// We only compare the type and subType values in an ASCII case-insensitive manner.
         /// Parameters are not allowed to be present on any of the content type operands.
         /// </summary>
@@ -193,14 +176,14 @@ namespace System.IO.Packaging
         /// <summary>
         /// This method does a weak comparison of the content types. We only compare the
         /// type and subType values in an ASCII case-insensitive manner.
-        /// Parameter and value pairs are not used for the comparison. 
-        /// If you wish to compare the paramters too, then you must get the ParameterValuePairs from
+        /// Parameter and value pairs are not used for the comparison.
+        /// If you wish to compare the parameters too, then you must get the ParameterValuePairs from
         /// both the ContentType objects and compare each parameter entry.
-        /// The allowParameterValuePairs parameter is used to indicate whether the 
+        /// The allowParameterValuePairs parameter is used to indicate whether the
         /// comparison is tolerant to parameters being present or no.
         /// </summary>
         /// <param name="contentType">Content type to be compared with</param>
-        /// <param name="allowParameterValuePairs">If true, allows the presence of parameter value pairs. 
+        /// <param name="allowParameterValuePairs">If true, allows the presence of parameter value pairs.
         /// If false, parameter/value pairs cannot be present in the content type string.
         /// In either case, the parameter value pair is not used for the comparison.</param>
         /// <returns></returns>
@@ -231,8 +214,8 @@ namespace System.IO.Packaging
                 // safe comparison because the _type and _subType strings have been restricted to
                 // ASCII characters, digits, and a small set of symbols.  This is not a safe comparison
                 // for the broader set of strings that have not been restricted in the same way.
-                result = (String.Compare(_type, contentType.TypeComponent, StringComparison.OrdinalIgnoreCase) == 0 &&
-                          String.Compare(_subType, contentType.SubTypeComponent, StringComparison.OrdinalIgnoreCase) == 0);
+                result = (string.Equals(_type, contentType.TypeComponent, StringComparison.OrdinalIgnoreCase) &&
+                          string.Equals(_subType, contentType.SubTypeComponent, StringComparison.OrdinalIgnoreCase));
             }
             return result;
         }
@@ -245,28 +228,28 @@ namespace System.IO.Packaging
         {
             if (_contentType == null)
             {
-                //This is needed so that while debugging we get the correct 
+                //This is needed so that while debugging we get the correct
                 //string
                 if (!_isInitialized)
-                    return String.Empty;
+                    return string.Empty;
 
-                Debug.Assert(String.CompareOrdinal(_type, String.Empty) != 0
-                   || String.CompareOrdinal(_subType, String.Empty) != 0);
+                Debug.Assert(string.CompareOrdinal(_type, string.Empty) != 0
+                   || string.CompareOrdinal(_subType, string.Empty) != 0);
 
                 StringBuilder stringBuilder = new StringBuilder(_type);
-                stringBuilder.Append(s_forwardSlashSeparator[0]);
+                stringBuilder.Append(PackUriHelper.ForwardSlashChar);
                 stringBuilder.Append(_subType);
 
                 if (_parameterDictionary != null && _parameterDictionary.Count > 0)
                 {
-                    foreach (string paramterKey in _parameterDictionary.Keys)
+                    foreach (string parameterKey in _parameterDictionary.Keys)
                     {
                         stringBuilder.Append(s_linearWhiteSpaceChars[0]);
                         stringBuilder.Append(SemicolonSeparator);
                         stringBuilder.Append(s_linearWhiteSpaceChars[0]);
-                        stringBuilder.Append(paramterKey);
+                        stringBuilder.Append(parameterKey);
                         stringBuilder.Append(EqualSeparator);
-                        stringBuilder.Append(_parameterDictionary[paramterKey]);
+                        stringBuilder.Append(_parameterDictionary[parameterKey]);
                     }
                 }
 
@@ -278,90 +261,12 @@ namespace System.IO.Packaging
 
         #endregion Internal Methods
 
-        //------------------------------------------------------
-        //
-        //  Nested Classes
-        //
-        //------------------------------------------------------
-
-        #region Nested Classes
-
-        /// <summary>
-        /// Comparer class makes it easier to put ContentType objects in collections.
-        /// Only compares type and subtype components of the ContentType.  Could be
-        /// expanded to optionally compare parameters as well.
-        /// </summary>
-        internal class StrongComparer : IEqualityComparer<ContentType>
-        {
-            /// <summary>
-            /// This method does a strong comparison of the content types.
-            /// Only compares the ContentTypes' type and subtype components.
-            /// </summary>
-            public bool Equals(ContentType x, ContentType y)
-            {
-                if (x == null)
-                {
-                    return (y == null);
-                }
-                else
-                {
-                    return x.AreTypeAndSubTypeEqual(y);
-                }
-            }
-
-            /// <summary>
-            /// We lower case the results of ToString() because it returns the original
-            /// casing passed into the constructor.  ContentTypes that are equal (which
-            /// ignores casing) must have the same hash code.
-            /// </summary>
-            public int GetHashCode(ContentType obj)
-            {
-                return obj.ToString().ToUpperInvariant().GetHashCode();
-            }
-        }
-
-        internal class WeakComparer : IEqualityComparer<ContentType>
-        {
-            /// <summary>            
-            /// This method does a weak comparison of the content types. 
-            /// Parameter and value pairs are not used for the comparison. 
-            /// </summary>
-            public bool Equals(ContentType x, ContentType y)
-            {
-                if (x == null)
-                {
-                    return (y == null);
-                }
-                else
-                {
-                    return x.AreTypeAndSubTypeEqual(y, true);
-                }
-            }
-
-            /// <summary>
-            /// We lower case the results of ToString() because it returns the original
-            /// casing passed into the constructor.  ContentTypes that are equal (which
-            /// ignores casing) must have the same hash code.
-            /// </summary>
-            public int GetHashCode(ContentType obj)
-            {
-                return obj._type.ToUpperInvariant().GetHashCode() ^ obj._subType.ToUpperInvariant().GetHashCode();
-            }
-        }
-        #endregion Nested Classes
-
-        //------------------------------------------------------
-        //
-        //  Private Methods
-        //
-        //------------------------------------------------------
-
         #region Private Methods
 
 
         /// <summary>
         /// This method validates if the content type string has
-        /// valid CR-LF characters. Specifically we test if '\r' is 
+        /// valid CR-LF characters. Specifically we test if '\r' is
         /// accompanied by a '\n' in the string, else its an error.
         /// </summary>
         /// <param name="contentType"></param>
@@ -387,7 +292,7 @@ namespace System.IO.Packaging
         }
 
         /// <summary>
-        /// Parses the type ans subType tokens from the string. 
+        /// Parses the type and subType tokens from the string.
         /// Also verifies if the Tokens are valid as per the grammar.
         /// </summary>
         /// <param name="typeAndSubType">substring that has the type and subType of the content type</param>
@@ -397,7 +302,7 @@ namespace System.IO.Packaging
             //okay to trim at this point the end of the string as Linear White Spaces(LWS) chars are allowed here.
             typeAndSubType = typeAndSubType.TrimEnd(s_linearWhiteSpaceChars);
 
-            string[] splitBasedOnForwardSlash = typeAndSubType.Split(s_forwardSlashSeparator);
+            string[] splitBasedOnForwardSlash = typeAndSubType.Split(PackUriHelper.s_forwardSlashCharArray);
 
             if (splitBasedOnForwardSlash.Length != 2)
                 throw new ArgumentException(SR.InvalidTypeSubType);
@@ -414,7 +319,7 @@ namespace System.IO.Packaging
         /// <exception cref="ArgumentException">If the string does not have the required "="</exception>
         private void ParseParameterAndValue(string parameterAndValue)
         {
-            while (String.CompareOrdinal(parameterAndValue, String.Empty) != 0)
+            while (parameterAndValue != string.Empty)
             {
                 //At this point the first character MUST be a semi-colon
                 //First time through this test is serving more as an assert.
@@ -430,7 +335,7 @@ namespace System.IO.Packaging
                 //Removing the leading ; from the string
                 parameterAndValue = parameterAndValue.Substring(1);
 
-                //okay to trim start as there can be spaces before the begining
+                //okay to trim start as there can be spaces before the beginning
                 //of the parameter name.
                 parameterAndValue = parameterAndValue.TrimStart(s_linearWhiteSpaceChars);
 
@@ -484,7 +389,7 @@ namespace System.IO.Packaging
                 else
                     length = semicolonIndex;
 
-                //If there is no linear white space found we treat the entire remaining string as 
+                //If there is no linear whitespace found we treat the entire remaining string as
                 //parameter value.
                 if (length == -1)
                     length = s.Length;
@@ -515,7 +420,7 @@ namespace System.IO.Packaging
 
         /// <summary>
         /// Validating the given token
-        /// The following checks are being made - 
+        /// The following checks are being made -
         /// 1. If all the characters in the token are either ASCII letter or digit.
         /// 2. If all the characters in the token are either from the remaining allowed cha----ter set.
         /// </summary>
@@ -524,25 +429,14 @@ namespace System.IO.Packaging
         /// <exception cref="ArgumentException">If the token is Empty</exception>
         private static string ValidateToken(string token)
         {
-            if (String.CompareOrdinal(token, String.Empty) == 0)
-                throw new ArgumentException(SR.InvalidToken);
+            if (string.IsNullOrEmpty(token))
+                throw new ArgumentException(SR.InvalidToken_ContentType);
 
             for (int i = 0; i < token.Length; i++)
             {
-                if (IsAsciiLetterOrDigit(token[i]))
+                if (!IsAsciiLetterOrDigit(token[i]) && !IsAllowedCharacter(token[i]))
                 {
-                    continue;
-                }
-                else
-                {
-                    if (IsAllowedCharacter(token[i]))
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        throw new ArgumentException(SR.InvalidToken);
-                    }
+                    throw new ArgumentException(SR.InvalidToken_ContentType);
                 }
             }
 
@@ -550,15 +444,15 @@ namespace System.IO.Packaging
         }
 
         /// <summary>
-        /// Validating if the value of a parameter is either a valid token or a 
+        /// Validating if the value of a parameter is either a valid token or a
         /// valid quoted string
         /// </summary>
-        /// <param name="parameterValue">paramter value string</param>
+        /// <param name="parameterValue">parameter value string</param>
         /// <returns>validate parameter value string</returns>
-        /// <exception cref="ArgumentException">If the paramter value is empty</exception>
+        /// <exception cref="ArgumentException">If the parameter value is empty</exception>
         private static string ValidateQuotedStringOrToken(string parameterValue)
         {
-            if (String.CompareOrdinal(parameterValue, String.Empty) == 0)
+            if (string.IsNullOrEmpty(parameterValue))
                 throw new ArgumentException(SR.InvalidParameterValue);
 
             if (parameterValue.Length >= 2 &&
@@ -601,14 +495,7 @@ namespace System.IO.Packaging
         /// <returns></returns>
         private static bool IsAllowedCharacter(char character)
         {
-            //We did not use any of the .Contains methods as
-            //it will result in boxing costs.
-            foreach (char c in s_allowedCharacters)
-            {
-                if (c == character)
-                    return true;
-            }
-            return false;
+            return Array.IndexOf(s_allowedCharacters, character) >= 0;
         }
 
         /// <summary>
@@ -619,15 +506,7 @@ namespace System.IO.Packaging
         /// <returns></returns>
         private static bool IsAsciiLetterOrDigit(char character)
         {
-            if (IsAsciiLetter(character))
-            {
-                return true;
-            }
-            if (character >= '0')
-            {
-                return (character <= '9');
-            }
-            return false;
+            return (IsAsciiLetter(character) || (character >= '0' && character <= '9'));
         }
 
         /// <summary>
@@ -638,19 +517,13 @@ namespace System.IO.Packaging
         /// <returns></returns>
         private static bool IsAsciiLetter(char character)
         {
-            if ((character >= 'a') && (character <= 'z'))
-            {
-                return true;
-            }
-            if (character >= 'A')
-            {
-                return (character <= 'Z');
-            }
-            return false;
+            return
+                (character >= 'a' && character <= 'z') ||
+                (character >= 'A' && character <= 'Z');
         }
 
         /// <summary>
-        /// Returns true if the input character is one of the Linear White Space characters - 
+        /// Returns true if the input character is one of the Linear White Space characters -
         /// ' ', '\t', '\n', '\r'
         /// Returns false if the input character is none of the above
         /// </summary>
@@ -663,13 +536,8 @@ namespace System.IO.Packaging
                 return false;
             }
 
-            foreach (char c in s_linearWhiteSpaceChars)
-            {
-                if (ch == c)
-                    return true;
-            }
-
-            return false;
+            int whiteSpaceIndex = Array.IndexOf(s_linearWhiteSpaceChars, ch);
+            return whiteSpaceIndex != -1;
         }
 
         /// <summary>
@@ -685,19 +553,14 @@ namespace System.IO.Packaging
 
         #endregion Private Methods
 
-        //------------------------------------------------------
-        //
-        //  Private Members
-        //
-        //------------------------------------------------------
         #region Private Members
 
         private string _contentType = null;
-        private string _type = String.Empty;
-        private string _subType = String.Empty;
-        private string _originalString;
+        private string _type = string.Empty;
+        private string _subType = string.Empty;
+        private readonly string _originalString;
         private Dictionary<string, string> _parameterDictionary = null;
-        private bool _isInitialized = false;
+        private readonly bool _isInitialized = false;
 
         private const string Quote = "\"";
         private const char SemicolonSeparator = ';';
@@ -705,14 +568,13 @@ namespace System.IO.Packaging
 
         //This array is sorted by the ascii value of these characters.
         private static readonly char[] s_allowedCharacters =
-         { '!' /*33*/, '#' /*35*/ , '$'  /*36*/,
-           '%' /*37*/, '&' /*38*/ , '\'' /*39*/,
-           '*' /*42*/, '+' /*43*/ , '-'  /*45*/,
-           '.' /*46*/, '^' /*94*/ , '_'  /*95*/,
-           '`' /*96*/, '|' /*124*/, '~'  /*126*/,
-         };
-
-        private static readonly char[] s_forwardSlashSeparator = { '/' };
+        {
+            '!' /*33*/, '#'  /*35*/, '$'  /*36*/,
+            '%' /*37*/, '&'  /*38*/, '\'' /*39*/,
+            '*' /*42*/, '+'  /*43*/, '-'  /*45*/,
+            '.' /*46*/, '^'  /*94*/, '_'  /*95*/,
+            '`' /*96*/, '|' /*124*/, '~' /*126*/,
+        };
 
         //Linear White Space characters
         private static readonly char[] s_linearWhiteSpaceChars =

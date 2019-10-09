@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -24,16 +25,16 @@ namespace System.Collections.Concurrent
     /// Inheritors of <see cref="Partitioner{TSource}"/> must adhere to the following rules:
     /// <ol>
     /// <li><see cref="GetPartitions"/> should throw a
-    /// <see cref="T:System.ArgumentOutOfRangeException"/> if the requested partition count is less than or
+    /// <see cref="System.ArgumentOutOfRangeException"/> if the requested partition count is less than or
     /// equal to zero.</li>
     /// <li><see cref="GetPartitions"/> should always return a number of enumerables equal to the requested
-    /// partition count. If the partitioner runs out of data and cannot create as many partitions as 
+    /// partition count. If the partitioner runs out of data and cannot create as many partitions as
     /// requested, an empty enumerator should be returned for each of the remaining partitions. If this rule
     /// is not followed, consumers of the implementation may throw a <see
-    /// cref="T:System.InvalidOperationException"/>.</li>
+    /// cref="System.InvalidOperationException"/>.</li>
     /// <li><see cref="GetPartitions"/> and <see cref="GetDynamicPartitions"/>
     /// should never return null. If null is returned, a consumer of the implementation may throw a
-    /// <see cref="T:System.InvalidOperationException"/>.</li>
+    /// <see cref="System.InvalidOperationException"/>.</li>
     /// <li><see cref="GetPartitions"/> and <see cref="GetDynamicPartitions"/> should always return
     /// partitions that can fully and uniquely enumerate the input data source. All of the data and only the
     /// data contained in the input source should be enumerated, with no duplication that was not already in
@@ -78,7 +79,7 @@ namespace System.Collections.Concurrent
         /// <remarks>
         /// <para>
         /// The returned object implements the <see
-        /// cref="T:System.Collections.Generic.IEnumerable{TSource}"/> interface. Calling <see
+        /// cref="System.Collections.Generic.IEnumerable{TSource}"/> interface. Calling <see
         /// cref="System.Collections.Generic.IEnumerable{TSource}.GetEnumerator">GetEnumerator</see> on the
         /// object creates another partition over the sequence.
         /// </para>

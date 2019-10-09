@@ -1,26 +1,38 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.IO;
-using System.Text;
-using System.Diagnostics;
-using System.Globalization;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-
-using Internal.NativeCrypto;
-using Internal.Cryptography;
 using Internal.Cryptography.Pal.Native;
-
-
-using System.Security.Cryptography;
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography;
 
 namespace Internal.Cryptography.Pal
 {
-    internal sealed partial class StorePal : IDisposable, IStorePal
+    internal sealed partial class StorePal : IDisposable, IStorePal, IExportPal, ILoaderPal
     {
+        private SafeCertStoreHandle _certStore;
+
+        public static IStorePal FromHandle(IntPtr storeHandle)
+        {
+            if (storeHandle == IntPtr.Zero)
+                throw new ArgumentNullException(nameof(storeHandle));
+
+            SafeCertStoreHandle certStoreHandle = Interop.crypt32.CertDuplicateStore(storeHandle);
+            if (certStoreHandle == null || certStoreHandle.IsInvalid)
+                throw new CryptographicException(SR.Cryptography_InvalidStoreHandle, nameof(storeHandle));
+
+            var pal = new StorePal(certStoreHandle);
+            return pal;
+        }
+
+        public void CloneTo(X509Certificate2Collection collection)
+        {
+            CopyTo(collection);
+        }
+
         public void CopyTo(X509Certificate2Collection collection)
         {
             Debug.Assert(collection != null);
@@ -36,8 +48,7 @@ namespace Internal.Cryptography.Pal
         public void Add(ICertificatePal certificate)
         {
             if (!Interop.crypt32.CertAddCertificateContextToStore(_certStore, ((CertificatePal)certificate).CertContext, CertStoreAddDisposition.CERT_STORE_ADD_REPLACE_EXISTING_INHERIT_PROPERTIES, IntPtr.Zero))
-                throw new CryptographicException(Marshal.GetLastWin32Error());
-            return;
+                throw Marshal.GetLastWin32Error().ToCryptographicException();
         }
 
         public void Remove(ICertificatePal certificate)
@@ -52,10 +63,9 @@ namespace Internal.Cryptography.Pal
 
                 CERT_CONTEXT* pCertContextToDelete = enumCertContext.Disconnect();  // CertDeleteCertificateFromContext always frees the context (even on error)
                 if (!Interop.crypt32.CertDeleteCertificateFromStore(pCertContextToDelete))
-                    throw new CryptographicException(Marshal.GetLastWin32Error());
+                    throw Marshal.GetLastWin32Error().ToCryptographicException();
 
                 GC.KeepAlive(existingCertContext);
-                return;
             }
         }
 
@@ -65,7 +75,6 @@ namespace Internal.Cryptography.Pal
             _certStore = null;
             if (certStore != null)
                 certStore.Dispose();
-            return;
         }
 
         internal SafeCertStoreHandle SafeCertStoreHandle
@@ -73,11 +82,19 @@ namespace Internal.Cryptography.Pal
             get { return _certStore; }
         }
 
-        private StorePal(SafeCertStoreHandle certStore)
+        SafeHandle IStorePal.SafeHandle
+        {
+            get
+            {
+                if (_certStore == null || _certStore.IsInvalid || _certStore.IsClosed)
+                    throw new CryptographicException(SR.Cryptography_X509_StoreNotOpen);
+                return _certStore;
+            }
+        }
+
+        internal StorePal(SafeCertStoreHandle certStore)
         {
             _certStore = certStore;
         }
-
-        private SafeCertStoreHandle _certStore;
     }
 }

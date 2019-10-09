@@ -1,9 +1,9 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace System.Reflection.Internal
@@ -16,7 +16,7 @@ namespace System.Reflection.Internal
     /// </remarks>
     internal sealed class StreamMemoryBlockProvider : MemoryBlockProvider
     {
-        // We're trying to balance total VM usage (which is a minimum of 64KB for a memory mapped file) 
+        // We're trying to balance total VM usage (which is a minimum of 64KB for a memory mapped file)
         // with private working set (since heap memory will be backed by the paging file and non-sharable).
         // Internal for testing.
         internal const int MemoryMapThreshold = 16 * 1024;
@@ -51,18 +51,12 @@ namespace System.Reflection.Internal
         protected override void Dispose(bool disposing)
         {
             Debug.Assert(disposing);
-
-            if (!_leaveOpen && _stream != null)
+            if (!_leaveOpen)
             {
-                _stream.Dispose();
-                _stream = null;
+                Interlocked.Exchange(ref _stream, null)?.Dispose();
             }
 
-            if (_lazyMemoryMap != null)
-            {
-                _lazyMemoryMap.Dispose();
-                _lazyMemoryMap = null;
-            }
+            Interlocked.Exchange(ref _lazyMemoryMap, null)?.Dispose();
         }
 
         public override int Size
@@ -73,6 +67,7 @@ namespace System.Reflection.Internal
             }
         }
 
+        /// <exception cref="IOException">Error reading from the stream.</exception>
         internal static unsafe NativeHeapMemoryBlock ReadMemoryBlockNoLock(Stream stream, bool isFileStream, long start, int size)
         {
             var block = new NativeHeapMemoryBlock(size);
@@ -127,6 +122,7 @@ namespace System.Reflection.Internal
             return _stream;
         }
 
+        /// <exception cref="IOException">IO error while mapping memory or not enough memory to create the mapping.</exception>
         private unsafe bool TryCreateMemoryMappedFileBlock(long start, int size, out MemoryMappedFileBlock block)
         {
             if (_lazyMemoryMap == null)
@@ -159,15 +155,13 @@ namespace System.Reflection.Internal
                 return false;
             }
 
-            SafeBuffer safeBuffer;
-            byte* pointer = MemoryMapLightUp.AcquirePointer(accessor, out safeBuffer);
-            if (pointer == null)
+            if (!MemoryMapLightUp.TryGetSafeBufferAndPointerOffset(accessor, out var safeBuffer, out long offset))
             {
                 block = null;
                 return false;
             }
 
-            block = new MemoryMappedFileBlock(accessor, safeBuffer, pointer, size);
+            block = new MemoryMappedFileBlock(accessor, safeBuffer, offset, size);
             return true;
         }
     }

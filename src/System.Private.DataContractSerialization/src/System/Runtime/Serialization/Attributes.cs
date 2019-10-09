@@ -1,57 +1,28 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Globalization;
-using System.IO;
 using System.Xml;
-using System.Security;
-
 
 namespace System.Runtime.Serialization
 {
     internal class Attributes
     {
-        /// <SecurityNote>
-        /// Critical - Static field used to store the attribute names to read during deserialization.
-        ///            Static fields are marked SecurityCritical or readonly to prevent
-        ///            data from being modified or leaked to other components in appdomain.
-        /// </SecurityNote>
-        [SecurityCritical]
-        private static XmlDictionaryString[] s_serializationLocalNames;
-
-        /// <SecurityNote>
-        /// Critical - Static field used to store the attribute names to read during deserialization.
-        ///            Static fields are marked SecurityCritical or readonly to prevent
-        ///            data from being modified or leaked to other components in appdomain.
-        /// </SecurityNote>
-        [SecurityCritical]
-        private static XmlDictionaryString[] s_schemaInstanceLocalNames;
-
-        /// <SecurityNote>
-        /// Critical - initializes critical static fields
-        /// Safe - doesn't leak anything
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        static Attributes()
+        private static readonly XmlDictionaryString[] s_serializationLocalNames = new XmlDictionaryString[]
         {
-            s_serializationLocalNames = new XmlDictionaryString[]
-            {
-                DictionaryGlobals.IdLocalName,
-                DictionaryGlobals.ArraySizeLocalName,
-                DictionaryGlobals.RefLocalName,
-                DictionaryGlobals.ClrTypeLocalName,
-                DictionaryGlobals.ClrAssemblyLocalName,
-            };
+            DictionaryGlobals.IdLocalName,
+            DictionaryGlobals.ArraySizeLocalName,
+            DictionaryGlobals.RefLocalName,
+            DictionaryGlobals.ClrTypeLocalName,
+            DictionaryGlobals.ClrAssemblyLocalName,
+            DictionaryGlobals.ISerializableFactoryTypeLocalName
+        };
 
-            s_schemaInstanceLocalNames = new XmlDictionaryString[]
-            {
-                DictionaryGlobals.XsiNilLocalName,
-                DictionaryGlobals.XsiTypeLocalName
-            };
-        }
+        private static readonly XmlDictionaryString[] s_schemaInstanceLocalNames = new XmlDictionaryString[]
+        {
+            DictionaryGlobals.XsiNilLocalName,
+            DictionaryGlobals.XsiTypeLocalName
+        };
 
         internal string Id;
         internal string Ref;
@@ -67,7 +38,6 @@ namespace System.Runtime.Serialization
         internal string FactoryTypePrefix;
         internal bool UnrecognizedAttributesFound;
 
-        [SecuritySafeCritical]
         internal void Read(XmlReaderDelegator reader)
         {
             Reset();

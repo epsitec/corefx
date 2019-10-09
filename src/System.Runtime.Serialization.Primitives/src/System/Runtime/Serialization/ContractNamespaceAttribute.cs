@@ -1,31 +1,19 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.Runtime.Serialization
 {
     [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Module, Inherited = false, AllowMultiple = true)]
     public sealed class ContractNamespaceAttribute : Attribute
     {
-        private string _clrNamespace;
-        private string _contractNamespace;
-
         public ContractNamespaceAttribute(string contractNamespace)
         {
-            _contractNamespace = contractNamespace;
+            ContractNamespace = contractNamespace;
         }
 
-        public string ClrNamespace
-        {
-            get { return _clrNamespace; }
-            set { _clrNamespace = value; }
-        }
+        public string ClrNamespace { get; set; }
 
-        public string ContractNamespace
-        {
-            get { return _contractNamespace; }
-        }
+        public string ContractNamespace { get; }
     }
 }
-

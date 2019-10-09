@@ -1,8 +1,8 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Globalization;
+using System.Collections.Generic;
 using Xunit;
 
 namespace System.Globalization.Tests
@@ -25,44 +25,57 @@ namespace System.Globalization.Tests
 
     public class DateTimeFormatInfoGetInstance
     {
-        // PosTest1: Call GetInstance to get an DateTimeFormatInfo instance when provider is an CultureInfo instance
-        [Fact]
-        public void PosTest1()
+        public static IEnumerable<object[]> GetInstance_NotNull_TestData()
         {
-            DateTimeFormatInfo info = DateTimeFormatInfo.GetInstance(new CultureInfo("en-us"));
-            Assert.NotNull(info);
+            yield return new object[] { new DateTimeFormatInfo() };
+            yield return new object[] { new CultureInfo("en-US") };
+            yield return new object[] { new TestIFormatProviderClass2() };
         }
 
-        // PosTest2: Call GetInstance to get an DateTimeFormatInfo instance when provider is null reference
-        [Fact]
-        public void PosTest2()
+        [Theory]
+        [MemberData(nameof(GetInstance_NotNull_TestData))]
+        public void GetInstance_ValidNonNullProvider_ReturnsExpected(IFormatProvider provider)
         {
-            DateTimeFormatInfo info = DateTimeFormatInfo.GetInstance(null);
-            Assert.Equal(DateTimeFormatInfo.CurrentInfo, info);
+            Assert.NotNull(DateTimeFormatInfo.GetInstance(provider));
         }
 
-        // PosTest3: Call GetInstance to get an DateTimeFormatInfo instance when provider is a DateTimeFormatInfo instance
-        [Fact]
-        public void PosTest3()
+        private void AssertSameValues(DateTimeFormatInfo expected, DateTimeFormatInfo value)
         {
-            DateTimeFormatInfo info = DateTimeFormatInfo.GetInstance(new DateTimeFormatInfo());
-            Assert.NotNull(info);
+            if (value.Equals(expected))
+            {
+                // same instance, we don't have to test the values
+                return;
+            }
+
+            Assert.Equal(expected.AbbreviatedDayNames, value.AbbreviatedDayNames);
+            Assert.Equal(expected.AbbreviatedMonthGenitiveNames, value.AbbreviatedMonthGenitiveNames);
+            Assert.Equal(expected.AbbreviatedMonthNames, value.AbbreviatedMonthNames);
+            Assert.Equal(expected.DayNames, value.DayNames);
+            Assert.Equal(expected.MonthGenitiveNames, value.MonthGenitiveNames);
+            Assert.Equal(expected.MonthNames, value.MonthNames);
+            Assert.Equal(expected.ShortestDayNames, value.ShortestDayNames);
+
+            Assert.Equal(expected.AMDesignator, value.AMDesignator);
+            Assert.Equal(expected.FullDateTimePattern, value.FullDateTimePattern);
+            Assert.Equal(expected.LongDatePattern, value.LongDatePattern);
+            Assert.Equal(expected.LongTimePattern, value.LongTimePattern);
+            Assert.Equal(expected.MonthDayPattern, value.MonthDayPattern);
+            Assert.Equal(expected.PMDesignator, value.PMDesignator);
+            Assert.Equal(expected.RFC1123Pattern, value.RFC1123Pattern);
+            Assert.Equal(expected.ShortDatePattern, value.ShortDatePattern);
+            Assert.Equal(expected.ShortTimePattern, value.ShortTimePattern);
+            Assert.Equal(expected.SortableDateTimePattern, value.SortableDateTimePattern);
+            Assert.Equal(expected.UniversalSortableDateTimePattern, value.UniversalSortableDateTimePattern);
+            Assert.Equal(expected.YearMonthPattern, value.YearMonthPattern);
+            Assert.Equal(expected.CalendarWeekRule, value.CalendarWeekRule);
+            Assert.Equal(expected.FirstDayOfWeek, value.FirstDayOfWeek);
         }
 
-        // PosTest4: Call GetInstance to get an DateTimeFormatInfo instance when provider.GetFormat method supports a DateTimeFormatInfo instance
         [Fact]
-        public void PosTest4()
+        public void GetInstance_ExpectedCurrent_ReturnsExpected()
         {
-            DateTimeFormatInfo info = DateTimeFormatInfo.GetInstance(new TestIFormatProviderClass2());
-            Assert.NotNull(info);
-        }
-
-        // PosTest5: Call GetInstance to get an DateTimeFormatInfo instance when provider.GetFormat method does not support a DateTimeFormatInfo instance
-        [Fact]
-        public void PosTest5()
-        {
-            DateTimeFormatInfo info = DateTimeFormatInfo.GetInstance(new TestIFormatProviderClass());
-            Assert.Equal(DateTimeFormatInfo.CurrentInfo, info);
+            AssertSameValues(DateTimeFormatInfo.CurrentInfo, DateTimeFormatInfo.GetInstance(null));
+            AssertSameValues(DateTimeFormatInfo.CurrentInfo, DateTimeFormatInfo.GetInstance(new TestIFormatProviderClass()));
         }
     }
 }

@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.class01.class01
 {
-    using ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.class01.class01;
-
     // <Area> dynamic in unsafe code </Area>
     // <Title> unsafe type </Title>
     // <Description>
@@ -39,8 +38,6 @@ namespace ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.class01.c
 
 namespace ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.codeblock01.codeblock01
 {
-    using ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.codeblock01.codeblock01;
-
     public unsafe class Test
     {
         [Fact]
@@ -67,8 +64,6 @@ namespace ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.codeblock
 
 namespace ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.freach01.freach01
 {
-    using ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.freach01.freach01;
-
     // <Area> dynamic in unsafe code </Area>
     // <Title> unsafe context </Title>
     // <Description>
@@ -114,8 +109,6 @@ namespace ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.freach01.
 
 namespace ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.freach02.freach02
 {
-    using ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.freach02.freach02;
-
     // <Area> dynamic in unsafe code </Area>
     // <Title> unsafe context </Title>
     // <Description>
@@ -160,7 +153,6 @@ namespace ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.freach02.
 
 namespace ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.freach03.freach03
 {
-    using ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.freach03.freach03;
     // <Area> dynamic in unsafe code </Area>
     // <Title> unsafe context </Title>
     // <Description>
@@ -175,7 +167,7 @@ namespace ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.freach03.
     //}
     //[TestClass]public class Test
     //{
-    //[Test][Priority(Priority.Priority2)]public void DynamicCSharpRunTest(){Assert.AreEqual(0, MainMethod(null));} public unsafe static int MainMethod(string[] args)
+    //[Test][Priority(Priority.Priority2)]public void DynamicCSharpRunTest(){Assert.AreEqual(0, MainMethod(null));} public static unsafe int MainMethod(string[] args)
     //{
     //int a = 1, b = 2, c = 3;
     //dynamic arrayp = new int*[] { &a, &b, &c };
@@ -200,8 +192,6 @@ namespace ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.freach03.
 
 namespace ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.strct01.strct01
 {
-    using ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.strct01.strct01;
-
     // <Area> dynamic in unsafe code </Area>
     // <Title> unsafe type</Title>
     // <Description>
@@ -235,8 +225,6 @@ namespace ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.strct01.s
 
 namespace ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.while01.while01
 {
-    using ManagedTests.DynamicCSharp.conformance.dynamic.unsfe.context.while01.while01;
-
     // <Area> dynamic in unsafe code </Area>
     // <Title> unsafe context </Title>
     // <Description>

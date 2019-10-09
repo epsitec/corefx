@@ -1,37 +1,26 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Reflection;
 using System.Xml;
-using System.Security;
 using System.Runtime.Serialization.Json;
 using System.Runtime.Serialization;
 using DataContractDictionary = System.Collections.Generic.Dictionary<System.Xml.XmlQualifiedName, System.Runtime.Serialization.DataContract>;
-#if !NET_NATIVE
-using ExtensionDataObject = System.Object;
-#endif
+using System.Diagnostics;
 
 namespace System.Runtime.Serialization.Json
 {
-#if NET_NATIVE
-    public class XmlObjectSerializerReadContextComplexJson : XmlObjectSerializerReadContextComplex
-#elif MERGE_DCJS
     internal class XmlObjectSerializerReadContextComplexJson : XmlObjectSerializerReadContextComplex
-#else
-    internal class XmlObjectSerializerReadContextComplexJson : XmlObjectSerializerReadContext
-#endif
     {
-        private DataContractJsonSerializer _jsonSerializer;
-#if !NET_NATIVE && !MERGE_DCJS
-        private bool _isSerializerKnownDataContractsSetExplicit;
-#endif
-#if NET_NATIVE || MERGE_DCJS
-        private DateTimeFormat _dateTimeFormat;
-        private bool _useSimpleDictionaryFormat;
-#endif
+        private string _extensionDataValueType;
+        private readonly DataContractJsonSerializer _jsonSerializer;
+        private readonly DateTimeFormat _dateTimeFormat;
+        private readonly bool _useSimpleDictionaryFormat;
+
         public XmlObjectSerializerReadContextComplexJson(DataContractJsonSerializer serializer, DataContract rootTypeDataContract)
             : base(null, int.MaxValue, new StreamingContext(), true)
         {
@@ -40,7 +29,6 @@ namespace System.Runtime.Serialization.Json
             _jsonSerializer = serializer;
         }
 
-#if NET_NATIVE || MERGE_DCJS
         internal XmlObjectSerializerReadContextComplexJson(DataContractJsonSerializerImpl serializer, DataContract rootTypeDataContract)
             : base(serializer, serializer.MaxItemsInObjectGraph, new StreamingContext(), false)
         {
@@ -87,23 +75,6 @@ namespace System.Runtime.Serialization.Json
             HandleMemberNotFound(xmlReader, extensionData, memberIndex);
             return length;
         }
-#endif
-
-#if !NET_NATIVE && !MERGE_DCJS
-        internal override DataContractDictionary SerializerKnownDataContracts
-        {
-            get
-            {
-                // This field must be initialized during construction by serializers using data contracts.
-                if (!_isSerializerKnownDataContractsSetExplicit)
-                {
-                    this.serializerKnownDataContracts = _jsonSerializer.KnownDataContracts;
-                    _isSerializerKnownDataContractsSetExplicit = true;
-                }
-                return this.serializerKnownDataContracts;
-            }
-        }
-#endif
 
         internal IList<Type> SerializerKnownTypeList
         {
@@ -113,13 +84,63 @@ namespace System.Runtime.Serialization.Json
             }
         }
 
-#if NET_NATIVE || MERGE_DCJS
         public bool UseSimpleDictionaryFormat
         {
             get
             {
                 return _useSimpleDictionaryFormat;
             }
+        }
+
+        protected override void StartReadExtensionDataValue(XmlReaderDelegator xmlReader)
+        {
+            _extensionDataValueType = xmlReader.GetAttribute(JsonGlobals.typeString);
+        }
+
+        protected override IDataNode ReadPrimitiveExtensionDataValue(XmlReaderDelegator xmlReader, string dataContractName, string dataContractNamespace)
+        {
+            IDataNode dataNode;
+
+            switch (_extensionDataValueType)
+            {
+                case null:
+                case JsonGlobals.stringString:
+                    dataNode = new DataNode<string>(xmlReader.ReadContentAsString());
+                    break;
+                case JsonGlobals.booleanString:
+                    dataNode = new DataNode<bool>(xmlReader.ReadContentAsBoolean());
+                    break;
+                case JsonGlobals.numberString:
+                    dataNode = ReadNumericalPrimitiveExtensionDataValue(xmlReader);
+                    break;
+                default:
+                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(
+                        XmlObjectSerializer.CreateSerializationException(SR.Format(SR.JsonUnexpectedAttributeValue, _extensionDataValueType)));
+            }
+
+            xmlReader.ReadEndElement();
+            return dataNode;
+        }
+
+        private IDataNode ReadNumericalPrimitiveExtensionDataValue(XmlReaderDelegator xmlReader)
+        {
+            TypeCode type;
+            object numericalValue = JsonObjectDataContract.ParseJsonNumber(xmlReader.ReadContentAsString(), out type);
+            return type switch
+            {
+                TypeCode.Byte => new DataNode<byte>((byte)numericalValue),
+                TypeCode.SByte => new DataNode<sbyte>((sbyte)numericalValue),
+                TypeCode.Int16 => new DataNode<short>((short)numericalValue),
+                TypeCode.Int32 => new DataNode<int>((int)numericalValue),
+                TypeCode.Int64 => new DataNode<long>((long)numericalValue),
+                TypeCode.UInt16 => new DataNode<ushort>((ushort)numericalValue),
+                TypeCode.UInt32 => new DataNode<uint>((uint)numericalValue),
+                TypeCode.UInt64 => new DataNode<ulong>((ulong)numericalValue),
+                TypeCode.Single => new DataNode<float>((float)numericalValue),
+                TypeCode.Double => new DataNode<double>((double)numericalValue),
+                TypeCode.Decimal => new DataNode<decimal>((decimal)numericalValue),
+                _ => throw new InvalidOperationException(SR.ParseJsonNumberReturnInvalidNumber),
+            };
         }
 
         internal override void ReadAttributes(XmlReaderDelegator xmlReader)
@@ -169,56 +190,6 @@ namespace System.Runtime.Serialization.Json
             }
             xmlReader.MoveToElement();
         }
-#endif
-
-        internal DataContract ResolveDataContractFromType(string typeName, string typeNs, DataContract memberTypeContract)
-        {
-            this.PushKnownTypes(this.rootTypeDataContract);
-            this.PushKnownTypes(memberTypeContract);
-            XmlQualifiedName qname = ParseQualifiedName(typeName);
-            DataContract contract = ResolveDataContractFromKnownTypes(qname.Name, TrimNamespace(qname.Namespace), memberTypeContract);
-
-            this.PopKnownTypes(this.rootTypeDataContract);
-            this.PopKnownTypes(memberTypeContract);
-            return contract;
-        }
-
-        internal void CheckIfTypeNeedsVerifcation(DataContract declaredContract, DataContract runtimeContract)
-        {
-            bool verifyType = true;
-            CollectionDataContract collectionContract = declaredContract as CollectionDataContract;
-            if (collectionContract != null && collectionContract.UnderlyingType.GetTypeInfo().IsInterface)
-            {
-                switch (collectionContract.Kind)
-                {
-                    case CollectionKind.Dictionary:
-                    case CollectionKind.GenericDictionary:
-                        verifyType = declaredContract.Name == runtimeContract.Name;
-                        break;
-
-                    default:
-                        Type t = collectionContract.ItemType.MakeArrayType();
-                        verifyType = (t != runtimeContract.UnderlyingType);
-                        break;
-                }
-            }
-
-            if (verifyType)
-            {
-                this.PushKnownTypes(declaredContract);
-                VerifyType(runtimeContract);
-                this.PopKnownTypes(declaredContract);
-            }
-        }
-
-        internal void VerifyType(DataContract dataContract)
-        {
-            DataContract knownContract = ResolveDataContractFromKnownTypes(dataContract.StableName.Name, dataContract.StableName.Namespace, null /*memberTypeContract*/);
-            if (knownContract == null || knownContract.UnderlyingType != dataContract.UnderlyingType)
-            {
-                throw System.ServiceModel.DiagnosticUtility.ExceptionUtility.ThrowHelperError(XmlObjectSerializer.CreateSerializationException(SR.Format(SR.DcTypeNotFoundOnSerialize, DataContract.GetClrTypeFullName(dataContract.UnderlyingType), dataContract.StableName.Name, dataContract.StableName.Namespace)));
-            }
-        }
 
         internal string TrimNamespace(string serverTypeNamespace)
         {
@@ -255,7 +226,7 @@ namespace System.Runtime.Serialization.Json
             string name, ns;
             if (string.IsNullOrEmpty(qname))
             {
-                name = ns = String.Empty;
+                name = ns = string.Empty;
             }
             else
             {
@@ -295,7 +266,6 @@ namespace System.Runtime.Serialization.Json
             return dataContract;
         }
 
-#if NET_NATIVE || MERGE_DCJS
         internal static bool TryGetJsonLocalName(XmlReaderDelegator xmlReader, out string name)
         {
             if (xmlReader.IsStartElement(JsonGlobals.itemDictionaryString, JsonGlobals.itemDictionaryString))
@@ -319,9 +289,7 @@ namespace System.Runtime.Serialization.Json
             }
             return name;
         }
-#endif
 
-#if !NET_NATIVE && MERGE_DCJS
         public static void ThrowDuplicateMemberException(object obj, XmlDictionaryString[] memberNames, int memberIndex)
         {
             throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new SerializationException(
@@ -355,11 +323,9 @@ namespace System.Runtime.Serialization.Json
             }
         }
 
-        [SecuritySafeCritical]
         private static bool IsBitSet(byte[] bytes, int bitIndex)
         {
             return BitFlagsGenerator.IsBitSet(bytes, bitIndex);
         }
-#endif
     }
 }

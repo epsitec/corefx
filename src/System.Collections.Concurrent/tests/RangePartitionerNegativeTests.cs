@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -32,7 +33,7 @@ namespace System.Collections.Concurrent.Tests
             IntFromNotGreaterThanTo(-19999, -299999, 100);
         }
 
-        public static void IntFromNotGreaterThanTo(int from, int to, int rangesize)
+        private static void IntFromNotGreaterThanTo(int from, int to, int rangesize)
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => Partitioner.Create(from, to));
             Assert.Throws<ArgumentOutOfRangeException>(() => Partitioner.Create(from, to, rangesize));
@@ -48,7 +49,7 @@ namespace System.Collections.Concurrent.Tests
             LongFromNotGreaterThanTo(-19999, -299999, 100);
         }
 
-        public static void LongFromNotGreaterThanTo(long from, long to, int rangesize)
+        private static void LongFromNotGreaterThanTo(long from, long to, int rangesize)
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => Partitioner.Create(from, to));
             Assert.Throws<ArgumentOutOfRangeException>(() => Partitioner.Create(from, to, rangesize));
@@ -64,7 +65,7 @@ namespace System.Collections.Concurrent.Tests
             InvalidIntRangeSize(899, 9000, -10);
         }
 
-        public static void InvalidIntRangeSize(int from, int to, int rangesize)
+        private static void InvalidIntRangeSize(int from, int to, int rangesize)
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => Partitioner.Create(from, to, rangesize));
         }
@@ -79,7 +80,7 @@ namespace System.Collections.Concurrent.Tests
             InvalidLongRangeSize(899, 9000, -10);
         }
 
-        public static void InvalidLongRangeSize(long from, long to, long rangesize)
+        private static void InvalidLongRangeSize(long from, long to, long rangesize)
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => Partitioner.Create(from, to, rangesize));
         }

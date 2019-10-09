@@ -1,44 +1,36 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System.Diagnostics.Contracts;
-using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 
 namespace System.IO
 {
-    public sealed partial class DriveInfo
+    public sealed partial class DriveInfo : ISerializable
     {
-        private readonly String _name;
+        private readonly string _name;
 
-        public DriveInfo(String driveName)
+        public DriveInfo(string driveName)
         {
             if (driveName == null)
             {
-                throw new ArgumentNullException("driveName");
+                throw new ArgumentNullException(nameof(driveName));
             }
-            Contract.EndContractBlock();
 
             _name = NormalizeDriveName(driveName);
         }
 
-        public String Name
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            get { return _name; }
+            throw new PlatformNotSupportedException();
         }
 
-        public bool IsReady
-        {
-            get { return Directory.Exists(Name); }
-        }
+        public string Name => _name;
 
-        public DirectoryInfo RootDirectory
-        {
-            get { return new DirectoryInfo(Name); }
-        }
+        public bool IsReady => Directory.Exists(Name);
 
-        public override String ToString()
-        {
-            return Name;
-        }
+        public DirectoryInfo RootDirectory => new DirectoryInfo(Name);
+
+        public override string ToString() => Name;
     }
 }

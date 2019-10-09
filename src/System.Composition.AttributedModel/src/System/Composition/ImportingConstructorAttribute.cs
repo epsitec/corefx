@@ -1,8 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-using System;
-using System.Diagnostics.CodeAnalysis;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.Composition
 {
@@ -10,8 +8,8 @@ namespace System.Composition
     ///     Specifies that a constructor should be used when constructing an attributed part.
     /// </summary>
     /// <remarks>
-    ///     By default, only a default parameter-less constructor, if available, is used to 
-    ///     construct an attributed part. Use this attribute to indicate that a specific constructor 
+    ///     By default, only a default parameter-less constructor, if available, is used to
+    ///     construct an attributed part. Use this attribute to indicate that a specific constructor
     ///     should be used.
     /// </remarks>
     [AttributeUsage(AttributeTargets.Constructor, AllowMultiple = false, Inherited = false)]

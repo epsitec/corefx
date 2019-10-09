@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Net;
@@ -39,6 +40,33 @@ namespace NetPrimitivesUnitTests
             var cookies = container.GetCookies(uri);
             Assert.Equal(1, cookies.Count);
             Assert.False(cookies[CookieName].DomainImplicit);
+        }
+
+        [Theory]
+        [InlineData("cookie_name=cookie_value", new[] { "cookie_name", "cookie_value" })]
+        [InlineData("cookie_name=cookie_value;", new[] { "cookie_name", "cookie_value" })]
+        [InlineData("cookie_name1=cookie_value1;cookie_name2=cookie_value2", new[] { "cookie_name1", "cookie_value1", "cookie_name2", "cookie_value2" })]
+        [InlineData("cookie_name1=cookie_value1;cookie_name2=cookie_value2;", new[] { "cookie_name1", "cookie_value1", "cookie_name2", "cookie_value2" })]
+        public void CookieParserGetServer_SetCookieHeaderValue_Success(string cookieString, string[] expectedStrings)
+        {
+            int index = 0;
+            int cookieCount = 0;
+            var parser = new CookieParser(cookieString);
+            while (true)
+            {
+                Cookie cookie = parser.GetServer();
+                if (cookie == null)
+                {
+                    break;
+                }
+
+                cookieCount++;
+                Assert.Equal(expectedStrings[index++], cookie.Name);
+                Assert.Equal(expectedStrings[index++], cookie.Value);
+            }
+
+            int expectedCookieCount = expectedStrings.Length >> 1;
+            Assert.Equal(expectedCookieCount, cookieCount);
         }
     }
 }

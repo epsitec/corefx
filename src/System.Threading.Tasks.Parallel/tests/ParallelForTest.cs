@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -9,17 +10,12 @@
 //
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-
 
-using Xunit;
-using CoreFXTestLibrary;
-
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Linq;
+using Xunit;
 
-namespace System.Threading.Tasks.Test.Unit
+namespace System.Threading.Tasks.Tests
 {
     public sealed class ParallelForTest
     {
@@ -29,10 +25,10 @@ namespace System.Threading.Tasks.Test.Unit
 
         private IList<int> _collection = null;  // the collection used in Foreach
 
-        private readonly double[] _results;  // global place to store the workload result for verication
+        private readonly double[] _results;  // global place to store the workload result for verification
 
         // data structure used with ParallelLoopState<TLocal>
-        // each row is the sequence of loop "index" finished in the same thread 
+        // each row is the sequence of loop "index" finished in the same thread
         private int _threadCount;
         private readonly List<int>[] _sequences;  // @TODO: remove if ConcurrentDictionary can be used
 
@@ -111,12 +107,12 @@ namespace System.Threading.Tasks.Test.Unit
                 {
                     if (_parameters.StateOption == ActionWithState.None)
                     {
-                        // call Parallel.For 
+                        // call Parallel.For
                         Parallel.For(_parameters.StartIndex64, _parameters.StartIndex64 + _parameters.Count, Work);
                     }
                     else if (_parameters.StateOption == ActionWithState.Stop)
                     {
-                        // call Parallel.For with ParallelLoopState 
+                        // call Parallel.For with ParallelLoopState
                         Parallel.For(_parameters.StartIndex64, _parameters.StartIndex64 + _parameters.Count, WorkWithStop);
                     }
                 }
@@ -242,7 +238,7 @@ namespace System.Threading.Tasks.Test.Unit
                 {
                     if (_parameters.StateOption == ActionWithState.None)
                     {
-                        // call Parallel.For 
+                        // call Parallel.For
                         Parallel.For(_parameters.StartIndex, _parameters.StartIndex + _parameters.Count, Work);
                     }
                     else if (_parameters.StateOption == ActionWithState.Stop)
@@ -584,7 +580,7 @@ namespace System.Threading.Tasks.Test.Unit
                 state.Stop();
         }
 
-        // workload for Parallel.Foreach which will possibly invoke ParallelLoopState.Stop 
+        // workload for Parallel.Foreach which will possibly invoke ParallelLoopState.Stop
         private void WorkWithIndexAndStop(int i, ParallelLoopState state, long index)
         {
             Work(i);
@@ -593,7 +589,7 @@ namespace System.Threading.Tasks.Test.Unit
                 state.Stop();
         }
 
-        // workload for Parallel.Foreach which will possibly invoke ParallelLoopState.Stop 
+        // workload for Parallel.Foreach which will possibly invoke ParallelLoopState.Stop
         private void WorkWithIndexAndStopPartitioner(int i, ParallelLoopState state, long index)
         {
             //index verification
@@ -675,7 +671,7 @@ namespace System.Threading.Tasks.Test.Unit
         {
             for (int i = tuple.Item1; i < tuple.Item2; i++)
             {
-                //index verification - only for enumerable 
+                //index verification - only for enumerable
                 if (_parameters.PartitionerType == PartitionerType.IEnumerableOOB)
                 {
                     int itemAtIndex = _collection[(int)index];
@@ -703,7 +699,7 @@ namespace System.Threading.Tasks.Test.Unit
         // workload for Foreach overload that takes a range partitioner
         private List<int> WorkWithLocalAndIndexPartitioner(int i, ParallelLoopState state, long index, List<int> threadLocalValue)
         {
-            //index verification - only for enumerable 
+            //index verification - only for enumerable
             if (_parameters.PartitionerType == PartitionerType.IEnumerableOOB)
             {
                 int itemAtIndex = _collection[(int)index];
@@ -765,7 +761,7 @@ namespace System.Threading.Tasks.Test.Unit
             return processedIndexes;
         }
 
-        // Creates an instance of ParallelOptions with an non-default DOP        
+        // Creates an instance of ParallelOptions with an non-default DOP
         private ParallelOptions GetParallelOptions()
         {
             switch (_parameters.ParallelOption)
@@ -778,7 +774,7 @@ namespace System.Threading.Tasks.Test.Unit
         }
 
         /// <summary>
-        /// Each Parallel.For loop stores the result of its compuatation in the 'result' array.
+        /// Each Parallel.For loop stores the result of its computation in the 'result' array.
         /// This function checks if result[i] for each i from 0 to _parameters.Count is correct
         /// A result[i] == double[i] means that the body for index i was run more than once
         /// </summary>
@@ -787,20 +783,17 @@ namespace System.Threading.Tasks.Test.Unit
         private void Verify(int i)
         {
             //Function point comparison cant be done by rounding off to nearest decimal points since
-            //1.64 could be represented as 1.63999999 or as 1.6499999999. To perform floating point comparisons, 
+            //1.64 could be represented as 1.63999999 or as 1.6499999999. To perform floating point comparisons,
             //a range has to be defined and check to ensure that the result obtained is within the specified range
             double minLimit = 1.63;
             double maxLimit = 1.65;
 
             if (_results[i] < minLimit || _results[i] > maxLimit)
             {
-                Assert.False(double.MinValue == _results[i], String.Format("results[{0}] has been revisisted", i));
-                
-                if (_parameters.StateOption == ActionWithState.Stop && 0 == _results[i])
-                    Logger.LogInformation("Stopped calculation at index = {0}", i);
+                Assert.False(double.MinValue == _results[i], string.Format("results[{0}] has been revisited", i));
 
                 Assert.True(_parameters.StateOption == ActionWithState.Stop && 0 == _results[i],
-                    String.Format("Incorrect results[{0}]. Expected result to lie between {1} and {2} but got {3})", i, minLimit, maxLimit, _results[i]));
+                    string.Format("Incorrect results[{0}]. Expected result to lie between {1} and {2} but got {3})", i, minLimit, maxLimit, _results[i]));
             }
         }
 
@@ -808,7 +801,7 @@ namespace System.Threading.Tasks.Test.Unit
         /// Checks if the ThreadLocal Functions - Init and Locally were run correctly
         /// Init creates a new List. Each body, pushes in a unique index and Finally consolidates
         /// the lists into 'sequences' array
-        /// 
+        ///
         /// Expected: The consolidated list contains all indices that were executed.
         /// Duplicates indicate that the body for a certain index was executed more than once
         /// </summary>
@@ -817,20 +810,11 @@ namespace System.Threading.Tasks.Test.Unit
         {
             List<int> duplicates;
             List<int> processedIndexes = Consolidate(out duplicates);
-            if (duplicates.Count > 0)
-            {
-                StringBuilder builder = new StringBuilder();
-                foreach (var dupe in duplicates)
-                    builder.Append(dupe.ToString() + ", ");
-                Assert.False(true, String.Format("Threadlocal invariant is broken, see duplicate occurance.  " + builder.ToString()));
-            }
+            Assert.Empty(duplicates);
 
-            for (int i = 0; i < _parameters.Count; i++)
-            {
-                // If result[i] != 0 then the body for that index was executed. 
-                // We expect the threadlocal list to also contain the same index
-                Assert.False(processedIndexes.Contains(i) != (_results[i] != 0), String.Format("Threadlocal invariant is broken, results not in sync with processed index {0}", i));
-            }
+            // If result[i] != 0 then the body for that index was executed.
+            // We expect the threadlocal list to also contain the same index
+            Assert.All(Enumerable.Range(0, _parameters.Count), idx => Assert.Equal(processedIndexes.Contains(idx), _results[idx] != 0));
         }
 
         #endregion
@@ -851,12 +835,12 @@ namespace System.Threading.Tasks.Test.Unit
             if (api == API.For64)
             {
                 // StartIndexBase.Int64 was set to -1 since Enum can't take a Int64.MaxValue. Fixing this below.
-                long indexBase64 = (startIndexBase == StartIndexBase.Int64) ? Int64.MaxValue : (long)startIndexBase;
+                long indexBase64 = (startIndexBase == StartIndexBase.Int64) ? long.MaxValue : (long)startIndexBase;
                 StartIndex64 = indexBase64 + StartIndexOffset;
             }
             else
             {
-                // startIndexBase must not be StartIndexBase.Int64 
+                // startIndexBase must not be StartIndexBase.Int64
                 StartIndex = (int)startIndexBase + StartIndexOffset;
             }
 
@@ -879,8 +863,8 @@ namespace System.Threading.Tasks.Test.Unit
         public int StartIndex;        // the real start index (base + offset) for the loop
         public long StartIndex64;     // the real start index (base + offset) for the 64 version loop
 
-        public readonly StartIndexBase StartIndexBase; // the base of the _parameters.StartIndex for boundary testing 
-        public int StartIndexOffset;          // the offset to be added to the base 
+        public readonly StartIndexBase StartIndexBase; // the base of the _parameters.StartIndex for boundary testing
+        public int StartIndexOffset;          // the offset to be added to the base
 
         public int Count;   // the _parameters.Count of loop range
         public int ChunkSize; // the chunk size to use for the range Partitioner
@@ -891,7 +875,7 @@ namespace System.Threading.Tasks.Test.Unit
 
         public WorkloadPattern WorkloadPattern;  // the workload pattern used by each workload
 
-        //partitioner 
+        //partitioner
         public PartitionerType PartitionerType;  //the partitioner type of the partitioner used - used for Partitioner tests
         public DataSourceType ParallelForeachDataSourceType;
     }
@@ -933,7 +917,7 @@ namespace System.Threading.Tasks.Test.Unit
     }
 
     /// <summary>
-    /// Partitioner types used for ParallelForeach with partioners
+    /// Partitioner types used for ParallelForeach with partitioners
     /// </summary>
     [Flags]
     public enum PartitionerType
@@ -983,8 +967,8 @@ namespace System.Threading.Tasks.Test.Unit
     public enum StartIndexBase
     {
         Zero = 0,
-        Int16 = System.Int16.MaxValue,
-        Int32 = System.Int32.MaxValue,
+        Int16 = short.MaxValue,
+        Int32 = int.MaxValue,
         Int64 = -1,     // Enum can't take a Int64.MaxValue
     }
 

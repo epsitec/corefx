@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -140,8 +141,8 @@ namespace System.Linq.Parallel
         internal QuerySettings WithPerExecutionSettings(CancellationTokenSource topLevelCancellationTokenSource, Shared<bool> topLevelDisposedFlag)
         {
             //Initialize a new QuerySettings structure and copy in the current settings.
-            //Note: this has the very important effect of newing a fresh CancellationSettings, 
-            //      and _not_ copying in the current internalCancellationSource or topLevelDisposedFlag which should not be 
+            //Note: this has the very important effect of newing a fresh CancellationSettings,
+            //      and _not_ copying in the current internalCancellationSource or topLevelDisposedFlag which should not be
             //      propagated to internal query executions. (This affects SelectMany execution)
             //      The fresh toplevel parameters are used instead.
             QuerySettings settings = new QuerySettings(TaskScheduler, DegreeOfParallelism, CancellationState.ExternalCancellationToken, ExecutionMode, MergeOptions);
@@ -153,7 +154,7 @@ namespace System.Linq.Parallel
             settings.CancellationState.MergedCancellationTokenSource =
                    CancellationTokenSource.CreateLinkedTokenSource(settings.CancellationState.InternalCancellationTokenSource.Token, settings.CancellationState.ExternalCancellationToken);
 
-            // and copy in the topLevelDisposedFlag 
+            // and copy in the topLevelDisposedFlag
             settings.CancellationState.TopLevelDisposedFlag = topLevelDisposedFlag;
 
             Debug.Assert(settings.CancellationState.InternalCancellationTokenSource != null);

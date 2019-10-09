@@ -1,8 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace System.Net.Http.Headers
 {
@@ -22,31 +24,26 @@ namespace System.Net.Http.Headers
         public ObjectCollection(Action<T> validator)
             : base(new List<T>())
         {
+            Debug.Assert(validator != null, $"{nameof(validator)} must not be null.");
             _validator = validator;
         }
 
         // This is only used internally to enumerate the collection
         // without the enumerator allocation.
-        new public List<T>.Enumerator GetEnumerator()
+        public new List<T>.Enumerator GetEnumerator()
         {
             return ((List<T>)Items).GetEnumerator();
         }
 
         protected override void InsertItem(int index, T item)
         {
-            if (_validator != null)
-            {
-                _validator(item);
-            }
+            _validator(item);
             base.InsertItem(index, item);
         }
 
         protected override void SetItem(int index, T item)
         {
-            if (_validator != null)
-            {
-                _validator(item);
-            }
+            _validator(item);
             base.SetItem(index, item);
         }
 
@@ -55,7 +52,7 @@ namespace System.Net.Http.Headers
             // Null values cannot be added to the collection.
             if (item == null)
             {
-                throw new ArgumentNullException("item");
+                throw new ArgumentNullException(nameof(item));
             }
         }
     }

@@ -1,8 +1,8 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Reflection.Internal;
-using TestUtilities;
 using Xunit;
 
 namespace System.Reflection.Metadata.Tests
@@ -32,15 +32,15 @@ namespace System.Reflection.Metadata.Tests
         public void CompressUnsignedIntegersFromSpecExamples()
         {
             // These examples are straight from the CLI spec.
-            // Test that our compression routine (written below for test purposes) encodes them the same way. 
+            // Test that our compression routine (written below for test purposes) encodes them the same way.
 
-            AssertEx.Equal(CompressUnsignedInteger(0x03), new byte[] { 0x03 });
-            AssertEx.Equal(CompressUnsignedInteger(0x7F), new byte[] { 0x7f });
-            AssertEx.Equal(CompressUnsignedInteger(0x80), new byte[] { 0x80, 0x80 });
-            AssertEx.Equal(CompressUnsignedInteger(0x2E57), new byte[] { 0xAE, 0x57 });
-            AssertEx.Equal(CompressUnsignedInteger(0x3FFF), new byte[] { 0xBF, 0xFF });
-            AssertEx.Equal(CompressUnsignedInteger(0x4000), new byte[] { 0xC0, 0x00, 0x40, 0x00 });
-            AssertEx.Equal(CompressUnsignedInteger(0x1FFFFFFF), new byte[] { 0xDF, 0xFF, 0xFF, 0xFF });
+            Assert.Equal(CompressUnsignedInteger(0x03), new byte[] { 0x03 });
+            Assert.Equal(CompressUnsignedInteger(0x7F), new byte[] { 0x7f });
+            Assert.Equal(CompressUnsignedInteger(0x80), new byte[] { 0x80, 0x80 });
+            Assert.Equal(CompressUnsignedInteger(0x2E57), new byte[] { 0xAE, 0x57 });
+            Assert.Equal(CompressUnsignedInteger(0x3FFF), new byte[] { 0xBF, 0xFF });
+            Assert.Equal(CompressUnsignedInteger(0x4000), new byte[] { 0xC0, 0x00, 0x40, 0x00 });
+            Assert.Equal(CompressUnsignedInteger(0x1FFFFFFF), new byte[] { 0xDF, 0xFF, 0xFF, 0xFF });
         }
 
         [Fact]
@@ -102,15 +102,15 @@ namespace System.Reflection.Metadata.Tests
         public void CompressSignedIntegersFromSpecExamples()
         {
             // These examples are straight from the CLI spec.
-            // Test that our compression routine (written below for test purposes) encodes them the same way. 
-            AssertEx.Equal(CompressSignedInteger(3), new byte[] { 0x06 });
-            AssertEx.Equal(CompressSignedInteger(-3), new byte[] { 0x7b });
-            AssertEx.Equal(CompressSignedInteger(64), new byte[] { 0x80, 0x80 });
-            AssertEx.Equal(CompressSignedInteger(-64), new byte[] { 0x01 });
-            AssertEx.Equal(CompressSignedInteger(8192), new byte[] { 0xC0, 0x00, 0x40, 0x00 });
-            AssertEx.Equal(CompressSignedInteger(-8192), new byte[] { 0x80, 0x01 });
-            AssertEx.Equal(CompressSignedInteger(268435455), new byte[] { 0xDF, 0xFF, 0xFF, 0xFE });
-            AssertEx.Equal(CompressSignedInteger(-268435456), new byte[] { 0xC0, 0x00, 0x00, 0x01 });
+            // Test that our compression routine (written below for test purposes) encodes them the same way.
+            Assert.Equal(CompressSignedInteger(3), new byte[] { 0x06 });
+            Assert.Equal(CompressSignedInteger(-3), new byte[] { 0x7b });
+            Assert.Equal(CompressSignedInteger(64), new byte[] { 0x80, 0x80 });
+            Assert.Equal(CompressSignedInteger(-64), new byte[] { 0x01 });
+            Assert.Equal(CompressSignedInteger(8192), new byte[] { 0xC0, 0x00, 0x40, 0x00 });
+            Assert.Equal(CompressSignedInteger(-8192), new byte[] { 0x80, 0x01 });
+            Assert.Equal(CompressSignedInteger(268435455), new byte[] { 0xDF, 0xFF, 0xFF, 0xFE });
+            Assert.Equal(CompressSignedInteger(-268435456), new byte[] { 0xC0, 0x00, 0x00, 0x01 });
         }
 
         [Fact]
@@ -186,7 +186,7 @@ namespace System.Reflection.Metadata.Tests
         }
 
         // NOTE: The compression routines below can be optimized, but please don't do that.
-        // The whole idea is to follow the verbal descriptions of the algorithms in 
+        // The whole idea is to follow the verbal descriptions of the algorithms in
         // the spec as closely as possible.
 
         private byte[] CompressUnsignedInteger(int value)
@@ -253,7 +253,7 @@ namespace System.Reflection.Metadata.Tests
                     Assert.True(value < (1 << 7));
                     return new byte[]
                     {
-                        // 1 byte encoding: bit 7 clear, 
+                        // 1 byte encoding: bit 7 clear,
                         // 7-bit value in bits 0-6
                         (byte)value
                     };
@@ -262,7 +262,7 @@ namespace System.Reflection.Metadata.Tests
                     Assert.True(value < (1 << 14));
                     return new byte[]
                     {
-                        // 2 byte encoding: bit 15 set, bit 14 clear, 
+                        // 2 byte encoding: bit 15 set, bit 14 clear,
                         // 14-bit value stored big-endian in bits 0-13
                         (byte)(0x80 | ((value >> 8) & 0x3f)),
                         (byte)(       ((value >> 0) & 0xff)),

@@ -1,7 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-//------------------------------------------------------------
-//------------------------------------------------------------
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Xml;
@@ -61,11 +60,11 @@ namespace System.Runtime.Serialization
                 {
                     if (_isReferenceArray == null)
                     {
-                        _isReferenceArray = new bool[InitialArraySize];
+                        _isReferenceArray = new bool[_objectArray.Length];
                     }
-                    else if (_count == _isReferenceArray.Length)
+                    else if (_count >= _isReferenceArray.Length)
                     {
-                        Array.Resize<bool>(ref _isReferenceArray, _isReferenceArray.Length * 2);
+                        Array.Resize<bool>(ref _isReferenceArray, _objectArray.Length);
                     }
                     _isReferenceArray[_count - 1] = true;
                 }
@@ -97,11 +96,10 @@ namespace System.Runtime.Serialization
             }
             for (int i = (currentCount - 1); i >= 0; i--)
             {
-                if (Object.ReferenceEquals(obj, _objectArray[i]) && _isReferenceArray != null && !_isReferenceArray[i])
+                if (object.ReferenceEquals(obj, _objectArray[i]) && _isReferenceArray != null && !_isReferenceArray[i])
                     return true;
             }
             return false;
         }
     }
 }
-

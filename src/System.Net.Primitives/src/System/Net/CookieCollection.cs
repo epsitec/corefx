@@ -1,16 +1,19 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
+using System.Runtime.Serialization;
 
 namespace System.Net
 {
     // CookieCollection
     //
-    // A list of cookies maintained in Sorted order. Only one cookie with matching Name/Domain/Path 
-    public class CookieCollection : ICollection
+    // A list of cookies maintained in Sorted order. Only one cookie with matching Name/Domain/Path
+    [Serializable]
+    [System.Runtime.CompilerServices.TypeForwardedFrom("System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
+    public class CookieCollection : ICollection<Cookie>, IReadOnlyCollection<Cookie>, ICollection
     {
         internal enum Stamp
         {
@@ -20,41 +23,25 @@ namespace System.Net
             SetToMaxUsed = 3,
         }
 
-        internal int _version;
-        private List<Cookie> _list = new List<Cookie>();
+        private readonly ArrayList m_list = new ArrayList();
 
-        private DateTime _timeStamp = DateTime.MinValue;
-        private bool _hasOtherVersions;
-
-        private readonly bool _isReadOnly;
+        private int m_version; // Do not rename (binary serialization). This field only exists for netfx serialization compatibility.
+        private DateTime m_TimeStamp = DateTime.MinValue; // Do not rename (binary serialization)
+        private bool m_has_other_versions; // Do not rename (binary serialization)
 
         public CookieCollection()
         {
-            _isReadOnly = true;
-        }
-
-        internal CookieCollection(bool IsReadOnly)
-        {
-            _isReadOnly = IsReadOnly;
-        }
-
-        public bool IsReadOnly
-        {
-            get
-            {
-                return _isReadOnly;
-            }
         }
 
         public Cookie this[int index]
         {
             get
             {
-                if (index < 0 || index >= _list.Count)
+                if (index < 0 || index >= m_list.Count)
                 {
-                    throw new ArgumentOutOfRangeException("index");
+                    throw new ArgumentOutOfRangeException(nameof(index));
                 }
-                return _list[index];
+                return m_list[index] as Cookie;
             }
         }
 
@@ -62,7 +49,7 @@ namespace System.Net
         {
             get
             {
-                foreach (Cookie c in _list)
+                foreach (Cookie c in m_list)
                 {
                     if (string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase))
                     {
@@ -73,21 +60,26 @@ namespace System.Net
             }
         }
 
+        [OnSerializing]
+        private void OnSerializing(StreamingContext context)
+        {
+            m_version = m_list.Count;
+        }
+
         public void Add(Cookie cookie)
         {
             if (cookie == null)
             {
-                throw new ArgumentNullException("cookie");
+                throw new ArgumentNullException(nameof(cookie));
             }
-            ++_version;
             int idx = IndexOf(cookie);
             if (idx == -1)
             {
-                _list.Add(cookie);
+                m_list.Add(cookie);
             }
             else
             {
-                _list[idx] = cookie;
+                m_list[idx] = cookie;
             }
         }
 
@@ -95,11 +87,40 @@ namespace System.Net
         {
             if (cookies == null)
             {
-                throw new ArgumentNullException("cookies");
+                throw new ArgumentNullException(nameof(cookies));
             }
-            foreach (Cookie cookie in cookies)
+            foreach (Cookie cookie in cookies.m_list)
             {
                 Add(cookie);
+            }
+        }
+
+        public void Clear()
+        {
+            m_list.Clear();
+        }
+
+        public bool Contains(Cookie cookie)
+        {
+            return IndexOf(cookie) >= 0;
+        }
+
+        public bool Remove(Cookie cookie)
+        {
+            int idx = IndexOf(cookie);
+            if (idx == -1)
+            {
+                return false;
+            }
+            m_list.RemoveAt(idx);
+            return true;
+        }
+
+        public bool IsReadOnly
+        {
+            get
+            {
+                return false;
             }
         }
 
@@ -107,7 +128,7 @@ namespace System.Net
         {
             get
             {
-                return _list.Count;
+                return m_list.Count;
             }
         }
 
@@ -129,12 +150,12 @@ namespace System.Net
 
         public void CopyTo(Array array, int index)
         {
-            ((IList)_list).CopyTo(array, index);
+            ((ICollection)m_list).CopyTo(array, index);
         }
 
         public void CopyTo(Cookie[] array, int index)
         {
-            _list.CopyTo(array, index);
+            m_list.CopyTo(array, index);
         }
 
         internal DateTime TimeStamp(Stamp how)
@@ -142,19 +163,19 @@ namespace System.Net
             switch (how)
             {
                 case Stamp.Set:
-                    _timeStamp = DateTime.Now;
+                    m_TimeStamp = DateTime.Now;
                     break;
                 case Stamp.SetToMaxUsed:
-                    _timeStamp = DateTime.MaxValue;
+                    m_TimeStamp = DateTime.MaxValue;
                     break;
                 case Stamp.SetToUnused:
-                    _timeStamp = DateTime.MinValue;
+                    m_TimeStamp = DateTime.MinValue;
                     break;
                 case Stamp.Check:
                 default:
                     break;
             }
-            return _timeStamp;
+            return m_TimeStamp;
         }
 
 
@@ -164,60 +185,70 @@ namespace System.Net
         {
             get
             {
-                return _hasOtherVersions;
+                return m_has_other_versions;
             }
         }
+
 
         // If isStrict == false, assumes that incoming cookie is unique.
         // If isStrict == true, replace the cookie if found same with newest Variant.
         // Returns 1 if added, 0 if replaced or rejected.
-        internal int InternalAdd(Cookie cookie, bool isStrict)
+
+        /*
+            TODO: #13607
+            VSO 449560
+            Reflecting on internal method won't work on AOT without rd.xml and DisableReflection
+            block in toolchain.Networking team will be working on exposing methods from S.Net.Primitive
+            public, this is a temporary workaround till that happens.
+        */
+#if uap
+        public
+#else
+        internal
+#endif
+        int InternalAdd(Cookie cookie, bool isStrict)
         {
             int ret = 1;
             if (isStrict)
             {
-                CookieComparer comp = CookieComparer.Instance;
-
                 int idx = 0;
-                foreach (Cookie c in _list)
+                foreach (Cookie c in m_list)
                 {
-                    if (comp.Compare(cookie, c) == 0)
+                    if (CookieComparer.Compare(cookie, c) == 0)
                     {
                         ret = 0; // Will replace or reject
 
                         // Cookie2 spec requires that new Variant cookie overwrite the old one.
                         if (c.Variant <= cookie.Variant)
                         {
-                            _list[idx] = cookie;
+                            m_list[idx] = cookie;
                         }
                         break;
                     }
                     ++idx;
                 }
-                if (idx == _list.Count)
+                if (idx == m_list.Count)
                 {
-                    _list.Add(cookie);
+                    m_list.Add(cookie);
                 }
             }
             else
             {
-                _list.Add(cookie);
+                m_list.Add(cookie);
             }
             if (cookie.Version != Cookie.MaxSupportedVersion)
             {
-                _hasOtherVersions = true;
+                m_has_other_versions = true;
             }
             return ret;
         }
 
         internal int IndexOf(Cookie cookie)
         {
-            CookieComparer comp = CookieComparer.Instance;
-
             int idx = 0;
-            foreach (Cookie c in _list)
+            foreach (Cookie c in m_list)
             {
-                if (comp.Compare(cookie, c) == 0)
+                if (CookieComparer.Compare(cookie, c) == 0)
                 {
                     return idx;
                 }
@@ -228,73 +259,20 @@ namespace System.Net
 
         internal void RemoveAt(int idx)
         {
-            _list.RemoveAt(idx);
+            m_list.RemoveAt(idx);
+        }
+
+        IEnumerator<Cookie> IEnumerable<Cookie>.GetEnumerator()
+        {
+            foreach (Cookie cookie in m_list)
+            {
+                yield return cookie;
+            }
         }
 
         public IEnumerator GetEnumerator()
         {
-            return new CookieCollectionEnumerator(this);
-        }
-
-#if DEBUG
-        internal void Dump()
-        {
-            GlobalLog.Print("CookieCollection:");
-            foreach (Cookie cookie in this)
-            {
-                cookie.Dump();
-            }
-        }
-#endif
-
-        private class CookieCollectionEnumerator : IEnumerator
-        {
-            private CookieCollection _cookies;
-            private int _count;
-            private int _index = -1;
-            private int _version;
-
-            internal CookieCollectionEnumerator(CookieCollection cookies)
-            {
-                _cookies = cookies;
-                _count = cookies.Count;
-                _version = cookies._version;
-            }
-
-            object IEnumerator.Current
-            {
-                get
-                {
-                    if (_index < 0 || _index >= _count)
-                    {
-                        throw new InvalidOperationException(SR.InvalidOperation_EnumOpCantHappen);
-                    }
-                    if (_version != _cookies._version)
-                    {
-                        throw new InvalidOperationException(SR.InvalidOperation_EnumFailedVersion);
-                    }
-                    return _cookies[_index];
-                }
-            }
-
-            bool IEnumerator.MoveNext()
-            {
-                if (_version != _cookies._version)
-                {
-                    throw new InvalidOperationException(SR.InvalidOperation_EnumFailedVersion);
-                }
-                if (++_index < _count)
-                {
-                    return true;
-                }
-                _index = _count;
-                return false;
-            }
-
-            void IEnumerator.Reset()
-            {
-                _index = -1;
-            }
+            return m_list.GetEnumerator();
         }
     }
 }

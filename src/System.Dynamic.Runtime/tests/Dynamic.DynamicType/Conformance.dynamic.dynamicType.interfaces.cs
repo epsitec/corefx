@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface001.integeregererface001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface001.integeregererface001;
-
     // <Title>Interfaces</Title>
     // <Description>covariance between object/dynamic - implicit/explicit implementations
     // </Description>
@@ -78,8 +77,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integereger
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface007.integeregererface007
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface007.integeregererface007;
-
     // <Title>Interfaces</Title>
     // <Description>
     // </Description>
@@ -125,8 +122,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integereger
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface008.integeregererface008
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface008.integeregererface008;
-
     // <Title>Interfaces</Title>
     // <Description>
     // </Description>
@@ -172,8 +167,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integereger
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface009.integeregererface009
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface009.integeregererface009;
-
     // <Title>Interfaces</Title>
     // <Description>
     // </Description>
@@ -219,8 +212,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integereger
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface010.integeregererface010
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface010.integeregererface010;
-
     // <Title>Interfaces</Title>
     // <Description>
     // </Description>
@@ -266,7 +257,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integereger
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface011.integeregererface011
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface011.integeregererface011;
     // <Title>Interfaces</Title>
     // <Description>
     // </Description>
@@ -314,7 +304,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integereger
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface012.integeregererface012
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface012.integeregererface012;
     // <Title>Interfaces</Title>
     // <Description>
     // </Description>
@@ -362,7 +351,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integereger
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface013.integeregererface013
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface013.integeregererface013;
     // <Title>Interfaces</Title>
     // <Description>
     // </Description>
@@ -410,7 +398,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integereger
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface014.integeregererface014
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface014.integeregererface014;
     // <Title>Interfaces</Title>
     // <Description>
     // </Description>
@@ -458,7 +445,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integereger
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface015.integeregererface015
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface015.integeregererface015;
     // <Title>Interfaces</Title>
     // <Description>
     // </Description>
@@ -505,7 +491,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integereger
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface016.integeregererface016
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.integeregererfaces.integeregererface016.integeregererface016;
     // <Title>Interfaces</Title>
     // <Description>
     // </Description>

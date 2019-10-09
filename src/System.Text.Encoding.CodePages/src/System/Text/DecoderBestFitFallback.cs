@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 //
 // This is used internally to create best fit behavior as per the original windows best fit behavior.
@@ -39,7 +40,7 @@ namespace System.Text
             }
         }
 
-        public override bool Equals(Object value)
+        public override bool Equals(object value)
         {
             InternalDecoderBestFitFallback that = value as InternalDecoderBestFitFallback;
             if (that != null)
@@ -61,18 +62,18 @@ namespace System.Text
         internal char cBestFit = '\0';
         internal int iCount = -1;
         internal int iSize;
-        private InternalDecoderBestFitFallback _oFallback;
+        private readonly InternalDecoderBestFitFallback _oFallback;
 
         // Private object for locking instead of locking on a public type for SQL reliability work.
-        private static Object s_InternalSyncObject;
-        private static Object InternalSyncObject
+        private static object s_InternalSyncObject;
+        private static object InternalSyncObject
         {
             get
             {
                 if (s_InternalSyncObject == null)
                 {
-                    Object o = new Object();
-                    Interlocked.CompareExchange<Object>(ref s_InternalSyncObject, o, null);
+                    object o = new object();
+                    Interlocked.CompareExchange<object>(ref s_InternalSyncObject, o, null);
                 }
                 return s_InternalSyncObject;
             }
@@ -153,14 +154,12 @@ namespace System.Text
         }
 
         // Clear the buffer
-        [System.Security.SecuritySafeCritical] // overrides public transparent member
         public override unsafe void Reset()
         {
             iCount = -1;
         }
 
         // This version just counts the fallback and doesn't actually copy anything.
-        [System.Security.SecurityCritical]  // auto-generated
         internal unsafe int InternalFallback(byte[] bytes, byte* pBytes)
         // Right now this has both bytes and bytes[], since we might have extra bytes, hence the
         // array, and we might need the index, hence the byte*
@@ -236,9 +235,8 @@ namespace System.Text
                 }
             }
 
-            // Char wasn't in our table            
+            // Char wasn't in our table
             return '\0';
         }
     }
 }
-

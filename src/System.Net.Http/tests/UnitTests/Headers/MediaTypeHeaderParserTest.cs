@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -44,7 +45,7 @@ namespace System.Net.Http.Tests
             // This test verifies that Parse() correctly calls TryParse().
             MediaTypeHeaderParser parser = MediaTypeHeaderParser.SingleValueParser;
             int index = 0;
-            
+
             // only one value allowed.
             Assert.Throws<FormatException>(() => { parser.ParseValue("text/plain; charset=utf-8, next/mediatype", null, ref index); });
         }
@@ -54,7 +55,7 @@ namespace System.Net.Http.Tests
         {
             MediaTypeHeaderParser parser = MediaTypeHeaderParser.SingleValueParser;
             int index = 0;
-            
+
             Assert.Throws<FormatException>(() => { parser.ParseValue(null, null, ref index); });
         }
 
@@ -66,7 +67,7 @@ namespace System.Net.Http.Tests
             CheckValidParsedValue("text/plain", 0, expected, 10, false);
 
             // We don't have to test all possible input strings, since most of the pieces are handled by other parsers.
-            // The purpose of this test is to verify that these other parsers are combined correctly to build a 
+            // The purpose of this test is to verify that these other parsers are combined correctly to build a
             // media-type parser.
             expected.CharSet = "utf-8";
             CheckValidParsedValue("\r\n text   /  plain ;  charset =   utf-8 ", 0, expected, 40, false);
@@ -92,7 +93,7 @@ namespace System.Net.Http.Tests
             CheckValidParsedValue("text/plain , invalid", 0, expected, 13, true);
 
             // We don't have to test all possible input strings, since most of the pieces are handled by other parsers.
-            // The purpose of this test is to verify that these other parsers are combined correctly to build a 
+            // The purpose of this test is to verify that these other parsers are combined correctly to build a
             // media-type parser.
             expected.CharSet = "utf-8";
             CheckValidParsedValue("\r\n text   /  plain ;  charset =   utf-8 ", 0, expected, 40, true);
@@ -107,8 +108,8 @@ namespace System.Net.Http.Tests
             CheckInvalidParsedValue("", 0, false);
             CheckInvalidParsedValue("  ", 0, false);
             CheckInvalidParsedValue(null, 0, false);
-            CheckInvalidParsedValue("text/plain会", 0, true);
-            CheckInvalidParsedValue("text/plain会", 0, false);
+            CheckInvalidParsedValue("text/plain\u4F1A", 0, true);
+            CheckInvalidParsedValue("text/plain\u4F1A", 0, false);
             CheckInvalidParsedValue("text/plain ,", 0, false);
             CheckInvalidParsedValue("text/plain,", 0, false);
             CheckInvalidParsedValue("text/plain; charset=utf-8 ,", 0, false);
@@ -157,7 +158,7 @@ namespace System.Net.Http.Tests
             int newIndex = startIndex;
             Assert.False(parser.TryParseValue(input, null, ref newIndex, out result),
                 string.Format("TryParse returned true. Input: '{0}', Index: {1}", input, startIndex));
-            Assert.Equal(null, result);
+            Assert.Null(result);
             Assert.Equal(startIndex, newIndex);
         }
         #endregion

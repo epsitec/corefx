@@ -1,62 +1,46 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
+using System;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
+using System.Text;
 
 namespace System.IO
 {
     /// <summary>Contains internal path helpers that are shared between many projects.</summary>
     internal static partial class PathInternal
     {
-        // Therre is only one invalid path character in Unix
-        private const char InvalidPathChar = '\0';
-        internal static readonly char[] InvalidPathChars = { InvalidPathChar };
-
-        /// <summary>Returns a value indicating if the given path contains invalid characters.</summary>
-        internal static bool HasIllegalCharacters(string path, bool checkAdditional = false)
+        internal static int GetRootLength(ReadOnlySpan<char> path)
         {
-            Contract.Requires(path != null);
-
-            foreach (char c in path)
-            {
-                // Same as InvalidPathChars, unrolled here for performance
-                if (c == InvalidPathChar)
-                    return true;
-            }
-
-            return false;
-        }
-
-        internal static int GetRootLength(string path)
-        {
-            PathInternal.CheckInvalidPathChars(path);
             return path.Length > 0 && IsDirectorySeparator(path[0]) ? 1 : 0;
         }
 
+        internal static bool EndsInDirectorySeparator(ReadOnlySpan<char> path)
+            => path.Length > 0 && IsDirectorySeparator(path[path.Length - 1]);
+
+        internal static ReadOnlySpan<char> TrimEndingDirectorySeparator(ReadOnlySpan<char> path) =>
+            EndsInDirectorySeparator(path) && !IsRoot(path) ?
+                path.Slice(0, path.Length - 1) :
+                path;
+
+        internal static bool IsRoot(ReadOnlySpan<char> path)
+            => path.Length == GetRootLength(path);
+
         internal static bool IsDirectorySeparator(char c)
         {
-            // The alternatie directory separator char is the same as the directory separator,
+            // The alternate directory separator char is the same as the directory separator,
             // so we only need to check one.
             Debug.Assert(Path.DirectorySeparatorChar == Path.AltDirectorySeparatorChar);
             return c == Path.DirectorySeparatorChar;
         }
 
 
-        /// <summary>
-        /// Returns true if the path is too long
-        /// </summary>
-        internal static bool IsPathTooLong(string fullPath)
+        internal static bool IsPartiallyQualified(string path)
         {
-            return fullPath.Length >= Interop.libc.MaxPath;
-        }
-
-        /// <summary>
-        /// Returns true if the directory is too long
-        /// </summary>
-        internal static bool IsDirectoryTooLong(string fullPath)
-        {
-            return fullPath.Length >= Interop.libc.MaxPath;
+            // This is much simpler than Windows where paths can be rooted, but not fully qualified (such as Drive Relative)
+            // As long as the path is rooted in Unix it doesn't use the current directory and therefore is fully qualified.
+            return string.IsNullOrEmpty(path) || path[0] != Path.DirectorySeparatorChar;
         }
     }
 }

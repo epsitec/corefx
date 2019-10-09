@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
 using System.Security;
@@ -24,8 +25,9 @@ namespace System.Numerics
             for (int i = left.Length - 1; i >= 0; i--)
             {
                 ulong value = (carry << 32) | left[i];
-                quotient[i] = (uint)(value / right);
-                carry = value % right;
+                ulong digit = value / right;
+                quotient[i] = (uint)digit;
+                carry = value - digit * right;
             }
             remainder = (uint)carry;
 
@@ -45,8 +47,9 @@ namespace System.Numerics
             for (int i = left.Length - 1; i >= 0; i--)
             {
                 ulong value = (carry << 32) | left[i];
-                quotient[i] = (uint)(value / right);
-                carry = value % right;
+                ulong digit = value / right;
+                quotient[i] = (uint)digit;
+                carry = value - digit * right;
             }
 
             return quotient;
@@ -69,8 +72,7 @@ namespace System.Numerics
             return (uint)carry;
         }
 
-        [SecuritySafeCritical]
-        public unsafe static uint[] Divide(uint[] left, uint[] right,
+        public static unsafe uint[] Divide(uint[] left, uint[] right,
                                            out uint[] remainder)
         {
             Debug.Assert(left != null);
@@ -87,7 +89,7 @@ namespace System.Numerics
             uint[] localLeft = CreateCopy(left);
             uint[] bits = new uint[left.Length - right.Length + 1];
 
-            fixed (uint* l = localLeft, r = right, b = bits)
+            fixed (uint* l = &localLeft[0], r = &right[0], b = &bits[0])
             {
                 Divide(l, localLeft.Length,
                        r, right.Length,
@@ -99,8 +101,7 @@ namespace System.Numerics
             return bits;
         }
 
-        [SecuritySafeCritical]
-        public unsafe static uint[] Divide(uint[] left, uint[] right)
+        public static unsafe uint[] Divide(uint[] left, uint[] right)
         {
             Debug.Assert(left != null);
             Debug.Assert(right != null);
@@ -115,7 +116,7 @@ namespace System.Numerics
             uint[] localLeft = CreateCopy(left);
             uint[] bits = new uint[left.Length - right.Length + 1];
 
-            fixed (uint* l = localLeft, r = right, b = bits)
+            fixed (uint* l = &localLeft[0], r = &right[0], b = &bits[0])
             {
                 Divide(l, localLeft.Length,
                        r, right.Length,
@@ -125,8 +126,7 @@ namespace System.Numerics
             return bits;
         }
 
-        [SecuritySafeCritical]
-        public unsafe static uint[] Remainder(uint[] left, uint[] right)
+        public static unsafe uint[] Remainder(uint[] left, uint[] right)
         {
             Debug.Assert(left != null);
             Debug.Assert(right != null);
@@ -140,7 +140,7 @@ namespace System.Numerics
 
             uint[] localLeft = CreateCopy(left);
 
-            fixed (uint* l = localLeft, r = right)
+            fixed (uint* l = &localLeft[0], r = &right[0])
             {
                 Divide(l, localLeft.Length,
                        r, right.Length,
@@ -150,8 +150,7 @@ namespace System.Numerics
             return localLeft;
         }
 
-        [SecuritySafeCritical]
-        private unsafe static void Divide(uint* left, int leftLength,
+        private static unsafe void Divide(uint* left, int leftLength,
                                           uint* right, int rightLength,
                                           uint* bits, int bitsLength)
         {
@@ -237,8 +236,7 @@ namespace System.Numerics
             }
         }
 
-        [SecuritySafeCritical]
-        private unsafe static uint AddDivisor(uint* left, int leftLength,
+        private static unsafe uint AddDivisor(uint* left, int leftLength,
                                               uint* right, int rightLength)
         {
             Debug.Assert(leftLength >= 0);
@@ -247,20 +245,19 @@ namespace System.Numerics
 
             // Repairs the dividend, if the last subtract was too much
 
-            ulong carry = 0L;
+            ulong carry = 0UL;
 
             for (int i = 0; i < rightLength; i++)
             {
                 ulong digit = (left[i] + carry) + right[i];
-                left[i] = (uint)digit;
+                left[i] = unchecked((uint)digit);
                 carry = digit >> 32;
             }
 
             return (uint)carry;
         }
 
-        [SecuritySafeCritical]
-        private unsafe static uint SubtractDivisor(uint* left, int leftLength,
+        private static unsafe uint SubtractDivisor(uint* left, int leftLength,
                                                    uint* right, int rightLength,
                                                    ulong q)
         {
@@ -272,16 +269,16 @@ namespace System.Numerics
             // Combines a subtract and a multiply operation, which is naturally
             // more efficient than multiplying and then subtracting...
 
-            ulong carry = 0L;
+            ulong carry = 0UL;
 
             for (int i = 0; i < rightLength; i++)
             {
                 carry += right[i] * q;
-                uint digit = (uint)carry;
+                uint digit = unchecked((uint)carry);
                 carry = carry >> 32;
                 if (left[i] < digit)
                     ++carry;
-                left[i] -= digit;
+                left[i] = unchecked(left[i] - digit);
             }
 
             return (uint)carry;
@@ -321,7 +318,7 @@ namespace System.Numerics
             Debug.Assert(value != null);
             Debug.Assert(value.Length != 0);
 
-            var bits = new uint[value.Length];
+            uint[] bits = new uint[value.Length];
             Array.Copy(value, 0, bits, 0, bits.Length);
             return bits;
         }
@@ -331,7 +328,7 @@ namespace System.Numerics
             if (value == 0)
                 return 32;
 
-            var count = 0;
+            int count = 0;
             if ((value & 0xFFFF0000) == 0)
             {
                 count += 16;

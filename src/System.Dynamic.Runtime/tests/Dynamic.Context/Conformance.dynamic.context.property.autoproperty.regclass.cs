@@ -1,18 +1,12 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
+using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass001.regclass001;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Linq.Expressions;
-    using System.Reflection;
-
     public class MyClass
     {
         public int Field = 0;
@@ -255,15 +249,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass001.regclass001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass001.regclass001;
     // <Title> Tests regular class auto property used in generic method body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -307,15 +298,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass003.regclass003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass003.regclass003;
     // <Title> Tests regular class auto property used in variable initializer.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -352,15 +340,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass004.regclass004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass004.regclass004;
     // <Title> Tests regular class auto property used in implicitly-typed array initializer.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -401,15 +386,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass005.regclass005
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass005.regclass005;
     // <Title> Tests regular class auto property used in operator.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -440,15 +422,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass006.regclass006
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass006.regclass006;
     // <Title> Tests regular class auto property used in null coalescing operator.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -494,8 +473,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass007.regclass007
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass007.regclass007;
     // <Title> Tests regular class auto property used in destructor.</Title>
     // <Description>
     // On IA64 the GC.WaitForPendingFinalizers() does not actually work...
@@ -521,10 +498,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
             }
         }
 
-        public void Foo()
-        {
-        }
-
         private static int Verify()
         {
             lock (Test.locker)
@@ -543,10 +516,10 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
         {
             Test t = new Test();
             Test.s_field = "Field";
-            t.Foo();
+            GC.KeepAlive(t);
         }
 
-        [Fact]
+        [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsPreciseGcSupported))]
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -568,15 +541,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass008.regclass008
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass008.regclass008;
     // <Title> Tests regular class auto property used in extension method body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -597,7 +567,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
         }
     }
 
-    static public class Extension
+    public static class Extension
     {
         public static MyStruct TestSetMyStruct(this int i)
         {
@@ -633,15 +603,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass009.regclass009
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass009.regclass009;
     // <Title> Tests regular class auto property used in variable initializer.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -668,15 +635,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass010.regclass010
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass010.regclass010;
     // <Title> Tests regular class auto property used in array initializer list.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -708,19 +672,16 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass014.regclass014
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass014.regclass014;
     // <Title> Tests regular class auto property used in for loop body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -751,15 +712,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass015.regclass015
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass015.regclass015;
     // <Title> Tests regular class auto property used in foreach expression.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
     using System.Collections.Generic;
 
     public class Test
@@ -801,16 +759,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass016.regclass016
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass016.regclass016;
     // <Title> Tests regular class auto property used in while body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
-    using System.Collections.Generic;
 
     public class Test : MemberClass
     {
@@ -845,19 +799,16 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass018.regclass018
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass018.regclass018;
     // <Title> Tests regular class auto property used in uncheck expression.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -880,15 +831,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass019.regclass019
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass019.regclass019;
     // <Title> Tests regular class auto property used in static constructor.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -919,15 +867,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass020.regclass020
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass020.regclass020;
     // <Title> Tests regular class auto property used in variable named dynamic.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -952,15 +897,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass022.regclass022
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass022.regclass022;
     // <Title> Tests regular class auto property used in field initailizer outside of constructor.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -988,15 +930,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass023.regclass023
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass023.regclass023;
     // <Title> Tests regular class auto property used in static generic method body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1025,15 +964,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass024.regclass024
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass024.regclass024;
     // <Title> Tests regular class auto property used in static generic method body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     // <Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1072,19 +1008,16 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass025.regclass025
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass025.regclass025;
     // <Title> Tests regular class auto property used in inside#if, #else block.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -1134,15 +1067,12 @@ array = new ulong[] { (ulong)dy.Property_ulong };
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass026.regclass026
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass026.regclass026;
     // <Title> Tests regular class auto property used in regular method body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1173,20 +1103,17 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass027.regclass027
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass027.regclass027;
     // <Title> Tests regular class auto property used in using block.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
     using System.IO;
 
     public class Test
     {
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -1231,15 +1158,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass028.regclass028
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass028.regclass028;
     // <Title> Tests regular class auto property used in ternary operator expression.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1295,15 +1219,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass029.regclass029
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass029.regclass029;
     // <Title> Tests regular class auto property used in null coalescing operator.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1336,15 +1257,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass030.regclass030
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass030.regclass030;
     // <Title> Tests regular class auto property used in constructor.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1385,19 +1303,16 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass031.regclass031
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass031.regclass031;
     // <Title> Tests regular class auto property used in null coalescing operator.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -1421,15 +1336,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass032.regclass032
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass032.regclass032;
     // <Title> Tests regular class auto property used in static variable.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1456,19 +1368,16 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass034.regclass034
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass034.regclass034;
     // <Title> Tests regular class auto property used in switch section statement.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -1523,15 +1432,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass035.regclass035
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass035.regclass035;
     // <Title> Tests regular class auto property used in switch default section statement.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1569,15 +1475,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass036.regclass036
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass036.regclass036;
     // <Title> Tests regular class auto property used in foreach body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1609,15 +1512,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autopr
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass037.regclass037
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclassautoprop.regclassautoprop;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.property.autoproperty.regclass.regclass037.regclass037;
     // <Title> Tests regular class auto property used in static method body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {

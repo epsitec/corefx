@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -9,22 +10,17 @@
 // Contains tests for ensuring thread safety of Range Partitioner:
 //  - For different overload of Range Partitioner, calling from multiple threads
 //    will not results in any exception, and will do the partition correctly
-// 
+//
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-using Xunit;
-using CoreFXTestLibrary;
-
-using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace System.Threading.Tasks.Test
+using Xunit;
+
+namespace System.Threading.Tasks.Tests
 {
-
-    public class RangePartitionerThreadSafetyTests
+    public static class RangePartitionerThreadSafetyTests
     {
         /// <summary>
         /// Make sure that range Partitioner.Create can be called from multiple threads
@@ -138,12 +134,12 @@ namespace System.Threading.Tasks.Test
                 while (e1.MoveNext())
                 {
                     // 'actual' ran out of elements before expected.
-                    Assert.True(e2.MoveNext(), String.Format("Partitioner returned fewer elements. Next element expected: {0}", e1.Current));
+                    Assert.True(e2.MoveNext(), string.Format("Partitioner returned fewer elements. Next element expected: {0}", e1.Current));
 
                     Assert.Equal(e1.Current, e2.Current);
                 }
 
-                Assert.False(e2.MoveNext(), String.Format("Partitioner returned more elements. Next element returned by partitioner: {0}", e2.Current));
+                Assert.False(e2.MoveNext(), string.Format("Partitioner returned more elements. Next element returned by partitioner: {0}", e2.Current));
             }
         }
 

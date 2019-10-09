@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.Runtime.Serialization
 {
@@ -19,7 +20,7 @@ namespace System.Runtime.Serialization
 
         public bool IsReference
         {
-            get { return _isReference; }
+            get => _isReference;
             set
             {
                 _isReference = value;
@@ -27,14 +28,11 @@ namespace System.Runtime.Serialization
             }
         }
 
-        public bool IsReferenceSetExplicitly
-        {
-            get { return _isReferenceSetExplicitly; }
-        }
+        public bool IsReferenceSetExplicitly => _isReferenceSetExplicitly;
 
         public string Namespace
         {
-            get { return _ns; }
+            get => _ns;
             set
             {
                 _ns = value;
@@ -42,14 +40,11 @@ namespace System.Runtime.Serialization
             }
         }
 
-        public bool IsNamespaceSetExplicitly
-        {
-            get { return _isNamespaceSetExplicitly; }
-        }
+        public bool IsNamespaceSetExplicitly => _isNamespaceSetExplicitly;
 
         public string Name
         {
-            get { return _name; }
+            get => _name;
             set
             {
                 _name = value;
@@ -57,9 +52,6 @@ namespace System.Runtime.Serialization
             }
         }
 
-        public bool IsNameSetExplicitly
-        {
-            get { return _isNameSetExplicitly; }
-        }
+        public bool IsNameSetExplicitly => _isNameSetExplicitly;
     }
 }

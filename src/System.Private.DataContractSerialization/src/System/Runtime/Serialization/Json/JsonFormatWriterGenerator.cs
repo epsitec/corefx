@@ -1,16 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Xml;
 
-#if NET_NATIVE
-namespace System.Runtime.Serialization.Json
-{
-    public delegate void JsonFormatClassWriterDelegate(XmlWriterDelegator xmlWriter, object obj, XmlObjectSerializerWriteContextComplexJson context, ClassDataContract dataContract, XmlDictionaryString[] memberNames);
-    public delegate void JsonFormatCollectionWriterDelegate(XmlWriterDelegator xmlWriter, object obj, XmlObjectSerializerWriteContextComplexJson context, CollectionDataContract dataContract);
-}
-#elif MERGE_DCJS
 namespace System.Runtime.Serialization.Json
 {
     using System;
@@ -25,22 +19,18 @@ namespace System.Runtime.Serialization.Json
 
     internal class JsonFormatWriterGenerator
     {
-        [SecurityCritical]
-        private CriticalHelper _helper;
+        private readonly CriticalHelper _helper;
 
-        [SecurityCritical]
         public JsonFormatWriterGenerator()
         {
             _helper = new CriticalHelper();
         }
 
-        [SecurityCritical]
         internal JsonFormatClassWriterDelegate GenerateClassWriter(ClassDataContract classContract)
         {
             return _helper.GenerateClassWriter(classContract);
         }
 
-        [SecurityCritical]
         internal JsonFormatCollectionWriterDelegate GenerateCollectionWriter(CollectionDataContract collectionContract)
         {
             return _helper.GenerateCollectionWriter(collectionContract);
@@ -62,7 +52,7 @@ namespace System.Runtime.Serialization.Json
             internal JsonFormatClassWriterDelegate GenerateClassWriter(ClassDataContract classContract)
             {
                 _ilg = new CodeGenerator();
-                bool memberAccessFlag = classContract.RequiresMemberAccessForWrite(null, JsonGlobals.JsonSerializationPatterns);
+                bool memberAccessFlag = classContract.RequiresMemberAccessForWrite(null);
                 try
                 {
                     BeginMethod(_ilg, "Write" + DataContract.SanitizeTypeName(classContract.StableName.Name) + "ToJson", typeof(JsonFormatClassWriterDelegate), memberAccessFlag);
@@ -71,7 +61,7 @@ namespace System.Runtime.Serialization.Json
                 {
                     if (memberAccessFlag)
                     {
-                        classContract.RequiresMemberAccessForWrite(securityException, JsonGlobals.JsonSerializationPatterns);
+                        classContract.RequiresMemberAccessForWrite(securityException);
                     }
                     else
                     {
@@ -87,7 +77,7 @@ namespace System.Runtime.Serialization.Json
             internal JsonFormatCollectionWriterDelegate GenerateCollectionWriter(CollectionDataContract collectionContract)
             {
                 _ilg = new CodeGenerator();
-                bool memberAccessFlag = collectionContract.RequiresMemberAccessForWrite(null, JsonGlobals.JsonSerializationPatterns);
+                bool memberAccessFlag = collectionContract.RequiresMemberAccessForWrite(null);
                 try
                 {
                     BeginMethod(_ilg, "Write" + DataContract.SanitizeTypeName(collectionContract.StableName.Name) + "ToJson", typeof(JsonFormatCollectionWriterDelegate), memberAccessFlag);
@@ -96,7 +86,7 @@ namespace System.Runtime.Serialization.Json
                 {
                     if (memberAccessFlag)
                     {
-                        collectionContract.RequiresMemberAccessForWrite(securityException, JsonGlobals.JsonSerializationPatterns);
+                        collectionContract.RequiresMemberAccessForWrite(securityException);
                     }
                     else
                     {
@@ -119,7 +109,7 @@ namespace System.Runtime.Serialization.Json
                 for (int i = 0; i < parameters.Length; i++)
                     paramTypes[i] = parameters[i].ParameterType;
 
-                DynamicMethod dynamicMethod = new DynamicMethod(methodName, signature.ReturnType, paramTypes, typeof(JsonFormatWriterGenerator).GetTypeInfo().Module, allowPrivateMemberAccess);
+                DynamicMethod dynamicMethod = new DynamicMethod(methodName, signature.ReturnType, paramTypes, typeof(JsonFormatWriterGenerator).Module, allowPrivateMemberAccess);
                 ilg.BeginMethod(dynamicMethod, delegateType, methodName, paramTypes, allowPrivateMemberAccess);
 #endif
             }
@@ -143,8 +133,8 @@ namespace System.Runtime.Serialization.Json
                     _ilg.ConvertValue(objectArg.ArgType, Globals.TypeOfDateTimeOffset);
                     _ilg.Call(XmlFormatGeneratorStatics.GetDateTimeOffsetAdapterMethod);
                 }
-                //Copy the KeyValuePair<K,T> to a KeyValuePairAdapter<K,T>. 
-                else if (objType.GetTypeInfo().IsGenericType && objType.GetGenericTypeDefinition() == Globals.TypeOfKeyValuePairAdapter)
+                //Copy the KeyValuePair<K,T> to a KeyValuePairAdapter<K,T>.
+                else if (objType.IsGenericType && objType.GetGenericTypeDefinition() == Globals.TypeOfKeyValuePairAdapter)
                 {
                     ClassDataContract dc = (ClassDataContract)DataContract.GetDataContract(objType);
                     _ilg.ConvertValue(objectArg.ArgType, Globals.TypeOfKeyValuePair.MakeGenericType(dc.KeyValuePairGenericArguments));
@@ -155,28 +145,6 @@ namespace System.Runtime.Serialization.Json
                     _ilg.ConvertValue(objectArg.ArgType, objType);
                 }
                 _ilg.Stloc(_objectLocal);
-            }
-
-            private void ThrowIfCannotSerializeReadOnlyTypes(ClassDataContract classContract)
-            {
-                ThrowIfCannotSerializeReadOnlyTypes(XmlFormatGeneratorStatics.ClassSerializationExceptionMessageProperty);
-            }
-
-            private void ThrowIfCannotSerializeReadOnlyTypes(CollectionDataContract classContract)
-            {
-                ThrowIfCannotSerializeReadOnlyTypes(XmlFormatGeneratorStatics.CollectionSerializationExceptionMessageProperty);
-            }
-
-            private void ThrowIfCannotSerializeReadOnlyTypes(PropertyInfo serializationExceptionMessageProperty)
-            {
-                _ilg.Load(_contextArg);
-                _ilg.LoadMember(XmlFormatGeneratorStatics.SerializeReadOnlyTypesProperty);
-                _ilg.IfNot();
-                _ilg.Load(_dataContractArg);
-                _ilg.LoadMember(serializationExceptionMessageProperty);
-                _ilg.Load(null);
-                _ilg.Call(XmlFormatGeneratorStatics.ThrowInvalidDataContractExceptionMethod);
-                _ilg.EndIf();
             }
 
             private void InvokeOnSerializing(ClassDataContract classContract)
@@ -208,15 +176,28 @@ namespace System.Runtime.Serialization.Json
             private void WriteClass(ClassDataContract classContract)
             {
                 InvokeOnSerializing(classContract);
-
                 if (classContract.IsISerializable)
                 {
                     _ilg.Call(_contextArg, JsonFormatGeneratorStatics.WriteJsonISerializableMethod, _xmlWriterArg, _objectLocal);
                 }
                 else
                 {
-                    WriteMembers(classContract, null, classContract);
+                    if (classContract.HasExtensionData)
+                    {
+                        LocalBuilder extensionDataLocal = _ilg.DeclareLocal(Globals.TypeOfExtensionDataObject, "extensionData");
+                        _ilg.Load(_objectLocal);
+                        _ilg.ConvertValue(_objectLocal.LocalType, Globals.TypeOfIExtensibleDataObject);
+                        _ilg.LoadMember(JsonFormatGeneratorStatics.ExtensionDataProperty);
+                        _ilg.Store(extensionDataLocal);
+                        _ilg.Call(_contextArg, XmlFormatGeneratorStatics.WriteExtensionDataMethod, _xmlWriterArg, extensionDataLocal, -1);
+                        WriteMembers(classContract, extensionDataLocal, classContract);
+                    }
+                    else
+                    {
+                        WriteMembers(classContract, null, classContract);
+                    }
                 }
+
                 InvokeOnSerialized(classContract);
             }
 
@@ -225,18 +206,20 @@ namespace System.Runtime.Serialization.Json
                 int memberCount = (classContract.BaseContract == null) ? 0 :
                     WriteMembers(classContract.BaseContract, extensionDataLocal, derivedMostClassContract);
 
-                _ilg.Call(_contextArg, XmlFormatGeneratorStatics.IncrementItemCountMethod, classContract.Members.Count);
+                int classMemberCount = classContract.Members.Count;
+                _ilg.Call(thisObj: _contextArg, XmlFormatGeneratorStatics.IncrementItemCountMethod, classMemberCount);
 
-                for (int i = 0; i < classContract.Members.Count; i++, memberCount++)
+                for (int i = 0; i < classMemberCount; i++, memberCount++)
                 {
                     DataMember member = classContract.Members[i];
                     Type memberType = member.MemberType;
                     LocalBuilder memberValue = null;
-                    if (member.IsGetOnlyCollection)
-                    {
-                        _ilg.Load(_contextArg);
-                        _ilg.Call(XmlFormatGeneratorStatics.StoreIsGetOnlyCollectionMethod);
-                    }
+
+                    _ilg.Load(_contextArg);
+                    _ilg.Call(methodInfo: member.IsGetOnlyCollection ?
+                        XmlFormatGeneratorStatics.StoreIsGetOnlyCollectionMethod :
+                        XmlFormatGeneratorStatics.ResetIsGetOnlyCollectionMethod);
+
                     if (!member.EmitDefaultValue)
                     {
                         memberValue = LoadMemberValue(member);
@@ -244,36 +227,42 @@ namespace System.Runtime.Serialization.Json
                     }
 
                     bool requiresNameAttribute = DataContractJsonSerializerImpl.CheckIfXmlNameRequiresMapping(classContract.MemberNames[i]);
-                    if (requiresNameAttribute || !TryWritePrimitive(memberType, memberValue, member.MemberInfo, null /*arrayItemIndex*/, null /*nameLocal*/, i + _childElementIndex))
+                    if (requiresNameAttribute || !TryWritePrimitive(memberType, memberValue, member.MemberInfo, arrayItemIndex: null, name: null, nameIndex: i + _childElementIndex))
                     {
                         // Note: DataContractSerializer has member-conflict logic here to deal with the schema export
                         //       requirement that the same member can't be of two different types.
                         if (requiresNameAttribute)
                         {
-                            _ilg.Call(null, JsonFormatGeneratorStatics.WriteJsonNameWithMappingMethod, _xmlWriterArg, _memberNamesArg, i + _childElementIndex);
+                            _ilg.Call(thisObj: null, JsonFormatGeneratorStatics.WriteJsonNameWithMappingMethod, _xmlWriterArg, _memberNamesArg, i + _childElementIndex);
                         }
                         else
                         {
-                            WriteStartElement(null /*nameLocal*/, i + _childElementIndex);
+                            WriteStartElement(nameLocal: null, nameIndex: i + _childElementIndex);
                         }
                         if (memberValue == null)
                             memberValue = LoadMemberValue(member);
                         WriteValue(memberValue);
                         WriteEndElement();
                     }
+
+                    if (classContract.HasExtensionData)
+                    {
+                        _ilg.Call(thisObj: _contextArg, XmlFormatGeneratorStatics.WriteExtensionDataMethod, _xmlWriterArg, extensionDataLocal, memberCount);
+                    }
+
                     if (!member.EmitDefaultValue)
                     {
                         if (member.IsRequired)
                         {
                             _ilg.Else();
-                            _ilg.Call(null, XmlFormatGeneratorStatics.ThrowRequiredMemberMustBeEmittedMethod, member.Name, classContract.UnderlyingType);
+                            _ilg.Call(thisObj: null, XmlFormatGeneratorStatics.ThrowRequiredMemberMustBeEmittedMethod, member.Name, classContract.UnderlyingType);
                         }
                         _ilg.EndIf();
                     }
                 }
 
                 _typeIndex++;
-                _childElementIndex += classContract.Members.Count;
+                _childElementIndex += classMemberCount;
                 return memberCount;
             }
 
@@ -362,7 +351,7 @@ namespace System.Runtime.Serialization.Json
                     MethodInfo getCurrentMethod = enumeratorType.GetMethod(Globals.GetCurrentMethodName, BindingFlags.Instance | BindingFlags.Public, Array.Empty<Type>());
                     if (moveNextMethod == null || getCurrentMethod == null)
                     {
-                        if (enumeratorType.GetTypeInfo().IsInterface)
+                        if (enumeratorType.IsInterface)
                         {
                             if (moveNextMethod == null)
                                 moveNextMethod = JsonFormatGeneratorStatics.MoveNextMethod;
@@ -378,7 +367,7 @@ namespace System.Runtime.Serialization.Json
                                 Type[] interfaceTypes = enumeratorType.GetInterfaces();
                                 foreach (Type interfaceType in interfaceTypes)
                                 {
-                                    if (interfaceType.GetTypeInfo().IsGenericType
+                                    if (interfaceType.IsGenericType
                                         && interfaceType.GetGenericTypeDefinition() == Globals.TypeOfIEnumeratorGeneric
                                         && interfaceType.GetGenericArguments()[0] == collectionContract.ItemType)
                                     {
@@ -491,7 +480,7 @@ namespace System.Runtime.Serialization.Json
                     return false;
 
                 // load writer
-                if (type.GetTypeInfo().IsValueType)
+                if (type.IsValueType)
                 {
                     _ilg.Load(_xmlWriterArg);
                 }
@@ -500,7 +489,7 @@ namespace System.Runtime.Serialization.Json
                     _ilg.Load(_contextArg);
                     _ilg.Load(_xmlWriterArg);
                 }
-                // load primitive value 
+                // load primitive value
                 if (value != null)
                 {
                     _ilg.Load(value);
@@ -598,9 +587,9 @@ namespace System.Runtime.Serialization.Json
             private void WriteValue(LocalBuilder memberValue)
             {
                 Type memberType = memberValue.LocalType;
-                bool isNullableOfT = (memberType.GetTypeInfo().IsGenericType &&
+                bool isNullableOfT = (memberType.IsGenericType &&
                                       memberType.GetGenericTypeDefinition() == Globals.TypeOfNullable);
-                if (memberType.GetTypeInfo().IsValueType && !isNullableOfT)
+                if (memberType.IsValueType && !isNullableOfT)
                 {
                     PrimitiveDataContract primitiveContract = PrimitiveDataContract.GetPrimitiveDataContract(memberType);
                     if (primitiveContract != null)
@@ -686,7 +675,7 @@ namespace System.Runtime.Serialization.Json
                 Label onNull = _ilg.DefineLabel();
                 Label end = _ilg.DefineLabel();
                 _ilg.LoadAddress(memberValue);
-                while (memberType.GetTypeInfo().IsGenericType && memberType.GetGenericTypeDefinition() == Globals.TypeOfNullable)
+                while (memberType.IsGenericType && memberType.GetGenericTypeDefinition() == Globals.TypeOfNullable)
                 {
                     Type innerType = memberType.GetGenericArguments()[0];
                     _ilg.Dup();
@@ -738,4 +727,3 @@ namespace System.Runtime.Serialization.Json
         }
     }
 }
-#endif

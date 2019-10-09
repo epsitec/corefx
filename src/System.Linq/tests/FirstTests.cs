@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -7,24 +8,13 @@ using Xunit;
 
 namespace System.Linq.Tests
 {
-    public class FirstTests
+    public class FirstTests : EnumerableTests
     {
-        private static IEnumerable<int> NumList(int start, int count)
-        {
-            for (int i = 0; i < count; i++)
-                yield return start + i;
-        }
-
-        private static bool IsEven(int num)
-        {
-            return num % 2 == 0;
-        }
-
         [Fact]
         public void SameResultsRepeatCallsIntQuery()
         {
             var q = from x in new[] { 9999, 0, 888, -1, 66, -777, 1, 2, -12345 }
-                    where x > Int32.MinValue
+                    where x > int.MinValue
                     select x;
 
             Assert.Equal(q.First(), q.First());
@@ -33,20 +23,20 @@ namespace System.Linq.Tests
         [Fact]
         public void SameResultsRepeatCallsStringQuery()
         {
-            var q = from x in new[] { "!@#$%^", "C", "AAA", "", "Calling Twice", "SoS", String.Empty }
-                    where !String.IsNullOrEmpty(x)
+            var q = from x in new[] { "!@#$%^", "C", "AAA", "", "Calling Twice", "SoS", string.Empty }
+                    where !string.IsNullOrEmpty(x)
                     select x;
 
             Assert.Equal(q.First(), q.First());
         }
 
-        public void TestEmptyIList<T>()
+        private static void TestEmptyIList<T>()
         {
             T[] source = { };
-            
+
             Assert.NotNull(source as IList<T>);
-            
-            Assert.Throws<InvalidOperationException>(() => source.First());
+
+            Assert.Throws<InvalidOperationException>(() => source.RunOnce().First());
         }
 
         [Fact]
@@ -65,29 +55,29 @@ namespace System.Linq.Tests
             int expected = 5;
 
             Assert.NotNull(source as IList<int>);
-            
+
             Assert.Equal(expected, source.First());
         }
 
         [Fact]
-        public void IListTManyELementsFirstIsDefault()
+        public void IListTManyElementsFirstIsDefault()
         {
             int?[] source = { null, -10, 2, 4, 3, 0, 2 };
             int? expected = null;
 
             Assert.IsAssignableFrom<IList<int?>>(source);
-            
+
             Assert.Equal(expected, source.First());
         }
 
         [Fact]
-        public void IListTManyELementsFirstIsNotDefault()
+        public void IListTManyElementsFirstIsNotDefault()
         {
             int?[] source = { 19, null, -10, 2, 4, 3, 0, 2 };
             int? expected = 19;
 
             Assert.IsAssignableFrom<IList<int?>>(source);
-            
+
             Assert.Equal(expected, source.First());
         }
 
@@ -101,8 +91,8 @@ namespace System.Linq.Tests
             var source = EmptySource<T>();
 
             Assert.Null(source as IList<T>);
-            
-            Assert.Throws<InvalidOperationException>(() => source.First());
+
+            Assert.Throws<InvalidOperationException>(() => source.RunOnce().First());
         }
 
         [Fact]
@@ -117,22 +107,22 @@ namespace System.Linq.Tests
         [Fact]
         public void OneElementNotIListT()
         {
-            IEnumerable<int> source = NumList(-5, 1);
+            IEnumerable<int> source = NumberRangeGuaranteedNotCollectionType(-5, 1);
             int expected = -5;
 
             Assert.Null(source as IList<int>);
-            
+
             Assert.Equal(expected, source.First());
         }
 
         [Fact]
         public void ManyElementsNotIListT()
         {
-            IEnumerable<int> source = NumList(3, 10);
+            IEnumerable<int> source = NumberRangeGuaranteedNotCollectionType(3, 10);
             int expected = 3;
 
             Assert.Null(source as IList<int>);
-            
+
             Assert.Equal(expected, source.First());
         }
 
@@ -151,7 +141,7 @@ namespace System.Linq.Tests
             int[] source = { 4 };
             Func<int, bool> predicate = IsEven;
             int expected = 4;
-            
+
             Assert.Equal(expected, source.First(predicate));
         }
 
@@ -182,6 +172,35 @@ namespace System.Linq.Tests
             int expected = 10;
 
             Assert.Equal(expected, source.First(predicate));
+        }
+
+        [Fact]
+        public void PredicateTrueForSomeRunOnce()
+        {
+            int[] source = { 3, 7, 10, 7, 9, 2, 11, 17, 13, 8 };
+            Func<int, bool> predicate = IsEven;
+            int expected = 10;
+
+            Assert.Equal(expected, source.RunOnce().First(predicate));
+        }
+
+        [Fact]
+        public void NullSource()
+        {
+            AssertExtensions.Throws<ArgumentNullException>("source", () => ((IEnumerable<int>)null).First());
+        }
+
+        [Fact]
+        public void NullSourcePredicateUsed()
+        {
+            AssertExtensions.Throws<ArgumentNullException>("source", () => ((IEnumerable<int>)null).First(i => i != 2));
+        }
+
+        [Fact]
+        public void NullPredicate()
+        {
+            Func<int, bool> predicate = null;
+            AssertExtensions.Throws<ArgumentNullException>("predicate", () => Enumerable.Range(0, 3).First(predicate));
         }
     }
 }

@@ -1,9 +1,12 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
+using System.Linq;
+using Microsoft.DotNet.RemoteExecutor;
 using Xunit;
 
-namespace System.IO.FileSystem.Tests
+namespace System.IO.Tests
 {
     public class FileInfo_Exists : FileSystemTest
     {
@@ -41,8 +44,16 @@ namespace System.IO.FileSystem.Tests
             Assert.False(new FileInfo("Da drar vi til fjells").Exists);
         }
 
+        [Theory, MemberData(nameof(TrailingCharacters))]
+        public void MissingDirectory(char trailingChar)
+        {
+            string path = GetTestFilePath();
+            FileInfo info = new FileInfo(Path.Combine(path, "file" + trailingChar));
+            Assert.False(info.Exists);
+        }
+
         [Fact]
-        [PlatformSpecific(PlatformID.Windows | PlatformID.OSX)] // testing case-insensitivity
+        [PlatformSpecific(CaseInsensitivePlatforms)]
         public void CaseInsensitivity()
         {
             string path = GetTestFilePath();
@@ -52,7 +63,7 @@ namespace System.IO.FileSystem.Tests
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.Linux | PlatformID.FreeBSD)] // testing case-Sensitivity
+        [PlatformSpecific(CaseSensitivePlatforms)]
         public void CaseSensitivity()
         {
             string path = GetTestFilePath();
@@ -78,6 +89,97 @@ namespace System.IO.FileSystem.Tests
             Directory.CreateDirectory(fileName);
             FileInfo di = new FileInfo(fileName);
             Assert.False(di.Exists);
+        }
+
+        [Fact]
+        [PlatformSpecific(TestPlatforms.AnyUnix)]  // Uses P/Invokes
+        public void TrueForNonRegularFile()
+        {
+            string fileName = GetTestFilePath();
+            Assert.Equal(0, mkfifo(fileName, 0));
+            FileInfo fi = new FileInfo(fileName);
+            Assert.True(fi.Exists);
+        }
+
+        [ConditionalFact(nameof(CanCreateSymbolicLinks))]
+        public void SymLinksMayExistIndependentlyOfTarget()
+        {
+            var path = GetTestFilePath();
+            var linkPath = GetTestFilePath();
+
+            var pathFI = new FileInfo(path);
+            var linkPathFI = new FileInfo(linkPath);
+
+            pathFI.Create().Dispose();
+            Assert.True(MountHelper.CreateSymbolicLink(linkPath, path, isDirectory: false));
+
+            // Both the symlink and the target exist
+            pathFI.Refresh();
+            linkPathFI.Refresh();
+            Assert.True(pathFI.Exists, "path should exist");
+            Assert.True(linkPathFI.Exists, "linkPath should exist");
+
+            // Delete the target.  The symlink should still exist
+            pathFI.Delete();
+            pathFI.Refresh();
+            linkPathFI.Refresh();
+            Assert.False(pathFI.Exists, "path should now not exist");
+            Assert.True(linkPathFI.Exists, "linkPath should still exist");
+
+            // Now delete the symlink.
+            linkPathFI.Delete();
+            linkPathFI.Refresh();
+            Assert.False(linkPathFI.Exists, "linkPath should no longer exist");
+        }
+
+        [Fact]
+        public void UnsharedFileExists()
+        {
+            string path = GetTestFilePath();
+            using (FileStream stream = new FileStream(path, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None))
+            {
+                RemoteExecutor.Invoke((p) =>
+                {
+                    FileInfo info = new FileInfo(p);
+                    Assert.True(info.Exists);
+                    return RemoteExecutor.SuccessExitCode;
+                }, path).Dispose();
+            }
+        }
+
+        [Fact]
+        [PlatformSpecific(~TestPlatforms.OSX)]
+        public void LockedFileExists()
+        {
+            string path = GetTestFilePath();
+            File.WriteAllBytes(path, new byte[10]);
+
+            using (FileStream stream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            {
+                stream.Lock(0, 10);
+
+                RemoteExecutor.Invoke((p) =>
+                {
+                    FileInfo info = new FileInfo(p);
+                    Assert.True(info.Exists);
+                    return RemoteExecutor.SuccessExitCode;
+                }, path).Dispose();
+
+                stream.Unlock(0, 10);
+            }
+        }
+
+        [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotInAppContainer))] // Can't read root in appcontainer
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public void PageFileExists()
+        {
+            // Typically there is a page file on the C: drive, if not, don't bother trying to track it down.
+            string pageFilePath = Directory.EnumerateFiles(@"C:\", "pagefile.sys").FirstOrDefault();
+            if (pageFilePath != null)
+            {
+                FileInfo info = new FileInfo(pageFilePath);
+                Assert.True(info.Exists);
+            }
         }
     }
 }

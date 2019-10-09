@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -31,23 +32,25 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void RequestingOneWhereMultipleArePresentFails()
         {
             var c = CreateContainer(typeof(LogA), typeof(LogB));
-            var x = AssertX.Throws<CompositionFailedException>(() =>
+            var x = Assert.Throws<CompositionFailedException>(() =>
                 c.GetExport<ILog>());
-            Assert.True(x.Message.Contains("LogA"));
-            Assert.True(x.Message.Contains("LogB"));
+            Assert.Contains("LogA", x.Message);
+            Assert.Contains("LogB", x.Message);
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void ImportingOneWhereMultipleArePresentFails()
         {
             var c = CreateContainer(typeof(LogA), typeof(LogB), typeof(UsesLog));
-            var x = AssertX.Throws<CompositionFailedException>(() =>
+            var x = Assert.Throws<CompositionFailedException>(() =>
                 c.GetExport<UsesLog>());
-            Assert.True(x.Message.Contains("LogA"));
-            Assert.True(x.Message.Contains("LogB"));
+            Assert.Contains("LogA", x.Message);
+            Assert.Contains("LogB", x.Message);
         }
     }
 }

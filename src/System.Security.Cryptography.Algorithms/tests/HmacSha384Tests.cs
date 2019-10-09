@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
@@ -10,6 +11,24 @@ namespace System.Security.Cryptography.Hashing.Algorithms.Tests
         protected override HMAC Create()
         {
             return new HMACSHA384();
+        }
+
+        protected override HashAlgorithm CreateHashAlgorithm()
+        {
+            return SHA384.Create();
+        }
+
+        protected override int BlockSize { get { return 128; } }
+
+        [Fact]
+        public void ProduceLegacyHmacValues()
+        {
+            using (var h = new HMACSHA384())
+            {
+                Assert.False(h.ProduceLegacyHmacValues);
+                h.ProduceLegacyHmacValues = false; // doesn't throw
+                Assert.Throws<PlatformNotSupportedException>(() => h.ProduceLegacyHmacValues = true);
+            }
         }
 
         [Fact]
@@ -53,6 +72,12 @@ namespace System.Security.Cryptography.Hashing.Algorithms.Tests
         public void HmacSha384_Rfc4231_7()
         {
             VerifyHmac(7, "6617178e941f020d351e2f254e8fd32c602420feb0b8fb9adccebb82461e99c5a678cc31e799176d3860e6110c46523e");
+        }
+
+        [Fact]
+        public void HMacSha384_Rfc2104_2()
+        {
+            VerifyHmacRfc2104_2();
         }
     }
 }

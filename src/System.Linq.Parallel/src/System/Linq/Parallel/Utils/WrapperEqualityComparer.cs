@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -19,7 +20,7 @@ namespace System.Linq.Parallel
     /// <typeparam name="T"></typeparam>
     internal struct WrapperEqualityComparer<T> : IEqualityComparer<Wrapper<T>>
     {
-        private IEqualityComparer<T> _comparer;
+        private readonly IEqualityComparer<T> _comparer;
 
         internal WrapperEqualityComparer(IEqualityComparer<T> comparer)
         {

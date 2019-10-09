@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Runtime.CompilerServices;
 
@@ -8,26 +9,26 @@ namespace System.Numerics
     // This file contains the definitions for all of the JIT intrinsic methods and properties that are recognized by the current x64 JIT compiler.
     // The implementation defined here is used in any circumstance where the JIT fails to recognize these members as intrinsic.
     // The JIT recognizes these methods and properties by name and signature: if either is changed, the JIT will no longer recognize the member.
-    // Some methods declared here are not strictly intrinsic, but delegate to an intrinsic method. For example, only one overload of CopyTo() 
+    // Some methods declared here are not strictly intrinsic, but delegate to an intrinsic method. For example, only one overload of CopyTo()
 
     public partial struct Vector4
     {
         /// <summary>
         /// The X component of the vector.
         /// </summary>
-        public Single X;
+        public float X;
         /// <summary>
         /// The Y component of the vector.
         /// </summary>
-        public Single Y;
+        public float Y;
         /// <summary>
         /// The Z component of the vector.
         /// </summary>
-        public Single Z;
+        public float Z;
         /// <summary>
         /// The W component of the vector.
         /// </summary>
-        public Single W;
+        public float W;
 
         #region Constructors
 
@@ -35,8 +36,8 @@ namespace System.Numerics
         /// Constructs a vector whose elements are all the single specified value.
         /// </summary>
         /// <param name="value">The element to fill the vector with.</param>
-        [JitIntrinsic]
-        public Vector4(Single value)
+        [Intrinsic]
+        public Vector4(float value)
             : this(value, value, value, value)
         {
         }
@@ -47,8 +48,8 @@ namespace System.Numerics
         /// <param name="x">X component.</param>
         /// <param name="y">Y component.</param>
         /// <param name="z">Z component.</param>
-        [JitIntrinsic]
-        public Vector4(Single x, Single y, Single z, Single w)
+        [Intrinsic]
+        public Vector4(float x, float y, float z, float w)
         {
             W = w;
             X = x;
@@ -62,7 +63,8 @@ namespace System.Numerics
         /// <param name="value">The vector to use as the X and Y components.</param>
         /// <param name="z">The Z component.</param>
         /// <param name="w">The W component.</param>
-        public Vector4(Vector2 value, Single z, Single w)
+        [Intrinsic]
+        public Vector4(Vector2 value, float z, float w)
         {
             X = value.X;
             Y = value.Y;
@@ -75,7 +77,8 @@ namespace System.Numerics
         /// </summary>
         /// <param name="value">The vector to use as the X, Y, and Z components.</param>
         /// <param name="w">The W component.</param>
-        public Vector4(Vector3 value, Single w)
+        [Intrinsic]
+        public Vector4(Vector3 value, float w)
         {
             X = value.X;
             Y = value.Y;
@@ -88,8 +91,9 @@ namespace System.Numerics
         /// <summary>
         /// Copies the contents of the vector into the given array.
         /// </summary>
+        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CopyTo(Single[] array)
+        public readonly void CopyTo(float[] array)
         {
             CopyTo(array, 0);
         }
@@ -101,9 +105,9 @@ namespace System.Numerics
         /// <exception cref="RankException">If array is multidimensional.</exception>
         /// <exception cref="ArgumentOutOfRangeException">If index is greater than end of the array or index is less than zero.</exception>
         /// <exception cref="ArgumentException">If number of elements in source vector is greater than those available in destination array.</exception>
-        [JitIntrinsic]
+        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CopyTo(Single[] array, int index)
+        public readonly void CopyTo(float[] array, int index)
         {
             if (array == null)
             {
@@ -112,7 +116,7 @@ namespace System.Numerics
             }
             if (index < 0 || index >= array.Length)
             {
-                throw new ArgumentOutOfRangeException(SR.Format(SR.Arg_ArgumentOutOfRangeException, index));
+                throw new ArgumentOutOfRangeException(nameof(index), SR.Format(SR.Arg_ArgumentOutOfRangeException, index));
             }
             if ((array.Length - index) < 4)
             {
@@ -129,8 +133,8 @@ namespace System.Numerics
         /// </summary>
         /// <param name="other">The Vector4 to compare this instance to.</param>
         /// <returns>True if the other Vector4 is equal to this instance; False otherwise.</returns>
-        [JitIntrinsic]
-        public bool Equals(Vector4 other)
+        [Intrinsic]
+        public readonly bool Equals(Vector4 other)
         {
             return this.X == other.X
                 && this.Y == other.Y
@@ -146,7 +150,7 @@ namespace System.Numerics
         /// <param name="vector1">The first vector.</param>
         /// <param name="vector2">The second vector.</param>
         /// <returns>The dot product.</returns>
-        [JitIntrinsic]
+        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Dot(Vector4 vector1, Vector4 vector2)
         {
@@ -162,7 +166,7 @@ namespace System.Numerics
         /// <param name="value1">The first source vector.</param>
         /// <param name="value2">The second source vector.</param>
         /// <returns>The minimized vector.</returns>
-        [JitIntrinsic]
+        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Min(Vector4 value1, Vector4 value2)
         {
@@ -179,7 +183,7 @@ namespace System.Numerics
         /// <param name="value1">The first source vector.</param>
         /// <param name="value2">The second source vector.</param>
         /// <returns>The maximized vector.</returns>
-        [JitIntrinsic]
+        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Max(Vector4 value1, Vector4 value2)
         {
@@ -195,11 +199,11 @@ namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector.</param>
         /// <returns>The absolute value vector.</returns>
-        [JitIntrinsic]
+        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Abs(Vector4 value)
         {
-            return new Vector4(Math.Abs(value.X), Math.Abs(value.Y), Math.Abs(value.Z), Math.Abs(value.W));
+            return new Vector4(MathF.Abs(value.X), MathF.Abs(value.Y), MathF.Abs(value.Z), MathF.Abs(value.W));
         }
 
         /// <summary>
@@ -207,11 +211,11 @@ namespace System.Numerics
         /// </summary>
         /// <param name="value">The source vector.</param>
         /// <returns>The square root vector.</returns>
-        [JitIntrinsic]
+        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 SquareRoot(Vector4 value)
         {
-            return new Vector4((Single)Math.Sqrt(value.X), (Single)Math.Sqrt(value.Y), (Single)Math.Sqrt(value.Z), (Single)Math.Sqrt(value.W));
+            return new Vector4(MathF.Sqrt(value.X), MathF.Sqrt(value.Y), MathF.Sqrt(value.Z), MathF.Sqrt(value.W));
         }
         #endregion Public Static Methods
 
@@ -222,7 +226,7 @@ namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The summed vector.</returns>
-        [JitIntrinsic]
+        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator +(Vector4 left, Vector4 right)
         {
@@ -235,7 +239,7 @@ namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The difference vector.</returns>
-        [JitIntrinsic]
+        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator -(Vector4 left, Vector4 right)
         {
@@ -248,7 +252,7 @@ namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The product vector.</returns>
-        [JitIntrinsic]
+        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator *(Vector4 left, Vector4 right)
         {
@@ -261,9 +265,9 @@ namespace System.Numerics
         /// <param name="left">The source vector.</param>
         /// <param name="right">The scalar value.</param>
         /// <returns>The scaled vector.</returns>
-        [JitIntrinsic]
+        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 operator *(Vector4 left, Single right)
+        public static Vector4 operator *(Vector4 left, float right)
         {
             return left * new Vector4(right);
         }
@@ -274,9 +278,9 @@ namespace System.Numerics
         /// <param name="left">The scalar value.</param>
         /// <param name="right">The source vector.</param>
         /// <returns>The scaled vector.</returns>
-        [JitIntrinsic]
+        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 operator *(Single left, Vector4 right)
+        public static Vector4 operator *(float left, Vector4 right)
         {
             return new Vector4(left) * right;
         }
@@ -287,7 +291,7 @@ namespace System.Numerics
         /// <param name="left">The first source vector.</param>
         /// <param name="right">The second source vector.</param>
         /// <returns>The vector resulting from the division.</returns>
-        [JitIntrinsic]
+        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator /(Vector4 left, Vector4 right)
         {
@@ -300,17 +304,10 @@ namespace System.Numerics
         /// <param name="value1">The source vector.</param>
         /// <param name="value2">The scalar value.</param>
         /// <returns>The result of the division.</returns>
-        [JitIntrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator /(Vector4 value1, float value2)
         {
-            float invDiv = 1.0f / value2;
-
-            return new Vector4(
-                value1.X * invDiv,
-                value1.Y * invDiv,
-                value1.Z * invDiv,
-                value1.W * invDiv);
+            return value1 / new Vector4(value2);
         }
 
         /// <summary>
@@ -330,7 +327,7 @@ namespace System.Numerics
         /// <param name="left">The first vector to compare.</param>
         /// <param name="right">The second vector to compare.</param>
         /// <returns>True if the vectors are equal; False otherwise.</returns>
-        [JitIntrinsic]
+        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Vector4 left, Vector4 right)
         {
@@ -343,6 +340,7 @@ namespace System.Numerics
         /// <param name="left">The first vector to compare.</param>
         /// <param name="right">The second vector to compare.</param>
         /// <returns>True if the vectors are not equal; False if they are equal.</returns>
+        [Intrinsic]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Vector4 left, Vector4 right)
         {

@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.integeregereractionDynamicObject.integeregereraction001.integeregereraction001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.integeregereractionDynamicObject.integeregereraction001.integeregereraction001;
-
     public class Test
     {
         public class Base
@@ -52,8 +51,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.inte
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.integeregereractionDynamicObject.integeregereraction002.integeregereraction002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.integeregereractionDynamicObject.integeregereraction002.integeregereraction002;
-
     public class Test
     {
         public class Base
@@ -99,8 +96,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.inte
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.integeregereractionDynamicObject.integeregereraction003.integeregereraction003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.integeregereractionDynamicObject.integeregereraction003.integeregereraction003;
-
     public class Test
     {
         public interface I
@@ -148,8 +143,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.inte
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.integeregereractionDynamicObject.integeregereraction006.integeregereraction006
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.integeregereractionDynamicObject.integeregereraction006.integeregereraction006;
-
     public class Test
     {
         public interface I

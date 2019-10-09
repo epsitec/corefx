@@ -1,11 +1,12 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
 // AsyncWork.cs
 //
-// Helper class that is used to test the FromAsync method. These classes hold the APM patterns 
+// Helper class that is used to test the FromAsync method. These classes hold the APM patterns
 // and is used by the TaskFromAsyncTest.cs file
 //
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -28,7 +29,7 @@ namespace System.Threading.Tasks.Tests
         /// <summary>
         /// Defines the amount of time the thread should sleep (to simulate workload)
         /// </summary>
-        private const int DEFAULT_TIME = 1000; // 1s
+        private const int DEFAULT_TIME = 15;
         private List<object> _inputs;
 
 
@@ -140,14 +141,15 @@ namespace System.Threading.Tasks.Tests
 
         public IAsyncResult BeginInvoke(AsyncCallback cb, object state)
         {
-            return _action.BeginInvoke(cb, state);
+            Task task = Task.Factory.StartNew(_ => _action(), state, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Default);
+            task.ContinueWith(_ => cb(task));
+            return task;
         }
 
         public void EndInvoke(IAsyncResult iar)
         {
             CheckState(iar.AsyncState);
-
-            _action.EndInvoke(iar);
+            ((Task)iar).GetAwaiter().GetResult();
         }
 
         #endregion
@@ -177,14 +179,15 @@ namespace System.Threading.Tasks.Tests
 
         public IAsyncResult BeginInvoke(T t, AsyncCallback cb, object state)
         {
-            return _action.BeginInvoke(t, cb, state);
+            Task task = Task.Factory.StartNew(_ => _action(t), state, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Default);
+            task.ContinueWith(_ => cb(task));
+            return task;
         }
 
         public void EndInvoke(IAsyncResult iar)
         {
             CheckState(iar.AsyncState);
-
-            _action.EndInvoke(iar);
+            ((Task)iar).GetAwaiter().GetResult();
         }
 
         #endregion
@@ -213,14 +216,15 @@ namespace System.Threading.Tasks.Tests
 
         public IAsyncResult BeginInvoke(T1 t1, T2 t2, AsyncCallback cb, object state)
         {
-            return _action.BeginInvoke(t1, t2, cb, state);
+            Task task = Task.Factory.StartNew(_ => _action(t1, t2), state, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Default);
+            task.ContinueWith(_ => cb(task));
+            return task;
         }
 
         public void EndInvoke(IAsyncResult iar)
         {
             CheckState(iar.AsyncState);
-
-            _action.EndInvoke(iar);
+            ((Task)iar).GetAwaiter().GetResult();
         }
 
         #endregion
@@ -246,18 +250,19 @@ namespace System.Threading.Tasks.Tests
             };
         }
 
-        #region APM  
+        #region APM
 
         public IAsyncResult BeginInvoke(T1 t1, T2 t2, T3 t3, AsyncCallback cb, object state)
         {
-            return _action.BeginInvoke(t1, t2, t3, cb, state);
+            Task task = Task.Factory.StartNew(_ => _action(t1, t2, t3), state, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Default);
+            task.ContinueWith(_ => cb(task));
+            return task;
         }
 
         public void EndInvoke(IAsyncResult iar)
         {
             CheckState(iar.AsyncState);
-
-            _action.EndInvoke(iar);
+            ((Task)iar).GetAwaiter().GetResult();
         }
 
         #endregion
@@ -268,7 +273,7 @@ namespace System.Threading.Tasks.Tests
     #region AsyncFunc
 
     /// <summary>
-    /// Extends the base class to implement that funtion form of APM 
+    /// Extends the base class to implement that function form of APM
     /// </summary>
     public class AsyncFunc : AsyncWork
     {
@@ -303,14 +308,15 @@ namespace System.Threading.Tasks.Tests
 
         public IAsyncResult BeginInvoke(AsyncCallback cb, object state)
         {
-            return _func.BeginInvoke(cb, state);
+            Task<ReadOnlyCollection<object>> task = Task.Factory.StartNew(_ => _func(), state, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Default);
+            task.ContinueWith(_ => cb(task));
+            return task;
         }
 
         public ReadOnlyCollection<object> EndInvoke(IAsyncResult iar)
         {
             CheckState(iar.AsyncState);
-
-            return _func.EndInvoke(iar);
+            return ((Task<ReadOnlyCollection<object>>)iar).GetAwaiter().GetResult();
         }
 
         #endregion
@@ -338,14 +344,15 @@ namespace System.Threading.Tasks.Tests
 
         public IAsyncResult BeginInvoke(T t, AsyncCallback cb, object state)
         {
-            return _func.BeginInvoke(t, cb, state);
+            Task<ReadOnlyCollection<object>> task = Task.Factory.StartNew(_ => _func(t), state, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Default);
+            task.ContinueWith(_ => cb(task));
+            return task;
         }
 
         public ReadOnlyCollection<object> EndInvoke(IAsyncResult iar)
         {
             CheckState(iar.AsyncState);
-
-            return _func.EndInvoke(iar);
+            return ((Task<ReadOnlyCollection<object>>)iar).GetAwaiter().GetResult();
         }
 
         #endregion
@@ -374,14 +381,15 @@ namespace System.Threading.Tasks.Tests
 
         public IAsyncResult BeginInvoke(T1 t1, T2 t2, AsyncCallback cb, object state)
         {
-            return _func.BeginInvoke(t1, t2, cb, state);
+            Task<ReadOnlyCollection<object>> task = Task.Factory.StartNew(_ => _func(t1, t2), state, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Default);
+            task.ContinueWith(_ => cb(task));
+            return task;
         }
 
         public ReadOnlyCollection<object> EndInvoke(IAsyncResult iar)
         {
             CheckState(iar.AsyncState);
-
-            return _func.EndInvoke(iar);
+            return ((Task<ReadOnlyCollection<object>>)iar).GetAwaiter().GetResult();
         }
 
         #endregion
@@ -411,14 +419,15 @@ namespace System.Threading.Tasks.Tests
 
         public IAsyncResult BeginInvoke(T1 t1, T2 t2, T3 t3, AsyncCallback cb, object state)
         {
-            return _func.BeginInvoke(t1, t2, t3, cb, state);
+            Task<ReadOnlyCollection<object>> task = Task.Factory.StartNew(_ => _func(t1, t2, t3), state, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Default);
+            task.ContinueWith(_ => cb(task));
+            return task;
         }
 
         public ReadOnlyCollection<object> EndInvoke(IAsyncResult iar)
         {
             CheckState(iar.AsyncState);
-
-            return _func.EndInvoke(iar);
+            return ((Task<ReadOnlyCollection<object>>)iar).GetAwaiter().GetResult();
         }
 
         #endregion
@@ -426,5 +435,3 @@ namespace System.Threading.Tasks.Tests
 
     #endregion
 }
-
-

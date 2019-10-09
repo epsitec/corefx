@@ -1,5 +1,8 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 
 namespace Microsoft.CSharp.RuntimeBinder.Semantics
 {
@@ -16,6 +19,8 @@ namespace Microsoft.CSharp.RuntimeBinder.Semantics
         Logical,
         Lim
     }
+
+    [Flags]
     internal enum BinOpMask
     {
         None = 0,
@@ -37,9 +42,5 @@ namespace Microsoft.CSharp.RuntimeBinder.Semantics
         Enum = Sub | Equal | Compare | Bitwise | BitXor,
         EnumUnder = Add | Sub,
         UnderEnum = Add,
-        Ptr = Sub,
-        PtrNum = Add | Sub,
-        NumPtr = Add,
-        VoidPtr = Equal | Compare,
     }
 }

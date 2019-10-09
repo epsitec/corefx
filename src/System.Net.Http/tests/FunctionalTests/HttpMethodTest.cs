@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -8,22 +9,29 @@ using System.Net.Http;
 
 using Xunit;
 
-namespace System.Net.Http.Tests
+namespace System.Net.Http.Functional.Tests
 {
-    public class HttpMethodTest
+    public partial class HttpMethodTest
     {
-        private static readonly object[][] s_staticHttpMethods =
-        {
-            new object[] { HttpMethod.Get },
-            new object[] { HttpMethod.Put },
-            new object[] { HttpMethod.Post },
-            new object[] { HttpMethod.Delete },
-            new object[] { HttpMethod.Head },
-            new object[] { HttpMethod.Options },
-            new object[] { HttpMethod.Trace }
-        };
+        public static IEnumerable<object[]> StaticHttpMethods { get;  }
 
-        public static IEnumerable<object[]> StaticHttpMethods { get { return s_staticHttpMethods; } }
+        static HttpMethodTest()
+        {
+            List<object[]> staticHttpMethods = new List<object[]>
+            {
+                new object[] { HttpMethod.Get },
+                new object[] { HttpMethod.Put },
+                new object[] { HttpMethod.Post },
+                new object[] { HttpMethod.Delete },
+                new object[] { HttpMethod.Head },
+                new object[] { HttpMethod.Options },
+                new object[] { HttpMethod.Trace }
+            };
+            AddStaticHttpMethods(staticHttpMethods);
+            StaticHttpMethods = staticHttpMethods;
+        }
+
+        static partial void AddStaticHttpMethods(List<object[]> staticHttpMethods);
 
         [Fact]
         public void StaticProperties_VerifyValues_PropertyNameMatchesHttpMethodName()
@@ -50,20 +58,26 @@ namespace System.Net.Http.Tests
         [Fact]
         public void Ctor_NullMethod_Exception()
         {
-            Assert.Throws<ArgumentException>(() => { new HttpMethod(null); } );
+            AssertExtensions.Throws<ArgumentException>("method", () => { new HttpMethod(null); } );
         }
 
-        // TODO: This should be a [Theory]
-        [Fact]
-        public void Ctor_SeparatorInMethod_Exception()
+        [Theory]
+        [InlineData('(')]
+        [InlineData(')')]
+        [InlineData('<')]
+        [InlineData('>')]
+        [InlineData('@')]
+        [InlineData(',')]
+        [InlineData(';')]
+        [InlineData(':')]
+        [InlineData('\\')]
+        [InlineData('"')]
+        [InlineData('/')]
+        [InlineData('[')]
+        [InlineData(']')]
+        public void Ctor_SeparatorInMethod_Exception(char separator)
         {
-            char[] separators = new char[] { '(', ')', '<', '>', '@', ',', ';', ':', '\\', '"', '/', '[', ']', 
-                '?', '=', '{', '}', ' ', '\t' };
-
-            for (int i = 0; i < separators.Length; i++)
-            {
-                Assert.Throws<FormatException>(() => { new HttpMethod("Get" + separators[i]); } );
-            }
+            Assert.Throws<FormatException>(() => { new HttpMethod("Get" + separator); } );
         }
 
         [Fact]
@@ -72,7 +86,7 @@ namespace System.Net.Http.Tests
             // Positive test cases
             Assert.True(new HttpMethod("GET") == HttpMethod.Get);
             Assert.False(new HttpMethod("GET") != HttpMethod.Get);
-            Assert.True((new HttpMethod("GET")).Equals(HttpMethod.Get)); 
+            Assert.True((new HttpMethod("GET")).Equals(HttpMethod.Get));
 
             Assert.True(new HttpMethod("get") == HttpMethod.Get);
             Assert.False(new HttpMethod("get") != HttpMethod.Get);
@@ -107,7 +121,7 @@ namespace System.Net.Http.Tests
         }
 
         [Theory]
-        [MemberData("StaticHttpMethods")]
+        [MemberData(nameof(StaticHttpMethods))]
         public void GetHashCode_StaticMethods_SameAsStringToUpperInvariantHashCode(HttpMethod method)
         {
             Assert.Equal(method.ToString().ToUpperInvariant().GetHashCode(), method.GetHashCode());

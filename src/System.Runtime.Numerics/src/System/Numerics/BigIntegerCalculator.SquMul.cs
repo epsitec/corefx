@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
 using System.Security;
@@ -8,8 +9,7 @@ namespace System.Numerics
 {
     internal static partial class BigIntegerCalculator
     {
-        [SecuritySafeCritical]
-        public unsafe static uint[] Square(uint[] value)
+        public static unsafe uint[] Square(uint[] value)
         {
             Debug.Assert(value != null);
 
@@ -31,8 +31,7 @@ namespace System.Numerics
         private static int SquareThreshold = 32;
         private static int AllocationThreshold = 256;
 
-        [SecuritySafeCritical]
-        private unsafe static void Square(uint* value, int valueLength,
+        private static unsafe void Square(uint* value, int valueLength,
                                           uint* bits, int bitsLength)
         {
             Debug.Assert(valueLength >= 0);
@@ -68,11 +67,11 @@ namespace System.Numerics
                     {
                         ulong digit1 = bits[i + j] + carry;
                         ulong digit2 = (ulong)value[j] * value[i];
-                        bits[i + j] = (uint)(digit1 + (digit2 << 1));
+                        bits[i + j] = unchecked((uint)(digit1 + (digit2 << 1)));
                         carry = (digit2 + (digit1 >> 1)) >> 31;
                     }
                     ulong digits = (ulong)value[i] * value[i] + carry;
-                    bits[i + i] = (uint)digits;
+                    bits[i + i] = unchecked((uint)digits);
                     bits[i + i + 1] = (uint)(digits >> 32);
                 }
             }
@@ -119,7 +118,9 @@ namespace System.Numerics
                 if (coreLength < AllocationThreshold)
                 {
                     uint* fold = stackalloc uint[foldLength];
+                    new Span<uint>(fold, foldLength).Clear();
                     uint* core = stackalloc uint[coreLength];
+                    new Span<uint>(core, coreLength).Clear();
 
                     // ... compute z_a = a_1 + a_0 (call it fold...)
                     Add(valueHigh, valueHighLength,
@@ -176,7 +177,7 @@ namespace System.Numerics
             for (; i < left.Length; i++)
             {
                 ulong digits = (ulong)left[i] * right + carry;
-                bits[i] = (uint)digits;
+                bits[i] = unchecked((uint)digits);
                 carry = digits >> 32;
             }
             bits[i] = (uint)carry;
@@ -184,8 +185,7 @@ namespace System.Numerics
             return bits;
         }
 
-        [SecuritySafeCritical]
-        public unsafe static uint[] Multiply(uint[] left, uint[] right)
+        public static unsafe uint[] Multiply(uint[] left, uint[] right)
         {
             Debug.Assert(left != null);
             Debug.Assert(right != null);
@@ -209,8 +209,7 @@ namespace System.Numerics
         // Mutable for unit testing...
         private static int MultiplyThreshold = 32;
 
-        [SecuritySafeCritical]
-        private unsafe static void Multiply(uint* left, int leftLength,
+        private static unsafe void Multiply(uint* left, int leftLength,
                                             uint* right, int rightLength,
                                             uint* bits, int bitsLength)
         {
@@ -244,7 +243,7 @@ namespace System.Numerics
                     {
                         ulong digits = bits[i + j] + carry
                             + (ulong)left[j] * right[i];
-                        bits[i + j] = (uint)digits;
+                        bits[i + j] = unchecked((uint)digits);
                         carry = digits >> 32;
                     }
                     bits[i + leftLength] = (uint)carry;
@@ -302,8 +301,11 @@ namespace System.Numerics
                 if (coreLength < AllocationThreshold)
                 {
                     uint* leftFold = stackalloc uint[leftFoldLength];
+                    new Span<uint>(leftFold, leftFoldLength).Clear();
                     uint* rightFold = stackalloc uint[rightFoldLength];
+                    new Span<uint>(rightFold, rightFoldLength).Clear();
                     uint* core = stackalloc uint[coreLength];
+                    new Span<uint>(core, coreLength).Clear();
 
                     // ... compute z_a = a_1 + a_0 (call it fold...)
                     Add(leftHigh, leftHighLength,
@@ -357,8 +359,7 @@ namespace System.Numerics
             }
         }
 
-        [SecuritySafeCritical]
-        private unsafe static void SubtractCore(uint* left, int leftLength,
+        private static unsafe void SubtractCore(uint* left, int leftLength,
                                                 uint* right, int rightLength,
                                                 uint* core, int coreLength)
         {
@@ -381,13 +382,13 @@ namespace System.Numerics
             for (; i < rightLength; i++)
             {
                 long digit = (core[i] + carry) - left[i] - right[i];
-                core[i] = (uint)digit;
+                core[i] = unchecked((uint)digit);
                 carry = digit >> 32;
             }
             for (; i < leftLength; i++)
             {
                 long digit = (core[i] + carry) - left[i];
-                core[i] = (uint)digit;
+                core[i] = unchecked((uint)digit);
                 carry = digit >> 32;
             }
             for (; carry != 0 && i < coreLength; i++)

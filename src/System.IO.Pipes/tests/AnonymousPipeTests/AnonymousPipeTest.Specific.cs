@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
@@ -38,7 +39,7 @@ namespace System.IO.Pipes.Tests
                 using (AnonymousPipeServerStream server = new AnonymousPipeServerStream(PipeDirection.Out, serverBase.SafePipeHandle, serverBase.ClientSafePipeHandle))
                 {
                     Assert.True(server.IsConnected);
-                    using (AnonymousPipeClientStream client = new AnonymousPipeClientStream(PipeDirection.In, server.GetClientHandleAsString()))
+                    using (AnonymousPipeClientStream client = new AnonymousPipeClientStream(PipeDirection.In, server.ClientSafePipeHandle))
                     {
                         Assert.True(server.IsConnected);
                         Assert.True(client.IsConnected);
@@ -60,7 +61,7 @@ namespace System.IO.Pipes.Tests
         {
             using (AnonymousPipeServerStream server = new AnonymousPipeServerStream(PipeDirection.Out))
             {
-                using (AnonymousPipeClientStream clientBase = new AnonymousPipeClientStream(PipeDirection.In, server.GetClientHandleAsString()))
+                using (AnonymousPipeClientStream clientBase = new AnonymousPipeClientStream(PipeDirection.In, server.ClientSafePipeHandle))
                 {
                     using (AnonymousPipeClientStream client = new AnonymousPipeClientStream(PipeDirection.In, clientBase.SafePipeHandle))
                     {
@@ -78,16 +79,17 @@ namespace System.IO.Pipes.Tests
             }
         }
 
-        [Fact]
-        [PlatformSpecific(PlatformID.Linux)]
+        [ConditionalFact(typeof(PlatformDetection), "IsNotRedHatFamily6")]
+        [PlatformSpecific(TestPlatforms.Linux)]  // On Linux, setting the buffer size of the server will also set the buffer size of the client
         public static void Linux_BufferSizeRoundtrips()
         {
             // On Linux, setting the buffer size of the server will also set the buffer size of the
             // client, regardless of the direction of the flow
 
-            int desiredBufferSize;
-            using (var server = new AnonymousPipeServerStream(PipeDirection.Out))
+            int desiredBufferSize = 4096;
+            using (var server = new AnonymousPipeServerStream(PipeDirection.Out, HandleInheritability.None, desiredBufferSize))
             {
+                Assert.Equal(desiredBufferSize, server.OutBufferSize);
                 desiredBufferSize = server.OutBufferSize * 2;
                 Assert.True(desiredBufferSize > 0);
             }
@@ -108,11 +110,24 @@ namespace System.IO.Pipes.Tests
         }
 
         [Fact]
-        [PlatformSpecific(~PlatformID.Linux)]
-        public static void BufferSizeRoundtripping()
+        [PlatformSpecific(TestPlatforms.OSX)]  // Buffer size not supported on OSX
+        public static void OSX_BufferSizeNotSupported()
         {
-            // On systems other than Linux, setting the buffer size of the server will only set
-            // set the buffer size of the client if the flow of the pipe is towards the client i.e.
+            int desiredBufferSize = 10;
+            using (var server = new AnonymousPipeServerStream(PipeDirection.Out, HandleInheritability.None, desiredBufferSize))
+            using (var client = new AnonymousPipeClientStream(PipeDirection.In, server.ClientSafePipeHandle))
+            {
+                Assert.Throws<PlatformNotSupportedException>(() => server.OutBufferSize);
+                Assert.Throws<PlatformNotSupportedException>(() => client.InBufferSize);
+            }
+        }
+
+        [Fact]
+        [PlatformSpecific(TestPlatforms.Windows)] // On Windows, setting the buffer size of the server will only set the buffer size of the client based on the direction of the flow
+        public static void Windows_BufferSizeRoundtripping()
+        {
+            // On Windows, setting the buffer size of the server will only set
+            // the buffer size of the client if the flow of the pipe is towards the client i.e.
             // the client is defined with PipeDirection.In
 
             int desiredBufferSize = 10;
@@ -147,7 +162,7 @@ namespace System.IO.Pipes.Tests
         public void ReadModeToByte_Accepted(PipeDirection serverDirection, PipeDirection clientDirection)
         {
             using (AnonymousPipeServerStream server = new AnonymousPipeServerStream(serverDirection))
-            using (AnonymousPipeClientStream client = new AnonymousPipeClientStream(clientDirection, server.GetClientHandleAsString()))
+            using (AnonymousPipeClientStream client = new AnonymousPipeClientStream(clientDirection, server.ClientSafePipeHandle))
             {
                 server.ReadMode = PipeTransmissionMode.Byte;
                 client.ReadMode = PipeTransmissionMode.Byte;
@@ -160,7 +175,7 @@ namespace System.IO.Pipes.Tests
         public void MessageReadMode_Throws_NotSupportedException()
         {
             using (AnonymousPipeServerStream server = new AnonymousPipeServerStream(PipeDirection.Out))
-            using (AnonymousPipeClientStream client = new AnonymousPipeClientStream(PipeDirection.In, server.GetClientHandleAsString()))
+            using (AnonymousPipeClientStream client = new AnonymousPipeClientStream(PipeDirection.In, server.ClientSafePipeHandle))
             {
                 Assert.Throws<NotSupportedException>(() => server.ReadMode = PipeTransmissionMode.Message);
                 Assert.Throws<NotSupportedException>(() => client.ReadMode = PipeTransmissionMode.Message);
@@ -171,7 +186,7 @@ namespace System.IO.Pipes.Tests
         public void InvalidReadMode_Throws_ArgumentOutOfRangeException()
         {
             using (AnonymousPipeServerStream server = new AnonymousPipeServerStream(PipeDirection.Out))
-            using (AnonymousPipeClientStream client = new AnonymousPipeClientStream(PipeDirection.In, server.GetClientHandleAsString()))
+            using (AnonymousPipeClientStream client = new AnonymousPipeClientStream(PipeDirection.In, server.ClientSafePipeHandle))
             {
                 Assert.Throws<ArgumentOutOfRangeException>(() => server.ReadMode = (PipeTransmissionMode)999);
                 Assert.Throws<ArgumentOutOfRangeException>(() => client.ReadMode = (PipeTransmissionMode)999);

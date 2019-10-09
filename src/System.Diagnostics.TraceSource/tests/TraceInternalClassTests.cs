@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
@@ -90,7 +91,7 @@ namespace System.Diagnostics.TraceSourceTests
         {
             get
             {
-                // ThreadSafeListener is only meaningful when not using a global lock, 
+                // ThreadSafeListener is only meaningful when not using a global lock,
                 // so UseGlobalLock will be auto-disabled in that mode.
                 return true && !ThreadSafeListener;
             }
@@ -178,7 +179,7 @@ namespace System.Diagnostics.TraceSourceTests
         {
             var listener = GetTraceListener();
             Trace.Listeners.Add(listener);
-            Trace.Write((Object)"Message", "Category");
+            Trace.Write((object)"Message", "Category");
             Assert.Equal(1, listener.GetCallCount(Method.Write));
             var flushExpected = AutoFlush ? 1 : 0;
             Assert.Equal(flushExpected, listener.GetCallCount(Method.Flush));
@@ -200,7 +201,7 @@ namespace System.Diagnostics.TraceSourceTests
         {
             var listener = GetTraceListener();
             Trace.Listeners.Add(listener);
-            Trace.WriteLine((Object)"Message");
+            Trace.WriteLine((object)"Message");
             Assert.Equal(1, listener.GetCallCount(Method.WriteLine));
             var flushExpected = AutoFlush ? 1 : 0;
             Assert.Equal(flushExpected, listener.GetCallCount(Method.Flush));
@@ -222,7 +223,7 @@ namespace System.Diagnostics.TraceSourceTests
         {
             var listener = GetTraceListener();
             Trace.Listeners.Add(listener);
-            Trace.WriteLine((Object)"Message", "Category");
+            Trace.WriteLine((object)"Message", "Category");
             Assert.Equal(1, listener.GetCallCount(Method.WriteLine));
             var flushExpected = AutoFlush ? 1 : 0;
             Assert.Equal(flushExpected, listener.GetCallCount(Method.Flush));
@@ -232,6 +233,8 @@ namespace System.Diagnostics.TraceSourceTests
         public void FailTest()
         {
             var listener = GetTraceListener();
+            // We have to clear the listeners list on Trace since there is a trace listener by default with AssertUiEnabled = true in Desktop and that will pop up an assert window with Trace.Fail
+            Trace.Listeners.Clear();
             Trace.Listeners.Add(listener);
             Trace.Fail("Message");
             Assert.Equal(1, listener.GetCallCount(Method.Fail));
@@ -243,6 +246,8 @@ namespace System.Diagnostics.TraceSourceTests
         public void Fail2Test()
         {
             var listener = GetTraceListener();
+            // We have to clear the listeners list on Trace since there is a trace listener by default with AssertUiEnabled = true in Desktop and that will pop up an assert window with Trace.Fail
+            Trace.Listeners.Clear();
             Trace.Listeners.Add(listener);
             Trace.Fail("Message", "Category");
             Assert.Equal(1, listener.GetCallCount(Method.Fail));

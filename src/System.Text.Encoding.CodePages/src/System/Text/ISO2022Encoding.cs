@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 
 //
@@ -16,8 +17,8 @@
 // IsAlwaysNormalized ???
 // Regarding Normalization for ISO-2022-JP (50220, 50221, 50222), its the same rules as EUCJP
 //  Forms KC & KD are precluded because of things like halfwidth Katakana that has compatibility mappings
-//  Form D is precluded because of 0x00a8, which changes to space + dierises.
-// 
+//  Form D is precluded because of 0x00a8, which changes to space + dieresis.
+//
 // Note: I think that IsAlwaysNormalized should probably return true for form C for Japanese 20932 based CPs.
 //
 // For ISO-2022-KR
@@ -26,14 +27,13 @@
 // IsAlwaysNormalized ???
 // Regarding Normalization for ISO-2022-CN (50227, 50229) & HZ-GB2312 (52936) I think is similar to the Japanese case.
 //  Forms KC & KD are precluded because of things like halfwidth Katakana that has compatibility mappings
-//  Form D is precluded because of 0x00a8, which changes to space + dierises.
+//  Form D is precluded because of 0x00a8, which changes to space + dieresis.
 //
 // Note: I think that IsAlwaysNormalized should probably return true for form C for Chinese 20936 based CPs.
 //
 
 using System.Globalization;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Text;
 using System.Runtime.InteropServices;
 using System;
@@ -57,12 +57,11 @@ namespace System.Text
 
         // We have to load the 936 code page tables, so impersonate 936 as our base
         // This pretends to be other code pages as far as memory sections are concerned.
-        [System.Security.SecurityCritical]  // auto-generated
         internal ISO2022Encoding(int codePage) : base(codePage, s_tableBaseCodePages[codePage % 10])
         {
         }
 
-        private static int[] s_tableBaseCodePages =
+        private static readonly int[] s_tableBaseCodePages =
         {
             932,    // 50220  ISO-2022-JP, No halfwidth Katakana, convert to full width
             932,    // 50221  ISO-2022-JP, Use escape sequence for half width Katakana
@@ -222,7 +221,6 @@ namespace System.Text
         }
 
         // GetByteCount
-        [System.Security.SecurityCritical]  // auto-generated
         public override unsafe int GetByteCount(char* chars, int count, EncoderNLS baseEncoder)
         {
             // Just need to ASSERT, this is called by something else internal that checked parameters already
@@ -233,7 +231,6 @@ namespace System.Text
             return GetBytes(chars, count, null, 0, baseEncoder);
         }
 
-        [System.Security.SecurityCritical]  // auto-generated
         public override unsafe int GetBytes(char* chars, int charCount,
                                                 byte* bytes, int byteCount, EncoderNLS baseEncoder)
         {
@@ -275,7 +272,6 @@ namespace System.Text
         }
 
         // This is internal and called by something else,
-        [System.Security.SecurityCritical]  // auto-generated
         public override unsafe int GetCharCount(byte* bytes, int count, DecoderNLS baseDecoder)
         {
             // Just assert, we're called internally so these should be safe, checked already
@@ -286,7 +282,6 @@ namespace System.Text
             return GetChars(bytes, count, null, 0, baseDecoder);
         }
 
-        [System.Security.SecurityCritical]  // auto-generated
         public override unsafe int GetChars(byte* bytes, int byteCount,
                                                 char* chars, int charCount, DecoderNLS baseDecoder)
         {
@@ -358,7 +353,6 @@ namespace System.Text
         // undefined, so we maintain that behavior when decoding.  We will never generate characters using
         // that technique, but the decoder will process them.
         //
-        [System.Security.SecurityCritical]  // auto-generated
         private unsafe int GetBytesCP5022xJP(char* chars, int charCount,
                                                   byte* bytes, int byteCount, ISO2022Encoder encoder)
         {
@@ -380,7 +374,7 @@ namespace System.Text
                 // We may have a left over character from last time, try and process it.
                 if (charLeftOver > 0)
                 {
-                    Debug.Assert(Char.IsHighSurrogate(charLeftOver), "[ISO2022Encoding.GetBytesCP5022xJP]leftover character should be high surrogate");
+                    Debug.Assert(char.IsHighSurrogate(charLeftOver), "[ISO2022Encoding.GetBytesCP5022xJP]leftover character should be high surrogate");
 
                     // It has to be a high surrogate, which we don't support, so it has to be a fallback
                     buffer.Fallback(charLeftOver);
@@ -477,7 +471,7 @@ namespace System.Text
                     }
 
                     // Make sure we're in the right mode (JIS 0208 or JIS 0212)
-                    // Note: Right now we don't use JIS 0212.  Also this table'd be wrong
+                    // Note: Right now we don't use JIS 0212.  Also this table would be wrong
 
                     // Its JIS extension 0208
                     if (currentMode != ISO2022Modes.ModeJIS0208)
@@ -600,7 +594,6 @@ namespace System.Text
         // Also Mlang always assumed KR mode, even if the designator wasn't found yet, so we do that as
         // well.  So basically we just ignore <ESC>$)C when decoding.
         //
-        [System.Security.SecurityCritical]  // auto-generated
         private unsafe int GetBytesCP50225KR(char* chars, int charCount,
                                                     byte* bytes, int byteCount, ISO2022Encoder encoder)
         {
@@ -622,7 +615,7 @@ namespace System.Text
                 // We may have a l left over character from last time, try and process it.
                 if (charLeftOver > 0)
                 {
-                    Debug.Assert(Char.IsHighSurrogate(charLeftOver), "[ISO2022Encoding.GetBytesCP50225KR]leftover character should be high surrogate");
+                    Debug.Assert(char.IsHighSurrogate(charLeftOver), "[ISO2022Encoding.GetBytesCP50225KR]leftover character should be high surrogate");
 
                     // It has to be a high surrogate, which we don't support, so it has to be a fallback
                     buffer.Fallback(charLeftOver);
@@ -717,7 +710,7 @@ namespace System.Text
                 // This is ASCII if we had to flush
                 encoder.currentMode = currentMode;
 
-                // We don't use shift out mode, but if we've flushed we need to reset it so it doesn't 
+                // We don't use shift out mode, but if we've flushed we need to reset it so it doesn't
                 // get output again.
                 if (!encoder.MustFlush || encoder.charLeftOver != (char)0)
                 {
@@ -750,7 +743,6 @@ namespace System.Text
         //
         // This encoding is designed for transmission by e-mail and news.  No bytes should have high bit set.
         // (all bytes <= 0x7f)
-        [System.Security.SecurityCritical]  // auto-generated
         private unsafe int GetBytesCP52936(char* chars, int charCount,
                                            byte* bytes, int byteCount, ISO2022Encoder encoder)
         {
@@ -769,7 +761,7 @@ namespace System.Text
                 // We may have a left over character from last time, try and process it.
                 if (charLeftOver > 0)
                 {
-                    Debug.Assert(Char.IsHighSurrogate(charLeftOver), "[ISO2022Encoding.GetBytesCP52936]leftover character should be high surrogate");
+                    Debug.Assert(char.IsHighSurrogate(charLeftOver), "[ISO2022Encoding.GetBytesCP52936]leftover character should be high surrogate");
 
                     // It has to be a high surrogate, which we don't support, so it has to be a fallback
                     buffer.Fallback(charLeftOver);
@@ -884,7 +876,6 @@ namespace System.Text
             return buffer.Count;
         }
 
-        [System.Security.SecurityCritical]  // auto-generated
         private unsafe int GetCharsCP5022xJP(byte* bytes, int byteCount,
                                                   char* chars, int charCount, ISO2022Decoder decoder)
         {
@@ -1040,7 +1031,7 @@ namespace System.Text
                     // MLang treated JIS 0208 '*' lead byte like a single halfwidth katakana
                     // escape, so use 0x8e00 as katakana lead byte and keep same trail byte.
                     // 0x2a lead byte range is normally unused in JIS 0208, so shouldn't have
-                    // any wierd compatibility issues.
+                    // any weird compatibility issues.
                     if ((b2Bytes == true) && ((iBytes & 0xff00) == 0x2a00))
                     {
                         iBytes = (ushort)(iBytes & 0xff);
@@ -1210,7 +1201,6 @@ namespace System.Text
 
         // Note that in DBCS mode mlang passed through ' ', '\t' and '\n' as SBCS characters
         // probably to allow mailer formatting without too much extra work.
-        [System.Security.SecurityCritical]  // auto-generated
         private unsafe int GetCharsCP50225KR(byte* bytes, int byteCount,
                                                    char* chars, int charCount, ISO2022Decoder decoder)
         {
@@ -1448,7 +1438,6 @@ namespace System.Text
         //
         // This encoding is designed for transmission by e-mail and news.  No bytes should have high bit set.
         // (all bytes <= 0x7f)
-        [System.Security.SecurityCritical]  // auto-generated
         private unsafe int GetCharsCP52936(byte* bytes, int byteCount,
                                                 char* chars, int charCount, ISO2022Decoder decoder)
         {
@@ -1654,14 +1643,14 @@ namespace System.Text
                 }
 
             // Just ASCII
-            // We allow some chars > 7f because everett did, so we have to look them up.
+            // We allow some chars > 7f because Everett did, so we have to look them up.
             STOREASCII:
                 char c = mapBytesToUnicode[ch];
 
                 // Check if it was unknown
                 if ((c == UNKNOWN_CHAR_FLAG || c == 0) && (ch != 0))
                 {
-                    // fallback the unkown bytes
+                    // fallback the unknown bytes
                     if (!buffer.Fallback((byte)ch))
                         break;
                     continue;
@@ -1705,8 +1694,7 @@ namespace System.Text
         public override int GetMaxByteCount(int charCount)
         {
             if (charCount < 0)
-                throw new ArgumentOutOfRangeException("charCount", SR.ArgumentOutOfRange_NeedNonNegNum);
-            Contract.EndContractBlock();
+                throw new ArgumentOutOfRangeException(nameof(charCount), SR.ArgumentOutOfRange_NeedNonNegNum);
 
             // Characters would be # of characters + 1 in case high surrogate is ? * max fallback
             long byteCount = (long)charCount + 1;
@@ -1751,7 +1739,7 @@ namespace System.Text
             byteCount += extraStart + extraEnd;
 
             if (byteCount > 0x7fffffff)
-                throw new ArgumentOutOfRangeException("charCount", SR.ArgumentOutOfRange_GetByteCountOverflow);
+                throw new ArgumentOutOfRangeException(nameof(charCount), SR.ArgumentOutOfRange_GetByteCountOverflow);
 
             return (int)byteCount;
         }
@@ -1759,8 +1747,7 @@ namespace System.Text
         public override int GetMaxCharCount(int byteCount)
         {
             if (byteCount < 0)
-                throw new ArgumentOutOfRangeException("byteCount", SR.ArgumentOutOfRange_NeedNonNegNum);
-            Contract.EndContractBlock();
+                throw new ArgumentOutOfRangeException(nameof(byteCount), SR.ArgumentOutOfRange_NeedNonNegNum);
 
             int perChar = 1;
             int extraDecoder = 1;
@@ -1788,7 +1775,7 @@ namespace System.Text
                 charCount *= DecoderFallback.MaxCharCount;
 
             if (charCount > 0x7fffffff)
-                throw new ArgumentOutOfRangeException("byteCount", SR.ArgumentOutOfRange_GetCharCountOverflow);
+                throw new ArgumentOutOfRangeException(nameof(byteCount), SR.ArgumentOutOfRange_GetCharCountOverflow);
 
             return (int)charCount;
         }
@@ -1870,7 +1857,7 @@ namespace System.Text
             }
         }
 
-        private static ushort[] s_HalfToFullWidthKanaTable =
+        private static readonly ushort[] s_HalfToFullWidthKanaTable =
         {
             0xa1a3, // 0x8ea1 : Halfwidth Ideographic Period
             0xa1d6, // 0x8ea2 : Halfwidth Opening Corner Bracket
@@ -1938,5 +1925,3 @@ namespace System.Text
         };
     }
 }
-
-

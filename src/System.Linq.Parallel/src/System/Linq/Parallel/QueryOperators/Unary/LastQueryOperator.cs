@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -10,6 +11,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace System.Linq.Parallel
 {
@@ -90,6 +92,7 @@ namespace System.Linq.Parallel
         //---------------------------------------------------------------------------------------
         // Returns an enumerable that represents the query executing sequentially.
         //
+        [ExcludeFromCodeCoverage]
         internal override IEnumerable<TSource> AsSequentialQuery(CancellationToken token)
         {
             Debug.Fail("This method should never be called as fallback to sequential is handled in ParallelEnumerable.First().");
@@ -110,18 +113,18 @@ namespace System.Linq.Parallel
         // The enumerator type responsible for executing the last operation.
         //
 
-        class LastQueryOperatorEnumerator<TKey> : QueryOperatorEnumerator<TSource, int>
+        private class LastQueryOperatorEnumerator<TKey> : QueryOperatorEnumerator<TSource, int>
         {
-            private QueryOperatorEnumerator<TSource, TKey> _source; // The data source to enumerate.
-            private Func<TSource, bool> _predicate; // The optional predicate used during the search.
+            private readonly QueryOperatorEnumerator<TSource, TKey> _source; // The data source to enumerate.
+            private readonly Func<TSource, bool> _predicate; // The optional predicate used during the search.
             private bool _alreadySearched; // Set once the enumerator has performed the search.
-            private int _partitionId; // ID of this partition
+            private readonly int _partitionId; // ID of this partition
 
             // Data shared among partitions.
-            private LastQueryOperatorState<TKey> _operatorState; // The current last candidate and its partition id.
-            private CountdownEvent _sharedBarrier; // Shared barrier, signaled when partitions find their 1st element.
-            private CancellationToken _cancellationToken; // Token used to cancel this operator.
-            private IComparer<TKey> _keyComparer; // Comparer for the order keys
+            private readonly LastQueryOperatorState<TKey> _operatorState; // The current last candidate and its partition id.
+            private readonly CountdownEvent _sharedBarrier; // Shared barrier, signaled when partitions find their 1st element.
+            private readonly CancellationToken _cancellationToken; // Token used to cancel this operator.
+            private readonly IComparer<TKey> _keyComparer; // Comparer for the order keys
 
             //---------------------------------------------------------------------------------------
             // Instantiates a new enumerator.
@@ -232,7 +235,7 @@ namespace System.Linq.Parallel
         }
 
 
-        class LastQueryOperatorState<TKey>
+        private class LastQueryOperatorState<TKey>
         {
             internal TKey _key;
             internal int _partitionId = -1;

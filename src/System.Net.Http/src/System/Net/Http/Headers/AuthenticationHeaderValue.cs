@@ -1,8 +1,8 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 
 namespace System.Net.Http.Headers
 {
@@ -18,13 +18,13 @@ namespace System.Net.Http.Headers
 
         // We simplify parameters by just considering them one string. The caller is responsible for correctly parsing
         // the string.
-        // The reason is that we can't determine the format of parameters. According to Errata 1959 in RFC 2617 
-        // parameters can be "token", "quoted-string", or "#auth-param" where "auth-param" is defined as 
+        // The reason is that we can't determine the format of parameters. According to Errata 1959 in RFC 2617
+        // parameters can be "token", "quoted-string", or "#auth-param" where "auth-param" is defined as
         // "token "=" ( token | quoted-string )". E.g. take the following BASIC example:
         // Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
         // Due to Base64 encoding we have two final "=". The value is neither a token nor a quoted-string, so it must
-        // be an auth-param according to the RFC definition. But that's also incorrect: auth-param means that we 
-        // consider the value before the first "=" as "name" and the final "=" as "value". 
+        // be an auth-param according to the RFC definition. But that's also incorrect: auth-param means that we
+        // consider the value before the first "=" as "name" and the final "=" as "value".
         public string Parameter
         {
             get { return _parameter; }
@@ -37,14 +37,14 @@ namespace System.Net.Http.Headers
 
         public AuthenticationHeaderValue(string scheme, string parameter)
         {
-            HeaderUtilities.CheckValidToken(scheme, "scheme");
+            HeaderUtilities.CheckValidToken(scheme, nameof(scheme));
             _scheme = scheme;
             _parameter = parameter;
         }
 
         private AuthenticationHeaderValue(AuthenticationHeaderValue source)
         {
-            Contract.Requires(source != null);
+            Debug.Assert(source != null);
 
             _scheme = source._scheme;
             _parameter = source._parameter;
@@ -119,7 +119,7 @@ namespace System.Net.Http.Headers
 
         internal static int GetAuthenticationLength(string input, int startIndex, out object parsedValue)
         {
-            Contract.Requires(startIndex >= 0);
+            Debug.Assert(startIndex >= 0);
 
             parsedValue = null;
 
@@ -136,8 +136,19 @@ namespace System.Net.Http.Headers
                 return 0;
             }
 
-            AuthenticationHeaderValue result = new AuthenticationHeaderValue();
-            result._scheme = input.Substring(startIndex, schemeLength);
+            var result = new AuthenticationHeaderValue();
+            string targetScheme = null;
+            switch (schemeLength)
+            {
+                // Avoid allocating a scheme string for the most common cases.
+                case 5: targetScheme = "Basic"; break;
+                case 6: targetScheme = "Digest"; break;
+                case 4: targetScheme = "NTLM"; break;
+                case 9: targetScheme = "Negotiate"; break;
+            }
+            result._scheme = targetScheme != null && string.CompareOrdinal(input, startIndex, targetScheme, 0, schemeLength) == 0 ?
+                targetScheme :
+                input.Substring(startIndex, schemeLength);
 
             int current = startIndex + schemeLength;
             int whitespaceLength = HttpRuleParser.GetWhitespaceLength(input, current);
@@ -145,12 +156,12 @@ namespace System.Net.Http.Headers
 
             if ((current == input.Length) || (input[current] == ','))
             {
-                // If we only have a scheme followed by whitespaces, we're done.
+                // If we only have a scheme followed by whitespace, we're done.
                 parsedValue = result;
                 return current - startIndex;
             }
 
-            // We need at least one space between the scheme and parameters. If there are no whitespaces, then we must
+            // We need at least one space between the scheme and parameters. If there is no whitespace, then we must
             // have reached the end of the string (i.e. scheme-only string).
             if (whitespaceLength == 0)
             {
@@ -158,8 +169,8 @@ namespace System.Net.Http.Headers
             }
 
             // If we get here, we have a <scheme> followed by a whitespace. Now we expect the following:
-            // '<scheme> <blob>[,<name>=<value>]*[, <otherscheme>...]*': <blob> potentially contains one 
-            // or more '=' characters, optionally followed by additional name/value pairs, optionally followed by 
+            // '<scheme> <blob>[,<name>=<value>]*[, <otherscheme>...]*': <blob> potentially contains one
+            // or more '=' characters, optionally followed by additional name/value pairs, optionally followed by
             // other schemes. <blob> may be a quoted string.
             // We look at the value after ',': if it is <token>=<value> then we have a parameter for <scheme>.
             // If we have either a <token>-only or <token><whitespace><blob> then we have another scheme.
@@ -206,7 +217,7 @@ namespace System.Net.Http.Headers
                 {
                     int whitespaceLength = HttpRuleParser.GetWhitespaceLength(input, current);
 
-                    // We don't want trailing whitespaces to be considered part of the parameter blob. Increment
+                    // We don't want trailing whitespace to be considered part of the parameter blob. Increment
                     // 'parameterEndIndex' only if we don't have a whitespace. E.g. "Basic AbC=  , NTLM" should return
                     // "AbC=" as parameter ignoring the spaces before ','.
                     if (whitespaceLength == 0)
@@ -226,7 +237,7 @@ namespace System.Net.Http.Headers
 
         private static bool TryGetParametersEndIndex(string input, ref int parseEndIndex, ref int parameterEndIndex)
         {
-            Contract.Requires(parseEndIndex < input.Length, "Expected string to have at least 1 char");
+            Debug.Assert(parseEndIndex < input.Length, "Expected string to have at least 1 char");
             Debug.Assert(input[parseEndIndex] == ',');
 
             int current = parseEndIndex;
@@ -241,8 +252,8 @@ namespace System.Net.Http.Headers
                     return true;
                 }
 
-                // Now we have to determine if after ',' we have a list of <name>=<value> pairs that are part of 
-                // the auth scheme parameters OR if we have another auth scheme. Either way, after ',' we expect a 
+                // Now we have to determine if after ',' we have a list of <name>=<value> pairs that are part of
+                // the auth scheme parameters OR if we have another auth scheme. Either way, after ',' we expect a
                 // valid token that is either the <name> in a <name>=<value> pair OR <scheme> of another scheme.
                 int tokenLength = HttpRuleParser.GetTokenLength(input, current);
                 if (tokenLength == 0)
@@ -253,8 +264,8 @@ namespace System.Net.Http.Headers
                 current = current + tokenLength;
                 current = current + HttpRuleParser.GetWhitespaceLength(input, current);
 
-                // If we reached the end of the string or the token is followed by anything but '=', then the parsed 
-                // token is another scheme name. The string representing parameters ends before the token (e.g. 
+                // If we reached the end of the string or the token is followed by anything but '=', then the parsed
+                // token is another scheme name. The string representing parameters ends before the token (e.g.
                 // "Digest a=b, c=d, NTLM": return scheme "Digest" with parameters string "a=b, c=d").
                 if ((current == input.Length) || (input[current] != '='))
                 {
@@ -276,7 +287,7 @@ namespace System.Net.Http.Headers
                 current = current + valueLength;
                 parameterEndIndex = current - 1; // -1 because 'current' already points to the char after <value>
                 current = current + HttpRuleParser.GetWhitespaceLength(input, current);
-                parseEndIndex = current; // this essentially points to parameterEndIndex + whitespaces + next char
+                parseEndIndex = current; // this essentially points to parameterEndIndex + whitespace + next char
             } while ((current < input.Length) && (input[current] == ','));
 
             return true;

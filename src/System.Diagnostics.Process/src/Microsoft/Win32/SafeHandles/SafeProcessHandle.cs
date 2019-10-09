@@ -1,42 +1,39 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 /*============================================================
 **
-** Class:  SafeProcessHandle 
+** Class:  SafeProcessHandle
 **
 ** A wrapper for a process handle
 **
-** 
+**
 ===========================================================*/
 
 using System;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Security;
 
 namespace Microsoft.Win32.SafeHandles
 {
-    [SecurityCritical]
-    public sealed partial class SafeProcessHandle : SafeHandle
+    public sealed partial class SafeProcessHandle : SafeHandleZeroOrMinusOneIsInvalid
     {
-        internal static readonly SafeProcessHandle InvalidHandle = new SafeProcessHandle(new IntPtr(DefaultInvalidHandleValue));
+        internal static readonly SafeProcessHandle InvalidHandle = new SafeProcessHandle();
 
         internal SafeProcessHandle()
-            : base(new IntPtr(DefaultInvalidHandleValue), true) 
+            : this(IntPtr.Zero)
         {
         }
 
         internal SafeProcessHandle(IntPtr handle)
-            : base(new IntPtr(DefaultInvalidHandleValue), true)
+            : this(handle, true)
         {
-            SetHandle(handle);
         }
 
-        public SafeProcessHandle(IntPtr handle, bool ownsHandle)
-            : base(new IntPtr(DefaultInvalidHandleValue), ownsHandle)
+        public SafeProcessHandle(IntPtr existingHandle, bool ownsHandle)
+            : base(ownsHandle)
         {
-            SetHandle(handle);
+            SetHandle(existingHandle);
         }
 
         internal void InitialSetHandle(IntPtr h)

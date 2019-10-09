@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Globalization;
 using System.Runtime.InteropServices;
@@ -9,25 +10,25 @@ namespace System.Numerics.Tests
 {
     public class Matrix4x4Tests
     {
-        static Matrix4x4 GenerateMatrixNumberFrom1To16()
+        static Matrix4x4 GenerateIncrementalMatrixNumber(float value = 0.0f)
         {
             Matrix4x4 a = new Matrix4x4();
-            a.M11 = 1.0f;
-            a.M12 = 2.0f;
-            a.M13 = 3.0f;
-            a.M14 = 4.0f;
-            a.M21 = 5.0f;
-            a.M22 = 6.0f;
-            a.M23 = 7.0f;
-            a.M24 = 8.0f;
-            a.M31 = 9.0f;
-            a.M32 = 10.0f;
-            a.M33 = 11.0f;
-            a.M34 = 12.0f;
-            a.M41 = 13.0f;
-            a.M42 = 14.0f;
-            a.M43 = 15.0f;
-            a.M44 = 16.0f;
+            a.M11 = value + 1.0f;
+            a.M12 = value + 2.0f;
+            a.M13 = value + 3.0f;
+            a.M14 = value + 4.0f;
+            a.M21 = value + 5.0f;
+            a.M22 = value + 6.0f;
+            a.M23 = value + 7.0f;
+            a.M24 = value + 8.0f;
+            a.M31 = value + 9.0f;
+            a.M32 = value + 10.0f;
+            a.M33 = value + 11.0f;
+            a.M34 = value + 12.0f;
+            a.M41 = value + 13.0f;
+            a.M42 = value + 14.0f;
+            a.M43 = value + 15.0f;
+            a.M44 = value + 16.0f;
             return a;
         }
 
@@ -247,11 +248,11 @@ namespace System.Numerics.Tests
             }
             else
             {
-                Assert.True(MathHelper.Equal(expectedScales, scales), String.Format("Matrix4x4.Decompose did not return expected value Expected:{0} actual:{1}.", expectedScales, scales));
-                Assert.True(MathHelper.EqualRotation(expectedRotation, rotation), String.Format("Matrix4x4.Decompose did not return expected value. Expected:{0} actual:{1}.", expectedRotation, rotation));
+                Assert.True(MathHelper.Equal(expectedScales, scales), string.Format("Matrix4x4.Decompose did not return expected value Expected:{0} actual:{1}.", expectedScales, scales));
+                Assert.True(MathHelper.EqualRotation(expectedRotation, rotation), string.Format("Matrix4x4.Decompose did not return expected value. Expected:{0} actual:{1}.", expectedRotation, rotation));
             }
 
-            Assert.True(MathHelper.Equal(expectedTranslation, translation), String.Format("Matrix4x4.Decompose did not return expected value. Expected:{0} actual:{1}.", expectedTranslation, translation));
+            Assert.True(MathHelper.Equal(expectedTranslation, translation), string.Format("Matrix4x4.Decompose did not return expected value. Expected:{0} actual:{1}.", expectedTranslation, translation));
         }
 
         // Various rotation decompose test.
@@ -352,7 +353,7 @@ namespace System.Numerics.Tests
             Quaternion rotation;
             Vector3 translation;
 
-            Assert.False(Matrix4x4.Decompose(GenerateMatrixNumberFrom1To16(), out scales, out rotation, out translation), "decompose should have failed.");
+            Assert.False(Matrix4x4.Decompose(GenerateIncrementalMatrixNumber(), out scales, out rotation, out translation), "decompose should have failed.");
             Assert.False(Matrix4x4.Decompose(new Matrix4x4(Matrix3x2.CreateSkew(1, 2)), out scales, out rotation, out translation), "decompose should have failed.");
         }
 
@@ -360,7 +361,7 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4TransformTest()
         {
-            Matrix4x4 target = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 target = GenerateIncrementalMatrixNumber();
 
             Matrix4x4 m =
                 Matrix4x4.CreateRotationX(MathHelper.ToRadians(30.0f)) *
@@ -560,7 +561,7 @@ namespace System.Numerics.Tests
 
                         Matrix4x4 expected = roll * pitch * yaw;
                         Matrix4x4 actual = Matrix4x4.CreateFromYawPitchRoll(yawRad, pitchRad, rollRad);
-                        Assert.True(MathHelper.Equal(expected, actual), String.Format("Yaw:{0} Pitch:{1} Roll:{2}", yawAngle, pitchAngle, rollAngle));
+                        Assert.True(MathHelper.Equal(expected, actual), string.Format("Yaw:{0} Pitch:{1} Roll:{2}", yawAngle, pitchAngle, rollAngle));
                     }
                 }
             }
@@ -1141,7 +1142,7 @@ namespace System.Numerics.Tests
             a.M43 = 43.0f;
             a.M44 = 44.0f;
 
-            Matrix4x4 b = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 b = GenerateIncrementalMatrixNumber();
 
             float t = 0.5f;
 
@@ -1175,7 +1176,7 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4UnaryNegationTest()
         {
-            Matrix4x4 a = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 a = GenerateIncrementalMatrixNumber();
 
             Matrix4x4 expected = new Matrix4x4();
             expected.M11 = -1.0f;
@@ -1203,9 +1204,26 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4SubtractionTest()
         {
-            Matrix4x4 a = GenerateMatrixNumberFrom1To16();
-            Matrix4x4 b = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 a = GenerateIncrementalMatrixNumber();
+            Matrix4x4 b = GenerateIncrementalMatrixNumber(-8.0f);
+
             Matrix4x4 expected = new Matrix4x4();
+            expected.M11 = a.M11 - b.M11;
+            expected.M12 = a.M12 - b.M12;
+            expected.M13 = a.M13 - b.M13;
+            expected.M14 = a.M14 - b.M14;
+            expected.M21 = a.M21 - b.M21;
+            expected.M22 = a.M22 - b.M22;
+            expected.M23 = a.M23 - b.M23;
+            expected.M24 = a.M24 - b.M24;
+            expected.M31 = a.M31 - b.M31;
+            expected.M32 = a.M32 - b.M32;
+            expected.M33 = a.M33 - b.M33;
+            expected.M34 = a.M34 - b.M34;
+            expected.M41 = a.M41 - b.M41;
+            expected.M42 = a.M42 - b.M42;
+            expected.M43 = a.M43 - b.M43;
+            expected.M44 = a.M44 - b.M44;
 
             Matrix4x4 actual = a - b;
             Assert.True(MathHelper.Equal(expected, actual), "Matrix4x4.operator - did not return the expected value.");
@@ -1215,8 +1233,8 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4MultiplyTest1()
         {
-            Matrix4x4 a = GenerateMatrixNumberFrom1To16();
-            Matrix4x4 b = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 a = GenerateIncrementalMatrixNumber();
+            Matrix4x4 b = GenerateIncrementalMatrixNumber(-8.0f);
 
             Matrix4x4 expected = new Matrix4x4();
             expected.M11 = a.M11 * b.M11 + a.M12 * b.M21 + a.M13 * b.M31 + a.M14 * b.M41;
@@ -1279,8 +1297,8 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4AdditionTest()
         {
-            Matrix4x4 a = GenerateMatrixNumberFrom1To16();
-            Matrix4x4 b = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 a = GenerateIncrementalMatrixNumber();
+            Matrix4x4 b = GenerateIncrementalMatrixNumber(-8.0f);
 
             Matrix4x4 expected = new Matrix4x4();
             expected.M11 = a.M11 + b.M11;
@@ -1300,10 +1318,7 @@ namespace System.Numerics.Tests
             expected.M43 = a.M43 + b.M43;
             expected.M44 = a.M44 + b.M44;
 
-            Matrix4x4 actual;
-
-            actual = a + b;
-
+            Matrix4x4 actual = a + b;
             Assert.True(MathHelper.Equal(expected, actual), "Matrix4x4.operator + did not return the expected value.");
         }
 
@@ -1311,7 +1326,7 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4TransposeTest()
         {
-            Matrix4x4 a = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 a = GenerateIncrementalMatrixNumber();
 
             Matrix4x4 expected = new Matrix4x4();
             expected.M11 = a.M11;
@@ -1499,7 +1514,7 @@ namespace System.Numerics.Tests
             a.M43 = 43.0f;
             a.M44 = 44.0f;
 
-            string expected = String.Format(CultureInfo.CurrentCulture,
+            string expected = string.Format(CultureInfo.CurrentCulture,
                 "{{ {{M11:{0} M12:{1} M13:{2} M14:{3}}} {{M21:{4} M22:{5} M23:{6} M24:{7}}} {{M31:{8} M32:{9} M33:{10} M34:{11}}} {{M41:{12} M42:{13} M43:{14} M44:{15}}} }}",
                     11.0f, -12.0f, -13.3f, 14.4f,
                     21.0f, 22.0f, 23.0f, 24.0f,
@@ -1514,8 +1529,8 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4AddTest()
         {
-            Matrix4x4 a = GenerateMatrixNumberFrom1To16();
-            Matrix4x4 b = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 a = GenerateIncrementalMatrixNumber();
+            Matrix4x4 b = GenerateIncrementalMatrixNumber(-8.0f);
 
             Matrix4x4 expected = new Matrix4x4();
             expected.M11 = a.M11 + b.M11;
@@ -1535,9 +1550,7 @@ namespace System.Numerics.Tests
             expected.M43 = a.M43 + b.M43;
             expected.M44 = a.M44 + b.M44;
 
-            Matrix4x4 actual;
-
-            actual = Matrix4x4.Add(a, b);
+            Matrix4x4 actual = Matrix4x4.Add(a, b);
             Assert.Equal(expected, actual);
         }
 
@@ -1545,8 +1558,8 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4EqualsTest()
         {
-            Matrix4x4 a = GenerateMatrixNumberFrom1To16();
-            Matrix4x4 b = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 a = GenerateIncrementalMatrixNumber();
+            Matrix4x4 b = GenerateIncrementalMatrixNumber();
 
             // case 1: compare between same values
             object obj = b;
@@ -1579,11 +1592,12 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4GetHashCodeTest()
         {
-            Matrix4x4 target = GenerateMatrixNumberFrom1To16();
-            int expected = target.M11.GetHashCode() + target.M12.GetHashCode() + target.M13.GetHashCode() + target.M14.GetHashCode() +
-                            target.M21.GetHashCode() + target.M22.GetHashCode() + target.M23.GetHashCode() + target.M24.GetHashCode() +
-                            target.M31.GetHashCode() + target.M32.GetHashCode() + target.M33.GetHashCode() + target.M34.GetHashCode() +
-                            target.M41.GetHashCode() + target.M42.GetHashCode() + target.M43.GetHashCode() + target.M44.GetHashCode();
+            Matrix4x4 target = GenerateIncrementalMatrixNumber();
+            int expected = unchecked(
+                target.M11.GetHashCode() + target.M12.GetHashCode() + target.M13.GetHashCode() + target.M14.GetHashCode() +
+                target.M21.GetHashCode() + target.M22.GetHashCode() + target.M23.GetHashCode() + target.M24.GetHashCode() +
+                target.M31.GetHashCode() + target.M32.GetHashCode() + target.M33.GetHashCode() + target.M34.GetHashCode() +
+                target.M41.GetHashCode() + target.M42.GetHashCode() + target.M43.GetHashCode() + target.M44.GetHashCode());
             int actual;
 
             actual = target.GetHashCode();
@@ -1594,8 +1608,8 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4MultiplyTest3()
         {
-            Matrix4x4 a = GenerateMatrixNumberFrom1To16();
-            Matrix4x4 b = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 a = GenerateIncrementalMatrixNumber();
+            Matrix4x4 b = GenerateIncrementalMatrixNumber(-8.0f);
 
             Matrix4x4 expected = new Matrix4x4();
             expected.M11 = a.M11 * b.M11 + a.M12 * b.M21 + a.M13 * b.M31 + a.M14 * b.M41;
@@ -1627,7 +1641,7 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4MultiplyTest5()
         {
-            Matrix4x4 a = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 a = GenerateIncrementalMatrixNumber();
             Matrix4x4 expected = new Matrix4x4(3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48);
             Matrix4x4 actual = Matrix4x4.Multiply(a, 3);
 
@@ -1638,7 +1652,7 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4MultiplyTest6()
         {
-            Matrix4x4 a = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 a = GenerateIncrementalMatrixNumber();
             Matrix4x4 expected = new Matrix4x4(3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48);
             Matrix4x4 actual = a * 3;
 
@@ -1649,7 +1663,7 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4NegateTest()
         {
-            Matrix4x4 m = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 m = GenerateIncrementalMatrixNumber();
 
             Matrix4x4 expected = new Matrix4x4();
             expected.M11 = -1.0f;
@@ -1678,8 +1692,8 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4InequalityTest()
         {
-            Matrix4x4 a = GenerateMatrixNumberFrom1To16();
-            Matrix4x4 b = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 a = GenerateIncrementalMatrixNumber();
+            Matrix4x4 b = GenerateIncrementalMatrixNumber();
 
             // case 1: compare between same values
             bool expected = false;
@@ -1697,8 +1711,8 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4EqualityTest()
         {
-            Matrix4x4 a = GenerateMatrixNumberFrom1To16();
-            Matrix4x4 b = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 a = GenerateIncrementalMatrixNumber();
+            Matrix4x4 b = GenerateIncrementalMatrixNumber();
 
             // case 1: compare between same values
             bool expected = true;
@@ -1716,12 +1730,28 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4SubtractTest()
         {
-            Matrix4x4 a = GenerateMatrixNumberFrom1To16();
-            Matrix4x4 b = GenerateMatrixNumberFrom1To16();
-            Matrix4x4 expected = new Matrix4x4();
-            Matrix4x4 actual;
+            Matrix4x4 a = GenerateIncrementalMatrixNumber();
+            Matrix4x4 b = GenerateIncrementalMatrixNumber(-8.0f);
 
-            actual = Matrix4x4.Subtract(a, b);
+            Matrix4x4 expected = new Matrix4x4();
+            expected.M11 = a.M11 - b.M11;
+            expected.M12 = a.M12 - b.M12;
+            expected.M13 = a.M13 - b.M13;
+            expected.M14 = a.M14 - b.M14;
+            expected.M21 = a.M21 - b.M21;
+            expected.M22 = a.M22 - b.M22;
+            expected.M23 = a.M23 - b.M23;
+            expected.M24 = a.M24 - b.M24;
+            expected.M31 = a.M31 - b.M31;
+            expected.M32 = a.M32 - b.M32;
+            expected.M33 = a.M33 - b.M33;
+            expected.M34 = a.M34 - b.M34;
+            expected.M41 = a.M41 - b.M41;
+            expected.M42 = a.M42 - b.M42;
+            expected.M43 = a.M43 - b.M43;
+            expected.M44 = a.M44 - b.M44;
+
+            Matrix4x4 actual = Matrix4x4.Subtract(a, b);
             Assert.Equal(expected, actual);
         }
 
@@ -2277,8 +2307,8 @@ namespace System.Numerics.Tests
         [Fact]
         public void Matrix4x4EqualsTest1()
         {
-            Matrix4x4 a = GenerateMatrixNumberFrom1To16();
-            Matrix4x4 b = GenerateMatrixNumberFrom1To16();
+            Matrix4x4 a = GenerateIncrementalMatrixNumber();
+            Matrix4x4 b = GenerateIncrementalMatrixNumber();
 
             // case 1: compare between same values
             bool expected = true;
@@ -2513,6 +2543,33 @@ namespace System.Numerics.Tests
             Assert.Equal(new IntPtr(basePtr + 13), new IntPtr(&mat.M42));
             Assert.Equal(new IntPtr(basePtr + 14), new IntPtr(&mat.M43));
             Assert.Equal(new IntPtr(basePtr + 15), new IntPtr(&mat.M44));
+        }
+
+        [Fact]
+        public void PerspectiveFarPlaneAtInfinityTest()
+        {
+            var nearPlaneDistance = 0.125f;
+            var m = Matrix4x4.CreatePerspective(1.0f, 1.0f, nearPlaneDistance, float.PositiveInfinity);
+            Assert.Equal(-1.0f, m.M33);
+            Assert.Equal(-nearPlaneDistance, m.M43);
+        }
+
+        [Fact]
+        public void PerspectiveFieldOfViewFarPlaneAtInfinityTest()
+        {
+            var nearPlaneDistance = 0.125f;
+            var m = Matrix4x4.CreatePerspectiveFieldOfView(MathHelper.ToRadians(60.0f), 1.5f, nearPlaneDistance, float.PositiveInfinity);
+            Assert.Equal(-1.0f, m.M33);
+            Assert.Equal(-nearPlaneDistance, m.M43);
+        }
+
+        [Fact]
+        public void PerspectiveOffCenterFarPlaneAtInfinityTest()
+        {
+            var nearPlaneDistance = 0.125f;
+            var m = Matrix4x4.CreatePerspectiveOffCenter(0.0f, 0.0f, 1.0f, 1.0f, nearPlaneDistance, float.PositiveInfinity);
+            Assert.Equal(-1.0f, m.M33);
+            Assert.Equal(-nearPlaneDistance, m.M43);
         }
     }
 }

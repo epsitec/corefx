@@ -1,125 +1,45 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
-namespace System.IO.FileSystem.Tests
+namespace System.IO.Tests
 {
-    public class FileInfo_GetSetAttributes : FileSystemTest
+    public class FileInfo_GetSetAttributes : InfoGetSetAttributes<FileInfo>
     {
-        #region Utilities
-
-        protected virtual FileAttributes Get(string path)
-        {
-            var info = new FileInfo(path);
-            return info.Attributes;
-        }
-
-        protected virtual void Set(string path, FileAttributes attributes)
-        {
-            var info = new FileInfo(path);
-            info.Attributes = attributes;
-        }
-
-        #endregion
+        protected override FileAttributes GetAttributes(string path) => new FileInfo(path).Attributes;
+        protected override void SetAttributes(string path, FileAttributes attributes) => new FileInfo(path).Attributes = attributes;
+        protected override FileInfo CreateInfo(string path) => new FileInfo(path);
 
         [Fact]
-        public void NullParameters()
+        public void IsReadOnly_SetAndGet()
         {
-            Assert.Throws<ArgumentNullException>(() => Get(null));
-            Assert.Throws<ArgumentNullException>(() => Set(null, FileAttributes.Normal));
-        }
-
-        [Fact]
-        public void InvalidParameters()
-        {
-            Assert.Throws<ArgumentException>(() => Get(string.Empty));
-            Assert.Throws<ArgumentException>(() => Set(string.Empty, FileAttributes.Normal));
-        }
-
-        [Fact]
-        public void NonExistentFile()
-        {
-            Assert.Throws<FileNotFoundException>(() => Set(GetTestFilePath(), FileAttributes.Normal));
-        }
-
-        [Fact]
-        public void IsReadOnly_Set_And_Get()
-        {
-            var test = new FileInfo(GetTestFilePath());
+            FileInfo test = new FileInfo(GetTestFilePath());
             test.Create().Dispose();
+
             // Set to True
             test.IsReadOnly = true;
             test.Refresh();
-            Assert.Equal(true, test.IsReadOnly);
+            Assert.True(test.IsReadOnly);
 
             // Set To False
             test.IsReadOnly = false;
             test.Refresh();
-            Assert.Equal(false, test.IsReadOnly);
+            Assert.False(test.IsReadOnly);
         }
 
         [Theory]
-        [InlineData(FileAttributes.ReadOnly)]
-        [InlineData(FileAttributes.Normal)]
-        [PlatformSpecific(PlatformID.AnyUnix)]
-        public void UnixAttributeSetting(FileAttributes attr)
+        [InlineData(".", true)]
+        [InlineData("", false)]
+        [PlatformSpecific(TestPlatforms.OSX)]
+        public void HiddenAttributeSetCorrectly_OSX(string filePrefix, bool hidden)
         {
-            var test = new FileInfo(GetTestFilePath());
-            test.Create().Dispose();
-            Set(test.FullName, attr);
-            test.Refresh();
-            Assert.Equal(attr, Get(test.FullName));
-            Set(test.FullName, 0);
-        }
+            string testFilePath = Path.Combine(TestDirectory, $"{filePrefix}{GetTestFileName()}");
+            FileInfo fileInfo = new FileInfo(testFilePath);
+            fileInfo.Create().Dispose();
 
-        [Theory]
-        [InlineData(FileAttributes.ReadOnly)]
-        [InlineData(FileAttributes.Hidden)]
-        [InlineData(FileAttributes.System)]
-        [InlineData(FileAttributes.Archive)]
-        [InlineData(FileAttributes.Normal)]
-        [InlineData(FileAttributes.Temporary)]
-        [InlineData(FileAttributes.ReadOnly | FileAttributes.Hidden)]
-        [PlatformSpecific(PlatformID.Windows)]
-        public void WindowsAttributeSetting(FileAttributes attr)
-        {
-            var test = new FileInfo(GetTestFilePath());
-            test.Create().Dispose();
-            Set(test.FullName, attr);
-            test.Refresh();
-            Assert.Equal(attr, Get(test.FullName));
-            Set(test.FullName, 0);
-        }
-
-        [Theory]
-        [InlineData(FileAttributes.Temporary)]
-        [InlineData(FileAttributes.Encrypted)]
-        [InlineData(FileAttributes.SparseFile)]
-        [InlineData(FileAttributes.ReparsePoint)]
-        [InlineData(FileAttributes.Compressed)]
-        [PlatformSpecific(PlatformID.AnyUnix)]
-        public void UnixInvalidAttributes(FileAttributes attr)
-        {
-            var path = GetTestFilePath();
-            File.Create(path).Dispose();
-            Set(path, attr);
-            Assert.Equal(FileAttributes.Normal, Get(path));
-        }
-
-        [Theory]
-        [InlineData(FileAttributes.Normal)]
-        [InlineData(FileAttributes.Encrypted)]
-        [InlineData(FileAttributes.SparseFile)]
-        [InlineData(FileAttributes.ReparsePoint)]
-        [InlineData(FileAttributes.Compressed)]
-        [PlatformSpecific(PlatformID.Windows)]
-        public void WindowsInvalidAttributes(FileAttributes attr)
-        {
-            var path = GetTestFilePath();
-            File.Create(path).Dispose();
-            Set(path, attr);
-            Assert.Equal(FileAttributes.Normal, Get(path));
+            Assert.Equal(hidden, (fileInfo.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden);
         }
     }
 }

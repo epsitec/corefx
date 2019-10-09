@@ -1,11 +1,13 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 
@@ -13,6 +15,17 @@ using System.Text;
 public interface TestType_IHelloService
 {
     string Hello(string message);
+}
+
+public interface TestType_IOut_Ref
+{
+    void Out(out string message);
+    void Ref(ref string message);
+    void InAttribute([In] string message);
+    void OutAttribute([Out] string message);
+    void InAttribute_OutAttribute([In][Out] string message);
+    void InAttribute_OutAttribute_Ref([In][Out] ref string message);
+    void InAttribute_Ref([In] ref string message);
 }
 
 public interface TestType_IGoodbyeService
@@ -55,6 +68,18 @@ public interface TestType_IPropertyService
     string ReadWrite { get; set; }
 }
 
+// Demonstrates proxies can be made for events.
+public interface TestType_IEventService
+{
+    event EventHandler AddRemove;
+}
+
+// Demonstrates proxies can be made for indexed properties.
+public interface TestType_IIndexerService
+{
+    string this[string key] { get; set; }
+}
+
 // Demonstrates proxies can be made for internal types
 internal interface TestType_InternalInterfaceService
 {
@@ -65,6 +90,11 @@ internal interface TestType_InternalInterfaceService
 internal interface TestType_PublicInterfaceService_Implements_Internal : TestType_InternalInterfaceService
 {
     string Echo2(string message);
+}
+
+public interface TypeType_GenericMethod
+{
+    T Echo<T>(T messages);
 }
 
 // Negative -- demonstrates trying to use a class for the interface type for the proxy
@@ -126,4 +156,3 @@ public class NoDefaultCtor_TestDispatchProxy : DispatchProxy
         throw new InvalidOperationException();
     }
 }
-

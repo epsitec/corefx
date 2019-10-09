@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Net.Http.Headers;
 using System.Text;
@@ -12,6 +13,7 @@ namespace System.Net.Http
 
         private HttpStatusCode _statusCode;
         private HttpResponseHeaders _headers;
+        private HttpResponseHeaders _trailingHeaders;
         private string _reasonPhrase;
         private HttpRequestMessage _requestMessage;
         private Version _version;
@@ -26,7 +28,7 @@ namespace System.Net.Http
 #if !PHONE
                 if (value == null)
                 {
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 }
 #endif
                 CheckDisposed();
@@ -35,6 +37,8 @@ namespace System.Net.Http
             }
         }
 
+        internal void SetVersionWithoutValidation(Version value) => _version = value;
+
         public HttpContent Content
         {
             get { return _content; }
@@ -42,15 +46,15 @@ namespace System.Net.Http
             {
                 CheckDisposed();
 
-                if (Logging.On)
+                if (NetEventSource.IsEnabled)
                 {
                     if (value == null)
                     {
-                        Logging.PrintInfo(Logging.Http, this, SR.net_http_log_content_null);
+                        NetEventSource.ContentNull(this);
                     }
                     else
                     {
-                        Logging.Associate(Logging.Http, this, value);
+                        NetEventSource.Associate(this, value);
                     }
                 }
 
@@ -65,13 +69,15 @@ namespace System.Net.Http
             {
                 if (((int)value < 0) || ((int)value > 999))
                 {
-                    throw new ArgumentOutOfRangeException("value");
+                    throw new ArgumentOutOfRangeException(nameof(value));
                 }
                 CheckDisposed();
 
                 _statusCode = value;
             }
         }
+
+        internal void SetStatusCodeWithoutValidation(HttpStatusCode value) => _statusCode = value;
 
         public string ReasonPhrase
         {
@@ -96,6 +102,8 @@ namespace System.Net.Http
             }
         }
 
+        internal void SetReasonPhraseWithoutValidation(string value) => _reasonPhrase = value;
+
         public HttpResponseHeaders Headers
         {
             get
@@ -108,13 +116,26 @@ namespace System.Net.Http
             }
         }
 
+        public HttpResponseHeaders TrailingHeaders
+        {
+            get
+            {
+                if (_trailingHeaders == null)
+                {
+                    _trailingHeaders = new HttpResponseHeaders();
+                }
+
+                return _trailingHeaders;
+            }
+        }
+
         public HttpRequestMessage RequestMessage
         {
             get { return _requestMessage; }
             set
             {
                 CheckDisposed();
-                if (Logging.On && (value != null)) Logging.Associate(Logging.Http, this, value);
+                if (value != null) NetEventSource.Associate(this, value);
                 _requestMessage = value;
             }
         }
@@ -131,35 +152,30 @@ namespace System.Net.Http
 
         public HttpResponseMessage(HttpStatusCode statusCode)
         {
-            if (Logging.On) Logging.Enter(Logging.Http, this, ".ctor", "StatusCode: " + (int)statusCode + ", ReasonPhrase: '" + _reasonPhrase + "'");
+            if (NetEventSource.IsEnabled) NetEventSource.Enter(this, statusCode);
 
             if (((int)statusCode < 0) || ((int)statusCode > 999))
             {
-                throw new ArgumentOutOfRangeException("statusCode");
+                throw new ArgumentOutOfRangeException(nameof(statusCode));
             }
 
             _statusCode = statusCode;
             _version = HttpUtilities.DefaultResponseVersion;
 
-            if (Logging.On) Logging.Exit(Logging.Http, this, ".ctor", null);
+            if (NetEventSource.IsEnabled) NetEventSource.Exit(this);
         }
 
         public HttpResponseMessage EnsureSuccessStatusCode()
         {
             if (!IsSuccessStatusCode)
             {
-                // Disposing the content should help users: If users call EnsureSuccessStatusCode(), an exception is
-                // thrown if the response status code is != 2xx. I.e. the behavior is similar to a failed request (e.g.
-                // connection failure). Users don't expect to dispose the content in this case: If an exception is 
-                // thrown, the object is responsible fore cleaning up its state.
-                if (_content != null)
-                {
-                    _content.Dispose();
-                }
-
-                throw new HttpRequestException(string.Format(System.Globalization.CultureInfo.InvariantCulture, SR.net_http_message_not_success_statuscode, (int)_statusCode,
+                throw new HttpRequestException(SR.Format(
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    SR.net_http_message_not_success_statuscode,
+                    (int)_statusCode,
                     ReasonPhrase));
             }
+
             return this;
         }
 
@@ -179,8 +195,14 @@ namespace System.Net.Http
             sb.Append(", Content: ");
             sb.Append(_content == null ? "<null>" : _content.GetType().ToString());
 
-            sb.Append(", Headers:\r\n");
-            sb.Append(HeaderUtilities.DumpHeaders(_headers, _content == null ? null : _content.Headers));
+            sb.AppendLine(", Headers:");
+            HeaderUtilities.DumpHeaders(sb, _headers, _content?.Headers);
+
+            if (_trailingHeaders != null)
+            {
+                sb.AppendLine(", Trailing Headers:");
+                HeaderUtilities.DumpHeaders(sb, _trailingHeaders);
+            }
 
             return sb.ToString();
         }
@@ -202,7 +224,7 @@ namespace System.Net.Http
         protected virtual void Dispose(bool disposing)
         {
             // The reason for this type to implement IDisposable is that it contains instances of types that implement
-            // IDisposable (content). 
+            // IDisposable (content).
             if (disposing && !_disposed)
             {
                 _disposed = true;

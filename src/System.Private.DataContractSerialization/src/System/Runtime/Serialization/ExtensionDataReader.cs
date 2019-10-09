@@ -1,15 +1,9 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Text;
-using System.IO;
 using System.Xml;
-using System.Diagnostics;
 using System.Collections;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Security;
 
 namespace System.Runtime.Serialization
 {
@@ -28,14 +22,12 @@ namespace System.Runtime.Serialization
             NullElement,
         }
 
-        private Dictionary<IDataNode, IDataNode> _cache = new Dictionary<IDataNode, IDataNode>();
-
         private ElementData[] _elements;
         private ElementData _element;
         private ElementData _nextElement;
 
         private ReadState _readState = ReadState.Initial;
-        private ExtensionDataNodeType _internalNodeType;
+        private readonly ExtensionDataNodeType _internalNodeType;
         private XmlNodeType _nodeType;
         private int _depth;
         private string _localName;
@@ -45,27 +37,23 @@ namespace System.Runtime.Serialization
         private int _attributeCount;
         private int _attributeIndex;
 
+        private static readonly object s_prefixLock = new object();
+
 #pragma warning disable 0649
-        private XmlNodeReader _xmlNodeReader;
+        private readonly XmlNodeReader _xmlNodeReader;
 #pragma warning restore 0649
 
-        private Queue<IDataNode> _deserializedDataNodes;
-        private XmlObjectSerializerReadContext _context;
+        private readonly XmlObjectSerializerReadContext _context;
 
-        [SecurityCritical]
-        private static Dictionary<string, string> s_nsToPrefixTable;
+        private static readonly Hashtable s_nsToPrefixTable = new Hashtable();
 
-        [SecurityCritical]
-        private static Dictionary<string, string> s_prefixToNsTable;
+        private static readonly Hashtable s_prefixToNsTable = new Hashtable();
 
-        [SecurityCritical]
         static ExtensionDataReader()
         {
-            s_nsToPrefixTable = new Dictionary<string, string>();
-            s_prefixToNsTable = new Dictionary<string, string>();
             AddPrefix(Globals.XsiPrefix, Globals.SchemaInstanceNamespace);
             AddPrefix(Globals.SerPrefix, Globals.SerializationNamespace);
-            AddPrefix(String.Empty, String.Empty);
+            AddPrefix(string.Empty, string.Empty);
         }
 
         internal ExtensionDataReader(XmlObjectSerializerReadContext context)
@@ -74,29 +62,11 @@ namespace System.Runtime.Serialization
             _context = context;
         }
 
-        internal void SetDeserializedValue(object obj)
-        {
-            IDataNode deserializedDataNode = (_deserializedDataNodes == null || _deserializedDataNodes.Count == 0) ? null : _deserializedDataNodes.Dequeue();
-            if (deserializedDataNode != null && !(obj is IDataNode))
-            {
-                deserializedDataNode.Value = obj;
-                deserializedDataNode.IsFinalValue = true;
-            }
-        }
-
         internal IDataNode GetCurrentNode()
         {
             IDataNode retVal = _element.dataNode;
             Skip();
             return retVal;
-        }
-
-        internal void SetDataNode(IDataNode dataNode, string name, string ns)
-        {
-            SetNextElement(dataNode, name, ns, null);
-            _element = _nextElement;
-            _nextElement = null;
-            SetElement();
         }
 
         internal void Reset()
@@ -111,7 +81,6 @@ namespace System.Runtime.Serialization
             _element = null;
             _nextElement = null;
             _elements = null;
-            _deserializedDataNodes = null;
         }
 
         private bool IsXmlDataNode { get { return (_internalNodeType == ExtensionDataNodeType.Xml); } }
@@ -226,21 +195,17 @@ namespace System.Runtime.Serialization
             _localName = _element.localName;
             _ns = _element.ns;
             _prefix = _element.prefix;
-            _value = String.Empty;
+            _value = string.Empty;
             _attributeCount = _element.attributeCount;
             _attributeIndex = -1;
         }
 
-        [SecuritySafeCritical]
         public override string LookupNamespace(string prefix)
         {
             if (IsXmlDataNode)
                 return _xmlNodeReader.LookupNamespace(prefix);
 
-            string ns;
-            if (!s_prefixToNsTable.TryGetValue(prefix, out ns))
-                return null;
-            return ns;
+            return (string)s_prefixToNsTable[prefix];
         }
 
         public override void Skip()
@@ -312,19 +277,19 @@ namespace System.Runtime.Serialization
 
                 case ExtensionDataNodeType.Text:
                     _nodeType = XmlNodeType.Text;
-                    _prefix = String.Empty;
-                    _ns = String.Empty;
-                    _localName = String.Empty;
+                    _prefix = string.Empty;
+                    _ns = string.Empty;
+                    _localName = string.Empty;
                     _attributeCount = 0;
                     _attributeIndex = -1;
                     break;
 
                 case ExtensionDataNodeType.EndElement:
                     _nodeType = XmlNodeType.EndElement;
-                    _prefix = String.Empty;
-                    _ns = String.Empty;
-                    _localName = String.Empty;
-                    _value = String.Empty;
+                    _prefix = string.Empty;
+                    _ns = string.Empty;
+                    _localName = string.Empty;
+                    _value = string.Empty;
                     _attributeCount = 0;
                     _attributeIndex = -1;
                     PopElement();
@@ -334,10 +299,10 @@ namespace System.Runtime.Serialization
                     if (_depth != 0)
                         throw new XmlException(SR.InvalidXmlDeserializingExtensionData);
                     _nodeType = XmlNodeType.None;
-                    _prefix = String.Empty;
-                    _ns = String.Empty;
-                    _localName = String.Empty;
-                    _value = String.Empty;
+                    _prefix = string.Empty;
+                    _ns = string.Empty;
+                    _localName = string.Empty;
+                    _value = string.Empty;
                     _attributeCount = 0;
                     _readState = ReadState.EndOfFile;
                     return false;
@@ -463,203 +428,6 @@ namespace System.Runtime.Serialization
             throw NotImplemented.ByDesign;
         }
 
-        private void SetNextElement(IDataNode node, string name, string ns, string prefix)
-        {
-            throw NotImplemented.ByDesign;
-        }
-
-        private void AddDeserializedDataNode(IDataNode node)
-        {
-            if (node.Id != Globals.NewObjectId && (node.Value == null || !node.IsFinalValue))
-            {
-                if (_deserializedDataNodes == null)
-                    _deserializedDataNodes = new Queue<IDataNode>();
-                _deserializedDataNodes.Enqueue(node);
-            }
-        }
-
-        private bool CheckIfNodeHandled(IDataNode node)
-        {
-            bool handled = false;
-            if (node.Id != Globals.NewObjectId)
-            {
-                handled = (_cache[node] != null);
-                if (handled)
-                {
-                    if (_nextElement == null)
-                        _nextElement = GetNextElement();
-                    _nextElement.attributeCount = 0;
-                    _nextElement.AddAttribute(Globals.SerPrefix, Globals.SerializationNamespace, Globals.RefLocalName, node.Id);
-                    _nextElement.AddAttribute(Globals.XsiPrefix, Globals.SchemaInstanceNamespace, Globals.XsiNilLocalName, Globals.True);
-                    _internalNodeType = ExtensionDataNodeType.ReferencedElement;
-                }
-                else
-                {
-                    _cache.Add(node, node);
-                }
-            }
-            return handled;
-        }
-
-        private void MoveNextInClass(ClassDataNode dataNode)
-        {
-            if (dataNode.Members != null && _element.childElementIndex < dataNode.Members.Count)
-            {
-                if (_element.childElementIndex == 0)
-                    _context.IncrementItemCount(-dataNode.Members.Count);
-
-                ExtensionDataMember member = dataNode.Members[_element.childElementIndex++];
-                SetNextElement(member.Value, member.Name, member.Namespace, GetPrefix(member.Namespace));
-            }
-            else
-            {
-                _internalNodeType = ExtensionDataNodeType.EndElement;
-                _element.childElementIndex = 0;
-            }
-        }
-
-        private void MoveNextInCollection(CollectionDataNode dataNode)
-        {
-            if (dataNode.Items != null && _element.childElementIndex < dataNode.Items.Count)
-            {
-                if (_element.childElementIndex == 0)
-                    _context.IncrementItemCount(-dataNode.Items.Count);
-
-                IDataNode item = dataNode.Items[_element.childElementIndex++];
-                SetNextElement(item, dataNode.ItemName, dataNode.ItemNamespace, GetPrefix(dataNode.ItemNamespace));
-            }
-            else
-            {
-                _internalNodeType = ExtensionDataNodeType.EndElement;
-                _element.childElementIndex = 0;
-            }
-        }
-
-        private void MoveNextInISerializable(ISerializableDataNode dataNode)
-        {
-            if (dataNode.Members != null && _element.childElementIndex < dataNode.Members.Count)
-            {
-                if (_element.childElementIndex == 0)
-                    _context.IncrementItemCount(-dataNode.Members.Count);
-
-                ISerializableDataMember member = dataNode.Members[_element.childElementIndex++];
-                SetNextElement(member.Value, member.Name, String.Empty, String.Empty);
-            }
-            else
-            {
-                _internalNodeType = ExtensionDataNodeType.EndElement;
-                _element.childElementIndex = 0;
-            }
-        }
-
-        private void MoveToDeserializedObject(IDataNode dataNode)
-        {
-            Type type = dataNode.DataType;
-            bool isTypedNode = true;
-            if (type == Globals.TypeOfObject)
-            {
-                type = dataNode.Value.GetType();
-                if (type == Globals.TypeOfObject)
-                {
-                    _internalNodeType = ExtensionDataNodeType.EndElement;
-                    return;
-                }
-                isTypedNode = false;
-            }
-
-            if (!MoveToText(type, dataNode, isTypedNode))
-            {
-                if (dataNode.IsFinalValue)
-                {
-                    _internalNodeType = ExtensionDataNodeType.EndElement;
-                }
-                else
-                {
-                    throw new XmlException(SR.Format(SR.InvalidDataNode, DataContract.GetClrTypeFullName(type)));
-                }
-            }
-        }
-
-        private bool MoveToText(Type type, IDataNode dataNode, bool isTypedNode)
-        {
-            bool handled = true;
-            switch (type.GetTypeCode())
-            {
-                case TypeCode.Boolean:
-                    _value = XmlConvert.ToString(isTypedNode ? ((DataNode<bool>)dataNode).GetValue() : (bool)dataNode.Value);
-                    break;
-                case TypeCode.Char:
-                    _value = XmlConvert.ToString((int)(isTypedNode ? ((DataNode<char>)dataNode).GetValue() : (char)dataNode.Value));
-                    break;
-                case TypeCode.Byte:
-                    _value = XmlConvert.ToString(isTypedNode ? ((DataNode<byte>)dataNode).GetValue() : (byte)dataNode.Value);
-                    break;
-                case TypeCode.Int16:
-                    _value = XmlConvert.ToString(isTypedNode ? ((DataNode<short>)dataNode).GetValue() : (short)dataNode.Value);
-                    break;
-                case TypeCode.Int32:
-                    _value = XmlConvert.ToString(isTypedNode ? ((DataNode<int>)dataNode).GetValue() : (int)dataNode.Value);
-                    break;
-                case TypeCode.Int64:
-                    _value = XmlConvert.ToString(isTypedNode ? ((DataNode<long>)dataNode).GetValue() : (long)dataNode.Value);
-                    break;
-                case TypeCode.Single:
-                    _value = XmlConvert.ToString(isTypedNode ? ((DataNode<float>)dataNode).GetValue() : (float)dataNode.Value);
-                    break;
-                case TypeCode.Double:
-                    _value = XmlConvert.ToString(isTypedNode ? ((DataNode<double>)dataNode).GetValue() : (double)dataNode.Value);
-                    break;
-                case TypeCode.Decimal:
-                    _value = XmlConvert.ToString(isTypedNode ? ((DataNode<decimal>)dataNode).GetValue() : (decimal)dataNode.Value);
-                    break;
-                case TypeCode.DateTime:
-                    DateTime dateTime = isTypedNode ? ((DataNode<DateTime>)dataNode).GetValue() : (DateTime)dataNode.Value;
-                    _value = dateTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffK", DateTimeFormatInfo.InvariantInfo);
-                    break;
-                case TypeCode.String:
-                    _value = isTypedNode ? ((DataNode<string>)dataNode).GetValue() : (string)dataNode.Value;
-                    break;
-                case TypeCode.SByte:
-                    _value = XmlConvert.ToString(isTypedNode ? ((DataNode<sbyte>)dataNode).GetValue() : (sbyte)dataNode.Value);
-                    break;
-                case TypeCode.UInt16:
-                    _value = XmlConvert.ToString(isTypedNode ? ((DataNode<ushort>)dataNode).GetValue() : (ushort)dataNode.Value);
-                    break;
-                case TypeCode.UInt32:
-                    _value = XmlConvert.ToString(isTypedNode ? ((DataNode<uint>)dataNode).GetValue() : (uint)dataNode.Value);
-                    break;
-                case TypeCode.UInt64:
-                    _value = XmlConvert.ToString(isTypedNode ? ((DataNode<ulong>)dataNode).GetValue() : (ulong)dataNode.Value);
-                    break;
-                case TypeCode.Object:
-                default:
-                    if (type == Globals.TypeOfByteArray)
-                    {
-                        byte[] bytes = isTypedNode ? ((DataNode<byte[]>)dataNode).GetValue() : (byte[])dataNode.Value;
-                        _value = (bytes == null) ? String.Empty : Convert.ToBase64String(bytes);
-                    }
-                    else if (type == Globals.TypeOfTimeSpan)
-                        _value = XmlConvert.ToString(isTypedNode ? ((DataNode<TimeSpan>)dataNode).GetValue() : (TimeSpan)dataNode.Value);
-                    else if (type == Globals.TypeOfGuid)
-                    {
-                        Guid guid = isTypedNode ? ((DataNode<Guid>)dataNode).GetValue() : (Guid)dataNode.Value;
-                        _value = guid.ToString();
-                    }
-                    else if (type == Globals.TypeOfUri)
-                    {
-                        Uri uri = isTypedNode ? ((DataNode<Uri>)dataNode).GetValue() : (Uri)dataNode.Value;
-                        _value = uri.GetComponents(UriComponents.SerializationInfoString, UriFormat.UriEscaped);
-                    }
-                    else
-                        handled = false;
-                    break;
-            }
-
-            if (handled)
-                _internalNodeType = ExtensionDataNodeType.Text;
-            return handled;
-        }
-
         private void PushElement()
         {
             GrowElementsIfNeeded();
@@ -709,18 +477,18 @@ namespace System.Runtime.Serialization
                 ? new ElementData() : _elements[nextDepth];
         }
 
-        [SecuritySafeCritical]
         internal static string GetPrefix(string ns)
         {
-            string prefix;
-            ns = ns ?? String.Empty;
-            if (!s_nsToPrefixTable.TryGetValue(ns, out prefix))
+            ns = ns ?? string.Empty;
+            string prefix = (string)s_nsToPrefixTable[ns];
+            if (prefix == null)
             {
-                lock (s_nsToPrefixTable)
+                lock (s_prefixLock)
                 {
-                    if (!s_nsToPrefixTable.TryGetValue(ns, out prefix))
+                    prefix = (string)s_nsToPrefixTable[ns];
+                    if (prefix == null)
                     {
-                        prefix = (ns == null || ns.Length == 0) ? String.Empty : "p" + s_nsToPrefixTable.Count;
+                        prefix = (ns == null || ns.Length == 0) ? string.Empty : "p" + s_nsToPrefixTable.Count;
                         AddPrefix(prefix, ns);
                     }
                 }
@@ -728,7 +496,6 @@ namespace System.Runtime.Serialization
             return prefix;
         }
 
-        [SecuritySafeCritical]
         private static void AddPrefix(string prefix, string ns)
         {
             s_nsToPrefixTable.Add(ns, prefix);
@@ -788,4 +555,3 @@ namespace System.Runtime.Serialization
         }
     }
 }
-

@@ -1,14 +1,14 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace System.IO.FileSystem.Tests
+namespace System.IO.Tests
 {
     public static class FSAssert
     {
@@ -18,50 +18,39 @@ namespace System.IO.FileSystem.Tests
             Assert.True(e is UnauthorizedAccessException || e is IOException, "Exception should be either UnauthorizedAccessException or IOException: " + e.ToString());
         }
 
-        public static void CompletesSynchronously(Task task, bool permitFaultedTask = false)
+        public static void CompletesSynchronously(Task task)
         {
             // The purpose of this method is to try and ensure that a task does a particular
             // piece of work (like return a result or throw) synchronously.
 
-            // We cannot use Task's IAsyncResult implementation since it doesn't set 
+            // We cannot use Task's IAsyncResult implementation since it doesn't set
             // CompletedSynchronously to anything but false.
 
             TaskStatus status = task.Status;
 
-            if (status == TaskStatus.Faulted)
-            {
-                // If an API is expected to return a faulted task instead of throwing synchronously
-                // then permit this.
-                if (permitFaultedTask)
-                {
-                    // Could have happened synchronously. Don't assert but trigger the exception
-                    task.GetAwaiter().GetResult();
-                }
-                else
-                {
-                    Assert.True(false, "Should throw synchronously, but instead returned faulted task");
-                }
-            }
-            else if (status == TaskStatus.Canceled)
+            Assert.NotEqual(TaskStatus.Faulted, status);
+
+            if (status == TaskStatus.Canceled)
             {
                 // Could have happened synchronously. Don't assert but trigger the exception
                 task.GetAwaiter().GetResult();
             }
-            else if (status != TaskStatus.RanToCompletion)
+            else
             {
                 // first wait for the task to complete without throwing
                 ((IAsyncResult)task).AsyncWaitHandle.WaitOne();
 
-                // now assert, we ignore the result of the task intentionally
-                Assert.True(false, "Should complete synchronously");
+                // now assert, we ignore the result of the task intentionally,
+                // As it previously did not complete synchronously.
+                Assert.Equal(TaskStatus.RanToCompletion, status);
             }
 
             return;
         }
 
-        public static T CompletesSynchronously<T>(Task<T> task, bool permitFaultedTask = false)
+        public static T CompletesSynchronously<T>(Task<T> task)
         {
-            CompletesSynchronously((Task)task, permitFaultedTask);
+            CompletesSynchronously((Task)task);
 
             // this should not throw or wait since we waited above and threw
             // when it didn't complete synchronously.
@@ -74,6 +63,11 @@ namespace System.IO.FileSystem.Tests
             OperationCanceledException tce = Assert.ThrowsAny<OperationCanceledException>(() => task.GetAwaiter().GetResult());
             Assert.NotNull(tce);
             Assert.Equal(ct, tce.CancellationToken);
+        }
+
+        public static void EqualWhenOrdered<T>(IEnumerable<T> expected, IEnumerable<T> actual)
+        {
+            Assert.Equal(expected.OrderBy(e => e).Select(o => o), actual.OrderBy(a => a).Select(o => o));
         }
     }
 }

@@ -1,7 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-//------------------------------------------------------------
-//------------------------------------------------------------
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.IO;
@@ -26,23 +25,23 @@ namespace System.Xml
 
     internal abstract class XmlBaseReader : XmlDictionaryReader
     {
-        private XmlBufferReader _bufferReader;
+        private readonly XmlBufferReader _bufferReader;
         private XmlNode _node;
-        private NamespaceManager _nsMgr;
+        private readonly NamespaceManager _nsMgr;
         private XmlElementNode[] _elementNodes;
         private XmlAttributeNode[] _attributeNodes;
-        private XmlAtomicTextNode _atomicTextNode;
+        private readonly XmlAtomicTextNode _atomicTextNode;
         private int _depth;
         private int _attributeCount;
         private int _attributeStart;    // Starting index for searching
-        private XmlDictionaryReaderQuotas _quotas;
+        private readonly XmlDictionaryReaderQuotas _quotas;
         private XmlNameTable _nameTable;
         private XmlDeclarationNode _declarationNode;
         private XmlComplexTextNode _complexTextNode;
         private XmlWhitespaceTextNode _whitespaceTextNode;
         private XmlCDataNode _cdataNode;
         private XmlCommentNode _commentNode;
-        private XmlElementNode _rootElementNode;
+        private readonly XmlElementNode _rootElementNode;
         private int _attributeIndex;    // Index for iteration
         private char[] _chars;
         private string _prefix;
@@ -56,21 +55,23 @@ namespace System.Xml
         private bool _rootElement;
         private bool _readingElement;
         private AttributeSorter _attributeSorter;
-        private static XmlInitialNode s_initialNode = new XmlInitialNode(XmlBufferReader.Empty);
-        private static XmlEndOfFileNode s_endOfFileNode = new XmlEndOfFileNode(XmlBufferReader.Empty);
-        private static XmlClosedNode s_closedNode = new XmlClosedNode(XmlBufferReader.Empty);
+        private static readonly XmlInitialNode s_initialNode = new XmlInitialNode(XmlBufferReader.Empty);
+        private static readonly XmlEndOfFileNode s_endOfFileNode = new XmlEndOfFileNode(XmlBufferReader.Empty);
+        private static readonly XmlClosedNode s_closedNode = new XmlClosedNode(XmlBufferReader.Empty);
         private static Base64Encoding s_base64Encoding;
+        private static BinHexEncoding s_binHexEncoding;
         private const string xmlns = "xmlns";
         private const string xml = "xml";
         private const string xmlnsNamespace = "http://www.w3.org/2000/xmlns/";
         private const string xmlNamespace = "http://www.w3.org/XML/1998/namespace";
-
+        private XmlSigningNodeWriter _signingWriter;
+        private bool _signing;
 
         protected XmlBaseReader()
         {
             _bufferReader = new XmlBufferReader(this);
             _nsMgr = new NamespaceManager(_bufferReader);
-            _quotas = XmlDictionaryReaderQuotas.Max;
+            _quotas = new XmlDictionaryReaderQuotas();
             _rootElementNode = new XmlElementNode(_bufferReader);
             _atomicTextNode = new XmlAtomicTextNode(_bufferReader);
             _node = s_closedNode;
@@ -87,11 +88,29 @@ namespace System.Xml
             }
         }
 
+        private static BinHexEncoding BinHexEncoding
+        {
+            get
+            {
+                if (s_binHexEncoding == null)
+                    s_binHexEncoding = new BinHexEncoding();
+                return s_binHexEncoding;
+            }
+        }
+
         protected XmlBufferReader BufferReader
         {
             get
             {
                 return _bufferReader;
+            }
+        }
+
+        public override XmlDictionaryReaderQuotas Quotas
+        {
+            get
+            {
+                return _quotas;
             }
         }
 
@@ -114,6 +133,11 @@ namespace System.Xml
 
         protected void MoveToInitial(XmlDictionaryReaderQuotas quotas)
         {
+            if (quotas == null)
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(quotas));
+
+            quotas.InternalCopyTo(_quotas);
+            _quotas.MakeReadOnly();
             _nsMgr.Clear();
             _depth = 0;
             _attributeCount = 0;
@@ -127,27 +151,27 @@ namespace System.Xml
         protected XmlDeclarationNode MoveToDeclaration()
         {
             if (_attributeCount < 1)
-                XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.Format(SR.XmlDeclMissingVersion)));
+                XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.XmlDeclMissingVersion));
 
             if (_attributeCount > 3)
-                XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.Format(SR.XmlMalformedDecl)));
+                XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.XmlMalformedDecl));
 
             // version
             if (!CheckDeclAttribute(0, "version", "1.0", false, SR.XmlInvalidVersion))
-                XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.Format(SR.XmlDeclMissingVersion)));
+                XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.XmlDeclMissingVersion));
 
             // encoding/standalone
             // We only validate that they are the only attributes that exist.  Encoding can have any value.
             if (_attributeCount > 1)
             {
-                if (CheckDeclAttribute(1, "encoding", null, true, SR.XmlInvalidEncoding))
+                if (CheckDeclAttribute(1, "encoding", null, true, SR.XmlInvalidEncoding_UTF8))
                 {
                     if (_attributeCount == 3 && !CheckStandalone(2))
-                        XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.Format(SR.XmlMalformedDecl)));
+                        XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.XmlMalformedDecl));
                 }
                 else if (!CheckStandalone(1) || _attributeCount > 2)
                 {
-                    XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.Format(SR.XmlMalformedDecl)));
+                    XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.XmlMalformedDecl));
                 }
             }
 
@@ -163,13 +187,13 @@ namespace System.Xml
         {
             XmlAttributeNode node = _attributeNodes[attr];
             if (!node.Prefix.IsEmpty)
-                XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.Format(SR.XmlMalformedDecl)));
+                XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.XmlMalformedDecl));
 
             if (node.LocalName != "standalone")
                 return false;
 
             if (!node.Value.Equals2("yes", false) && !node.Value.Equals2("no", false))
-                XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.Format(SR.XmlInvalidStandalone)));
+                XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.XmlInvalidStandalone));
 
             return true;
         }
@@ -178,7 +202,7 @@ namespace System.Xml
         {
             XmlAttributeNode node = _attributeNodes[index];
             if (!node.Prefix.IsEmpty)
-                XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.Format(SR.XmlMalformedDecl)));
+                XmlExceptionHelper.ThrowXmlException(this, new XmlException(SR.XmlMalformedDecl));
 
             if (node.LocalName != localName)
                 return false;
@@ -276,6 +300,8 @@ namespace System.Xml
             }
             _nsMgr.EnterScope();
             _depth++;
+            if (_depth > _quotas.MaxDepth)
+                XmlExceptionHelper.ThrowMaxDepthExceeded(this, _quotas.MaxDepth);
             if (_elementNodes == null)
             {
                 _elementNodes = new XmlElementNode[4];
@@ -283,7 +309,7 @@ namespace System.Xml
             else if (_elementNodes.Length == _depth)
             {
                 XmlElementNode[] newElementNodes = new XmlElementNode[_depth * 2];
-                Array.Copy(_elementNodes, newElementNodes, _depth);
+                Array.Copy(_elementNodes, 0, newElementNodes, 0, _depth);
                 _elementNodes = newElementNodes;
             }
             XmlElementNode elementNode = _elementNodes[_depth];
@@ -317,7 +343,7 @@ namespace System.Xml
             else if (_attributeNodes.Length == attributeIndex)
             {
                 XmlAttributeNode[] newAttributeNodes = new XmlAttributeNode[attributeIndex * 2];
-                Array.Copy(_attributeNodes, newAttributeNodes, attributeIndex);
+                Array.Copy(_attributeNodes, 0, newAttributeNodes, 0, attributeIndex);
                 _attributeNodes = newAttributeNodes;
             }
             XmlAttributeNode attributeNode = _attributeNodes[attributeIndex];
@@ -477,6 +503,8 @@ namespace System.Xml
                 _elementNodes = null;
             _nsMgr.Close();
             _bufferReader.Close();
+            if (_signingWriter != null)
+                _signingWriter.Close();
             if (_attributeSorter != null)
                 _attributeSorter.Close();
         }
@@ -507,18 +535,18 @@ namespace System.Xml
         private XmlAttributeNode GetAttributeNode(int index)
         {
             if (!_node.CanGetAttribute)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("index", SR.Format(SR.XmlElementAttributes)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(index), SR.XmlElementAttributes));
             if (index < 0)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("index", SR.Format(SR.ValueMustBeNonNegative)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(index), SR.ValueMustBeNonNegative));
             if (index >= _attributeCount)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("index", SR.Format(SR.OffsetExceedsBufferSize, _attributeCount)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(index), SR.Format(SR.OffsetExceedsBufferSize, _attributeCount)));
             return _attributeNodes[index];
         }
 
         private XmlAttributeNode GetAttributeNode(string name)
         {
             if (name == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("name"));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(name)));
             if (!_node.CanGetAttribute)
                 return null;
             int index = name.IndexOf(':');
@@ -566,7 +594,7 @@ namespace System.Xml
         private XmlAttributeNode GetAttributeNode(string localName, string namespaceUri)
         {
             if (localName == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("localName"));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(localName)));
             if (namespaceUri == null)
                 namespaceUri = string.Empty;
             if (!_node.CanGetAttribute)
@@ -593,7 +621,7 @@ namespace System.Xml
         private XmlAttributeNode GetAttributeNode(XmlDictionaryString localName, XmlDictionaryString namespaceUri)
         {
             if (localName == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("localName"));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(localName)));
             if (namespaceUri == null)
                 namespaceUri = XmlDictionaryString.Empty;
             if (!_node.CanGetAttribute)
@@ -965,27 +993,27 @@ namespace System.Xml
         public override bool IsLocalName(string localName)
         {
             if (localName == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("localName"));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(localName)));
             return _node.IsLocalName(localName);
         }
 
         public override bool IsLocalName(XmlDictionaryString localName)
         {
             if (localName == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("localName"));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(localName)));
             return _node.IsLocalName(localName);
         }
         public override bool IsNamespaceUri(string namespaceUri)
         {
             if (namespaceUri == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull("namespaceUri");
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(namespaceUri));
             return _node.IsNamespaceUri(namespaceUri);
         }
 
         public override bool IsNamespaceUri(XmlDictionaryString namespaceUri)
         {
             if (namespaceUri == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull("namespaceUri");
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(namespaceUri));
             return _node.IsNamespaceUri(namespaceUri);
         }
         public override sealed bool IsStartElement()
@@ -1036,18 +1064,18 @@ namespace System.Xml
         public override bool IsStartElement(XmlDictionaryString localName, XmlDictionaryString namespaceUri)
         {
             if (localName == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull("localName");
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(localName));
             if (namespaceUri == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull("namespaceUri");
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(namespaceUri));
             return (_node.NodeType == XmlNodeType.Element || IsStartElement()) && _node.LocalName == localName && _node.IsNamespaceUri(namespaceUri);
         }
 
         public override int IndexOfLocalName(string[] localNames, string namespaceUri)
         {
             if (localNames == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull("localNames");
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(localNames));
             if (namespaceUri == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull("namespaceUri");
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(namespaceUri));
             QNameType qnameType = _node.QNameType;
             if (_node.IsNamespaceUri(namespaceUri))
             {
@@ -1087,9 +1115,9 @@ namespace System.Xml
         public override int IndexOfLocalName(XmlDictionaryString[] localNames, XmlDictionaryString namespaceUri)
         {
             if (localNames == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull("localNames");
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(localNames));
             if (namespaceUri == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull("namespaceUri");
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(namespaceUri));
             QNameType qnameType = _node.QNameType;
             if (_node.IsNamespaceUri(namespaceUri))
             {
@@ -1129,15 +1157,15 @@ namespace System.Xml
         public override int ReadValueChunk(char[] chars, int offset, int count)
         {
             if (chars == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("chars"));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(chars)));
             if (offset < 0)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("offset", SR.Format(SR.ValueMustBeNonNegative)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(offset), SR.ValueMustBeNonNegative));
             if (offset > chars.Length)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("offset", SR.Format(SR.OffsetExceedsBufferSize, chars.Length)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(offset), SR.Format(SR.OffsetExceedsBufferSize, chars.Length)));
             if (count < 0)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("count", SR.Format(SR.ValueMustBeNonNegative)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(count), SR.ValueMustBeNonNegative));
             if (count > chars.Length - offset)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("count", SR.Format(SR.SizeExceedsRemainingBufferSpace, chars.Length - offset)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(count), SR.Format(SR.SizeExceedsRemainingBufferSpace, chars.Length - offset)));
             int actual;
 
             if (_value == null)
@@ -1159,15 +1187,15 @@ namespace System.Xml
         public override int ReadValueAsBase64(byte[] buffer, int offset, int count)
         {
             if (buffer == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("buffer"));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(buffer)));
             if (offset < 0)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("offset", SR.Format(SR.ValueMustBeNonNegative)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(offset), SR.ValueMustBeNonNegative));
             if (offset > buffer.Length)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("offset", SR.Format(SR.OffsetExceedsBufferSize, buffer.Length)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(offset), SR.Format(SR.OffsetExceedsBufferSize, buffer.Length)));
             if (count < 0)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("count", SR.Format(SR.ValueMustBeNonNegative)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(count), SR.ValueMustBeNonNegative));
             if (count > buffer.Length - offset)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("count", SR.Format(SR.SizeExceedsRemainingBufferSpace, buffer.Length - offset)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(count), SR.Format(SR.SizeExceedsRemainingBufferSpace, buffer.Length - offset)));
             if (count == 0)
                 return 0;
             int actual;
@@ -1228,7 +1256,7 @@ namespace System.Xml
             {
                 int nodeDepth = _node.NodeType == XmlNodeType.Element ? _depth - 1 : _depth;
                 if (nodeDepth == 0)
-                    throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.XmlEndElementNoOpenNodes)));
+                    throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.XmlEndElementNoOpenNodes));
                 // If depth is non-zero, then the document isn't what was expected
                 XmlElementNode elementNode = _elementNodes[nodeDepth];
                 XmlExceptionHelper.ThrowEndElementExpected(this, elementNode.LocalName.GetString(), elementNode.Namespace.Uri.GetString());
@@ -1319,15 +1347,15 @@ namespace System.Xml
         public override int ReadContentAsBase64(byte[] buffer, int offset, int count)
         {
             if (buffer == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("buffer"));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(buffer)));
             if (offset < 0)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("offset", SR.Format(SR.ValueMustBeNonNegative)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(offset), SR.ValueMustBeNonNegative));
             if (offset > buffer.Length)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("offset", SR.Format(SR.OffsetExceedsBufferSize, buffer.Length)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(offset), SR.Format(SR.OffsetExceedsBufferSize, buffer.Length)));
             if (count < 0)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("count", SR.Format(SR.ValueMustBeNonNegative)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(count), SR.ValueMustBeNonNegative));
             if (count > buffer.Length - offset)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("count", SR.Format(SR.SizeExceedsRemainingBufferSpace, buffer.Length - offset)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(count), SR.Format(SR.SizeExceedsRemainingBufferSpace, buffer.Length - offset)));
             if (count == 0)
                 return 0;
             int actual;
@@ -1349,6 +1377,52 @@ namespace System.Xml
             return ReadBytes(Base64Encoding, 3, 4, buffer, offset, Math.Min(count, 512), true);
         }
 
+        public override byte[] ReadContentAsBinHex()
+        {
+            return ReadContentAsBinHex(_quotas.MaxArrayLength);
+        }
+
+        public override int ReadContentAsBinHex(byte[] buffer, int offset, int count)
+        {
+            if (buffer == null)
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(buffer)));
+            if (offset < 0)
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(offset), SR.ValueMustBeNonNegative));
+            if (offset > buffer.Length)
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(offset), SR.Format(SR.OffsetExceedsBufferSize, buffer.Length)));
+            if (count < 0)
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(count), SR.ValueMustBeNonNegative));
+            if (count > buffer.Length - offset)
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(count), SR.Format(SR.SizeExceedsRemainingBufferSpace, buffer.Length - offset)));
+            if (count == 0)
+                return 0;
+            return ReadBytes(BinHexEncoding, 1, 2, buffer, offset, Math.Min(count, 512), true);
+        }
+
+        public override int ReadElementContentAsBinHex(byte[] buffer, int offset, int count)
+        {
+            if (!_readingElement)
+            {
+                if (IsEmptyElement)
+                {
+                    Read();
+                    return 0;
+                }
+
+                ReadStartElement();
+                _readingElement = true;
+            }
+
+            int i = ReadContentAsBinHex(buffer, offset, count);
+
+            if (i == 0)
+            {
+                ReadEndElement();
+                _readingElement = false;
+            }
+
+            return i;
+        }
 
         private int ReadBytes(Encoding encoding, int byteBlock, int charBlock, byte[] buffer, int offset, int byteCount, bool readContent)
         {
@@ -1356,9 +1430,9 @@ namespace System.Xml
             if (_trailByteCount > 0)
             {
                 int actual = Math.Min(_trailByteCount, byteCount);
-                Array.Copy(_trailBytes, 0, buffer, offset, actual);
+                Buffer.BlockCopy(_trailBytes, 0, buffer, offset, actual);
                 _trailByteCount -= actual;
-                Array.Copy(_trailBytes, actual, _trailBytes, 0, _trailByteCount);
+                Buffer.BlockCopy(_trailBytes, actual, _trailBytes, 0, _trailByteCount);
                 return actual;
             }
             XmlNodeType nodeType = _node.NodeType;
@@ -1391,9 +1465,17 @@ namespace System.Xml
                 {
                     int actualCharCount;
                     if (readContent)
+                    {
                         actualCharCount = ReadContentAsChars(chars, charCount, maxCharCount - charCount);
+                        // When deserializing base64 content which contains new line chars (CR, LF) chars from ReadObject, the reader reads in chunks of base64 content, LF char, base64 content, LF char and so on
+                        // Relying on encoding.GetBytes' exception to handle LF char would result in performance degradation so skipping LF char here
+                        if (actualCharCount == 1 && chars[charCount] == '\n')
+                            continue;
+                    }
                     else
+                    {
                         actualCharCount = ReadValueChunk(chars, charCount, maxCharCount - charCount);
+                    }
                     if (actualCharCount == 0)
                         break;
                     charCount += actualCharCount;
@@ -1418,9 +1500,9 @@ namespace System.Xml
                             _trailBytes = new byte[3];
                         _trailByteCount = encoding.GetBytes(chars, 0, charCount, _trailBytes, 0);
                         int actual = Math.Min(_trailByteCount, byteCount);
-                        Array.Copy(_trailBytes, 0, buffer, offset, actual);
+                        Buffer.BlockCopy(_trailBytes, 0, buffer, offset, actual);
                         _trailByteCount -= actual;
-                        Array.Copy(_trailBytes, actual, _trailBytes, 0, _trailByteCount);
+                        Buffer.BlockCopy(_trailBytes, actual, _trailBytes, 0, _trailByteCount);
                         return actual;
                     }
                     else
@@ -1466,13 +1548,15 @@ namespace System.Xml
                 {
                     value = node.Value.GetString();
                     SkipValue(node);
+                    if (value.Length > _quotas.MaxStringContentLength)
+                        XmlExceptionHelper.ThrowMaxStringContentLengthExceeded(this, _quotas.MaxStringContentLength);
                 }
                 return value;
             }
             return base.ReadContentAsString(_quotas.MaxStringContentLength);
         }
 
-        public override Boolean ReadContentAsBoolean()
+        public override bool ReadContentAsBoolean()
         {
             XmlNode node = this.Node;
             if (_value == null && node.IsAtomicValue)
@@ -1484,31 +1568,31 @@ namespace System.Xml
             return XmlConverter.ToBoolean(ReadContentAsString());
         }
 
-        public override Int64 ReadContentAsLong()
+        public override long ReadContentAsLong()
         {
             XmlNode node = this.Node;
             if (_value == null && node.IsAtomicValue)
             {
-                Int64 value = node.Value.ToLong();
+                long value = node.Value.ToLong();
                 SkipValue(node);
                 return value;
             }
             return XmlConverter.ToInt64(ReadContentAsString());
         }
 
-        public override Int32 ReadContentAsInt()
+        public override int ReadContentAsInt()
         {
             XmlNode node = this.Node;
             if (_value == null && node.IsAtomicValue)
             {
-                Int32 value = node.Value.ToInt();
+                int value = node.Value.ToInt();
                 SkipValue(node);
                 return value;
             }
             return XmlConverter.ToInt32(ReadContentAsString());
         }
 
-        public DateTime ReadContentAsDateTime()
+        public override DateTime ReadContentAsDateTime()
         {
             XmlNode node = this.Node;
             if (_value == null && node.IsAtomicValue)
@@ -1520,7 +1604,7 @@ namespace System.Xml
             return XmlConverter.ToDateTime(ReadContentAsString());
         }
 
-        public override Double ReadContentAsDouble()
+        public override double ReadContentAsDouble()
         {
             XmlNode node = this.Node;
             if (_value == null && node.IsAtomicValue)
@@ -1532,7 +1616,7 @@ namespace System.Xml
             return XmlConverter.ToDouble(ReadContentAsString());
         }
 
-        public override Single ReadContentAsFloat()
+        public override float ReadContentAsFloat()
         {
             XmlNode node = this.Node;
             if (_value == null && node.IsAtomicValue)
@@ -1544,7 +1628,7 @@ namespace System.Xml
             return XmlConverter.ToSingle(ReadContentAsString());
         }
 
-        public override Decimal ReadContentAsDecimal()
+        public override decimal ReadContentAsDecimal()
         {
             XmlNode node = this.Node;
             if (_value == null && node.IsAtomicValue)
@@ -1647,7 +1731,7 @@ namespace System.Xml
 
         public override void ResolveEntity()
         {
-            throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.XmlInvalidOperation)));
+            throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.XmlInvalidOperation));
         }
 
         public override void Skip()
@@ -1731,32 +1815,32 @@ namespace System.Xml
             return _node.TryGetValueAsDictionaryString(out value);
         }
 
-        public override Int16[] ReadInt16Array(string localName, string namespaceUri)
+        public override short[] ReadInt16Array(string localName, string namespaceUri)
         {
             return Int16ArrayHelperWithString.Instance.ReadArray(this, localName, namespaceUri, _quotas.MaxArrayLength);
         }
 
-        public override Int16[] ReadInt16Array(XmlDictionaryString localName, XmlDictionaryString namespaceUri)
+        public override short[] ReadInt16Array(XmlDictionaryString localName, XmlDictionaryString namespaceUri)
         {
             return Int16ArrayHelperWithDictionaryString.Instance.ReadArray(this, localName, namespaceUri, _quotas.MaxArrayLength);
         }
 
-        public override Int32[] ReadInt32Array(string localName, string namespaceUri)
+        public override int[] ReadInt32Array(string localName, string namespaceUri)
         {
             return Int32ArrayHelperWithString.Instance.ReadArray(this, localName, namespaceUri, _quotas.MaxArrayLength);
         }
 
-        public override Int32[] ReadInt32Array(XmlDictionaryString localName, XmlDictionaryString namespaceUri)
+        public override int[] ReadInt32Array(XmlDictionaryString localName, XmlDictionaryString namespaceUri)
         {
             return Int32ArrayHelperWithDictionaryString.Instance.ReadArray(this, localName, namespaceUri, _quotas.MaxArrayLength);
         }
 
-        public override Int64[] ReadInt64Array(string localName, string namespaceUri)
+        public override long[] ReadInt64Array(string localName, string namespaceUri)
         {
             return Int64ArrayHelperWithString.Instance.ReadArray(this, localName, namespaceUri, _quotas.MaxArrayLength);
         }
 
-        public override Int64[] ReadInt64Array(XmlDictionaryString localName, XmlDictionaryString namespaceUri)
+        public override long[] ReadInt64Array(XmlDictionaryString localName, XmlDictionaryString namespaceUri)
         {
             return Int64ArrayHelperWithDictionaryString.Instance.ReadArray(this, localName, namespaceUri, _quotas.MaxArrayLength);
         }
@@ -1845,6 +1929,128 @@ namespace System.Xml
             return _chars;
         }
 
+        private void SignStartElement(XmlSigningNodeWriter writer)
+        {
+            int prefixOffset, prefixLength;
+            byte[] prefixBuffer = _node.Prefix.GetString(out prefixOffset, out prefixLength);
+            int localNameOffset, localNameLength;
+            byte[] localNameBuffer = _node.LocalName.GetString(out localNameOffset, out localNameLength);
+            writer.WriteStartElement(prefixBuffer, prefixOffset, prefixLength, localNameBuffer, localNameOffset, localNameLength);
+        }
+
+        private void SignAttribute(XmlSigningNodeWriter writer, XmlAttributeNode attributeNode)
+        {
+            QNameType qnameType = attributeNode.QNameType;
+            if (qnameType == QNameType.Normal)
+            {
+                int prefixOffset, prefixLength;
+                byte[] prefixBuffer = attributeNode.Prefix.GetString(out prefixOffset, out prefixLength);
+                int localNameOffset, localNameLength;
+                byte[] localNameBuffer = attributeNode.LocalName.GetString(out localNameOffset, out localNameLength);
+                writer.WriteStartAttribute(prefixBuffer, prefixOffset, prefixLength, localNameBuffer, localNameOffset, localNameLength);
+                attributeNode.Value.Sign(writer);
+                writer.WriteEndAttribute();
+            }
+            else
+            {
+                Fx.Assert(qnameType == QNameType.Xmlns, "");
+                int prefixOffset, prefixLength;
+                byte[] prefixBuffer = attributeNode.Namespace.Prefix.GetString(out prefixOffset, out prefixLength);
+                int nsOffset, nsLength;
+                byte[] nsBuffer = attributeNode.Namespace.Uri.GetString(out nsOffset, out nsLength);
+                writer.WriteXmlnsAttribute(prefixBuffer, prefixOffset, prefixLength, nsBuffer, nsOffset, nsLength);
+            }
+        }
+
+        private void SignEndElement(XmlSigningNodeWriter writer)
+        {
+            int prefixOffset, prefixLength;
+            byte[] prefixBuffer = _node.Prefix.GetString(out prefixOffset, out prefixLength);
+            int localNameOffset, localNameLength;
+            byte[] localNameBuffer = _node.LocalName.GetString(out localNameOffset, out localNameLength);
+            writer.WriteEndElement(prefixBuffer, prefixOffset, prefixLength, localNameBuffer, localNameOffset, localNameLength);
+        }
+
+        private void SignNode(XmlSigningNodeWriter writer)
+        {
+            switch (_node.NodeType)
+            {
+                case XmlNodeType.None:
+                    break;
+                case XmlNodeType.Element:
+                    SignStartElement(writer);
+                    for (int i = 0; i < _attributeCount; i++)
+                        SignAttribute(writer, _attributeNodes[i]);
+                    writer.WriteEndStartElement(_node.IsEmptyElement);
+                    break;
+                case XmlNodeType.Text:
+                case XmlNodeType.Whitespace:
+                case XmlNodeType.SignificantWhitespace:
+                case XmlNodeType.CDATA:
+                    _node.Value.Sign(writer);
+                    break;
+                case XmlNodeType.XmlDeclaration:
+                    writer.WriteDeclaration();
+                    break;
+                case XmlNodeType.Comment:
+                    writer.WriteComment(_node.Value.GetString());
+                    break;
+                case XmlNodeType.EndElement:
+                    SignEndElement(writer);
+                    break;
+                default:
+                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException());
+            }
+        }
+
+        public override bool CanCanonicalize
+        {
+            get
+            {
+                return true;
+            }
+        }
+
+        protected bool Signing
+        {
+            get
+            {
+                return _signing;
+            }
+        }
+
+        protected void SignNode()
+        {
+            if (_signing)
+            {
+                SignNode(_signingWriter);
+            }
+        }
+
+        public override void StartCanonicalization(Stream stream, bool includeComments, string[] inclusivePrefixes)
+        {
+            if (_signing)
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.XmlCanonicalizationStarted));
+
+            if (_signingWriter == null)
+                _signingWriter = CreateSigningNodeWriter();
+
+            _signingWriter.SetOutput(XmlNodeWriter.Null, stream, includeComments, inclusivePrefixes);
+            _nsMgr.Sign(_signingWriter);
+            _signing = true;
+        }
+
+        public override void EndCanonicalization()
+        {
+            if (!_signing)
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.XmlCanonicalizationNotStarted));
+
+            _signingWriter.Flush();
+            _signingWriter.Close();
+            _signing = false;
+        }
+
+        protected abstract XmlSigningNodeWriter CreateSigningNodeWriter();
 
         protected enum QNameType
         {
@@ -1855,21 +2061,21 @@ namespace System.Xml
         protected class XmlNode
         {
             private XmlNodeType _nodeType;
-            private PrefixHandle _prefix;
-            private StringHandle _localName;
-            private ValueHandle _value;
+            private readonly PrefixHandle _prefix;
+            private readonly StringHandle _localName;
+            private readonly ValueHandle _value;
             private Namespace _ns;
-            private bool _hasValue;
-            private bool _canGetAttribute;
-            private bool _canMoveToElement;
-            private ReadState _readState;
-            private XmlAttributeTextNode _attributeTextNode;
+            private readonly bool _hasValue;
+            private readonly bool _canGetAttribute;
+            private readonly bool _canMoveToElement;
+            private readonly ReadState _readState;
+            private readonly XmlAttributeTextNode _attributeTextNode;
             private bool _exitScope;
-            private int _depthDelta;
+            private readonly int _depthDelta;
             private bool _isAtomicValue;
-            private bool _skipValue;
+            private readonly bool _skipValue;
             private QNameType _qnameType;
-            private bool _hasContent;
+            private readonly bool _hasContent;
             private bool _isEmptyElement;
             private char _quoteChar;
 
@@ -2167,7 +2373,7 @@ namespace System.Xml
 
         protected class XmlElementNode : XmlNode
         {
-            private XmlEndElementNode _endElementNode;
+            private readonly XmlEndElementNode _endElementNode;
             private int _bufferOffset;
 
             public XmlElementNode(XmlBufferReader bufferReader)
@@ -2514,12 +2720,12 @@ namespace System.Xml
 
         private class NamespaceManager
         {
-            private XmlBufferReader _bufferReader;
+            private readonly XmlBufferReader _bufferReader;
             private Namespace[] _namespaces;
             private int _nsCount;
             private int _depth;
-            private Namespace[] _shortPrefixUri;
-            private static Namespace s_emptyNamespace = new Namespace(XmlBufferReader.Empty);
+            private readonly Namespace[] _shortPrefixUri;
+            private static readonly Namespace s_emptyNamespace = new Namespace(XmlBufferReader.Empty);
             private static Namespace s_xmlNamespace;
             private XmlAttribute[] _attributes;
             private int _attributeCount;
@@ -2549,7 +2755,7 @@ namespace System.Xml
                 _lang = string.Empty;
             }
 
-            static public Namespace XmlNamespace
+            public static Namespace XmlNamespace
             {
                 get
                 {
@@ -2557,12 +2763,12 @@ namespace System.Xml
                     {
                         byte[] xmlBuffer =
                             {
-                                (byte)'x',(byte)'m',(byte)'l',
-                                (byte)'h',(byte)'t',(byte)'t',(byte)'p',(byte)':',(byte)'/',(byte)'/',(byte)'w',
-                                (byte)'w',(byte)'w',(byte)'.',(byte)'w',(byte)'3',(byte)'.',(byte)'o',(byte)'r',
-                                (byte)'g',(byte)'/',(byte)'X',(byte)'M',(byte)'L',(byte)'/',(byte)'1',(byte)'9',
-                                (byte)'9',(byte)'8',(byte)'/',(byte)'n',(byte)'a',(byte)'m',(byte)'e',(byte)'s',
-                                (byte)'p',(byte)'a',(byte)'c',(byte)'e'
+                                (byte)'x', (byte)'m', (byte)'l',
+                                (byte)'h', (byte)'t', (byte)'t', (byte)'p', (byte)':', (byte)'/', (byte)'/', (byte)'w',
+                                (byte)'w', (byte)'w', (byte)'.', (byte)'w', (byte)'3', (byte)'.', (byte)'o', (byte)'r',
+                                (byte)'g', (byte)'/', (byte)'X', (byte)'M', (byte)'L', (byte)'/', (byte)'1', (byte)'9',
+                                (byte)'9', (byte)'8', (byte)'/', (byte)'n', (byte)'a', (byte)'m', (byte)'e', (byte)'s',
+                                (byte)'p', (byte)'a', (byte)'c', (byte)'e'
                             };
                         Namespace nameSpace = new Namespace(new XmlBufferReader(xmlBuffer));
                         nameSpace.Prefix.SetValue(0, 3);
@@ -2573,7 +2779,7 @@ namespace System.Xml
                 }
             }
 
-            static public Namespace EmptyNamespace
+            public static Namespace EmptyNamespace
             {
                 get
                 {
@@ -2648,6 +2854,30 @@ namespace System.Xml
                 _depth--;
             }
 
+            public void Sign(XmlSigningNodeWriter writer)
+            {
+                for (int i = 0; i < _nsCount; i++)
+                {
+                    PrefixHandle prefix = _namespaces[i].Prefix;
+                    bool found = false;
+                    for (int j = i + 1; j < _nsCount; j++)
+                    {
+                        if (Equals(prefix, _namespaces[j].Prefix))
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                    {
+                        int prefixOffset, prefixLength;
+                        byte[] prefixBuffer = prefix.GetString(out prefixOffset, out prefixLength);
+                        int nsOffset, nsLength;
+                        byte[] nsBuffer = _namespaces[i].Uri.GetString(out nsOffset, out nsLength);
+                        writer.WriteXmlnsAttribute(prefixBuffer, prefixOffset, prefixLength, nsBuffer, nsOffset, nsLength);
+                    }
+                }
+            }
 
             public void AddLangAttribute(string lang)
             {
@@ -2670,7 +2900,7 @@ namespace System.Xml
                 else if (_attributes.Length == _attributeCount)
                 {
                     XmlAttribute[] newAttributes = new XmlAttribute[_attributeCount * 2];
-                    Array.Copy(_attributes, newAttributes, _attributeCount);
+                    Array.Copy(_attributes, 0, newAttributes, 0, _attributeCount);
                     _attributes = newAttributes;
                 }
                 XmlAttribute attribute = _attributes[_attributeCount];
@@ -2708,7 +2938,7 @@ namespace System.Xml
                 else if (_namespaces.Length == _nsCount)
                 {
                     Namespace[] newNamespaces = new Namespace[_nsCount * 2];
-                    Array.Copy(_namespaces, newNamespaces, _nsCount);
+                    Array.Copy(_namespaces, 0, newNamespaces, 0, _nsCount);
                     _namespaces = newNamespaces;
                 }
                 Namespace nameSpace = _namespaces[_nsCount];
@@ -2829,8 +3059,8 @@ namespace System.Xml
         }
         protected class Namespace
         {
-            private PrefixHandle _prefix;
-            private StringHandle _uri;
+            private readonly PrefixHandle _prefix;
+            private readonly StringHandle _uri;
             private int _depth;
             private Namespace _outerUri;
             private string _uriString;

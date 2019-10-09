@@ -1,135 +1,138 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
 using Xunit;
 
-public class ConvertToDecimalTests : ConvertTestBase<Decimal>
+namespace System.Tests
 {
-    [Fact]
-    public void FromBoolean()
+    public class ConvertToDecimalTests : ConvertTestBase<decimal>
     {
-        Boolean[] testValues = { true, false };
-        Decimal[] expectedValues = { 1.0m, Decimal.Zero };
-        Verify(Convert.ToDecimal, testValues, expectedValues);
-    }
+        [Fact]
+        public void FromBoolean()
+        {
+            bool[] testValues = { true, false };
+            decimal[] expectedValues = { 1.0m, decimal.Zero };
+            Verify(Convert.ToDecimal, testValues, expectedValues);
+        }
 
-    [Fact]
-    public void FromByte()
-    {
-        Byte[] testValues = { Byte.MaxValue, Byte.MinValue };
-        Decimal[] expectedValues = { Byte.MaxValue, Byte.MinValue };
-        Verify(Convert.ToDecimal, testValues, expectedValues);
-    }
+        [Fact]
+        public void FromByte()
+        {
+            byte[] testValues = { byte.MaxValue, byte.MinValue };
+            decimal[] expectedValues = { byte.MaxValue, byte.MinValue };
+            Verify(Convert.ToDecimal, testValues, expectedValues);
+        }
 
-    [Fact]
-    public void FromDecimal()
-    {
-        Decimal[] testValues = { Decimal.MaxValue, Decimal.MinValue, 0 };
-        Decimal[] expectedValues = { Decimal.MaxValue, Decimal.MinValue, 0 };
-        Verify(Convert.ToDecimal, testValues, expectedValues);
-    }
+        [Fact]
+        public void FromDecimal()
+        {
+            decimal[] testValues = { decimal.MaxValue, decimal.MinValue, 0 };
+            decimal[] expectedValues = { decimal.MaxValue, decimal.MinValue, 0 };
+            Verify(Convert.ToDecimal, testValues, expectedValues);
+        }
 
-    [Fact]
-    public void FromDouble()
-    {
-        Double[] testValues = { 1000.0, 100.0, 0.0, 0.001, -1000.0, -100.0, };
-        Decimal[] expectedValues = { 1000.0m, 100.0m, 0.0m, 0.001m, -1000.0m, -100.0m };
-        Verify(Convert.ToDecimal, testValues, expectedValues);
+        [Fact]
+        public void FromDouble()
+        {
+            double[] testValues = { 1000.0, 100.0, 0.0, 0.001, -1000.0, -100.0, };
+            decimal[] expectedValues = { 1000.0m, 100.0m, 0.0m, 0.001m, -1000.0m, -100.0m };
+            Verify(Convert.ToDecimal, testValues, expectedValues);
 
-        Double[] overflowValues = { Double.MaxValue, Double.MinValue };
-        VerifyThrows<OverflowException, Double>(Convert.ToDecimal, overflowValues);
-    }
+            double[] overflowValues = { double.MaxValue, double.MinValue };
+            VerifyThrows<OverflowException, double>(Convert.ToDecimal, overflowValues);
+        }
 
-    [Fact]
-    public void FromInt16()
-    {
-        Int16[] testValues = { Int16.MaxValue, Int16.MinValue, 0 };
-        Decimal[] expectedValues = { Int16.MaxValue, Int16.MinValue, 0 };
-        Verify(Convert.ToDecimal, testValues, expectedValues);
-    }
+        [Fact]
+        public void FromInt16()
+        {
+            short[] testValues = { short.MaxValue, short.MinValue, 0 };
+            decimal[] expectedValues = { short.MaxValue, short.MinValue, 0 };
+            Verify(Convert.ToDecimal, testValues, expectedValues);
+        }
 
-    [Fact]
-    public void FromInt32()
-    {
-        Int32[] testValues = { Int32.MaxValue, Int32.MinValue, 0 };
-        Decimal[] expectedValues = { Int32.MaxValue, Int32.MinValue, 0 };
-        Verify(Convert.ToDecimal, testValues, expectedValues);
-    }
+        [Fact]
+        public void FromInt32()
+        {
+            int[] testValues = { int.MaxValue, int.MinValue, 0 };
+            decimal[] expectedValues = { int.MaxValue, int.MinValue, 0 };
+            Verify(Convert.ToDecimal, testValues, expectedValues);
+        }
 
-    [Fact]
-    public void FromInt64()
-    {
-        Int64[] testValues = { Int64.MaxValue, Int64.MinValue, 0 };
-        Decimal[] expectedValues = { Int64.MaxValue, Int64.MinValue, 0 };
-        Verify(Convert.ToDecimal, testValues, expectedValues);
-    }
+        [Fact]
+        public void FromInt64()
+        {
+            long[] testValues = { long.MaxValue, long.MinValue, 0 };
+            decimal[] expectedValues = { long.MaxValue, long.MinValue, 0 };
+            Verify(Convert.ToDecimal, testValues, expectedValues);
+        }
 
-    [Fact]
-    public void FromObject()
-    {
-        Object[] testValues = { null };
-        Decimal[] expectedValues = { 0 };
-        VerifyFromObject(Convert.ToDecimal, Convert.ToDecimal, testValues, expectedValues);
+        [Fact]
+        public void FromObject()
+        {
+            object[] testValues = { null };
+            decimal[] expectedValues = { 0 };
+            VerifyFromObject(Convert.ToDecimal, Convert.ToDecimal, testValues, expectedValues);
 
-        Object[] invalidValues = { new Object(), DateTime.Now };
-        VerifyFromObjectThrows<InvalidCastException>(Convert.ToDecimal, Convert.ToDecimal, invalidValues);
-    }
+            object[] invalidValues = { new object(), DateTime.Now };
+            VerifyFromObjectThrows<InvalidCastException>(Convert.ToDecimal, Convert.ToDecimal, invalidValues);
+        }
 
-    [Fact]
-    public void FromSByte()
-    {
-        SByte[] testValues = { SByte.MinValue, SByte.MaxValue, 0 };
-        Decimal[] expectedValues = { SByte.MinValue, SByte.MaxValue, 0 };
-        Verify(Convert.ToDecimal, testValues, expectedValues);
-    }
+        [Fact]
+        public void FromSByte()
+        {
+            sbyte[] testValues = { sbyte.MinValue, sbyte.MaxValue, 0 };
+            decimal[] expectedValues = { sbyte.MinValue, sbyte.MaxValue, 0 };
+            Verify(Convert.ToDecimal, testValues, expectedValues);
+        }
 
-    [Fact]
-    public void FromSingle()
-    {
-        Single[] testValues = { 1000.0f, 100.0f, 0.0f, -1.0f, -100.0f };
-        Decimal[] expectedValues = { 1000.0m, 100.0m, 0.0m, -1.0m, -100.0m };
-        Verify(Convert.ToDecimal, testValues, expectedValues);
+        [Fact]
+        public void FromSingle()
+        {
+            float[] testValues = { 1000.0f, 100.0f, 0.0f, -1.0f, -100.0f };
+            decimal[] expectedValues = { 1000.0m, 100.0m, 0.0m, -1.0m, -100.0m };
+            Verify(Convert.ToDecimal, testValues, expectedValues);
 
-        Single[] overflowValues = { Single.MaxValue, Single.MinValue };
-        VerifyThrows<OverflowException, Single>(Convert.ToDecimal, overflowValues);
-    }
+            float[] overflowValues = { float.MaxValue, float.MinValue };
+            VerifyThrows<OverflowException, float>(Convert.ToDecimal, overflowValues);
+        }
 
-    [Fact]
-    public void FromString()
-    {
-        String[] testValues = { Int32.MaxValue.ToString(), Int64.MaxValue.ToString(), Decimal.MaxValue.ToString(), Decimal.MinValue.ToString(), "0", null };
-        Decimal[] expectedValues = { Int32.MaxValue, Int64.MaxValue, Decimal.MaxValue, Decimal.MinValue, 0, 0 };
-        VerifyFromString(Convert.ToDecimal, Convert.ToDecimal, testValues, expectedValues);
+        [Fact]
+        public void FromString()
+        {
+            string[] testValues = { Int32.MaxValue.ToString(), Int64.MaxValue.ToString(), Decimal.MaxValue.ToString(), Decimal.MinValue.ToString(), "0", null };
+            decimal[] expectedValues = { int.MaxValue, long.MaxValue, decimal.MaxValue, decimal.MinValue, 0, 0 };
+            VerifyFromString(Convert.ToDecimal, Convert.ToDecimal, testValues, expectedValues);
 
-        String[] overflowValues = { "1" + Decimal.MaxValue.ToString(), Decimal.MinValue.ToString() + "1" };
-        VerifyFromStringThrows<OverflowException>(Convert.ToDecimal, Convert.ToDecimal, overflowValues);
+            string[] overflowValues = { "1" + Decimal.MaxValue.ToString(), Decimal.MinValue.ToString() + "1" };
+            VerifyFromStringThrows<OverflowException>(Convert.ToDecimal, Convert.ToDecimal, overflowValues);
 
-        String[] formatExceptionValues = { "100E12" };
-        VerifyFromStringThrows<FormatException>(Convert.ToDecimal, Convert.ToDecimal, formatExceptionValues);
-    }
+            string[] formatExceptionValues = { "100E12" };
+            VerifyFromStringThrows<FormatException>(Convert.ToDecimal, Convert.ToDecimal, formatExceptionValues);
+        }
 
-    [Fact]
-    public void FromUInt16()
-    {
-        UInt16[] testValues = { UInt16.MaxValue, UInt16.MinValue };
-        Decimal[] expectedValues = { UInt16.MaxValue, UInt16.MinValue };
-        Verify(Convert.ToDecimal, testValues, expectedValues);
-    }
+        [Fact]
+        public void FromUInt16()
+        {
+            ushort[] testValues = { ushort.MaxValue, ushort.MinValue };
+            decimal[] expectedValues = { ushort.MaxValue, ushort.MinValue };
+            Verify(Convert.ToDecimal, testValues, expectedValues);
+        }
 
-    [Fact]
-    public void FromUInt32()
-    {
-        UInt32[] testValues = { UInt32.MaxValue, UInt32.MinValue };
-        Decimal[] expectedValues = { UInt32.MaxValue, UInt32.MinValue };
-        Verify(Convert.ToDecimal, testValues, expectedValues);
-    }
+        [Fact]
+        public void FromUInt32()
+        {
+            uint[] testValues = { uint.MaxValue, uint.MinValue };
+            decimal[] expectedValues = { uint.MaxValue, uint.MinValue };
+            Verify(Convert.ToDecimal, testValues, expectedValues);
+        }
 
-    [Fact]
-    public void FromUInt64()
-    {
-        UInt64[] testValues = { UInt64.MaxValue, UInt64.MinValue };
-        Decimal[] expectedValues = { UInt64.MaxValue, UInt64.MinValue };
-        Verify(Convert.ToDecimal, testValues, expectedValues);
+        [Fact]
+        public void FromUInt64()
+        {
+            ulong[] testValues = { ulong.MaxValue, ulong.MinValue };
+            decimal[] expectedValues = { ulong.MaxValue, ulong.MinValue };
+            Verify(Convert.ToDecimal, testValues, expectedValues);
+        }
     }
 }

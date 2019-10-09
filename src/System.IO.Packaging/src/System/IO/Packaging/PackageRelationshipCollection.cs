@@ -1,35 +1,22 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-//-----------------------------------------------------------------------------
-//
-// Description:
-//  This is a class for representing a PackageRelationshipCollection. This is a part of the 
-//  MMCF Packaging Layer. 
-//
-// Details:
-//   This class handles serialization to/from relationship parts, creation of those parts
-//   and offers methods to create, delete and enumerate relationships.
-//
-//-----------------------------------------------------------------------------
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;               // For Debug.Assert
+using System.Diagnostics;
 
 namespace System.IO.Packaging
 {
     /// <summary>
-    /// Collection of all the relationships corresponding to a given source PackagePart
+    /// Collection of all the relationships corresponding to a given source PackagePart.
+    /// This class is part of the MMCF Packaging Layer. It handles serialization to/from
+    /// relationship parts, creation of those parts and offers methods to create, delete
+    /// and enumerate relationships.
     /// </summary>
     public class PackageRelationshipCollection : IEnumerable<PackageRelationship>
     {
-        //------------------------------------------------------
-        //
-        //  Public Methods
-        //
-        //------------------------------------------------------
         #region IEnumerable
 
         /// <summary>
@@ -57,11 +44,6 @@ namespace System.IO.Packaging
         }
         #endregion
 
-        //------------------------------------------------------
-        //
-        //  Internal Members
-        //
-        //------------------------------------------------------
         #region Internal Members
         /// <summary>
         /// Constructor
@@ -77,21 +59,10 @@ namespace System.IO.Packaging
 
         #endregion
 
-        //------------------------------------------------------
-        //
-        //  Private Methods
-        //
-        //------------------------------------------------------
-        //  None
-        //------------------------------------------------------
-        //
-        //  Private Members
-        //
-        //------------------------------------------------------
         #region Private Members
 
-        private InternalRelationshipCollection _relationships;
-        private string _filter;
+        private readonly InternalRelationshipCollection _relationships;
+        private readonly string _filter;
 
         #endregion
 
@@ -100,7 +71,7 @@ namespace System.IO.Packaging
         #region FilteredEnumerator Class
 
         /// <summary>
-        /// Internal class for the FilteredEnumerator        
+        /// Internal class for the FilteredEnumerator
         /// </summary>
         private sealed class FilteredEnumerator : IEnumerator<PackageRelationship>
         {
@@ -117,7 +88,7 @@ namespace System.IO.Packaging
                 Debug.Assert(filter != null, "PackageRelationship filter string cannot be null");
 
                 // Look for empty string or string with just spaces
-                Debug.Assert(filter.Trim() != String.Empty,
+                Debug.Assert(filter.Trim() != string.Empty,
                     "RelationshipType filter cannot be empty string or a string with just spaces");
 
                 _enumerator = enumerator;
@@ -129,7 +100,7 @@ namespace System.IO.Packaging
             #region IEnumerator Methods
 
             /// <summary>
-            /// This method keeps moving the enumerator the the next position till
+            /// This method keeps moving the enumerator the next position till
             /// a relationship is found with the matching Name
             /// </summary>
             /// <returns>Bool indicating if the enumerator successfully moved to the next position</returns>
@@ -148,7 +119,7 @@ namespace System.IO.Packaging
             /// Gets the current object in the enumerator
             /// </summary>
             /// <value></value>
-            Object IEnumerator.Current
+            object IEnumerator.Current
             {
                 get
                 {
@@ -157,7 +128,7 @@ namespace System.IO.Packaging
             }
 
             /// <summary>
-            /// Resets the enumerator to the begining
+            /// Resets the enumerator to the beginning
             /// </summary>
             void IEnumerator.Reset()
             {
@@ -187,7 +158,7 @@ namespace System.IO.Packaging
 
             public void Dispose()
             {
-                //Most enumerators have dispose as a no-op, we follow the same pattern. 
+                //Most enumerators have dispose as a no-op, we follow the same pattern.
                 _enumerator.Dispose();
             }
 
@@ -200,7 +171,7 @@ namespace System.IO.Packaging
                 PackageRelationship r = _enumerator.Current;
 
                 //Case-sensitive comparison
-                if (String.CompareOrdinal(r.RelationshipType, _filter) == 0)
+                if (string.CompareOrdinal(r.RelationshipType, _filter) == 0)
                     return true;
                 else
                     return false;
@@ -210,8 +181,8 @@ namespace System.IO.Packaging
 
             #region Private Members
 
-            private IEnumerator<PackageRelationship> _enumerator;
-            private string _filter;
+            private readonly IEnumerator<PackageRelationship> _enumerator;
+            private readonly string _filter;
 
             #endregion Private Members
         }

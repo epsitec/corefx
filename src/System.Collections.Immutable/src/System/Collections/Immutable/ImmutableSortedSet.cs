@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -165,6 +166,19 @@ namespace System.Collections.Immutable
         public static ImmutableSortedSet<TSource> ToImmutableSortedSet<TSource>(this IEnumerable<TSource> source)
         {
             return ToImmutableSortedSet(source, null);
+        }
+
+        /// <summary>
+        /// Returns an immutable copy of the current contents of the builder's collection.
+        /// </summary>
+        /// <param name="builder">The builder to create the immutable set from.</param>
+        /// <returns>An immutable set.</returns>
+        [Pure]
+        public static ImmutableSortedSet<TSource> ToImmutableSortedSet<TSource>(this ImmutableSortedSet<TSource>.Builder builder)
+        {
+            Requires.NotNull(builder, nameof(builder));
+
+            return builder.ToImmutable();
         }
     }
 }

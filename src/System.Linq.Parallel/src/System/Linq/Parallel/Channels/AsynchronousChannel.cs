@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -13,7 +14,7 @@ using System.Diagnostics;
 namespace System.Linq.Parallel
 {
     /// <summary>
-    /// This is a bounded channel meant for single-producer/single-consumer scenarios. 
+    /// This is a bounded channel meant for single-producer/single-consumer scenarios.
     /// </summary>
     /// <typeparam name="T">Specifies the type of data in the channel.</typeparam>
     internal sealed class AsynchronousChannel<T> : IDisposable
@@ -61,9 +62,9 @@ namespace System.Linq.Parallel
         //   very carefully above, this channel will deadlock, become corrupt, and generally
         //   make you an unhappy camper if you try to use more than 1 producer or more than
         //   1 consumer thread to access this thing concurrently. It's been carefully designed
-        //   to avoid locking, but only because of this restriction... 
+        //   to avoid locking, but only because of this restriction...
 
-        private T[][] _buffer;              // The buffer of chunks.
+        private readonly T[][] _buffer;              // The buffer of chunks.
         private readonly int _index;            // Index of this channel
         private volatile int _producerBufferIndex;   // Producer's current index, i.e. where to put the next chunk.
         private volatile int _consumerBufferIndex;   // Consumer's current index, i.e. where to get the next chunk.
@@ -75,7 +76,7 @@ namespace System.Linq.Parallel
         private T[] _consumerChunk;         // The temporary chunk being enumerated by the consumer.
         private int _consumerChunkIndex;    // A consumer's index into its temporary chunk.
 
-        private int _chunkSize;             // The number of elements that comprise a chunk.
+        private readonly int _chunkSize;             // The number of elements that comprise a chunk.
 
         // These events are used to signal a waiting producer when the consumer dequeues, and to signal a
         // waiting consumer when the producer enqueues.
@@ -86,7 +87,7 @@ namespace System.Linq.Parallel
         // volatile because they are used in synchronization critical regions of code (see usage below).
         private volatile int _producerIsWaiting;
         private volatile int _consumerIsWaiting;
-        private CancellationToken _cancellationToken;
+        private readonly CancellationToken _cancellationToken;
 
         //-----------------------------------------------------------------------------------
         // Initializes a new channel with the specific capacity and chunk size.
@@ -225,11 +226,11 @@ namespace System.Linq.Parallel
             // considering waiting will notice that the producer is done. This is done
             // after setting the done flag to facilitate a Dekker-style check/recheck.
             //
-            // Because we can race with threads trying to Dispose of the event, we must 
+            // Because we can race with threads trying to Dispose of the event, we must
             // acquire a lock around our setting, and double-check that the event isn't null.
             //
             // Update 8/2/2011: Dispose() should never be called with SetDone() concurrently,
-            // but in order to reduce churn late in the product cycle, we decided not to 
+            // but in order to reduce churn late in the product cycle, we decided not to
             // remove the lock.
             lock (this)
             {
@@ -299,9 +300,7 @@ namespace System.Linq.Parallel
             // write; the CLR 2.0 memory model ensures the write won't move before the write to the
             // corresponding element, so a consumer won't see the new index but the corresponding
             // element in the array as empty.
-#pragma warning disable 0420
             Interlocked.Exchange(ref _producerBufferIndex, (bufferIndex + 1) % _buffer.Length);
-#pragma warning restore 0420
 
             // (If there is a consumer waiting, we have to ensure to signal the event. Unfortunately,
             // this requires that we issue a memory barrier: We need to guarantee that the write to
@@ -337,9 +336,7 @@ namespace System.Linq.Parallel
                 // very quickly, suddenly seeing an empty queue. This would lead to deadlock
                 // if we aren't careful. Therefore we check the empty/full state AGAIN after
                 // setting our flag to see if a real wait is warranted.
-#pragma warning disable 0420
                 Interlocked.Exchange(ref _producerIsWaiting, 1);
-#pragma warning restore 0420
 
                 // (We have to prevent the reads that go into determining whether the buffer
                 // is full from moving before the write to the producer-wait flag. Hence the CAS.)
@@ -380,7 +377,7 @@ namespace System.Linq.Parallel
                 // Trim the partially-full chunk to an array just big enough to hold it.
                 Debug.Assert(1 <= _producerChunkIndex && _producerChunkIndex <= _chunkSize);
                 T[] leftOverChunk = new T[_producerChunkIndex];
-                Array.Copy(_producerChunk, leftOverChunk, _producerChunkIndex);
+                Array.Copy(_producerChunk, 0, leftOverChunk, 0, _producerChunkIndex);
 
                 // And enqueue the right-sized temporary chunk, possibly blocking if it's full.
                 EnqueueChunk(leftOverChunk);
@@ -556,9 +553,7 @@ namespace System.Linq.Parallel
                 // very quickly, suddenly seeing a full queue. This would lead to deadlock
                 // if we aren't careful. Therefore we check the empty/full state AGAIN after
                 // setting our flag to see if a real wait is warranted.
-#pragma warning disable 0420
                 Interlocked.Exchange(ref _consumerIsWaiting, 1);
-#pragma warning restore 0420
 
                 // (We have to prevent the reads that go into determining whether the buffer
                 // is full from moving before the write to the producer-wait flag. Hence the CAS.)
@@ -618,9 +613,7 @@ namespace System.Linq.Parallel
             // write; the CLR 2.0 memory model ensures the write won't move before the write to the
             // corresponding element, so a consumer won't see the new index but the corresponding
             // element in the array as empty.
-#pragma warning disable 0420
             Interlocked.Exchange(ref _consumerBufferIndex, (consumerBufferIndex + 1) % _buffer.Length);
-#pragma warning restore 0420
 
             // (Unfortunately, this whole sequence requires a memory barrier: We need to guarantee
             // that the write to _consumerBufferIndex doesn't pass the read of the wait-flags; the CLR memory
@@ -657,7 +650,7 @@ namespace System.Linq.Parallel
             // and producer threads racing inside of SetDone.
             //
             // Update 8/2/2011: Dispose() should never be called with SetDone() concurrently,
-            // but in order to reduce churn late in the product cycle, we decided not to 
+            // but in order to reduce churn late in the product cycle, we decided not to
             // remove the lock.
             lock (this)
             {

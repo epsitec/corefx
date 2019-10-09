@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using Xunit;
@@ -15,18 +16,18 @@ namespace System.IO.MemoryMappedFiles.Tests
         public void InvalidArguments_Name()
         {
             // null isn't valid when trying to OpenExistinga map
-            Assert.Throws<ArgumentNullException>("mapName", () => MemoryMappedFile.OpenExisting(null));
+            AssertExtensions.Throws<ArgumentNullException>("mapName", () => MemoryMappedFile.OpenExisting(null));
 
             // Empty is never a valid map name
-            Assert.Throws<ArgumentException>(() => MemoryMappedFile.OpenExisting(string.Empty));
+            AssertExtensions.Throws<ArgumentException>(null, () => MemoryMappedFile.OpenExisting(string.Empty));
         }
 
         /// <summary>
         /// Test to verify that map names are left unsupported on Unix.
         /// </summary>
-        [PlatformSpecific(PlatformID.AnyUnix)]
+        [PlatformSpecific(TestPlatforms.AnyUnix)]  // Map names unsupported on Unix
         [Theory]
-        [MemberData("CreateValidMapNames")]
+        [MemberData(nameof(CreateValidMapNames))]
         public void MapNamesNotSupported_Unix(string mapName)
         {
             Assert.Throws<PlatformNotSupportedException>(() => MemoryMappedFile.OpenExisting(mapName));
@@ -37,7 +38,7 @@ namespace System.IO.MemoryMappedFiles.Tests
         /// <summary>
         /// Test to verify that non-existent map names result in exceptions.
         /// </summary>
-        [PlatformSpecific(PlatformID.Windows)]
+        [PlatformSpecific(TestPlatforms.Windows)]  // Map names unsupported on Unix
         [Fact]
         public void InvalidArguments_Name_NonExistent()
         {
@@ -55,7 +56,7 @@ namespace System.IO.MemoryMappedFiles.Tests
         public void InvalidArguments_Inheritability(HandleInheritability inheritability)
         {
             // Out of range values
-            Assert.Throws<ArgumentOutOfRangeException>("inheritability", () => MemoryMappedFile.OpenExisting(CreateUniqueMapName(), MemoryMappedFileRights.Read, inheritability));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("inheritability", () => MemoryMappedFile.OpenExisting(CreateUniqueMapName(), MemoryMappedFileRights.Read, inheritability));
         }
 
         /// <summary>
@@ -65,16 +66,16 @@ namespace System.IO.MemoryMappedFiles.Tests
         public void InvalidArguments_Rights()
         {
             // Out of range values
-            Assert.Throws<ArgumentOutOfRangeException>("desiredAccessRights", () => MemoryMappedFile.OpenExisting(CreateUniqueMapName(), (MemoryMappedFileRights)0x800000));
-            Assert.Throws<ArgumentOutOfRangeException>("desiredAccessRights", () => MemoryMappedFile.OpenExisting(CreateUniqueMapName(), (MemoryMappedFileRights)0x800000, HandleInheritability.None));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("desiredAccessRights", () => MemoryMappedFile.OpenExisting(CreateUniqueMapName(), (MemoryMappedFileRights)0x800000));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("desiredAccessRights", () => MemoryMappedFile.OpenExisting(CreateUniqueMapName(), (MemoryMappedFileRights)0x800000, HandleInheritability.None));
         }
 
         /// <summary>
         /// Test various combinations of arguments to Open, opening maps created by CreateNew.
         /// </summary>
-        [PlatformSpecific(PlatformID.Windows)]
+        [PlatformSpecific(TestPlatforms.Windows)] // Map names unsupported on Unix
         [Theory]
-        [MemberData("MemberData_OpenCreated")]
+        [MemberData(nameof(MemberData_OpenCreated))]
         public void OpenCreatedNew(string mapName, MemoryMappedFileRights desiredAccessRights, HandleInheritability inheritability)
         {
             const int Capacity = 4096;
@@ -105,9 +106,9 @@ namespace System.IO.MemoryMappedFiles.Tests
         /// <summary>
         /// Test various combinations of arguments to Open, opening maps created by CreateFromFile.
         /// </summary>
-        [PlatformSpecific(PlatformID.Windows)]
+        [PlatformSpecific(TestPlatforms.Windows)] // Map names unsupported on Unix
         [Theory]
-        [MemberData("MemberData_OpenCreated")]
+        [MemberData(nameof(MemberData_OpenCreated))]
         public void OpenCreatedFromFile(string name, MemoryMappedFileRights rights, HandleInheritability inheritability)
         {
             const int Capacity = 4096;

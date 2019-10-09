@@ -1,219 +1,97 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Globalization;
+using System.Collections.Generic;
 using System.Text;
 using Xunit;
 
-namespace System.Text.EncodingTests
+namespace System.Text.Encodings.Tests
 {
-    public class EncodingTest
+    public class EncodingMiscTests
     {
-        private static byte[] s_UTF32LEBom = new byte[] { 0xFF, 0xFE, 0x0, 0x0 };
-        private static byte[] s_UTF32BEBom = new byte[] { 0x0, 0x0, 0xFE, 0xFF, };
-        private static byte[] s_UTF8Bom = new byte[] { 0xEF, 0xBB, 0xBF };
-        private static byte[] s_UTF16LEBom = new byte[] { 0xFF, 0xFE };
-        private static byte[] s_UTF8BEBom = new byte[] { 0xFE, 0xFF };
-
-        [Fact]
-        [ActiveIssue(846, PlatformID.AnyUnix)]
-        public static void TestGetEncoding()
+        public static IEnumerable<object[]> Encoding_TestData()
         {
-            Encoding encoding = Encoding.GetEncoding("UTF-32LE");
-            Assert.Equal<byte>(encoding.GetPreamble(), s_UTF32LEBom);
-
-            encoding = Encoding.UTF32;
-            Assert.Equal<byte>(encoding.GetPreamble(), s_UTF32LEBom);
-
-            encoding = Encoding.GetEncoding("UTF-32BE");
-            Assert.Equal<byte>(encoding.GetPreamble(), s_UTF32BEBom);
-
-            encoding = Encoding.UTF8;
-            Assert.Equal<byte>(encoding.GetPreamble(), s_UTF8Bom);
-
-            encoding = Encoding.GetEncoding("UTF-16BE");
-            Assert.Equal<byte>(encoding.GetPreamble(), s_UTF8BEBom);
-
-            encoding = Encoding.GetEncoding("UTF-16LE");
-            Assert.Equal<byte>(encoding.GetPreamble(), s_UTF16LEBom);
-
-            encoding = Encoding.Unicode;
-            Assert.Equal<byte>(encoding.GetPreamble(), s_UTF16LEBom);
+            //                          CodePage   Name         BodyName      HeaderName    IsBrowserDisplay IsBrowserSave  IsMailNewsDisplay   IsMailNewsSave WindowsCodePage
+            yield return new object[] { 20127,    "us-ascii",   "us-ascii",   "us-ascii",   false,            false,          true,               true,           1252 };
+            yield return new object[] { 28591,    "iso-8859-1", "iso-8859-1", "iso-8859-1", true,             true,           true,               true,           1252 };
+            yield return new object[] { 65000,    "utf-7",      "utf-7",      "utf-7",      false,            false,          true,               true,           1200 };
+            yield return new object[] { 65001,    "utf-8",      "utf-8",      "utf-8",      true,             true,           true,               true,           1200 };
+            yield return new object[] { 1200,     "utf-16",     "utf-16",     "utf-16",     false,            true,           false,              false,          1200 };
+            yield return new object[] { 1201,     "utf-16BE",   "utf-16BE",   "utf-16BE",   false,            false,          false,              false,          1200 };
+            yield return new object[] { 12000,    "utf-32",     "utf-32",     "utf-32",     false,            false,          false,              false,          1200 };
+            yield return new object[] { 12001,    "utf-32BE",   "utf-32BE",   "utf-32BE",   false,            false,          false,              false,          1200 };
         }
 
-        private static byte[] s_asciiBytes = new byte[] { (byte)'A', (byte)'B', (byte)'C', (byte)'D', (byte)'E', (byte)'F', (byte)'G', (byte)'H', };
-        private static string s_asciiString = "ABCDEFGH";
-
-        [Fact]
-        public static void TestEncodingDecoding()
+        public static IEnumerable<object[]> Normalization_TestData()
         {
-            Encoding encoding = Encoding.ASCII;
-            byte[] bytes = encoding.GetBytes(s_asciiString);
-            Assert.Equal<byte>(bytes, s_asciiBytes);
-            string s = encoding.GetString(bytes, 0, bytes.Length);
-            Assert.True(s.Equals(s_asciiString));
-            s = encoding.GetString(bytes);
-            Assert.True(s.Equals(s_asciiString));
-
-            encoding = Encoding.GetEncoding("us-ascii");
-            bytes = encoding.GetBytes(s_asciiString);
-            Assert.Equal<byte>(bytes, s_asciiBytes);
-            s = encoding.GetString(bytes, 0, bytes.Length);
-            Assert.True(s.Equals(s_asciiString));
-            s = encoding.GetString(bytes);
-            Assert.True(s.Equals(s_asciiString));
-
-            encoding = Encoding.GetEncoding("latin1");
-            bytes = encoding.GetBytes(s_asciiString);
-            Assert.Equal<byte>(bytes, s_asciiBytes);
-            s = encoding.GetString(bytes, 0, bytes.Length);
-            Assert.True(s.Equals(s_asciiString));
-            s = encoding.GetString(bytes);
-            Assert.True(s.Equals(s_asciiString));
-        }
-
-        public class CodePageMapping
-        {
-            public CodePageMapping(string name, int codepage)
-            {
-                Name = name;
-                CodePage = codepage;
-            }
-            public string Name { set; get; }
-            public int CodePage { set; get; }
-        }
-
-        private static CodePageMapping[] s_mapping = new CodePageMapping[] {
-        new CodePageMapping("ANSI_X3.4-1968", 20127 ),
-        new CodePageMapping("ANSI_X3.4-1986", 20127 ),
-        new CodePageMapping("ascii", 20127 ),
-        new CodePageMapping("cp367", 20127 ),
-        new CodePageMapping("cp819", 28591 ),
-        new CodePageMapping("csASCII", 20127 ),
-        new CodePageMapping("csISOLatin1", 28591 ),
-        new CodePageMapping("csUnicode11UTF7", 65000 ),
-        new CodePageMapping("IBM367", 20127 ),
-        new CodePageMapping("ibm819", 28591 ),
-        new CodePageMapping("ISO-10646-UCS-2", 1200),
-        new CodePageMapping("iso-8859-1", 28591),
-        new CodePageMapping("iso-ir-100", 28591),
-        new CodePageMapping("iso-ir-6", 20127),
-        new CodePageMapping("ISO646-US", 20127),
-        new CodePageMapping("iso8859-1", 28591),
-        new CodePageMapping("ISO_646.irv:1991", 20127),
-        new CodePageMapping("iso_8859-1", 28591),
-        new CodePageMapping("iso_8859-1:1987", 28591),
-        new CodePageMapping("l1", 28591),
-        new CodePageMapping("latin1", 28591),
-        new CodePageMapping("ucs-2", 1200),
-        new CodePageMapping("unicode", 1200),
-        new CodePageMapping("unicode-1-1-utf-7", 65000),
-        new CodePageMapping("unicode-1-1-utf-8", 65001),
-        new CodePageMapping("unicode-2-0-utf-7", 65000),
-        new CodePageMapping("unicode-2-0-utf-8", 65001),
-        new CodePageMapping("unicodeFFFE", 1201),
-        new CodePageMapping("us", 20127),
-        new CodePageMapping("us-ascii", 20127),
-        new CodePageMapping("utf-16", 1200),
-        new CodePageMapping("UTF-16BE", 1201),
-        new CodePageMapping("UTF-16LE", 1200),
-        new CodePageMapping("utf-32", 12000),
-        new CodePageMapping("UTF-32BE", 12001),
-        new CodePageMapping("UTF-32LE", 12000),
-        new CodePageMapping("utf-7", 65000),
-        new CodePageMapping("utf-8", 65001),
-        new CodePageMapping("x-unicode-1-1-utf-7", 65000),
-        new CodePageMapping("x-unicode-1-1-utf-8", 65001),
-        new CodePageMapping("x-unicode-2-0-utf-7", 65000),
-        new CodePageMapping("x-unicode-2-0-utf-8", 65001)
-    };
-
-        [Fact]
-        [ActiveIssue(846, PlatformID.AnyUnix)]
-        public static void TestEncodingNameAndCopdepageNumber()
-        {
-            foreach (var map in s_mapping)
-            {
-                Encoding encoding = Encoding.GetEncoding(map.Name);
-                Assert.True(encoding.CodePage == map.CodePage);
-            }
+            //                                          codepage isNormalized   IsNormalized(FormC)     IsNormalized(FormD)     IsNormalized(FormKC)    IsNormalized(FormKD)
+            /* us-ascii   */ yield return new object[] { 20127,     false,          false,                      false,              false,                  false };
+            /* iso-8859-1 */ yield return new object[] { 28591,     true,           true,                       false,              false,                  false };
+            /* utf-7      */ yield return new object[] { 65000,     false,          false,                      false,              false,                  false };
+            /* utf-8      */ yield return new object[] { 65001,     false,          false,                      false,              false,                  false };
+            /* utf-16     */ yield return new object[] { 1200,      false,          false,                      false,              false,                  false };
+            /* utf-16BE   */ yield return new object[] { 1201,      false,          false,                      false,              false,                  false };
+            /* utf-32     */ yield return new object[] { 12000,     false,          false,                      false,              false,                  false };
+            /* utf-32BE   */ yield return new object[] { 12001,     false,          false,                      false,              false,                  false };
         }
 
         [Fact]
-        public static void TestEncodingDisplayNames()
+        public static void DefaultEncodingTest()
         {
-            CultureInfo originalUICulture = CultureInfo.CurrentUICulture;
-            try
-            {
-                CultureInfo.CurrentCulture = new CultureInfo("en-US");
-
-                foreach (var map in s_mapping)
-                {
-                    Encoding encoding = Encoding.GetEncoding(map.Name);
-
-                    string name = encoding.EncodingName;
-
-                    if (string.IsNullOrEmpty(name))
-                    {
-                        Assert.False(true, "failed to get the display name of the encoding: " + encoding.WebName);
-                    }
-
-                    for (int i = 0; i < name.Length; ++i)
-                    {
-                        int ch = (int)name[i];
-
-                        if (ch > 127)
-                        {
-                            Assert.False(true,
-                                string.Format("English name '{0}' for encoding '{1}' contains non-ASCII character: {2}",
-                                    name, encoding.WebName, ch));
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                CultureInfo.CurrentUICulture = originalUICulture;
-            }
+            Encoding enc = (Encoding) Encoding.Default.Clone();
+            Assert.Equal(enc.WebName, Encoding.Default.WebName);
+            Assert.Equal(enc.GetBytes("Some string"), Encoding.Default.GetBytes("Some string"));
         }
 
         [Fact]
-        [ActiveIssue(846, PlatformID.AnyUnix)]
-        public static void TestCodePageToWebNameMappings()
+        public static void DefaultEncodingBOMTest()
         {
-            foreach (var mapping in s_codePageToWebNameMappings)
+            UTF8Encoding defaultEncoding = Encoding.Default as UTF8Encoding;
+            Assert.True(defaultEncoding != null);
+            Assert.Equal(0, defaultEncoding.GetPreamble().Length);
+        }
+
+        [Fact]
+        public static void GetEncodingsTest()
+        {
+            EncodingInfo [] encodingList = Encoding.GetEncodings();
+            foreach (var info in encodingList)
             {
-                Encoding encoding = Encoding.GetEncoding(mapping.CodePage);
-                Assert.True(string.Equals(mapping.WebName, encoding.WebName, StringComparison.OrdinalIgnoreCase));
+                Encoding encoding = Encoding.GetEncoding(info.CodePage);
+                Assert.Equal(encoding, info.GetEncoding());
+                Assert.Equal(encoding.WebName, info.Name);
+                Assert.False(string.IsNullOrEmpty(info.DisplayName));
             }
         }
 
-        internal class CodePageToWebNameMapping
+        [Theory]
+        [MemberData(nameof(Encoding_TestData))]
+        public static void NormalizationTest(int codepage, string name, string bodyName, string headerName, bool isBrowserDisplay,
+                                            bool isBrowserSave, bool isMailNewsDisplay, bool isMailNewsSave, int windowsCodePage)
         {
-            public CodePageToWebNameMapping(int codePage, string webName)
-            {
-                _codePage = codePage;
-                _webName = webName;
-            }
-
-            public int CodePage { get { return _codePage; } }
-            public string WebName { get { return _webName; } }
-
-            private int _codePage;
-            private string _webName;
+            Encoding encoding = Encoding.GetEncoding(codepage);
+            Assert.Equal(name, encoding.WebName);
+            Assert.Equal(bodyName, encoding.BodyName);
+            Assert.Equal(headerName, encoding.HeaderName);
+            Assert.Equal(isBrowserDisplay, encoding.IsBrowserDisplay);
+            Assert.Equal(isBrowserSave, encoding.IsBrowserSave);
+            Assert.Equal(isMailNewsDisplay, encoding.IsMailNewsDisplay);
+            Assert.Equal(isMailNewsSave, encoding.IsMailNewsSave);
+            Assert.Equal(windowsCodePage, encoding.WindowsCodePage);
         }
 
-        private static readonly CodePageToWebNameMapping[] s_codePageToWebNameMappings = new[]
-    {
-        new CodePageToWebNameMapping(1200, "utf-16"),
-        new CodePageToWebNameMapping(1201, "utf-16be"),
-        new CodePageToWebNameMapping(12000, "utf-32"),
-        new CodePageToWebNameMapping(12001, "utf-32be"),
-        new CodePageToWebNameMapping(20127, "us-ascii"),
-        new CodePageToWebNameMapping(28591, "iso-8859-1"),
-        new CodePageToWebNameMapping(65000, "utf-7"),
-        new CodePageToWebNameMapping(65001, "utf-8")
-    };
+        [Theory]
+        [MemberData(nameof(Normalization_TestData))]
+        public static void NormalizationTest(int codepage, bool normalized, bool normalizedC, bool normalizedD, bool normalizedKC, bool normalizedKD)
+        {
+            Encoding encoding = Encoding.GetEncoding(codepage);
+            Assert.True(encoding.IsReadOnly);
+            Assert.Equal(normalized,  encoding.IsAlwaysNormalized());
+            Assert.Equal(normalizedC, encoding.IsAlwaysNormalized(NormalizationForm.FormC));
+            Assert.Equal(normalizedD, encoding.IsAlwaysNormalized(NormalizationForm.FormD));
+            Assert.Equal(normalizedKC, encoding.IsAlwaysNormalized(NormalizationForm.FormKC));
+            Assert.Equal(normalizedKD, encoding.IsAlwaysNormalized(NormalizationForm.FormKD));
+        }
     }
 }

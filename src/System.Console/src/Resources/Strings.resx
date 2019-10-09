@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<root>
+﻿<root>
   <!-- 
     Microsoft ResX Schema 
     
@@ -117,8 +116,17 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ArgumentOutOfRange_ConsoleWindowBufferSize" xml:space="preserve">
+    <value>The value must be less than the console's current maximum window size of {0} in that dimension. Note that this value depends on screen resolution and the console font.</value>
+  </data>
+  <data name="ArgumentOutOfRange_ConsoleWindowSize_Size" xml:space="preserve">
+    <value>The new console window size would force the console buffer size to be too large.</value>
+  </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Non-negative number required.</value>
+  </data>
+  <data name="ArgumentOutOfRange_NeedPosNum" xml:space="preserve">
+    <value>Positive number required.</value>
   </data>
   <data name="ArgumentNull_Buffer" xml:space="preserve">
     <value>Buffer cannot be null.</value>
@@ -142,7 +150,7 @@
     <value>Stream does not support reading.</value>
   </data>
   <data name="IO_AlreadyExists_Name" xml:space="preserve">
-    <value>Cannot create '{0}'because a file or directory with the same name already exists.</value>
+    <value>Cannot create '{0}' because a file or directory with the same name already exists.</value>
   </data>
   <data name="IO_FileExists_Name" xml:space="preserve">
     <value>The file '{0}' already exists.</value>
@@ -177,17 +185,11 @@
   <data name="IndexOutOfRange_IORaceCondition" xml:space="preserve">
     <value>Probable I/O race condition detected while copying memory. The I/O package is not thread safe by default. In multithreaded applications, a stream must be accessed in a thread-safe way, such as a thread-safe wrapper returned by TextReader's or TextWriter's Synchronized methods. This also applies to classes like StreamWriter and StreamReader.</value>
   </data>
-  <data name="UnknownError_Num" xml:space="preserve">
-    <value>Unknown error '{0}'.</value>
-  </data>
   <data name="Arg_InvalidConsoleColor" xml:space="preserve">
     <value>The ConsoleColor enum value was not defined on that enum. Please use a defined color from the enum.</value>
   </data>
   <data name="IO_NoConsole" xml:space="preserve">
     <value>There is no console.</value>
-  </data>
-  <data name="InvalidOperation_EmptyStack" xml:space="preserve">
-    <value>Stack empty</value>
   </data>
   <data name="IO_TermInfoInvalid" xml:space="preserve">
     <value>The terminfo database is invalid.</value>
@@ -195,10 +197,64 @@
   <data name="InvalidOperation_PrintF" xml:space="preserve">
     <value>The printf operation failed.</value>
   </data>
-  <data name="PlatformNotSupported_GettingColor" xml:space="preserve">
-    <value>This platform does not support getting the current color.</value>
+  <data name="InvalidOperation_ConsoleReadKeyOnFile" xml:space="preserve">
+    <value>Cannot read keys when either application does not have a console or when console input has been redirected. Try Console.Read.</value>
   </data>
   <data name="PersistedFiles_NoHomeDirectory" xml:space="preserve">
     <value>The home directory of the current user could not be determined.</value>
+  </data>
+  <data name="ArgumentOutOfRange_ConsoleKey" xml:space="preserve">
+    <value>Console key values must be between 0 and 255 inclusive.</value>
+  </data>
+  <data name="ArgumentOutOfRange_ConsoleBufferBoundaries" xml:space="preserve">
+    <value>The value must be greater than or equal to zero and less than the console's buffer size in that dimension.</value>
+  </data>
+  <data name="ArgumentOutOfRange_ConsoleWindowPos" xml:space="preserve">
+    <value>The window position must be set such that the current window size fits within the console's buffer, and the numbers must not be negative.</value>
+  </data>
+  <data name="InvalidOperation_ConsoleKeyAvailableOnFile" xml:space="preserve">
+    <value>Cannot see if a key has been pressed when either application does not have a console or when console input has been redirected from a file. Try Console.In.Peek.</value>
+  </data>
+  <data name="ArgumentOutOfRange_ConsoleBufferLessThanWindowSize" xml:space="preserve">
+    <value>The console buffer size must not be less than the current size and position of the console window, nor greater than or equal to short.MaxValue.</value>
+  </data>
+  <data name="ArgumentOutOfRange_CursorSize" xml:space="preserve">
+    <value>The cursor size is invalid. It must be a percentage between 1 and 100.</value>
+  </data>
+  <data name="ArgumentOutOfRange_BeepFrequency" xml:space="preserve">
+    <value>The frequency must be between {0} and {1}.</value>
+  </data>
+  <data name="ArgumentNull_Array" xml:space="preserve">
+    <value>Array cannot be null.</value>
+  </data>
+  <data name="ArgumentOutOfRange_IndexCountBuffer" xml:space="preserve">
+    <value>Index and count must refer to a location within the buffer.</value>
+  </data>
+  <data name="ArgumentOutOfRange_IndexCount" xml:space="preserve">
+    <value>Index and count must refer to a location within the string.</value>
+  </data>
+  <data name="ArgumentOutOfRange_Index" xml:space="preserve">
+    <value>Index was out of range. Must be non-negative and less than the size of the collection.</value>
+  </data>
+  <data name="Argument_EncodingConversionOverflowBytes" xml:space="preserve">
+    <value>The output byte buffer is too small to contain the encoded data, encoding '{0}' fallback '{1}'.</value>
+  </data>
+  <data name="Argument_EncodingConversionOverflowChars" xml:space="preserve">
+    <value>The output char buffer is too small to contain the decoded characters, encoding '{0}' fallback '{1}'.</value>
+  </data>
+  <data name="ArgumentOutOfRange_GetByteCountOverflow" xml:space="preserve">
+    <value>Too many characters. The resulting number of bytes is larger than what can be returned as an int.</value>
+  </data>
+  <data name="ArgumentOutOfRange_GetCharCountOverflow" xml:space="preserve">
+    <value>Too many bytes. The resulting number of chars is larger than what can be returned as an int.</value>
+  </data>
+  <data name="Argument_InvalidCharSequenceNoIndex" xml:space="preserve">
+    <value>String contains invalid Unicode code points.</value>
+  </data>
+  <data name="IO_PathTooLong_Path" xml:space="preserve">
+    <value>The path '{0}' is too long, or a component of the specified path is too long.</value>
+  </data>
+  <data name="IO_TermInfoInvalidMagicNumber" xml:space="preserve">
+    <value>The terminfo database has an invalid magic number: '{0}'.</value>
   </data>
 </root>

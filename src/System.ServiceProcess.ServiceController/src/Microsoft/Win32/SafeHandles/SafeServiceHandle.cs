@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Security;
@@ -8,6 +9,9 @@ using System.Runtime.InteropServices;
 
 namespace Microsoft.Win32.SafeHandles
 {
+    /// <summary>
+    /// Used to wrap handles gotten from OpenSCManager or OpenService
+    /// </summary>
     internal class SafeServiceHandle : SafeHandle
     {
         internal SafeServiceHandle(IntPtr handle) : base(IntPtr.Zero, true)
@@ -22,7 +26,7 @@ namespace Microsoft.Win32.SafeHandles
 
         protected override bool ReleaseHandle()
         {
-            return Interop.mincore.CloseServiceHandle(handle);
+            return Interop.Advapi32.CloseServiceHandle(handle);
         }
     }
 }

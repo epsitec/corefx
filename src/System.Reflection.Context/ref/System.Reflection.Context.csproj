@@ -1,16 +1,16 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), dir.props))\dir.props" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <UseECMAKey>true</UseECMAKey>
-    <AssemblyVersion>4.0.1.0</AssemblyVersion>
-    <OutputType>Library</OutputType>
+    <!-- this assembly is inbox in desktop, do not version it unless you
+         plan on shipping a new desktop version out of band. Instead add API
+         to a different assembly. -->
+    <AssemblyVersion>4.0.0.0</AssemblyVersion>
+    <Configurations>netstandard-Debug;netstandard-Release;netstandard1.1-Debug;netstandard1.1-Release</Configurations>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="System.Reflection.Context.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="project.json" />
+  <ItemGroup Condition="'$(TargetGroup)' == 'netstandard1.1'">
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Reflection" />
   </ItemGroup>
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), dir.targets))\dir.targets" />
 </Project>

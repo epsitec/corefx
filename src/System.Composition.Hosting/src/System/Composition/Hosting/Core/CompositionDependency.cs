@@ -1,15 +1,12 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-// -----------------------------------------------------------------------
-// Copyright © Microsoft Corporation.  All rights reserved.
-// -----------------------------------------------------------------------
 using System.Composition.Hosting.Util;
-using System.Composition.Runtime;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using Microsoft.Internal;
 
 namespace System.Composition.Hosting.Core
 {
@@ -26,7 +23,7 @@ namespace System.Composition.Hosting.Core
         private readonly object _site;
         private readonly CompositionContract _contract;
 
-        // Carrying some information to later use in error messages - 
+        // Carrying some information to later use in error messages -
         // it may be better to just store the message.
         private readonly ExportDescriptorPromise[] _oversuppliedTargets;
 
@@ -43,9 +40,20 @@ namespace System.Composition.Hosting.Core
         /// <param name="contract">The contract required by the dependency.</param>
         public static CompositionDependency Satisfied(CompositionContract contract, ExportDescriptorPromise target, bool isPrerequisite, object site)
         {
-            Requires.NotNull(target, "target");
-            Requires.NotNull(site, "site");
-            Requires.NotNull(contract, "contract");
+            if (contract == null)
+            {
+                throw new ArgumentNullException(nameof(contract));
+            }
+
+            if (target == null)
+            {
+                throw new ArgumentNullException(nameof(target));
+            }
+
+            if (site == null)
+            {
+                throw new ArgumentNullException(nameof(site));
+            }
 
             return new CompositionDependency(contract, target, isPrerequisite, site);
         }
@@ -59,8 +67,15 @@ namespace System.Composition.Hosting.Core
         /// <param name="contract">The contract required by the dependency.</param>
         public static CompositionDependency Missing(CompositionContract contract, object site)
         {
-            Requires.NotNull(contract, "contract");
-            Requires.NotNull(site, "site");
+            if (contract == null)
+            {
+                throw new ArgumentNullException(nameof(contract));
+            }
+
+            if (site == null)
+            {
+                throw new ArgumentNullException(nameof(site));
+            }
 
             return new CompositionDependency(contract, site);
         }
@@ -75,9 +90,20 @@ namespace System.Composition.Hosting.Core
         /// <param name="contract">The contract required by the dependency.</param>
         public static CompositionDependency Oversupplied(CompositionContract contract, IEnumerable<ExportDescriptorPromise> targets, object site)
         {
-            Requires.NotNull(targets, "targets");
-            Requires.NotNull(site, "site");
-            Requires.NotNull(contract, "contract");
+            if (contract == null)
+            {
+                throw new ArgumentNullException(nameof(contract));
+            }
+
+            if (targets == null)
+            {
+                throw new ArgumentNullException(nameof(targets));
+            }
+
+            if (site == null)
+            {
+                throw new ArgumentNullException(nameof(site));
+            }
 
             return new CompositionDependency(contract, targets, site);
         }
@@ -136,23 +162,23 @@ namespace System.Composition.Hosting.Core
             if (IsError)
                 return Site.ToString();
 
-            return string.Format(Properties.Resources.Dependency_ToStringFormat, Site, Target.Contract, Target.Origin);
+            return SR.Format(SR.Dependency_ToStringFormat, Site, Target.Contract, Target.Origin);
         }
 
         internal bool IsError { get { return _target == null; } }
 
         internal void DescribeError(StringBuilder message)
         {
-            Assumes.IsTrue(IsError, "Dependency is not in an error state.");
+            Debug.Assert(IsError, "Should be in error state.");
 
             if (_oversuppliedTargets != null)
             {
-                var list = Formatters.ReadableList(_oversuppliedTargets.Select(t => string.Format(Properties.Resources.Dependency_QuoteParameter, t.Origin)));
-                message.AppendFormat(Properties.Resources.Dependency_TooManyExports, Contract, list);
+                var list = Formatters.ReadableList(_oversuppliedTargets.Select(t => SR.Format(SR.Dependency_QuoteParameter, t.Origin)));
+                message.AppendFormat(SR.Dependency_TooManyExports, Contract, list);
             }
             else
             {
-                message.AppendFormat(Properties.Resources.Dependency_ExportNotFound, Contract);
+                message.AppendFormat(SR.Dependency_ExportNotFound, Contract);
             }
         }
     }

@@ -1,10 +1,11 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.IO;
 
-namespace Microsoft.Framework.WebEncoders
+namespace System.Text.Encodings.Web.Tests
 {
     /// <summary>
     /// Helpful extension methods for the encoder classes.
@@ -22,10 +23,10 @@ namespace Microsoft.Framework.WebEncoders
         {
             if (htmlEncoder == null)
             {
-                throw new ArgumentNullException("htmlEncoder");
+                throw new ArgumentNullException(nameof(htmlEncoder));
             }
 
-            if (!String.IsNullOrEmpty(value))
+            if (!string.IsNullOrEmpty(value))
             {
                 htmlEncoder.HtmlEncode(value, 0, value.Length, output);
             }
@@ -38,10 +39,10 @@ namespace Microsoft.Framework.WebEncoders
         {
             if (javaScriptStringEncoder == null)
             {
-                throw new ArgumentNullException("javaScriptStringEncoder");
+                throw new ArgumentNullException(nameof(javaScriptStringEncoder));
             }
 
-            if (!String.IsNullOrEmpty(value))
+            if (!string.IsNullOrEmpty(value))
             {
                 javaScriptStringEncoder.JavaScriptStringEncode(value, 0, value.Length, output);
             }
@@ -58,10 +59,10 @@ namespace Microsoft.Framework.WebEncoders
         {
             if (urlEncoder == null)
             {
-                throw new ArgumentNullException("urlEncoder");
+                throw new ArgumentNullException(nameof(urlEncoder));
             }
 
-            if (!String.IsNullOrEmpty(value))
+            if (!string.IsNullOrEmpty(value))
             {
                 urlEncoder.UrlEncode(value, 0, value.Length, output);
             }

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -34,18 +35,18 @@ namespace System.Linq.Parallel
 
     internal class SortHelper<TInputOutput, TKey> : SortHelper<TInputOutput>, IDisposable
     {
-        private QueryOperatorEnumerator<TInputOutput, TKey> _source; // The data source from which to pull data.
-        private int _partitionCount; // The partition count.
-        private int _partitionIndex; // This helper's index.
+        private readonly QueryOperatorEnumerator<TInputOutput, TKey> _source; // The data source from which to pull data.
+        private readonly int _partitionCount; // The partition count.
+        private readonly int _partitionIndex; // This helper's index.
 
         // This data is shared among all partitions.
-        private QueryTaskGroupState _groupState; // To communicate status, e.g. cancellation.
-        private int[][] _sharedIndices; // Shared set of indices used during sorting.
-        private GrowingArray<TKey>[] _sharedKeys; // Shared keys with which to compare elements.
-        private TInputOutput[][] _sharedValues; // The actual values used for comparisons.
-        private Barrier[][] _sharedBarriers; // A matrix of barriers used for synchronizing during merges.
-        private OrdinalIndexState _indexState; // State of the order index
-        private IComparer<TKey> _keyComparer; // Comparer for the order keys
+        private readonly QueryTaskGroupState _groupState; // To communicate status, e.g. cancellation.
+        private readonly int[][] _sharedIndices; // Shared set of indices used during sorting.
+        private readonly GrowingArray<TKey>[] _sharedKeys; // Shared keys with which to compare elements.
+        private readonly TInputOutput[][] _sharedValues; // The actual values used for comparisons.
+        private readonly Barrier[][] _sharedBarriers; // A matrix of barriers used for synchronizing during merges.
+        private readonly OrdinalIndexState _indexState; // State of the order index
+        private readonly IComparer<TKey> _keyComparer; // Comparer for the order keys
 
         //---------------------------------------------------------------------------------------
         // Creates a single sort helper object.  This is marked private to ensure the only
@@ -264,7 +265,7 @@ namespace System.Linq.Parallel
         // Notes:
         //     Each element in the indices array is an index which refers to an element in
         //     the key/value array.  After calling this routine, the indices will be ordered
-        //     such that the keys they refere to are in ascending or descending order,
+        //     such that the keys they refer to are in ascending or descending order,
         //     according to the sort criteria used.
         //
 
@@ -486,7 +487,7 @@ namespace System.Linq.Parallel
 
                         // After the barrier, the other partition will have made two things available to us:
                         // (1) its own indices, keys, and values, stored in the cell that used to hold our data,
-                        // and (2) the arrays into which merged data will go, stored in its shared array cells.  
+                        // and (2) the arrays into which merged data will go, stored in its shared array cells.
                         // We will snag references to all of these things.
                         int[] leftIndices = _sharedIndices[_partitionIndex];
                         TKey[] leftKeys = _sharedKeys[_partitionIndex].InternalArray;
@@ -583,8 +584,8 @@ namespace System.Linq.Parallel
             Debug.Assert(0 <= right && right < keys.Length);
 
             // cancellation check.
-            // only test for intervals that are wider than so many items, else this test is 
-            // relatively expensive compared to the work being performend.
+            // only test for intervals that are wider than so many items, else this test is
+            // relatively expensive compared to the work being performed.
             if (right - left > CancellationState.POLL_INTERVAL)
                 CancellationState.ThrowIfCanceled(cancelToken);
 

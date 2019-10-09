@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using Xunit;
 
 namespace System.Linq.Tests
 {
-    public class ShortCircuitingTests
+    public class ShortCircuitingTests : EnumerableTests
     {
         private class TrackingEnumerable : IEnumerable<int>
         {
@@ -42,10 +43,10 @@ namespace System.Linq.Tests
                 get
                 {
                     return x =>
-                        {
-                            ++Calls;
-                            return _baseFunc(x);
-                        };
+                    {
+                        ++Calls;
+                        return _baseFunc(x);
+                    };
                 }
             }
         }
@@ -56,6 +57,9 @@ namespace System.Linq.Tests
             var source = Enumerable.Range(0, 10).ToList();
             var pred = new CountedFunction<int, bool>(i => i < 7);
             Assert.Equal(6, source.Last(pred.Func));
+
+            // .NET Core shortcircuits as an optimization.
+            // See https://github.com/dotnet/corefx/pull/2350.
             Assert.Equal(4, pred.Calls);
         }
 
@@ -65,15 +69,21 @@ namespace System.Linq.Tests
             var tracker = new TrackingEnumerable(10);
             var source = tracker.Select(i => i == 5 ? double.NaN : (double)i);
             Assert.True(double.IsNaN(source.Min()));
+
+            // .NET Core shortcircuits as an optimization.
+            // See https://github.com/dotnet/corefx/pull/2350.
             Assert.Equal(5, tracker.Moves);
         }
 
         [Fact]
-        void MinNullableDoubleDoesntCheckAll()
+        public void MinNullableDoubleDoesntCheckAll()
         {
             var tracker = new TrackingEnumerable(10);
             var source = tracker.Select(i => (double?)(i == 5 ? double.NaN : (double)i));
             Assert.True(double.IsNaN(source.Min().GetValueOrDefault()));
+
+            // .NET Core shortcircuits as an optimization.
+            // See https://github.com/dotnet/corefx/pull/2350.
             Assert.Equal(5, tracker.Moves);
         }
 
@@ -83,40 +93,132 @@ namespace System.Linq.Tests
             var tracker = new TrackingEnumerable(10);
             var source = tracker.Select(i => i == 5 ? float.NaN : (float)i);
             Assert.True(float.IsNaN(source.Min()));
+
+            // .NET Core shortcircuits as an optimization.
+            // See https://github.com/dotnet/corefx/pull/2350.
             Assert.Equal(5, tracker.Moves);
         }
 
         [Fact]
-        void MinNullableSingleDoesntCheckAll()
+        public void MinNullableSingleDoesntCheckAll()
         {
             var tracker = new TrackingEnumerable(10);
             var source = tracker.Select(i => (float?)(i == 5 ? float.NaN : (float)i));
             Assert.True(float.IsNaN(source.Min().GetValueOrDefault()));
+
+            // .NET Core shortcircuits as an optimization.
+            // See https://github.com/dotnet/corefx/pull/2350.
             Assert.Equal(5, tracker.Moves);
         }
 
         [Fact]
-        void SingleWithPredicateDoesntCheckAll()
+        public void MinDoubleDoesntCheckAllStartLeadingWithNaN()
+        {
+            var tracker = new TrackingEnumerable(10);
+            IEnumerable<double> source = tracker.Select(i => i == 1 ? double.NaN : (double)i);
+
+            Assert.True(double.IsNaN(source.Min()));
+            Assert.Equal(1, tracker.Moves);
+        }
+
+        [Fact]
+        public void MinNullableDoubleDoesntCheckAllLeadingWithNaN()
+        {
+            var tracker = new TrackingEnumerable(10);
+            IEnumerable<double?> source = tracker.Select(i => (double?)(i == 1 ? double.NaN : (double)i));
+
+            Assert.True(double.IsNaN(source.Min().GetValueOrDefault()));
+            Assert.Equal(1, tracker.Moves);
+        }
+
+        [Fact]
+        public void MinSingleDoesntCheckAllLeadingWithNaN()
+        {
+            var tracker = new TrackingEnumerable(10);
+            IEnumerable<float> source = tracker.Select(i => i == 1 ? float.NaN : (float)i);
+
+            Assert.True(float.IsNaN(source.Min()));
+            Assert.Equal(1, tracker.Moves);
+        }
+
+        [Fact]
+        public void MinNullableSingleDoesntCheckAllLeadingWithNaN()
+        {
+            var tracker = new TrackingEnumerable(10);
+            IEnumerable<float?> source = tracker.Select(i => (float?)(i == 1 ? float.NaN : (float)i));
+
+            Assert.True(float.IsNaN(source.Min().GetValueOrDefault()));
+            Assert.Equal(1, tracker.Moves);
+        }
+
+        [Fact]
+        public void MinDoubleSelectorDoesntCheckAllStartLeadingWithNaN()
+        {
+            var tracker = new TrackingEnumerable(10);
+            IEnumerable<double> source = tracker.Select(i => i == 1 ? double.NaN : (double)i);
+
+            Assert.True(double.IsNaN(source.Min(x => x + 1d)));
+            Assert.Equal(1, tracker.Moves);
+        }
+
+        [Fact]
+        public void MinNullableDoubleSelectorDoesntCheckAllLeadingWithNaN()
+        {
+            var tracker = new TrackingEnumerable(10);
+            IEnumerable<double?> source = tracker.Select(i => (double?)(i == 1 ? double.NaN : (double)i));
+
+            Assert.True(double.IsNaN(source.Min(x => x + 1d).GetValueOrDefault()));
+            Assert.Equal(1, tracker.Moves);
+        }
+
+        [Fact]
+        public void MinSingleSelectorDoesntCheckAllLeadingWithNaN()
+        {
+            var tracker = new TrackingEnumerable(10);
+            IEnumerable<float> source = tracker.Select(i => i == 1 ? float.NaN : (float)i);
+
+            Assert.True(float.IsNaN(source.Min(x => x + 1f)));
+            Assert.Equal(1, tracker.Moves);
+        }
+
+        [Fact]
+        public void MinNullableSingleSelectorDoesntCheckAllLeadingWithNaN()
+        {
+            var tracker = new TrackingEnumerable(10);
+            IEnumerable<float?> source = tracker.Select(i => (float?)(i == 1 ? float.NaN : (float)i));
+
+            Assert.True(float.IsNaN(source.Min(x => x + 1f).GetValueOrDefault()));
+            Assert.Equal(1, tracker.Moves);
+        }
+
+        [Fact]
+        public void SingleWithPredicateDoesntCheckAll()
         {
             var tracker = new TrackingEnumerable(10);
             var pred = new CountedFunction<int, bool>(i => i > 2);
             Assert.Throws<InvalidOperationException>(() => tracker.Single(pred.Func));
+
+            // .NET Core shortcircuits as an optimization.
+            // See https://github.com/dotnet/corefx/pull/2350.
             Assert.Equal(4, tracker.Moves);
             Assert.Equal(4, pred.Calls);
         }
 
         [Fact]
-        void SingleOrDefaultWithPredicateDoesntCheckAll()
+        public void SingleOrDefaultWithPredicateDoesntCheckAll()
         {
             var tracker = new TrackingEnumerable(10);
             var pred = new CountedFunction<int, bool>(i => i > 2);
             Assert.Throws<InvalidOperationException>(() => tracker.SingleOrDefault(pred.Func));
+
+            // .NET Core shortcircuits as an optimization.
+            // See https://github.com/dotnet/corefx/pull/2350.
             Assert.Equal(4, tracker.Moves);
             Assert.Equal(4, pred.Calls);
         }
 
         [Fact]
-        void SingleWithPredicateWorksLikeWhereFollowedBySingle()
+        public void SingleWithPredicateWorksLikeWhereFollowedBySingle()
         {
             var tracker0 = new TrackingEnumerable(10);
             var pred0 = new CountedFunction<int, bool>(i => i > 2);
@@ -124,12 +226,15 @@ namespace System.Linq.Tests
             var tracker1 = new TrackingEnumerable(10);
             var pred1 = new CountedFunction<int, bool>(i => i > 2);
             Assert.Throws<InvalidOperationException>(() => tracker1.Where(pred1.Func).Single());
+
+            // .NET Core shortcircuits as an optimization.
+            // See https://github.com/dotnet/corefx/pull/2350.
             Assert.Equal(tracker0.Moves, tracker1.Moves);
             Assert.Equal(pred0.Calls, pred1.Calls);
         }
 
         [Fact]
-        void SingleOrDefaultWithPredicateWorksLikeWhereFollowedBySingleOrDefault()
+        public void SingleOrDefaultWithPredicateWorksLikeWhereFollowedBySingleOrDefault()
         {
             var tracker0 = new TrackingEnumerable(10);
             var pred0 = new CountedFunction<int, bool>(i => i > 2);
@@ -137,6 +242,9 @@ namespace System.Linq.Tests
             var tracker1 = new TrackingEnumerable(10);
             var pred1 = new CountedFunction<int, bool>(i => i > 2);
             Assert.Throws<InvalidOperationException>(() => tracker1.Where(pred1.Func).SingleOrDefault());
+
+            // .NET Core shortcircuits as an optimization.
+            // See https://github.com/dotnet/corefx/pull/2350.
             Assert.Equal(tracker0.Moves, tracker1.Moves);
             Assert.Equal(pred0.Calls, pred1.Calls);
         }

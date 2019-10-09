@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 
@@ -9,6 +10,7 @@ namespace System.Diagnostics
     ///    <para>Provides a multi-level switch to enable or disable tracing
     ///       and debug output for a compiled application or framework.</para>
     /// </devdoc>
+    [SwitchLevel(typeof(TraceLevel))]
     public class TraceSwitch : Switch
     {
         /// <devdoc>
@@ -121,4 +123,3 @@ namespace System.Diagnostics
         }
     }
 }
-

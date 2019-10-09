@@ -1,105 +1,40 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
-namespace System.IO.FileSystem.Tests
+namespace System.IO.Tests
 {
-    public class File_GetSetAttributes : FileSystemTest
+    public class File_GetSetAttributes : BaseGetSetAttributes
     {
-        #region Utilities
+        protected override FileAttributes GetAttributes(string path) => File.GetAttributes(path);
+        protected override void SetAttributes(string path, FileAttributes attributes) => File.SetAttributes(path, attributes);
 
-        protected virtual FileAttributes Get(string path)
+        // Getting only throws for File, not FileInfo
+        [Theory, MemberData(nameof(TrailingCharacters))]
+        public void GetAttributes_MissingFile(char trailingChar)
         {
-            return File.GetAttributes(path);
+            Assert.Throws<FileNotFoundException>(() => GetAttributes(GetTestFilePath() + trailingChar));
         }
 
-        protected virtual void Set(string path, FileAttributes attributes)
+        // Getting only throws for File, not FileInfo
+        [Theory,
+            InlineData(":bar"),
+            InlineData(":bar:$DATA")]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public void GetAttributes_MissingAlternateDataStream_Windows(string streamName)
         {
-            File.SetAttributes(path, attributes);
+            string path = CreateItem();
+            streamName = path + streamName;
+
+            Assert.Throws<FileNotFoundException>(() => GetAttributes(streamName));
         }
 
-        #endregion
-
-        [Fact]
-        public void NullParameters()
+        [Theory, MemberData(nameof(TrailingCharacters))]
+        public void GetAttributes_MissingDirectory(char trailingChar)
         {
-            Assert.Throws<ArgumentNullException>(() => Get(null));
-            Assert.Throws<ArgumentNullException>(() => Set(null, FileAttributes.Normal));
-        }
-
-        [Fact]
-        public void InvalidParameters()
-        {
-            Assert.Throws<ArgumentException>(() => Get(string.Empty));
-            Assert.Throws<ArgumentException>(() => Set(string.Empty, FileAttributes.Normal));
-        }
-
-        [Fact]
-        public void NonExistentFile()
-        {
-            Assert.Throws<FileNotFoundException>(() => Set(GetTestFilePath(), FileAttributes.Normal));
-        }
-
-        [Theory]
-        [InlineData(FileAttributes.ReadOnly)]
-        [InlineData(FileAttributes.Normal)]
-        [PlatformSpecific(PlatformID.AnyUnix)]
-        public void UnixAttributeSetting(FileAttributes attr)
-        {
-            var path = GetTestFilePath();
-            File.Create(path).Dispose();
-            Set(path, attr);
-            Assert.Equal(attr, Get(path));
-            Set(path, 0);
-        }
-
-        [Theory]
-        [InlineData(FileAttributes.ReadOnly)]
-        [InlineData(FileAttributes.Hidden)]
-        [InlineData(FileAttributes.System)]
-        [InlineData(FileAttributes.Archive)]
-        [InlineData(FileAttributes.Normal)]
-        [InlineData(FileAttributes.Temporary)]
-        [InlineData(FileAttributes.ReadOnly | FileAttributes.Hidden)]
-        [PlatformSpecific(PlatformID.Windows)]
-        public void WindowsAttributeSetting(FileAttributes attr)
-        {
-            var path = GetTestFilePath();
-            File.Create(path).Dispose();
-            Set(path, attr);
-            Assert.Equal(attr, Get(path));
-            Set(path, 0);
-        }
-
-        [Theory]
-        [InlineData(FileAttributes.SparseFile)]
-        [InlineData(FileAttributes.Temporary)]
-        [InlineData(FileAttributes.ReparsePoint)]
-        [InlineData(FileAttributes.Compressed)]
-        [InlineData(FileAttributes.Encrypted)]
-        [PlatformSpecific(PlatformID.AnyUnix)]
-        public void UnixInvalidAttributes(FileAttributes attr)
-        {
-            var path = GetTestFilePath();
-            File.Create(path).Dispose();
-            Set(path, attr);
-            Assert.Equal(FileAttributes.Normal, Get(path));
-        }
-
-        [Theory]
-        [InlineData(FileAttributes.Normal)]
-        [InlineData(FileAttributes.Encrypted)]
-        [InlineData(FileAttributes.SparseFile)]
-        [InlineData(FileAttributes.ReparsePoint)]
-        [InlineData(FileAttributes.Compressed)]
-        [PlatformSpecific(PlatformID.Windows)]
-        public void WindowsInvalidAttributes(FileAttributes attr)
-        {
-            var path = GetTestFilePath();
-            File.Create(path).Dispose();
-            Set(path, attr);
-            Assert.Equal(FileAttributes.Normal, Get(path));
+            Assert.Throws<DirectoryNotFoundException>(() => GetAttributes(Path.Combine(GetTestFilePath(), "dir" + trailingChar)));
         }
     }
 }

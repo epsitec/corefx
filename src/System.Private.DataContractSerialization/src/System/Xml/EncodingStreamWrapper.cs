@@ -1,7 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.IO;
@@ -30,7 +29,7 @@ namespace System.Xml
         private const int BufferLength = 128;
 
         // UTF-8 is fastpath, so that's how these are stored
-        // Compare methods adapt to unicodes.
+        // Compare methods adapt to Unicode.
         private static readonly byte[] s_encodingAttr = new byte[] { (byte)'e', (byte)'n', (byte)'c', (byte)'o', (byte)'d', (byte)'i', (byte)'n', (byte)'g' };
         private static readonly byte[] s_encodingUTF8 = new byte[] { (byte)'u', (byte)'t', (byte)'f', (byte)'-', (byte)'8' };
         private static readonly byte[] s_encodingUnicode = new byte[] { (byte)'u', (byte)'t', (byte)'f', (byte)'-', (byte)'1', (byte)'6' };
@@ -39,17 +38,17 @@ namespace System.Xml
 
         private SupportedEncoding _encodingCode;
         private Encoding _encoding;
-        private Encoder _enc;
-        private Decoder _dec;
-        private bool _isReading;
+        private readonly Encoder _enc;
+        private readonly Decoder _dec;
+        private readonly bool _isReading;
 
-        private Stream _stream;
+        private readonly Stream _stream;
         private char[] _chars;
         private byte[] _bytes;
         private int _byteOffset;
         private int _byteCount;
 
-        private byte[] _byteBuffer = new byte[1];
+        private readonly byte[] _byteBuffer = new byte[1];
 
         // Reading constructor
         public EncodingStreamWrapper(Stream stream, Encoding encoding)
@@ -120,59 +119,32 @@ namespace System.Xml
             _encoding = GetEncoding(e);
         }
 
-        private static Encoding GetEncoding(SupportedEncoding e)
-        {
-            switch (e)
+        private static Encoding GetEncoding(SupportedEncoding e) =>
+            e switch
             {
-                case SupportedEncoding.UTF8:
-                    return s_validatingUTF8;
+                SupportedEncoding.UTF8 => s_validatingUTF8,
+                SupportedEncoding.UTF16LE => s_validatingUTF16,
+                SupportedEncoding.UTF16BE => s_validatingBEUTF16,
+                _ => throw new XmlException(SR.XmlEncodingNotSupported),
+            };
 
-                case SupportedEncoding.UTF16LE:
-                    return s_validatingUTF16;
-
-                case SupportedEncoding.UTF16BE:
-                    return s_validatingBEUTF16;
-
-                default:
-                    throw new XmlException(SR.XmlEncodingNotSupported);
-            }
-        }
-
-        private static Encoding GetSafeEncoding(SupportedEncoding e)
-        {
-            switch (e)
+        private static Encoding GetSafeEncoding(SupportedEncoding e) =>
+            e switch
             {
-                case SupportedEncoding.UTF8:
-                    return s_safeUTF8;
+                SupportedEncoding.UTF8 => s_safeUTF8,
+                SupportedEncoding.UTF16LE => s_safeUTF16,
+                SupportedEncoding.UTF16BE => s_safeBEUTF16,
+                _ => throw new XmlException(SR.XmlEncodingNotSupported),
+            };
 
-                case SupportedEncoding.UTF16LE:
-                    return s_safeUTF16;
-
-                case SupportedEncoding.UTF16BE:
-                    return s_safeBEUTF16;
-
-                default:
-                    throw new XmlException(SR.XmlEncodingNotSupported);
-            }
-        }
-
-        private static string GetEncodingName(SupportedEncoding enc)
-        {
-            switch (enc)
+        private static string GetEncodingName(SupportedEncoding enc) =>
+            enc switch
             {
-                case SupportedEncoding.UTF8:
-                    return "utf-8";
-
-                case SupportedEncoding.UTF16LE:
-                    return "utf-16LE";
-
-                case SupportedEncoding.UTF16BE:
-                    return "utf-16BE";
-
-                default:
-                    throw new XmlException(SR.XmlEncodingNotSupported);
-            }
-        }
+                SupportedEncoding.UTF8 => "utf-8",
+                SupportedEncoding.UTF16LE => "utf-16LE",
+                SupportedEncoding.UTF16BE => "utf-16BE",
+                _ => throw new XmlException(SR.XmlEncodingNotSupported),
+            };
 
         private static SupportedEncoding GetSupportedEncoding(Encoding encoding)
         {
@@ -207,9 +179,9 @@ namespace System.Xml
                 // Emit BOM
                 if (emitBOM)
                 {
-                    byte[] bom = _encoding.GetPreamble();
+                    ReadOnlySpan<byte> bom = _encoding.Preamble;
                     if (bom.Length > 0)
-                        _stream.Write(bom, 0, bom.Length);
+                        _stream.Write(bom);
                 }
             }
         }
@@ -447,7 +419,7 @@ namespace System.Xml
                 if (key[i] == buffer[offset + i])
                     continue;
 
-                if (key[i] != Char.ToLowerInvariant((char)buffer[offset + i]))
+                if (key[i] != char.ToLowerInvariant((char)buffer[offset + i]))
                     return false;
             }
             return true;
@@ -597,7 +569,11 @@ namespace System.Xml
 
         protected override void Dispose(bool disposing)
         {
-            Flush();
+            if (_stream.CanWrite)
+            {
+                Flush();
+            }
+
             _stream.Dispose();
             base.Dispose(disposing);
         }

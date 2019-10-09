@@ -1,9 +1,9 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Text;
 
@@ -34,7 +34,7 @@ namespace System.Net.Http.Headers
             get { return _dispositionType; }
             set
             {
-                CheckDispositionTypeFormat(value, "value");
+                CheckDispositionTypeFormat(value, nameof(value));
                 _dispositionType = value;
             }
         }
@@ -96,7 +96,7 @@ namespace System.Net.Http.Headers
                 if (sizeParameter != null)
                 {
                     string sizeString = sizeParameter.Value;
-                    if (UInt64.TryParse(sizeString, NumberStyles.Integer, CultureInfo.InvariantCulture, out value))
+                    if (ulong.TryParse(sizeString, NumberStyles.Integer, CultureInfo.InvariantCulture, out value))
                     {
                         return (long)value;
                     }
@@ -116,7 +116,7 @@ namespace System.Net.Http.Headers
                 }
                 else if (value < 0)
                 {
-                    throw new ArgumentOutOfRangeException("value");
+                    throw new ArgumentOutOfRangeException(nameof(value));
                 }
                 else if (sizeParameter != null)
                 {
@@ -125,7 +125,7 @@ namespace System.Net.Http.Headers
                 else
                 {
                     string sizeString = value.Value.ToString(CultureInfo.InvariantCulture);
-                    _parameters.Add(new NameValueHeaderValue(size, sizeString));
+                    Parameters.Add(new NameValueHeaderValue(size, sizeString));
                 }
             }
         }
@@ -141,7 +141,7 @@ namespace System.Net.Http.Headers
 
         protected ContentDispositionHeaderValue(ContentDispositionHeaderValue source)
         {
-            Contract.Requires(source != null);
+            Debug.Assert(source != null);
 
             _dispositionType = source._dispositionType;
 
@@ -156,7 +156,7 @@ namespace System.Net.Http.Headers
 
         public ContentDispositionHeaderValue(string dispositionType)
         {
-            CheckDispositionTypeFormat(dispositionType, "dispositionType");
+            CheckDispositionTypeFormat(dispositionType, nameof(dispositionType));
             _dispositionType = dispositionType;
         }
 
@@ -166,7 +166,10 @@ namespace System.Net.Http.Headers
 
         public override string ToString()
         {
-            return _dispositionType + NameValueHeaderValue.ToString(_parameters, ';', true);
+            StringBuilder sb = StringBuilderCache.Acquire();
+            sb.Append(_dispositionType);
+            NameValueHeaderValue.ToString(_parameters, ';', true, sb);
+            return StringBuilderCache.GetStringAndRelease(sb);
         }
 
         public override bool Equals(object obj)
@@ -221,7 +224,7 @@ namespace System.Net.Http.Headers
 
         internal static int GetDispositionTypeLength(string input, int startIndex, out object parsedValue)
         {
-            Contract.Requires(startIndex >= 0);
+            Debug.Assert(startIndex >= 0);
 
             parsedValue = null;
 
@@ -230,7 +233,7 @@ namespace System.Net.Http.Headers
                 return 0;
             }
 
-            // Caller must remove leading whitespaces. If not, we'll return 0.
+            // Caller must remove leading whitespace. If not, we'll return 0.
             string dispositionType = null;
             int dispositionTypeLength = GetDispositionTypeExpressionLength(input, startIndex, out dispositionType);
 
@@ -267,12 +270,12 @@ namespace System.Net.Http.Headers
 
         private static int GetDispositionTypeExpressionLength(string input, int startIndex, out string dispositionType)
         {
-            Contract.Requires((input != null) && (input.Length > 0) && (startIndex < input.Length));
+            Debug.Assert((input != null) && (input.Length > 0) && (startIndex < input.Length));
 
             // This method just parses the disposition type string, it does not parse parameters.
             dispositionType = null;
 
-            // Parse the disposition type, i.e. <dispositiontype> in content-disposition string 
+            // Parse the disposition type, i.e. <dispositiontype> in content-disposition string
             // "<dispositiontype>; param1=value1; param2=value2".
             int typeLength = HttpRuleParser.GetTokenLength(input, startIndex);
 
@@ -292,12 +295,12 @@ namespace System.Net.Http.Headers
                 throw new ArgumentException(SR.net_http_argument_empty_string, parameterName);
             }
 
-            // When adding values using strongly typed objects, no leading/trailing LWS (whitespaces) are allowed.
+            // When adding values using strongly typed objects, no leading/trailing LWS (whitespace) are allowed.
             string tempDispositionType;
             int dispositionTypeLength = GetDispositionTypeExpressionLength(dispositionType, 0, out tempDispositionType);
             if ((dispositionTypeLength == 0) || (tempDispositionType.Length != dispositionType.Length))
             {
-                throw new FormatException(string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                throw new FormatException(SR.Format(System.Globalization.CultureInfo.InvariantCulture,
                     SR.net_http_headers_invalid_value, dispositionType));
             }
         }
@@ -314,13 +317,13 @@ namespace System.Net.Http.Headers
             DateTimeOffset date;
             if (dateParameter != null)
             {
-                string dateString = dateParameter.Value;
+                ReadOnlySpan<char> dateString = dateParameter.Value;
                 // Should have quotes, remove them.
                 if (IsQuoted(dateString))
                 {
-                    dateString = dateString.Substring(1, dateString.Length - 2);
+                    dateString = dateString.Slice(1, dateString.Length - 2);
                 }
-                if (HttpRuleParser.TryStringToDate(dateString, out date))
+                if (HttpDateParser.TryStringToDate(dateString, out date))
                 {
                     return date;
                 }
@@ -343,8 +346,7 @@ namespace System.Net.Http.Headers
             else
             {
                 // Must always be quoted.
-                string dateString = string.Format(CultureInfo.InvariantCulture, "\"{0}\"",
-                    HttpRuleParser.DateToString(date.Value));
+                string dateString = "\"" + HttpDateParser.DateToString(date.Value) + "\"";
                 if (dateParameter != null)
                 {
                     dateParameter.Value = dateString;
@@ -356,7 +358,7 @@ namespace System.Net.Http.Headers
             }
         }
 
-        // Gets a parameter of the given name and attempts to decode it if nessisary.
+        // Gets a parameter of the given name and attempts to decode it if necessary.
         // Returns null if the parameter is not present or the raw value if the encoding is incorrect.
         private string GetName(string parameter)
         {
@@ -403,7 +405,7 @@ namespace System.Net.Http.Headers
                 string processedValue = string.Empty;
                 if (parameter.EndsWith("*", StringComparison.Ordinal))
                 {
-                    processedValue = Encode5987(value);
+                    processedValue = HeaderUtilities.Encode5987(value);
                 }
                 else
                 {
@@ -422,7 +424,7 @@ namespace System.Net.Http.Headers
         }
 
         // Returns input for decoding failures, as the content might not be encoded.
-        private string EncodeAndQuoteMime(string input)
+        private static string EncodeAndQuoteMime(string input)
         {
             string result = input;
             bool needsQuotes = false;
@@ -433,12 +435,12 @@ namespace System.Net.Http.Headers
                 needsQuotes = true;
             }
 
-            if (result.IndexOf("\"", 0, StringComparison.Ordinal) >= 0) // Only bounding quotes are allowed.
+            if (result.Contains('"')) // Only bounding quotes are allowed.
             {
-                throw new ArgumentException(string.Format(CultureInfo.InvariantCulture,
+                throw new ArgumentException(SR.Format(CultureInfo.InvariantCulture,
                     SR.net_http_headers_invalid_value, input));
             }
-            else if (RequiresEncoding(result))
+            else if (HeaderUtilities.ContainsNonAscii(result))
             {
                 needsQuotes = true; // Encoded data must always be quoted, the equals signs are invalid in tokens.
                 result = EncodeMime(result); // =?utf-8?B?asdfasdfaesdf?=
@@ -451,45 +453,30 @@ namespace System.Net.Http.Headers
             if (needsQuotes)
             {
                 // Re-add quotes "value".
-                result = string.Format(CultureInfo.InvariantCulture, "\"{0}\"", result);
+                result = "\"" + result + "\"";
             }
             return result;
         }
 
         // Returns true if the value starts and ends with a quote.
-        private bool IsQuoted(string value)
+        private static bool IsQuoted(ReadOnlySpan<char> value)
         {
-            Debug.Assert(value != null);
-
-            return value.Length > 1 && value.StartsWith("\"", StringComparison.Ordinal)
-                && value.EndsWith("\"", StringComparison.Ordinal);
-        }
-
-        // tspecials are required to be in a quoted string.  Only non-ascii needs to be encoded.
-        private bool RequiresEncoding(string input)
-        {
-            Debug.Assert(input != null);
-
-            foreach (char c in input)
-            {
-                if ((int)c > 0x7f)
-                {
-                    return true;
-                }
-            }
-            return false;
+            return
+                value.Length > 1 &&
+                value[0] == '"' &&
+                value[value.Length - 1] == '"';
         }
 
         // Encode using MIME encoding.
-        private string EncodeMime(string input)
+        private static string EncodeMime(string input)
         {
             byte[] buffer = Encoding.UTF8.GetBytes(input);
             string encodedName = Convert.ToBase64String(buffer);
-            return string.Format(CultureInfo.InvariantCulture, "=?utf-8?B?{0}?=", encodedName);
+            return "=?utf-8?B?" + encodedName + "?=";
         }
 
         // Attempt to decode MIME encoded strings.
-        private bool TryDecodeMime(string input, out string output)
+        private static bool TryDecodeMime(string input, out string output)
         {
             Debug.Assert(input != null);
 
@@ -500,11 +487,12 @@ namespace System.Net.Http.Headers
             {
                 return false;
             }
+
             string[] parts = processedInput.Split('?');
             // "=, encodingName, encodingType, encodedData, ="
             if (parts.Length != 5 || parts[0] != "\"=" || parts[4] != "=\"" || parts[2].ToLowerInvariant() != "b")
             {
-                // Not encoded.  
+                // Not encoded.
                 // This does not support multi-line encoding.
                 // Only base64 encoding is supported, not quoted printable.
                 return false;
@@ -528,61 +516,41 @@ namespace System.Net.Http.Headers
             return false;
         }
 
-        // Encode a string using RFC 5987 encoding.
-        // encoding'lang'PercentEncodedSpecials
-        private string Encode5987(string input)
-        {
-            StringBuilder builder = new StringBuilder("utf-8\'\'");
-            foreach (char c in input)
-            {
-                // attr-char = ALPHA / DIGIT / "!" / "#" / "$" / "&" / "+" / "-" / "." / "^" / "_" / "`" / "|" / "~"
-                //      ; token except ( "*" / "'" / "%" )
-                if (c > 0x7F) // Encodes as multiple utf-8 bytes
-                {
-                    byte[] bytes = Encoding.UTF8.GetBytes(c.ToString());
-                    foreach (byte b in bytes)
-                    {
-                        builder.Append(UriShim.HexEscape((char)b));
-                    }
-                }
-                else if (!HttpRuleParser.IsTokenChar(c) || c == '*' || c == '\'' || c == '%')
-                {
-                    // ASCII - Only one encoded byte.
-                    builder.Append(UriShim.HexEscape(c));
-                }
-                else
-                {
-                    builder.Append(c);
-                }
-            }
-            return builder.ToString();
-        }
 
         // Attempt to decode using RFC 5987 encoding.
         // encoding'language'my%20string
-        private bool TryDecode5987(string input, out string output)
+        private static bool TryDecode5987(string input, out string output)
         {
             output = null;
-            string[] parts = input.Split('\'');
-            if (parts.Length != 3)
+
+            int quoteIndex = input.IndexOf('\'');
+            if (quoteIndex == -1)
             {
                 return false;
             }
 
+            int lastQuoteIndex = input.LastIndexOf('\'');
+            if (quoteIndex == lastQuoteIndex || input.IndexOf('\'', quoteIndex + 1) != lastQuoteIndex)
+            {
+                return false;
+            }
+
+            string encodingString = input.Substring(0, quoteIndex);
+            string dataString = input.Substring(lastQuoteIndex + 1, input.Length - (lastQuoteIndex + 1));
+
             StringBuilder decoded = new StringBuilder();
             try
             {
-                Encoding encoding = Encoding.GetEncoding(parts[0]);
+                Encoding encoding = Encoding.GetEncoding(encodingString);
 
-                string dataString = parts[2];
                 byte[] unescapedBytes = new byte[dataString.Length];
                 int unescapedBytesCount = 0;
                 for (int index = 0; index < dataString.Length; index++)
                 {
-                    if (UriShim.IsHexEncoding(dataString, index)) // %FF
+                    if (Uri.IsHexEncoding(dataString, index)) // %FF
                     {
                         // Unescape and cache bytes, multi-byte characters must be decoded all at once.
-                        unescapedBytes[unescapedBytesCount++] = (byte)UriShim.HexUnescape(dataString, ref index);
+                        unescapedBytes[unescapedBytesCount++] = (byte)Uri.HexUnescape(dataString, ref index);
                         index--; // HexUnescape did +=3; Offset the for loop's ++
                     }
                     else

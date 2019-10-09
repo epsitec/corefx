@@ -1,19 +1,22 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.Security.Cryptography.Rsa.Tests
 {
     public class RSAOpenSslProvider : IRSAProvider
     {
-        public RSA Create()
-        {
-            return new RSAOpenSsl();
-        }
+        public RSA Create() => new RSAOpenSsl();
 
-        public RSA Create(int keySize)
-        {
-            return new RSAOpenSsl(keySize);
-        }
+        public RSA Create(int keySize) => new RSAOpenSsl(keySize);
+
+        public bool Supports384PrivateKey => true;
+
+        public bool SupportsLargeExponent => true;
+
+        public bool SupportsSha2Oaep => true;
+
+        public bool SupportsPss => true;
     }
 
     public partial class RSAFactory

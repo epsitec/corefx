@@ -1,34 +1,25 @@
-<Project ToolsVersion="12.0" DefaultTargets="BuildAndTest" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="dir.props" />
-  <Import Project="BuildValues.props" />
+<Project>
+  <Import Project="Directory.Build.props" />
 
-  <ItemGroup>
-    <!-- System.Runtime.WindowsRuntime depends on some internal-only paths, disable from corefx build for now -->
-    <ExcludeProjects Include="System.Runtime.WindowsRuntime\ref\4.0\System.Runtime.WindowsRuntime.csproj" />
-    <Project Include="*\src\*.csproj" Exclude="@(ExcludeProjects)" />
-    <Project Include="*\src\*.vbproj" Condition="'$(IncludeVbProjects)'!='false'" Exclude="@(ExcludeProjects)" />
-    <Project Include="*\test*\**\*.csproj" Exclude="@(ExcludeProjects)" />
-    <Project Include="*\test*\**\*.vbproj" Condition="'$(IncludeVbProjects)'!='false'" Exclude="@(ExcludeProjects)" />
+  <!-- required to build the projects in their specified order -->
+  <PropertyGroup>
+    <SerializeProjects>true</SerializeProjects>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(DirectoryToBuild)' == ''">
+    <Project Include="ref.builds" />
+    <Project Include="shims\generated\*.csproj" />
+    <Project Include="Native\native-binplace.proj" />
+    <Project Include="src.builds" />
+    <Project Include="shims\manual\*.csproj" />
+    <Project Include="shims\ApiCompat.proj" Condition="'$(DotNetBuildFromSource)' != 'true'" />
+    <Project Include="pretest.proj" Condition="'$(DotNetBuildFromSource)' != 'true' and '$(BuildAllConfigurations)' != 'true'" />
   </ItemGroup>
 
-  <Import Project="..\dir.targets" />
+  <ItemGroup Condition="'$(DirectoryToBuild)' != ''">
+    <Project Include="ref.builds" />
+    <Project Include="src.builds" />
+  </ItemGroup>
 
-  <Import Project="..\dir.traversal.targets" />
-
-  <Import Project="$(ToolsDir)packages.targets" Condition="Exists('$(ToolsDir)packages.targets') and '$(ImportGetNuGetPackageVersions)' != 'false'" />
-  <Import Project="$(ToolsDir)UpdateBuildValues.targets" Condition="Exists('$(ToolsDir)UpdateBuildValues.targets')" />
-
-  <PropertyGroup Condition="Exists('$(ToolsDir)packages.targets') and '$(ImportGetNuGetPackageVersions)' != 'false'">
-    <TraversalBuildDependsOn>
-      $(TraversalBuildDependsOn);
-      BuildPackages;
-    </TraversalBuildDependsOn>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <GenerateCodeCoverageReportForAll>true</GenerateCodeCoverageReportForAll>
-  </PropertyGroup>
-  <Import Project="$(ToolsDir)CodeCoverage.targets" Condition="Exists('$(ToolsDir)CodeCoverage.targets')" />
-  <Import Project="$(ToolsDir)PerfTesting.targets" Condition="Exists('$(ToolsDir)PerfTesting.targets')" />
-
+  <Import Project="$(RepositoryEngineeringDir)dir.traversal.targets" />
 </Project>

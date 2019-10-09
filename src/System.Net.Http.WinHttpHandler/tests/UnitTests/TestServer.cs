@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.IO;
@@ -12,9 +13,15 @@ namespace System.Net.Http.WinHttpHandlerUnitTests
 {
     public static class TestServer
     {
+        public const string ExpectedResponseBody = "This is the response body.";
+        public const string FakeServerEndpoint = "http://www.contoso.com/";
+        public const string FakeSecureServerEndpoint = "https://www.contoso.com/";
+        public static readonly byte[] ExpectedResponseBodyBytes = Encoding.UTF8.GetBytes(ExpectedResponseBody);
+
         private static MemoryStream requestBody = null;
         private static MemoryStream responseBody = null;
         private static string responseHeaders = null;
+        private static double dataAvailablePercentage = 1.0;
 
         public static byte[] RequestBody
         {
@@ -43,6 +50,39 @@ namespace System.Net.Http.WinHttpHandlerUnitTests
             set
             {
                 responseHeaders = value;
+            }
+        }
+
+        public static double DataAvailablePercentage
+        {
+            get
+            {
+                return dataAvailablePercentage;
+            }
+
+            set
+            {
+                dataAvailablePercentage = value;
+            }
+        }
+
+        public static int DataAvailable
+        {
+            get
+            {
+                if (responseBody == null)
+                {
+                    return 0;
+                }
+
+                int totalBytesLeftToRead = (int)(responseBody.Length - responseBody.Position);
+                int allowedBytesToRead = (int)((double)totalBytesLeftToRead * dataAvailablePercentage);
+                if (allowedBytesToRead == 0 && totalBytesLeftToRead != 0)
+                {
+                    allowedBytesToRead = 1;
+                }
+
+                return allowedBytesToRead;
             }
         }
 
@@ -93,23 +133,7 @@ namespace System.Net.Http.WinHttpHandlerUnitTests
             }
             else
             {
-                using (var memoryStream = new MemoryStream())
-                {
-                    Stream compressedStream = null;
-                    if (compressionKind == DecompressionMethods.Deflate)
-                    {
-                        compressedStream = new DeflateStream(memoryStream, CompressionMode.Compress);
-                    }
-                    else
-                    {
-                        compressedStream = new GZipStream(memoryStream, CompressionMode.Compress);
-                    }
-
-                    compressedStream.Write(responseBodyBytes, 0, responseBodyBytes.Length);
-                    compressedStream.Dispose();
-
-                    compressedBytes = memoryStream.ToArray();
-                }
+                compressedBytes = CompressBytes(responseBodyBytes, compressionKind == DecompressionMethods.GZip);
             }
 
             ResponseBody = compressedBytes;
@@ -128,6 +152,28 @@ namespace System.Net.Http.WinHttpHandlerUnitTests
             requestBody = new MemoryStream();
             responseBody = new MemoryStream();
             responseHeaders = null;
+            dataAvailablePercentage = 1.0;
+        }
+
+        public static byte[] CompressBytes(byte[] bytes, bool useGZip)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                Stream compressedStream = null;
+                if (useGZip)
+                {
+                    compressedStream = new GZipStream(memoryStream, CompressionMode.Compress);
+                }
+                else
+                {
+                    compressedStream = new DeflateStream(memoryStream, CompressionMode.Compress);
+                }
+
+                compressedStream.Write(bytes, 0, bytes.Length);
+                compressedStream.Dispose();
+
+                return memoryStream.ToArray();
+            }
         }
     }
 }

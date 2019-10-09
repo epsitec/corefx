@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections;
@@ -12,7 +13,7 @@ namespace System.Diagnostics
     /// </devdoc>
     public class TraceListenerCollection : IList
     {
-        private List<TraceListener> _list;
+        private readonly List<TraceListener> _list;
 
         internal TraceListenerCollection()
         {
@@ -86,7 +87,7 @@ namespace System.Diagnostics
         {
             if (value == null)
             {
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             }
             for (int i = 0; ((i) < (value.Length)); i = ((i) + (1)))
             {
@@ -101,7 +102,7 @@ namespace System.Diagnostics
         {
             if (value == null)
             {
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             }
             int currentCount = value.Count;
             for (int i = 0; i < currentCount; i = ((i) + (1)))
@@ -122,7 +123,7 @@ namespace System.Diagnostics
         }
 
         /// <devdoc>
-        ///    <para>Checks whether the list contains the specified 
+        ///    <para>Checks whether the list contains the specified
         ///       listener.</para>
         /// </devdoc>
         public bool Contains(TraceListener listener)
@@ -131,7 +132,7 @@ namespace System.Diagnostics
         }
 
         /// <devdoc>
-        /// <para>Copies a section of the current <see cref='System.Diagnostics.TraceListenerCollection'/> list to the specified array at the specified 
+        /// <para>Copies a section of the current <see cref='System.Diagnostics.TraceListenerCollection'/> list to the specified array at the specified
         ///    index.</para>
         /// </devdoc>
         public void CopyTo(TraceListener[] listeners, int index)
@@ -152,7 +153,7 @@ namespace System.Diagnostics
         internal void InitializeListener(TraceListener listener)
         {
             if (listener == null)
-                throw new ArgumentNullException("listener");
+                throw new ArgumentNullException(nameof(listener));
 
             listener.IndentSize = TraceInternal.IndentSize;
             listener.IndentLevel = TraceInternal.IndentLevel;
@@ -189,7 +190,7 @@ namespace System.Diagnostics
         }
 
         /// <devdoc>
-        ///    <para>Removes the first listener in the list that has the 
+        ///    <para>Removes the first listener in the list that has the
         ///       specified name.</para>
         /// </devdoc>
         public void Remove(string name)
@@ -222,7 +223,7 @@ namespace System.Diagnostics
             {
                 TraceListener listener = value as TraceListener;
                 if (listener == null)
-                    throw new ArgumentException(SR.MustAddListener, "value");
+                    throw new ArgumentException(SR.MustAddListener, nameof(value));
                 InitializeListener(listener);
                 _list[index] = listener;
             }
@@ -251,7 +252,7 @@ namespace System.Diagnostics
         {
             TraceListener listener = value as TraceListener;
             if (listener == null)
-                throw new ArgumentException(SR.MustAddListener, "value");
+                throw new ArgumentException(SR.MustAddListener, nameof(value));
 
             InitializeListener(listener);
 
@@ -278,7 +279,7 @@ namespace System.Diagnostics
         {
             TraceListener listener = value as TraceListener;
             if (listener == null)
-                throw new ArgumentException(SR.MustAddListener, "value");
+                throw new ArgumentException(SR.MustAddListener, nameof(value));
 
             InitializeListener(listener);
 

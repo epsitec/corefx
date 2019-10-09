@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -46,9 +47,9 @@ namespace System.Linq.Parallel
         // A wrapper over IEnumerator that provides IEnumerator<object> interface
         //
 
-        class WrapperEnumeratorWeakToStrong : IEnumerator<object>
+        private class WrapperEnumeratorWeakToStrong : IEnumerator<object>
         {
-            private IEnumerator _wrappedEnumerator; // The weakly typed enumerator we've wrapped.
+            private readonly IEnumerator _wrappedEnumerator; // The weakly typed enumerator we've wrapped.
 
             //-----------------------------------------------------------------------------------
             // Wrap the specified enumerator in a new weak-to-strong converter.

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -19,19 +20,19 @@ namespace System.Linq.Parallel
     /// merging. Namely, for synchronous merges, the input data is yielded from the
     /// input data streams in "depth first" left-to-right order. For asynchronous merges,
     /// on the other hand, we use a biased choice algorithm to favor input channels in
-    /// a "fair" way. No order preservation is carried out by this helper. 
+    /// a "fair" way. No order preservation is carried out by this helper.
     /// </summary>
     /// <typeparam name="TInputOutput"></typeparam>
     /// <typeparam name="TIgnoreKey"></typeparam>
     internal class DefaultMergeHelper<TInputOutput, TIgnoreKey> : IMergeHelper<TInputOutput>
     {
-        private QueryTaskGroupState _taskGroupState; // State shared among tasks.
-        private PartitionedStream<TInputOutput, TIgnoreKey> _partitions; // Source partitions.
-        private AsynchronousChannel<TInputOutput>[] _asyncChannels; // Destination channels (async).
-        private SynchronousChannel<TInputOutput>[] _syncChannels; // Destination channels (sync).
-        private IEnumerator<TInputOutput> _channelEnumerator; // Output enumerator.
-        private TaskScheduler _taskScheduler; // The task manager to execute the query.
-        private bool _ignoreOutput; // Whether we're enumerating "for effect".
+        private readonly QueryTaskGroupState _taskGroupState; // State shared among tasks.
+        private readonly PartitionedStream<TInputOutput, TIgnoreKey> _partitions; // Source partitions.
+        private readonly AsynchronousChannel<TInputOutput>[] _asyncChannels; // Destination channels (async).
+        private readonly SynchronousChannel<TInputOutput>[] _syncChannels; // Destination channels (sync).
+        private readonly IEnumerator<TInputOutput> _channelEnumerator; // Output enumerator.
+        private readonly TaskScheduler _taskScheduler; // The task manager to execute the query.
+        private readonly bool _ignoreOutput; // Whether we're enumerating "for effect".
 
         //-----------------------------------------------------------------------------------
         // Instantiates a new merge helper.

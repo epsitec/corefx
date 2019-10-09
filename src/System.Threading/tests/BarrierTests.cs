@@ -1,13 +1,12 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using Xunit;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Threading.Tasks;
+using Xunit;
 
-namespace Test
+namespace System.Threading.Tests
 {
     /// <summary>
     /// Barrier unit tests
@@ -35,32 +34,20 @@ namespace Test
         /// <summary>
         /// Testing Barrier constructor
         /// </summary>
-        /// <param name="initialCount">The intial barrier count</param>
+        /// <param name="initialCount">The initial barrier count</param>
         /// <param name="exceptionType">Type of the exception in case of invalid input, null for valid cases</param>
-        /// <returns>Tru if the test succeeded, false otherwise</returns>
+        /// <returns>True if the test succeeded, false otherwise</returns>
         private static void RunBarrierTest1_ctor(int initialCount, Type exceptionType)
         {
-            Exception exception = null;
             try
             {
                 Barrier b = new Barrier(initialCount);
-                if (b.ParticipantCount != initialCount)
-                {
-                    Assert.True(false, string.Format("BarrierTests:  Constructor failed, ParticipantCount doesn't match the initialCount."));
-                }
+                Assert.Equal(initialCount, b.ParticipantCount);
             }
             catch (Exception ex)
             {
-                exception = ex;
-            }
-
-            if (exception != null && exceptionType == null)
-            {
-                Assert.True(false, string.Format("BarrierTests:  Constructor failed, unexpected exception has been thrown."));
-            }
-            if (exception != null && !Type.Equals(exceptionType, exception.GetType()))
-            {
-                Assert.True(false, string.Format("BarrierTests:  Constructor failed, exceptions types do not match."));
+                Assert.NotNull(exceptionType);
+                Assert.IsType(exceptionType, ex);
             }
         }
 
@@ -86,38 +73,23 @@ namespace Test
         /// <param name="timeout">SignalAndWait timeout</param>
         /// <param name="result">Expected return value</param>
         /// <param name="exceptionType">Type of the exception in case of invalid input, null for valid cases</param>
-        /// <returns>Tru if the test succeeded, false otherwise</returns>
+        /// <returns>True if the test succeeded, false otherwise</returns>
         private static void RunBarrierTest2_SignalAndWait(int initialCount, TimeSpan timeout, bool result, Type exceptionType)
         {
             Barrier b = new Barrier(initialCount);
-            Exception exception = null;
             try
             {
-                if (b.SignalAndWait(timeout) != result)
-                {
-                    Assert.True(false, string.Format("BarrierTests:  SignalAndWait failed, return value doesn't match the expected value"));
-                }
+                Assert.Equal(result, b.SignalAndWait(timeout));
                 if (result && b.CurrentPhaseNumber != 1)
                 {
-                    Assert.True(false, string.Format("BarrierTests:  SignalAndWait failed, CurrentPhaseNumber has not been incremented after SignalAndWait"));
-                }
-                if (result && b.ParticipantsRemaining != b.ParticipantCount)
-                {
-                    Assert.True(false, string.Format("BarrierTests:  SignalAndWait failed, ParticipantsRemaming does not equal the total participants"));
+                    Assert.Equal(1, b.CurrentPhaseNumber);
+                    Assert.Equal(b.ParticipantCount, b.ParticipantsRemaining);
                 }
             }
             catch (Exception ex)
             {
-                exception = ex;
-            }
-
-            if (exception != null && exceptionType == null)
-            {
-                Assert.True(false, string.Format("BarrierTests:  SignalAndWait failed, unexpected exception has been thrown."));
-            }
-            if (exception != null && !Type.Equals(exceptionType, exception.GetType()))
-            {
-                Assert.True(false, string.Format("BarrierTests:  SignalAndWait failed, exceptions types do not match."));
+                Assert.NotNull(exceptionType);
+                Assert.IsType(exceptionType, ex);
             }
         }
 
@@ -125,7 +97,7 @@ namespace Test
         /// Test SignalANdWait parallel
         /// </summary>
         /// <param name="initialCount">Initial barrier count</param>
-        /// <returns>Tru if the test succeeded, false otherwise</returns>
+        /// <returns>True if the test succeeded, false otherwise</returns>
         private static void RunBarrierTest3_SignalAndWait(int initialCount)
         {
             Barrier b = new Barrier(initialCount);
@@ -135,14 +107,8 @@ namespace Test
             }
             b.SignalAndWait();
 
-            if (b.CurrentPhaseNumber != 1)
-            {
-                Assert.True(false, string.Format("BarrierTests:  SignalAndWait failed, CurrentPhaseNumber has not been incremented after SignalAndWait"));
-            }
-            if (b.ParticipantsRemaining != b.ParticipantCount)
-            {
-                Assert.True(false, string.Format("BarrierTests:  SignalAndWait failed, ParticipantsRemaming does not equal the total participants"));
-            }
+            Assert.Equal(1, b.CurrentPhaseNumber);
+            Assert.Equal(b.ParticipantCount, b.ParticipantsRemaining);
         }
 
         [Fact]
@@ -164,7 +130,7 @@ namespace Test
         [Fact]
         public static void TooManyParticipants()
         {
-            Barrier b = new Barrier(Int16.MaxValue);
+            Barrier b = new Barrier(short.MaxValue);
             Assert.Throws<InvalidOperationException>(() => b.AddParticipant());
         }
 
@@ -185,40 +151,55 @@ namespace Test
             Assert.Throws<ArgumentOutOfRangeException>(() => b.RemoveParticipants(2));
         }
 
+        [Fact]
+        public static async Task RemovingWaitingParticipants()
+        {
+            Barrier b = new Barrier(4);
+            Task t = Task.Run(() =>
+            {
+                b.SignalAndWait();
+            });
+
+            while (b.ParticipantsRemaining > 3)
+            {
+                await Task.Delay(100);
+            }
+
+            b.RemoveParticipants(2); // Legal. Succeeds.
+
+            Assert.Equal(1, b.ParticipantsRemaining);
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => b.RemoveParticipants(20)); // Too few total to remove
+
+            Assert.Equal(1, b.ParticipantsRemaining);
+
+            Assert.Throws<InvalidOperationException>(() => b.RemoveParticipants(2)); // Too few remaining to remove
+
+            Assert.Equal(1, b.ParticipantsRemaining);
+            b.RemoveParticipant(); // Barrier survives the incorrect removals, and we can still remove correctly.
+
+            await t; // t can now complete.
+        }
+
         /// <summary>
         /// Test AddParticipants
         /// </summary>
         /// <param name="initialCount">The initial barrier participants count</param>
-        /// <param name="participantsToAdd">The aprticipants that will be added</param>
+        /// <param name="participantsToAdd">The participants that will be added</param>
         /// <param name="exceptionType">Type of the exception in case of invalid input, null for valid cases</param>
-        /// <returns>Tru if the test succeeded, false otherwise</returns>
+        /// <returns>True if the test succeeded, false otherwise</returns>
         private static void RunBarrierTest4_AddParticipants(int initialCount, int participantsToAdd, Type exceptionType)
         {
             Barrier b = new Barrier(initialCount);
-            Exception exception = null;
             try
             {
-                if (b.AddParticipants(participantsToAdd) != 0)
-                {
-                    Assert.True(false, string.Format("BarrierTests:  AddParticipants failed, the return phase count is not correct"));
-                }
-                if (b.ParticipantCount != initialCount + participantsToAdd)
-                {
-                    Assert.True(false, string.Format("BarrierTests:  AddParticipants failed, total participant was not increased"));
-                }
+                Assert.Equal(0, b.AddParticipants(participantsToAdd));
+                Assert.Equal(initialCount + participantsToAdd, b.ParticipantCount);
             }
             catch (Exception ex)
             {
-                exception = ex;
-            }
-
-            if (exception != null && exceptionType == null)
-            {
-                Assert.True(false, string.Format("BarrierTests:  AddParticipants failed, unexpected exception has been thrown."));
-            }
-            if (exception != null && !Type.Equals(exceptionType, exception.GetType()))
-            {
-                Assert.True(false, string.Format("BarrierTests:  AddParticipants failed, exceptions types do not match."));
+                Assert.NotNull(exceptionType);
+                Assert.IsType(exceptionType, ex);
             }
         }
 
@@ -241,60 +222,49 @@ namespace Test
         /// Test RemoveParticipants
         /// </summary>
         /// <param name="initialCount">The initial barrier participants count</param>
-        /// <param name="participantsToRemove">The aprticipants that will be added</param>
+        /// <param name="participantsToRemove">The participants that will be added</param>
         /// <param name="exceptionType">Type of the exception in case of invalid input, null for valid cases</param>
-        /// <returns>Tru if the test succeeded, false otherwise</returns>
+        /// <returns>True if the test succeeded, false otherwise</returns>
         private static void RunBarrierTest5_RemoveParticipants(int initialCount, int participantsToRemove, Type exceptionType)
         {
             Barrier b = new Barrier(initialCount);
-            Exception exception = null;
             try
             {
                 b.RemoveParticipants(participantsToRemove);
-                if (b.ParticipantCount != initialCount - participantsToRemove)
-                {
-                    Assert.True(false, string.Format("BarrierTests:  RemoveParticipants failed, total participant was not decreased"));
-                }
+                Assert.Equal(initialCount - participantsToRemove, b.ParticipantCount);
             }
             catch (Exception ex)
             {
-                exception = ex;
-            }
-
-            if (exception != null && exceptionType == null)
-            {
-                Assert.True(false, string.Format("BarrierTests:  RemoveParticipants failed, unexpected exception has been thrown."));
-            }
-            if (exception != null && !Type.Equals(exceptionType, exception.GetType()))
-            {
-                Assert.True(false, string.Format("BarrierTests:  RemoveParticipants failed, exceptions types do not match."));
+                Assert.NotNull(exceptionType);
+                Assert.IsType(exceptionType, ex);
             }
         }
 
         /// <summary>
         /// Test Dispose
         /// </summary>
-        /// <returns>Tru if the test succeeded, false otherwise</returns>
+        /// <returns>True if the test succeeded, false otherwise</returns>
         [Fact]
         public static void RunBarrierTest6_Dispose()
         {
             Barrier b = new Barrier(1);
             b.Dispose();
-            try
+            Assert.Throws<ObjectDisposedException>(() => b.SignalAndWait());
+        }
+
+        [Fact]
+        public static void SignalBarrierWithoutParticipants()
+        {
+            using (Barrier b = new Barrier(0))
             {
-                b.SignalAndWait();
-                Assert.True(false, string.Format("BarrierTests:  Cancel failed, SignalAndWait didn't throw exceptions after Dispose."));
-            }
-            catch (ObjectDisposedException)
-            {
+                Assert.Throws<InvalidOperationException>(() => b.SignalAndWait());
             }
         }
 
         [Fact]
         public static void RunBarrierTest7a()
         {
-            bool failed = false;
-            for (int j = 0; j < 100 && !failed; j++)
+            for (int j = 0; j < 100; j++)
             {
                 Barrier b = new Barrier(0);
                 Action[] actions = new Action[4];
@@ -304,16 +274,8 @@ namespace Test
                     {
                         for (int i = 0; i < 400; i++)
                         {
-                            try
-                            {
-                                b.AddParticipant();
-                                b.RemoveParticipant();
-                            }
-                            catch
-                            {
-                                failed = true;
-                                break;
-                            }
+                            b.AddParticipant();
+                            b.RemoveParticipant();
                         }
                     });
                 }
@@ -322,18 +284,12 @@ namespace Test
                 for (int k = 0; k < tasks.Length; k++)
                     tasks[k] = Task.Factory.StartNew((index) => actions[(int)index](), k, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Default);
                 Task.WaitAll(tasks);
-                if (b.ParticipantCount != 0)
-                    failed = true;
-            }
-
-            if (failed)
-            {
-                Assert.True(false, string.Format("BarrierTests:  RunBarrierTest7a failed"));
+                Assert.Equal(0, b.ParticipantCount);
             }
         }
 
         /// <summary>
-        /// Test ithe case when the post phase action throws an exception
+        /// Test the case when the post phase action throws an exception
         /// </summary>
         /// <returns>True if the test succeeded, false otherwise</returns>
         [Fact]
@@ -349,7 +305,7 @@ namespace Test
             int succeededCount = 0;
 
             // Run threads that will expect BarrierPostPhaseException when they call SignalAndWait, and increment the count in the catch block
-            // The BarrierPostPhaseException inner exception should be the real excption thrown by the post phase action
+            // The BarrierPostPhaseException inner exception should be the real exception thrown by the post phase action
             Task[] threads = new Task[participants];
             for (int i = 0; i < threads.Length; i++)
             {
@@ -369,15 +325,8 @@ namespace Test
 
             foreach (Task t in threads)
                 t.Wait();
-            if (succeededCount != participants)
-            {
-                Assert.True(false, string.Format("BarrierTests:  Failed, Not all participants threw the exception, expected {0}, actual {1}", participants, succeededCount));
-            }
-            // make sure the phase count is incremented
-            if (barrier.CurrentPhaseNumber != 1)
-            {
-                Assert.True(false, string.Format("BarrierTests:  Failed, Expected phase count = 1, but did not match."));
-            }
+            Assert.Equal(participants, succeededCount);
+            Assert.Equal(1, barrier.CurrentPhaseNumber);
 
             // turn off the exception
             shouldThrow = false;
@@ -400,16 +349,13 @@ namespace Test
             }
             foreach (Task t in threads)
                 t.Wait();
-            if (succeededCount != participants)
-            {
-                Assert.True(false, string.Format("BarrierTests:  Failed, At least one participant threw BarrierPostPhaseException."));
-            }
+            Assert.Equal(participants, succeededCount);
         }
 
         /// <summary>
         /// Test ithe case when the post phase action throws an exception
         /// </summary>
-        /// <returns>Tru if the test succeeded, false otherwise</returns>
+        /// <returns>True if the test succeeded, false otherwise</returns>
         [Fact]
         public static void RunBarrierTest9_PostPhaseException()
         {
@@ -455,11 +401,10 @@ namespace Test
         }
 
         [Fact]
-        [OuterLoop]
         public static void RunBarrierTest10b()
         {
             // Regression test for Barrier race condition
-            for (int j = 0; j < 10000; j++)
+            for (int j = 0; j < 10; j++)
             {
                 Barrier b = new Barrier(2);
                 var t1 = Task.Run(() =>
@@ -477,30 +422,21 @@ namespace Test
         }
 
         [Fact]
-        [OuterLoop]
         public static void RunBarrierTest10c()
         {
-            for (int j = 0; j < 10000; j++)
+            for (int j = 0; j < 10; j++)
             {
                 Task[] tasks = new Task[2];
                 Barrier b = new Barrier(3);
                 tasks[0] = Task.Run(() => b.SignalAndWait());
                 tasks[1] = Task.Run(() => b.SignalAndWait());
 
-
                 b.SignalAndWait();
                 b.Dispose();
 
                 GC.Collect();
 
-                try
-                {
-                    Task.WaitAll(tasks);
-                }
-                catch
-                {
-                    Assert.True(false, string.Format("RunBarrierTest10c:  Error: Only finished {0} iterations, before an exception was thrown.", j));
-                }
+                Task.WaitAll(tasks);
             }
         }
 
@@ -525,18 +461,8 @@ namespace Test
         /// </summary>
         private static void EnsurePostPhaseThrew(Barrier barrier)
         {
-            try
-            {
-                barrier.SignalAndWait();
-                Assert.True(false, string.Format("BarrierTests:  PostPhaseException failed, Postphase action didn't throw."));
-            }
-            catch (BarrierPostPhaseException ex)
-            {
-                if (!ex.InnerException.GetType().Equals(typeof(InvalidOperationException)))
-                {
-                    Assert.True(false, string.Format("BarrierTests:  PostPhaseException failed, Postphase action didn't throw the correct exception."));
-                }
-            }
+            BarrierPostPhaseException be = Assert.Throws<BarrierPostPhaseException>(() => barrier.SignalAndWait());
+            Assert.IsType<InvalidOperationException>(be.InnerException);
         }
 
         #endregion

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -26,9 +27,9 @@ namespace System.Threading.Tasks.Dataflow.Tests
             }
 
             blocks = new[] {
-                new TransformManyBlock<int, int>(DataflowTestHelpers.ToEnumerable, 
+                new TransformManyBlock<int, int>(DataflowTestHelpers.ToEnumerable,
                     new ExecutionDataflowBlockOptions { CancellationToken = new CancellationToken(true) }),
-                new TransformManyBlock<int, int>(i => Task.Run(() => DataflowTestHelpers.ToEnumerable(i)), 
+                new TransformManyBlock<int, int>(i => Task.Run(() => DataflowTestHelpers.ToEnumerable(i)),
                     new ExecutionDataflowBlockOptions { CancellationToken = new CancellationToken(true) })
             };
             foreach (var block in blocks)
@@ -86,7 +87,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
         public void TestPost()
         {
             foreach (bool bounded in DataflowTestHelpers.BooleanValues)
-                foreach (var tb in new[] { 
+                foreach (var tb in new[] {
                 new TransformManyBlock<int, int>(DataflowTestHelpers.ToEnumerable, new ExecutionDataflowBlockOptions { BoundedCapacity = bounded ? 1 : -1 }),
                 new TransformManyBlock<int, int>(i => Task.Run(() => DataflowTestHelpers.ToEnumerable(i)), new ExecutionDataflowBlockOptions { BoundedCapacity = bounded ? 1 : -1 })})
                 {
@@ -108,7 +109,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
             const int Messages = 1;
             foreach (bool append in DataflowTestHelpers.BooleanValues)
             foreach (var tb in new[] {
-                new TransformManyBlock<int, int>(DataflowTestHelpers.ToEnumerable), 
+                new TransformManyBlock<int, int>(DataflowTestHelpers.ToEnumerable),
                 new TransformManyBlock<int, int>(i => Task.Run(() => DataflowTestHelpers.ToEnumerable(i))) })
             {
                 var values = new int[Messages];
@@ -138,7 +139,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
         {
             for (int test = 0; test < 2; test++)
             {
-                foreach (var tb in new[] { 
+                foreach (var tb in new[] {
                     new TransformManyBlock<int, int>(i => Enumerable.Repeat(i * 2, 1)),
                     new TransformManyBlock<int, int>(i => Task.Run(() => Enumerable.Repeat(i * 2, 1))) })
                 {
@@ -236,8 +237,8 @@ namespace System.Threading.Tasks.Dataflow.Tests
             foreach (int boundedCapacity in new[] { 1, 3 })
             {
                 var options = new ExecutionDataflowBlockOptions { BoundedCapacity = boundedCapacity };
-                foreach (var tb in new[] { 
-                    new TransformManyBlock<int, int>(DataflowTestHelpers.ToEnumerable, options), 
+                foreach (var tb in new[] {
+                    new TransformManyBlock<int, int>(DataflowTestHelpers.ToEnumerable, options),
                     new TransformManyBlock<int, int>(i => Task.Run(() => DataflowTestHelpers.ToEnumerable(i)), options) })
                 {
                     var sendAsync = new Task<bool>[boundedCapacity + Excess];
@@ -541,7 +542,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
                     if ((i % 2) == 0) return null;
                     return Task.Run(() => (IEnumerable<int>)new[] { i });
                 }, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = dop });
- 
+
                 const int Iters = 100;
                 tb.PostRange(0, Iters);
                 tb.Complete();
@@ -651,25 +652,153 @@ namespace System.Threading.Tasks.Dataflow.Tests
             }
         }
 
-        [Fact]
-        public async Task TestOrdering()
+        [Theory]
+        [InlineData(DataflowBlockOptions.Unbounded, 1, null)]
+        [InlineData(DataflowBlockOptions.Unbounded, 2, null)]
+        [InlineData(DataflowBlockOptions.Unbounded, DataflowBlockOptions.Unbounded, null)]
+        [InlineData(1, 1, null)]
+        [InlineData(1, 2, null)]
+        [InlineData(1, DataflowBlockOptions.Unbounded, null)]
+        [InlineData(2, 2, true)]
+        [InlineData(2, 1, false)] // no force ordered, but dop == 1, so it doesn't matter
+        public async Task TestOrdering_Sync_OrderedEnabled(int mmpt, int dop, bool? EnsureOrdered)
         {
-            const int iters = 9999;
-            foreach (int mmpt in new[] { DataflowBlockOptions.Unbounded, 1 })
-            foreach (int dop in new[] { 1, 2, DataflowBlockOptions.Unbounded })
+            const int iters = 1000;
+
+            var options = new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = dop, MaxMessagesPerTask = mmpt };
+            if (EnsureOrdered == null)
             {
-                var options = new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = dop, MaxMessagesPerTask = mmpt };
-                var tb = new TransformManyBlock<int, int>(i => new[] { i, i + 1, i + 2 }, options);
-                for (int i = 0; i < iters; i += 3)
-                {
-                    Assert.True(tb.Post(i));
-                }
-                for (int i = 0; i < iters; i++)
-                {
-                    Assert.Equal(expected: i, actual: await tb.ReceiveAsync());
-                }
-                tb.Complete();
-                await tb.Completion;
+                Assert.True(options.EnsureOrdered);
+            }
+            else
+            {
+                options.EnsureOrdered = EnsureOrdered.Value;
+            }
+
+            var tb = new TransformManyBlock<int, int>(i => new[] { i }, options);
+            tb.PostRange(0, iters);
+            for (int i = 0; i < iters; i++)
+            {
+                Assert.Equal(expected: i, actual: await tb.ReceiveAsync());
+            }
+            tb.Complete();
+            await tb.Completion;
+        }
+
+        [Theory]
+        [InlineData(DataflowBlockOptions.Unbounded, 1, null)]
+        [InlineData(DataflowBlockOptions.Unbounded, 2, null)]
+        [InlineData(DataflowBlockOptions.Unbounded, DataflowBlockOptions.Unbounded, null)]
+        [InlineData(1, 1, null)]
+        [InlineData(1, 2, null)]
+        [InlineData(1, DataflowBlockOptions.Unbounded, null)]
+        [InlineData(2, 2, true)]
+        [InlineData(2, 1, false)] // no force ordered, but dop == 1, so it doesn't matter
+        public async Task TestOrdering_Async_OrderedEnabled(int mmpt, int dop, bool? EnsureOrdered)
+        {
+            const int iters = 1000;
+
+            var options = new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = dop, MaxMessagesPerTask = mmpt };
+            if (EnsureOrdered == null)
+            {
+                Assert.True(options.EnsureOrdered);
+            }
+            else
+            {
+                options.EnsureOrdered = EnsureOrdered.Value;
+            }
+
+            var tb = new TransformManyBlock<int, int>(i => Task.FromResult(Enumerable.Repeat(i, 1)), options);
+            tb.PostRange(0, iters);
+            for (int i = 0; i < iters; i++)
+            {
+                Assert.Equal(expected: i, actual: await tb.ReceiveAsync());
+            }
+            tb.Complete();
+            await tb.Completion;
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task TestOrdering_Async_OrderedDisabled(bool trustedEnumeration)
+        {
+            // If ordering were enabled, this test would hang.
+
+            var options = new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = DataflowBlockOptions.Unbounded, EnsureOrdered = false };
+
+            var tasks = new TaskCompletionSource<IEnumerable<int>>[10];
+            for (int i = 0; i < tasks.Length; i++)
+            {
+                tasks[i] = new TaskCompletionSource<IEnumerable<int>>();
+            }
+
+            var tb = new TransformManyBlock<int, int>(i => tasks[i].Task, options);
+            tb.PostRange(0, tasks.Length);
+
+            for (int i = tasks.Length - 1; i >= 0; i--)
+            {
+                tasks[i].SetResult(trustedEnumeration ?
+                    new[] { i } :
+                    Enumerable.Repeat(i, 1));
+                Assert.Equal(expected: i, actual: await tb.ReceiveAsync());
+            }
+
+            tb.Complete();
+            await tb.Completion;
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task TestOrdering_Sync_OrderedDisabled(bool trustedEnumeration)
+        {
+            // If ordering were enabled, this test would hang.
+
+            var options = new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 2, EnsureOrdered = false };
+
+            var mres = new ManualResetEventSlim();
+            var tb = new TransformManyBlock<int, int>(i =>
+            {
+                if (i == 0) mres.Wait();
+                return trustedEnumeration ?
+                    new[] { i } :
+                    Enumerable.Repeat(i, 1);
+            }, options);
+            tb.Post(0);
+            tb.Post(1);
+
+            Assert.Equal(1, await tb.ReceiveAsync());
+            mres.Set();
+            Assert.Equal(0, await tb.ReceiveAsync());
+
+            tb.Complete();
+            await tb.Completion;
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task TestOrdering_Sync_BlockingEnumeration_NoDeadlock(bool ensureOrdered)
+        {
+            // If iteration of the yielded enumerables happened while holding a lock, this would deadlock.
+            var options = new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 2, EnsureOrdered = ensureOrdered };
+
+            ManualResetEventSlim mres1 = new ManualResetEventSlim(), mres2 = new ManualResetEventSlim();
+            var tb = new TransformManyBlock<int, int>(i => i == 0 ? BlockableIterator(mres1, mres2) : BlockableIterator(mres2, mres1), options);
+            tb.Post(0);
+            tb.Post(1);
+            Assert.Equal(42, await tb.ReceiveAsync());
+            Assert.Equal(42, await tb.ReceiveAsync());
+
+            tb.Complete();
+            await tb.Completion;
+
+            IEnumerable<int> BlockableIterator(ManualResetEventSlim wait, ManualResetEventSlim release)
+            {
+                release.Set();
+                wait.Wait();
+                yield return 42;
             }
         }
     }

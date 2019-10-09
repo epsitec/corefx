@@ -1,7 +1,8 @@
-﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using Microsoft.Framework.WebEncoders;
+using System.Text.Encodings.Web.Tests;
 using System;
 using System.IO;
 using Xunit;
@@ -29,6 +30,49 @@ namespace System.Text.Encodings.Web
 
             // Assert
             Assert.Equal("Hello&#x2B;there!", writer.ToString());
+        }
+
+        [Fact]
+        public void HtmlEncode_PositiveTestCase_CreateWithSettings()
+        {
+            // Arrange
+            TextEncoderSettings settings = new TextEncoderSettings(UnicodeRanges.All);
+            HtmlEncoder encoder = HtmlEncoder.Create(settings);
+            StringWriter writer = new StringWriter();
+
+            // Act
+            encoder.Encode(writer, "Hello+there!");
+
+            // Assert
+            Assert.Equal("Hello&#x2B;there!", writer.ToString());
+        }
+
+        [Fact]
+        public void HtmlEncode_CreateNullRanges()
+        {
+            Assert.Throws<ArgumentNullException>("allowedRanges", () => HtmlEncoder.Create(default(UnicodeRange[])));
+        }
+
+        [Fact]
+        public void HtmlEncode_CreateNullSettings()
+        {
+            Assert.Throws<ArgumentNullException>("settings", () => HtmlEncoder.Create(default(TextEncoderSettings)));
+        }
+
+
+        [Fact]
+        public unsafe void TryEncodeUnicodeScalar_Null_Buffer()
+        {
+            Assert.Throws<ArgumentNullException>("buffer", () => HtmlEncoder.Default.TryEncodeUnicodeScalar(2, null, 1, out int _));
+        }
+
+        [Fact]
+        public unsafe void TryEncodeUnicodeScalar_InsufficientRoom()
+        {
+            char* buffer = stackalloc char[1];
+            int numberWritten;
+            Assert.False(HtmlEncoder.Default.TryEncodeUnicodeScalar(0x10000, buffer, 1, out numberWritten));
+            Assert.Equal(0, numberWritten);
         }
 
         [Fact]

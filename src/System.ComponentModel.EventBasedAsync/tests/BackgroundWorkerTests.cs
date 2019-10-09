@@ -1,7 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -57,7 +60,7 @@ namespace System.ComponentModel.EventBasedAsync.Tests
 
                 worker.RunWorkerAsync();
 
-                // wait for singal from WhenRunWorkerCompleted
+                // wait for signal from WhenRunWorkerCompleted
                 Assert.True(workerCompletedEvent.Wait(TimeoutLong));
                 Assert.False(worker.IsBusy);
                 Assert.Equal(expectedReportCallsCount, actualReportCallsCount);
@@ -66,6 +69,24 @@ namespace System.ComponentModel.EventBasedAsync.Tests
             {
                 SynchronizationContext.SetSynchronizationContext(orignal);
             }
+        }
+
+        [Fact]
+        public async Task RunWorkerAsync_NoOnWorkHandler_SetsResultToNull()
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            var backgroundWorker = new BackgroundWorker { WorkerReportsProgress = true };
+            backgroundWorker.RunWorkerCompleted += (sender, e) =>
+            {
+                Assert.Null(e.Result);
+                Assert.False(backgroundWorker.IsBusy);
+                tcs.SetResult(true);
+            };
+
+            backgroundWorker.RunWorkerAsync();
+
+            await Task.WhenAny(tcs.Task, Task.Delay(TimeSpan.FromSeconds(10))); // Usually takes 100th of a sec
+            Assert.True(tcs.Task.IsCompleted);
         }
 
         #region TestCancelAsync
@@ -87,7 +108,7 @@ namespace System.ComponentModel.EventBasedAsync.Tests
 
             bool ret = manualResetEvent3.Wait(TimeoutLong);
             Assert.True(ret);
-            // there could be race condition between worker thread cancellation and completion which will set the CancellationPending to false 
+            // there could be race condition between worker thread cancellation and completion which will set the CancellationPending to false
             // if it is completed already, we don't check cancellation
             if (bw.IsBusy) // not complete
             {
@@ -160,8 +181,9 @@ namespace System.ComponentModel.EventBasedAsync.Tests
                 {
                     try
                     {
-                        TestException ex = Assert.Throws<TestException>(() => e.Result);
-                        Assert.Equal(expectedExceptionMsg, ex.Message);
+                        TargetInvocationException ex = Assert.Throws<TargetInvocationException>(() => e.Result);
+                        Assert.True(ex.InnerException is TestException);
+                        Assert.Equal(expectedExceptionMsg, ex.InnerException.Message);
                     }
                     finally
                     {
@@ -278,6 +300,16 @@ namespace System.ComponentModel.EventBasedAsync.Tests
             }
 
             Assert.Equal(expectedProgress, actualProgress);
+        }
+
+        [Fact]
+        public void ReportProgress_NoProgressHandle_Nop()
+        {
+            var backgroundWorker = new BackgroundWorker { WorkerReportsProgress = true };
+            foreach (int i in new int[] { 1, 2, 3, 4, 5 })
+            {
+                backgroundWorker.ReportProgress(i);
+            }
         }
 
         [Fact]

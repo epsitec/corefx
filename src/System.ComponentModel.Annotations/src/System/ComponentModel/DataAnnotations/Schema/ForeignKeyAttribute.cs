@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Globalization;
 
@@ -13,8 +14,6 @@ namespace System.ComponentModel.DataAnnotations.Schema
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class ForeignKeyAttribute : Attribute
     {
-        private readonly string _name;
-
         /// <summary>
         ///     Initializes a new instance of the <see cref="ForeignKeyAttribute" /> class.
         /// </summary>
@@ -27,20 +26,16 @@ namespace System.ComponentModel.DataAnnotations.Schema
         {
             if (string.IsNullOrWhiteSpace(name))
             {
-                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture,
-                    SR.ArgumentIsNullOrWhitespace, "name"));
+                throw new ArgumentException(SR.Format(SR.ArgumentIsNullOrWhitespace, nameof(name)), nameof(name));
             }
 
-            _name = name;
+            Name = name;
         }
 
         /// <summary>
         ///     If placed on a foreign key property, the name of the associated navigation property.
         ///     If placed on a navigation property, the name of the associated foreign key(s).
         /// </summary>
-        public string Name
-        {
-            get { return _name; }
-        }
+        public string Name { get; }
     }
 }

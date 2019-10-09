@@ -1,30 +1,32 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Microsoft.Win32.SafeHandles;
-using System.Text;
-using System.Runtime.InteropServices;
-using System.ComponentModel;
-using System.Diagnostics;
 using System;
 using System.Collections.Generic;
-using System.Threading;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Security;
+using System.Text;
+using System.Threading;
 
 namespace System.ServiceProcess
 {
     /// This class represents an NT service. It allows you to connect to a running or stopped service
     /// and manipulate it or get information about it.
-    public class ServiceController : IDisposable
+    public class ServiceController : Component
     {
-        private readonly string _machineName;
+        private string _machineName; // Never null
         private readonly ManualResetEvent _waitForStatusSignal = new ManualResetEvent(false);
         private const string DefaultMachineName = ".";
 
         private string _name;
         private string _eitherName;
         private string _displayName;
+
         private int _commandsAccepted;
         private bool _statusGenerated;
         private bool _startTypeInitialized;
@@ -36,8 +38,11 @@ namespace System.ServiceProcess
         private ServiceController[] _servicesDependedOn;
         private ServiceStartMode _startType;
 
-        private const int SERVICENAMEMAXLENGTH = 80;
-        private const int DISPLAYNAMEBUFFERSIZE = 256;
+        public ServiceController()
+        {
+            _machineName = DefaultMachineName;
+            _type = Interop.Advapi32.ServiceTypeOptions.SERVICE_TYPE_ALL;
+        }
 
         /// Creates a ServiceController object, based on service name.
         public ServiceController(string name)
@@ -52,17 +57,17 @@ namespace System.ServiceProcess
                 throw new ArgumentException(SR.Format(SR.BadMachineName, machineName));
 
             if (string.IsNullOrEmpty(name))
-                throw new ArgumentException(SR.Format(SR.InvalidParameter, "name", name));
+                throw new ArgumentException(SR.Format(SR.InvalidParameter, nameof(name), name));
 
             _machineName = machineName;
             _eitherName = name;
-            _type = Interop.mincore.ServiceTypeOptions.SERVICE_TYPE_ALL;
+            _type = Interop.Advapi32.ServiceTypeOptions.SERVICE_TYPE_ALL;
         }
 
 
         /// Used by the GetServices and GetDevices methods. Avoids duplicating work by the static
         /// methods and our own GenerateInfo().
-        private ServiceController(string machineName, Interop.mincore.ENUM_SERVICE_STATUS status)
+        private ServiceController(string machineName, Interop.Advapi32.ENUM_SERVICE_STATUS status)
         {
             if (!CheckMachineName(machineName))
                 throw new ArgumentException(SR.Format(SR.BadMachineName, machineName));
@@ -77,7 +82,7 @@ namespace System.ServiceProcess
         }
 
         /// Used by the GetServicesInGroup method.
-        private ServiceController(string machineName, Interop.mincore.ENUM_SERVICE_STATUS_PROCESS status)
+        private ServiceController(string machineName, Interop.Advapi32.ENUM_SERVICE_STATUS_PROCESS status)
         {
             if (!CheckMachineName(machineName))
                 throw new ArgumentException(SR.Format(SR.BadMachineName, machineName));
@@ -97,7 +102,7 @@ namespace System.ServiceProcess
             get
             {
                 GenerateStatus();
-                return (_commandsAccepted & Interop.mincore.AcceptOptions.ACCEPT_PAUSE_CONTINUE) != 0;
+                return (_commandsAccepted & Interop.Advapi32.AcceptOptions.ACCEPT_PAUSE_CONTINUE) != 0;
             }
         }
 
@@ -108,7 +113,7 @@ namespace System.ServiceProcess
             get
             {
                 GenerateStatus();
-                return (_commandsAccepted & Interop.mincore.AcceptOptions.ACCEPT_SHUTDOWN) != 0;
+                return (_commandsAccepted & Interop.Advapi32.AcceptOptions.ACCEPT_SHUTDOWN) != 0;
             }
         }
 
@@ -118,7 +123,7 @@ namespace System.ServiceProcess
             get
             {
                 GenerateStatus();
-                return (_commandsAccepted & Interop.mincore.AcceptOptions.ACCEPT_STOP) != 0;
+                return (_commandsAccepted & Interop.Advapi32.AcceptOptions.ACCEPT_STOP) != 0;
             }
         }
 
@@ -127,9 +132,25 @@ namespace System.ServiceProcess
         {
             get
             {
-                if (_displayName == null)
+                if (string.IsNullOrEmpty(_displayName))
                     GenerateNames();
                 return _displayName;
+            }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+
+                if (string.Equals(value, _displayName, StringComparison.OrdinalIgnoreCase))
+                {
+                    // they're just changing the casing. No need to close.
+                    _displayName = value;
+                    return;
+                }
+
+                Close();
+                _displayName = value;
+                _name = "";
             }
         }
 
@@ -141,13 +162,12 @@ namespace System.ServiceProcess
             {
                 if (_dependentServices == null)
                 {
-                    IntPtr serviceHandle = GetServiceHandle(Interop.mincore.ServiceOptions.SERVICE_ENUMERATE_DEPENDENTS);
-                    try
+                    using (var serviceHandle = GetServiceHandle(Interop.Advapi32.ServiceOptions.SERVICE_ENUMERATE_DEPENDENTS))
                     {
                         // figure out how big a buffer we need to get the info
                         int bytesNeeded = 0;
                         int numEnumerated = 0;
-                        bool result = Interop.mincore.EnumDependentServices(serviceHandle, Interop.mincore.ServiceState.SERVICE_STATE_ALL, IntPtr.Zero, 0,
+                        bool result = Interop.Advapi32.EnumDependentServices(serviceHandle, Interop.Advapi32.ServiceState.SERVICE_STATE_ALL, IntPtr.Zero, 0,
                             ref bytesNeeded, ref numEnumerated);
                         if (result)
                         {
@@ -156,7 +176,7 @@ namespace System.ServiceProcess
                         }
 
                         int lastError = Marshal.GetLastWin32Error();
-                        if (lastError != Interop.mincore.Errors.ERROR_MORE_DATA)
+                        if (lastError != Interop.Errors.ERROR_MORE_DATA)
                             throw new Win32Exception(lastError);
 
                         // allocate the buffer
@@ -165,7 +185,7 @@ namespace System.ServiceProcess
                         try
                         {
                             // get all the info
-                            result = Interop.mincore.EnumDependentServices(serviceHandle, Interop.mincore.ServiceState.SERVICE_STATE_ALL, enumBuffer, bytesNeeded,
+                            result = Interop.Advapi32.EnumDependentServices(serviceHandle, Interop.Advapi32.ServiceState.SERVICE_STATE_ALL, enumBuffer, bytesNeeded,
                                 ref bytesNeeded, ref numEnumerated);
                             if (!result)
                                 throw new Win32Exception();
@@ -174,8 +194,8 @@ namespace System.ServiceProcess
                             _dependentServices = new ServiceController[numEnumerated];
                             for (int i = 0; i < numEnumerated; i++)
                             {
-                                Interop.mincore.ENUM_SERVICE_STATUS status = new Interop.mincore.ENUM_SERVICE_STATUS();
-                                IntPtr structPtr = (IntPtr)((long)enumBuffer + (i * Marshal.SizeOf<Interop.mincore.ENUM_SERVICE_STATUS>()));
+                                Interop.Advapi32.ENUM_SERVICE_STATUS status = new Interop.Advapi32.ENUM_SERVICE_STATUS();
+                                IntPtr structPtr = (IntPtr)((long)enumBuffer + (i * Marshal.SizeOf<Interop.Advapi32.ENUM_SERVICE_STATUS>()));
                                 Marshal.PtrToStructure(structPtr, status);
                                 _dependentServices[i] = new ServiceController(_machineName, status);
                             }
@@ -184,10 +204,6 @@ namespace System.ServiceProcess
                         {
                             Marshal.FreeHGlobal(enumBuffer);
                         }
-                    }
-                    finally
-                    {
-                        Interop.mincore.CloseServiceHandle(serviceHandle);
                     }
                 }
 
@@ -202,6 +218,22 @@ namespace System.ServiceProcess
             {
                 return _machineName;
             }
+            set
+            {
+                if (!CheckMachineName(value))
+                    throw new ArgumentException(SR.Format(SR.BadMachineName, value));
+
+                if (string.Equals(_machineName, value, StringComparison.OrdinalIgnoreCase))
+                {
+                    // no need to close, because the most they're changing is the
+                    // casing.
+                    _machineName = value;
+                    return;
+                }
+
+                Close();
+                _machineName = value;
+            }
         }
 
         /// Returns the short name of the service referenced by this object.
@@ -209,9 +241,29 @@ namespace System.ServiceProcess
         {
             get
             {
-                if (_name == null)
+                if (string.IsNullOrEmpty(_name))
                     GenerateNames();
                 return _name;
+            }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+
+                if (string.Equals(value, _name, StringComparison.OrdinalIgnoreCase))
+                {
+                    // they might be changing the casing, but the service we refer to
+                    // is the same. No need to close.
+                    _name = value;
+                    return;
+                }
+
+                if (!ServiceBase.ValidServiceName(value))
+                    throw new ArgumentException(SR.Format(SR.ServiceName, value, ServiceBase.MaxNameLength.ToString()));
+
+                Close();
+                _name = value;
+                _displayName = "";
             }
         }
 
@@ -222,11 +274,10 @@ namespace System.ServiceProcess
                 if (_servicesDependedOn != null)
                     return _servicesDependedOn;
 
-                IntPtr serviceHandle = GetServiceHandle(Interop.mincore.ServiceOptions.SERVICE_QUERY_CONFIG);
-                try
+                using (var serviceHandle = GetServiceHandle(Interop.Advapi32.ServiceOptions.SERVICE_QUERY_CONFIG))
                 {
                     int bytesNeeded = 0;
-                    bool success = Interop.mincore.QueryServiceConfig(serviceHandle, IntPtr.Zero, 0, out bytesNeeded);
+                    bool success = Interop.Advapi32.QueryServiceConfig(serviceHandle, IntPtr.Zero, 0, out bytesNeeded);
                     if (success)
                     {
                         _servicesDependedOn = Array.Empty<ServiceController>();
@@ -234,18 +285,18 @@ namespace System.ServiceProcess
                     }
 
                     int lastError = Marshal.GetLastWin32Error();
-                    if (lastError != Interop.mincore.Errors.ERROR_INSUFFICIENT_BUFFER)
+                    if (lastError != Interop.Errors.ERROR_INSUFFICIENT_BUFFER)
                         throw new Win32Exception(lastError);
 
                     // get the info
                     IntPtr bufPtr = Marshal.AllocHGlobal((IntPtr)bytesNeeded);
                     try
                     {
-                        success = Interop.mincore.QueryServiceConfig(serviceHandle, bufPtr, bytesNeeded, out bytesNeeded);
+                        success = Interop.Advapi32.QueryServiceConfig(serviceHandle, bufPtr, bytesNeeded, out bytesNeeded);
                         if (!success)
                             throw new Win32Exception(Marshal.GetLastWin32Error());
 
-                        Interop.mincore.QUERY_SERVICE_CONFIG config = new Interop.mincore.QUERY_SERVICE_CONFIG();
+                        Interop.Advapi32.QUERY_SERVICE_CONFIG config = new Interop.Advapi32.QUERY_SERVICE_CONFIG();
                         Marshal.PtrToStructure(bufPtr, config);
                         Dictionary<string, ServiceController> dependencyHash = null;
 
@@ -253,7 +304,7 @@ namespace System.ServiceProcess
                         if (dependencyChar != null)
                         {
                             // lpDependencies points to the start of multiple null-terminated strings. The list is
-                            // double-null terminated.                            
+                            // double-null terminated.
                             int length = 0;
                             dependencyHash = new Dictionary<string, ServiceController>();
                             while (*(dependencyChar + length) != '\0')
@@ -267,8 +318,8 @@ namespace System.ServiceProcess
                                     if (dependencyNameStr.StartsWith("+", StringComparison.Ordinal))
                                     {
                                         // this entry is actually a service load group
-                                        Interop.mincore.ENUM_SERVICE_STATUS_PROCESS[] loadGroup = GetServicesInGroup(_machineName, dependencyNameStr.Substring(1));
-                                        foreach (Interop.mincore.ENUM_SERVICE_STATUS_PROCESS groupMember in loadGroup)
+                                        Interop.Advapi32.ENUM_SERVICE_STATUS_PROCESS[] loadGroup = GetServicesInGroup(_machineName, dependencyNameStr.Substring(1));
+                                        foreach (Interop.Advapi32.ENUM_SERVICE_STATUS_PROCESS groupMember in loadGroup)
                                         {
                                             if (!dependencyHash.ContainsKey(groupMember.serviceName))
                                                 dependencyHash.Add(groupMember.serviceName, new ServiceController(MachineName, groupMember));
@@ -300,10 +351,6 @@ namespace System.ServiceProcess
                         Marshal.FreeHGlobal(bufPtr);
                     }
                 }
-                finally
-                {
-                    Interop.mincore.CloseServiceHandle(serviceHandle);
-                }
             }
         }
 
@@ -314,28 +361,24 @@ namespace System.ServiceProcess
                 if (_startTypeInitialized)
                     return _startType;
 
-                IntPtr serviceHandle = IntPtr.Zero;
-                try
+                using (var serviceHandle = GetServiceHandle(Interop.Advapi32.ServiceOptions.SERVICE_QUERY_CONFIG))
                 {
-                    serviceHandle = GetServiceHandle(Interop.mincore.ServiceOptions.SERVICE_QUERY_CONFIG);
-
                     int bytesNeeded = 0;
-                    bool success = Interop.mincore.QueryServiceConfig(serviceHandle, IntPtr.Zero, 0, out bytesNeeded);
+                    bool success = Interop.Advapi32.QueryServiceConfig(serviceHandle, IntPtr.Zero, 0, out bytesNeeded);
 
                     int lastError = Marshal.GetLastWin32Error();
-                    if (lastError != Interop.mincore.Errors.ERROR_INSUFFICIENT_BUFFER)
+                    if (lastError != Interop.Errors.ERROR_INSUFFICIENT_BUFFER)
                         throw new Win32Exception(lastError);
 
                     // get the info
-                    IntPtr bufPtr = IntPtr.Zero;
+                    IntPtr bufPtr = Marshal.AllocHGlobal((IntPtr)bytesNeeded);
                     try
                     {
-                        bufPtr = Marshal.AllocHGlobal((IntPtr)bytesNeeded);
-                        success = Interop.mincore.QueryServiceConfig(serviceHandle, bufPtr, bytesNeeded, out bytesNeeded);
+                        success = Interop.Advapi32.QueryServiceConfig(serviceHandle, bufPtr, bytesNeeded, out bytesNeeded);
                         if (!success)
                             throw new Win32Exception(Marshal.GetLastWin32Error());
 
-                        Interop.mincore.QUERY_SERVICE_CONFIG config = new Interop.mincore.QUERY_SERVICE_CONFIG();
+                        Interop.Advapi32.QUERY_SERVICE_CONFIG config = new Interop.Advapi32.QUERY_SERVICE_CONFIG();
                         Marshal.PtrToStructure(bufPtr, config);
 
                         _startType = (ServiceStartMode)config.dwStartType;
@@ -343,14 +386,8 @@ namespace System.ServiceProcess
                     }
                     finally
                     {
-                        if (bufPtr != IntPtr.Zero)
-                            Marshal.FreeHGlobal(bufPtr);
+                        Marshal.FreeHGlobal(bufPtr);
                     }
-                }
-                finally
-                {
-                    if (serviceHandle != IntPtr.Zero)
-                        Interop.mincore.CloseServiceHandle(serviceHandle);
                 }
 
                 return _startType;
@@ -361,7 +398,7 @@ namespace System.ServiceProcess
         {
             get
             {
-                return new SafeServiceHandle(GetServiceHandle(Interop.mincore.ServiceOptions.SERVICE_ALL_ACCESS));
+                return GetServiceHandle(Interop.Advapi32.ServiceOptions.SERVICE_ALL_ACCESS);
             }
         }
 
@@ -387,20 +424,18 @@ namespace System.ServiceProcess
 
         private static bool CheckMachineName(string value)
         {
+            // string.Contains(char) is .NetCore2.1+ specific
             return !string.IsNullOrWhiteSpace(value) && value.IndexOf('\\') == -1;
         }
 
-        private void Close()
-        {
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-
-        /// Disconnects this object from the service and frees any allocated resources.
-        protected virtual void Dispose(bool disposing)
+        /// <summary>
+        /// Closes the handle to the service manager, but does not
+        /// mark the class as disposed.
+        /// </summary>
+        /// <remarks>
+        /// Violates design guidelines by not matching Dispose() -- matches .NET Framework
+        /// </remarks>
+        public void Close()
         {
             if (_serviceManagerHandle != null)
             {
@@ -410,19 +445,27 @@ namespace System.ServiceProcess
 
             _statusGenerated = false;
             _startTypeInitialized = false;
-            _type = Interop.mincore.ServiceTypeOptions.SERVICE_TYPE_ALL;
+            _type = Interop.Advapi32.ServiceTypeOptions.SERVICE_TYPE_ALL;
+        }
+
+        /// <summary>
+        /// Closes the handle to the service manager, and disposes.
+        /// </summary>
+        protected override void Dispose(bool disposing)
+        {
+            Close();
             _disposed = true;
+            base.Dispose(disposing);
         }
 
         private unsafe void GenerateStatus()
         {
             if (!_statusGenerated)
             {
-                IntPtr serviceHandle = GetServiceHandle(Interop.mincore.ServiceOptions.SERVICE_QUERY_STATUS);
-                try
+                using (var serviceHandle = GetServiceHandle(Interop.Advapi32.ServiceOptions.SERVICE_QUERY_STATUS))
                 {
-                    Interop.mincore.SERVICE_STATUS svcStatus = new Interop.mincore.SERVICE_STATUS();
-                    bool success = Interop.mincore.QueryServiceStatus(serviceHandle, &svcStatus);
+                    Interop.Advapi32.SERVICE_STATUS svcStatus = new Interop.Advapi32.SERVICE_STATUS();
+                    bool success = Interop.Advapi32.QueryServiceStatus(serviceHandle, &svcStatus);
                     if (!success)
                         throw new Win32Exception(Marshal.GetLastWin32Error());
 
@@ -431,107 +474,139 @@ namespace System.ServiceProcess
                     _type = svcStatus.serviceType;
                     _statusGenerated = true;
                 }
-                finally
-                {
-                    Interop.mincore.CloseServiceHandle(serviceHandle);
-                }
             }
         }
 
         private unsafe void GenerateNames()
         {
-            if (_machineName.Length == 0)
-                throw new ArgumentException(SR.NoMachineName);
+            GetDataBaseHandleWithConnectAccess();
 
-            IntPtr databaseHandle = IntPtr.Zero;
-            IntPtr memory = IntPtr.Zero;
-            int bytesNeeded;
-            int servicesReturned;
-            int resumeHandle = 0;
-
-            try
+            if (string.IsNullOrEmpty(_name))
             {
-                databaseHandle = GetDataBaseHandleWithEnumerateAccess(_machineName);
-                Interop.mincore.EnumServicesStatusEx(
-                    databaseHandle,
-                    Interop.mincore.ServiceControllerOptions.SC_ENUM_PROCESS_INFO,
-                    Interop.mincore.ServiceTypeOptions.SERVICE_TYPE_WIN32,
-                    Interop.mincore.StatusOptions.STATUS_ALL,
-                    IntPtr.Zero,
-                    0,
-                    out bytesNeeded,
-                    out servicesReturned,
-                    ref resumeHandle,
-                    null);
+                // Figure out the _name based on the information we have.
+                // We must either have _displayName or the constructor parameter _eitherName.
+                string userGivenName = string.IsNullOrEmpty(_eitherName) ? _displayName : _eitherName;
 
-                memory = Marshal.AllocHGlobal(bytesNeeded);
+                if (string.IsNullOrEmpty(userGivenName))
+                    throw new InvalidOperationException(SR.Format(SR.ServiceName, userGivenName, ServiceBase.MaxNameLength.ToString()));
 
-                Interop.mincore.EnumServicesStatusEx(
-                    databaseHandle,
-                    Interop.mincore.ServiceControllerOptions.SC_ENUM_PROCESS_INFO,
-                    Interop.mincore.ServiceTypeOptions.SERVICE_TYPE_WIN32,
-                    Interop.mincore.StatusOptions.STATUS_ALL,
-                    memory,
-                    bytesNeeded,
-                    out bytesNeeded,
-                    out servicesReturned,
-                    ref resumeHandle,
-                    null);
+                // Try it as a display name
+                string result = GetServiceKeyName(_serviceManagerHandle, userGivenName);
 
-                // Since the service name of one service cannot be equal to the
-                // service or display name of another service, we can safely
-                // loop through all services checking if either the service or
-                // display name matches the user given name. If there is a
-                // match, then we've found the service.
-                for (int i = 0; i < servicesReturned; i++)
+                if (result != null)
                 {
-                    IntPtr structPtr = (IntPtr)((long)memory + (i * Marshal.SizeOf<Interop.mincore.ENUM_SERVICE_STATUS_PROCESS>()));
-                    Interop.mincore.ENUM_SERVICE_STATUS_PROCESS status = new Interop.mincore.ENUM_SERVICE_STATUS_PROCESS();
-                    Marshal.PtrToStructure(structPtr, status);
-
-                    if (string.Equals(_eitherName, status.serviceName, StringComparison.OrdinalIgnoreCase) ||
-                        string.Equals(_eitherName, status.displayName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (_name == null)
-                        {
-                            _name = status.serviceName;
-                        }
-
-                        if (_displayName == null)
-                        {
-                            _displayName = status.displayName;
-                        }
-
-                        _eitherName = string.Empty;
-                        return;
-                    }
+                    // Now we have both
+                    _name = result;
+                    _displayName = userGivenName;
+                    _eitherName = null;
+                    return;
                 }
 
-                throw new InvalidOperationException(SR.Format(SR.NoService, _eitherName, _machineName));
+                // Try it as a service name
+                result = GetServiceDisplayName(_serviceManagerHandle, userGivenName);
+
+                if (result == null)
+                {
+                    throw new InvalidOperationException(SR.Format(SR.NoService, userGivenName, _machineName), new Win32Exception(Interop.Errors.ERROR_SERVICE_DOES_NOT_EXIST));
+                }
+
+                _name = userGivenName;
+                _displayName = result;
+                _eitherName = null;
             }
-            finally
+            else if (string.IsNullOrEmpty(_displayName))
             {
-                Marshal.FreeHGlobal(memory);
-                if (databaseHandle != IntPtr.Zero)
+                // We must have _name
+                string result = GetServiceDisplayName(_serviceManagerHandle, _name);
+
+                if (result == null)
                 {
-                    Interop.mincore.CloseServiceHandle(databaseHandle);
+                    throw new InvalidOperationException(SR.Format(SR.NoService, _name, _machineName), new Win32Exception(Interop.Errors.ERROR_SERVICE_DOES_NOT_EXIST));
                 }
+
+                _displayName = result;
+                _eitherName = null;
             }
         }
 
-        private static IntPtr GetDataBaseHandleWithAccess(string machineName, int serviceControlManagerAccess)
+        /// <summary>
+        /// Gets service name (key name) from service display name.
+        /// Returns null if service is not found.
+        /// </summary>
+        private unsafe string GetServiceKeyName(SafeServiceHandle SCMHandle, string serviceDisplayName)
         {
-            IntPtr databaseHandle = IntPtr.Zero;
+            Span<char> initialBuffer = stackalloc char[256];
+            var builder = new ValueStringBuilder(initialBuffer);
+            int bufLen;
+            while (true)
+            {
+                bufLen = builder.Capacity;
+                fixed (char* c = builder)
+                {
+                    if (Interop.Advapi32.GetServiceKeyName(SCMHandle, serviceDisplayName, c, ref bufLen))
+                        break;
+                }
+
+                int lastError = Marshal.GetLastWin32Error();
+                if (lastError == Interop.Errors.ERROR_SERVICE_DOES_NOT_EXIST)
+                {
+                    return null;
+                }
+                else if (lastError != Interop.Errors.ERROR_INSUFFICIENT_BUFFER)
+                {
+                    throw new InvalidOperationException(SR.Format(SR.NoService, serviceDisplayName, _machineName), new Win32Exception(lastError));
+                }
+
+                builder.EnsureCapacity(bufLen + 1); // Does not include null
+            }
+
+            builder.Length = bufLen;
+            return builder.ToString();
+        }
+
+        private unsafe string GetServiceDisplayName(SafeServiceHandle SCMHandle, string serviceName)
+        {
+            var builder = new ValueStringBuilder(4096);
+            int bufLen;
+            while (true)
+            {
+                bufLen = builder.Capacity;
+                fixed (char* c = builder)
+                {
+                    if (Interop.Advapi32.GetServiceDisplayName(SCMHandle, serviceName, c, ref bufLen))
+                        break;
+                }
+
+                int lastError = Marshal.GetLastWin32Error();
+                if (lastError == Interop.Errors.ERROR_SERVICE_DOES_NOT_EXIST)
+                {
+                    return null;
+                }
+                else if (lastError != Interop.Errors.ERROR_INSUFFICIENT_BUFFER)
+                {
+                    throw new InvalidOperationException(SR.Format(SR.NoService, serviceName, _machineName), new Win32Exception(lastError));
+                }
+
+                builder.EnsureCapacity(bufLen + 1); // Does not include null
+            }
+
+            builder.Length = bufLen;
+            return builder.ToString();
+        }
+
+        private static SafeServiceHandle GetDataBaseHandleWithAccess(string machineName, int serviceControlManagerAccess)
+        {
+            SafeServiceHandle databaseHandle = null;
             if (machineName.Equals(DefaultMachineName) || machineName.Length == 0)
             {
-                databaseHandle = Interop.mincore.OpenSCManager(null, null, serviceControlManagerAccess);
+                databaseHandle = new SafeServiceHandle(Interop.Advapi32.OpenSCManager(null, null, serviceControlManagerAccess));
             }
             else
             {
-                databaseHandle = Interop.mincore.OpenSCManager(machineName, null, serviceControlManagerAccess);
+                databaseHandle = new SafeServiceHandle(Interop.Advapi32.OpenSCManager(machineName, null, serviceControlManagerAccess));
             }
 
-            if (databaseHandle == IntPtr.Zero)
+            if (databaseHandle.IsInvalid)
             {
                 Exception inner = new Win32Exception(Marshal.GetLastWin32Error());
                 throw new InvalidOperationException(SR.Format(SR.OpenSC, machineName), inner);
@@ -550,13 +625,8 @@ namespace System.ServiceProcess
             // get a handle to SCM with connect access and store it in serviceManagerHandle field.
             if (_serviceManagerHandle == null)
             {
-                _serviceManagerHandle = new SafeServiceHandle(GetDataBaseHandleWithAccess(_machineName, Interop.mincore.ServiceControllerOptions.SC_MANAGER_CONNECT));
+                _serviceManagerHandle = GetDataBaseHandleWithAccess(_machineName, Interop.Advapi32.ServiceControllerOptions.SC_MANAGER_CONNECT);
             }
-        }
-
-        private static IntPtr GetDataBaseHandleWithEnumerateAccess(string machineName)
-        {
-            return GetDataBaseHandleWithAccess(machineName, Interop.mincore.ServiceControllerOptions.SC_MANAGER_ENUMERATE_SERVICE);
         }
 
         /// Gets all the device-driver services on the local machine.
@@ -568,17 +638,16 @@ namespace System.ServiceProcess
         /// Gets all the device-driver services in the machine specified.
         public static ServiceController[] GetDevices(string machineName)
         {
-            return GetServicesOfType(machineName, Interop.mincore.ServiceTypeOptions.SERVICE_TYPE_DRIVER);
+            return GetServicesOfType(machineName, Interop.Advapi32.ServiceTypeOptions.SERVICE_TYPE_DRIVER);
         }
 
-        /// Opens a handle for the current service. The handle must be closed with
-        /// a call to Interop.CloseServiceHandle().
-        private IntPtr GetServiceHandle(int desiredAccess)
+        /// Opens a handle for the current service. The handle must be Dispose()'d.
+        private SafeServiceHandle GetServiceHandle(int desiredAccess)
         {
             GetDataBaseHandleWithConnectAccess();
 
-            IntPtr serviceHandle = Interop.mincore.OpenService(_serviceManagerHandle.DangerousGetHandle(), ServiceName, desiredAccess);
-            if (serviceHandle == IntPtr.Zero)
+            var serviceHandle = new SafeServiceHandle(Interop.Advapi32.OpenService(_serviceManagerHandle, ServiceName, desiredAccess));
+            if (serviceHandle.IsInvalid)
             {
                 Exception inner = new Win32Exception(Marshal.GetLastWin32Error());
                 throw new InvalidOperationException(SR.Format(SR.OpenService, ServiceName, _machineName), inner);
@@ -596,13 +665,13 @@ namespace System.ServiceProcess
         /// Gets the services (not including device-driver services) on the machine specified.
         public static ServiceController[] GetServices(string machineName)
         {
-            return GetServicesOfType(machineName, Interop.mincore.ServiceTypeOptions.SERVICE_TYPE_WIN32);
+            return GetServicesOfType(machineName, Interop.Advapi32.ServiceTypeOptions.SERVICE_TYPE_WIN32);
         }
 
         /// Helper function for ServicesDependedOn.
-        private static Interop.mincore.ENUM_SERVICE_STATUS_PROCESS[] GetServicesInGroup(string machineName, string group)
+        private static Interop.Advapi32.ENUM_SERVICE_STATUS_PROCESS[] GetServicesInGroup(string machineName, string group)
         {
-            return GetServices<Interop.mincore.ENUM_SERVICE_STATUS_PROCESS>(machineName, Interop.mincore.ServiceTypeOptions.SERVICE_TYPE_WIN32, group, status => { return status; });
+            return GetServices<Interop.Advapi32.ENUM_SERVICE_STATUS_PROCESS>(machineName, Interop.Advapi32.ServiceTypeOptions.SERVICE_TYPE_WIN32, group, status => { return status; });
         }
 
         /// Helper function for GetDevices and GetServices.
@@ -615,24 +684,21 @@ namespace System.ServiceProcess
         }
 
         /// Helper for GetDevices, GetServices, and ServicesDependedOn
-        private static T[] GetServices<T>(string machineName, int serviceType, string group, Func<Interop.mincore.ENUM_SERVICE_STATUS_PROCESS, T> selector)
+        private static T[] GetServices<T>(string machineName, int serviceType, string group, Func<Interop.Advapi32.ENUM_SERVICE_STATUS_PROCESS, T> selector)
         {
-            IntPtr databaseHandle = IntPtr.Zero;
-            IntPtr memory = IntPtr.Zero;
             int bytesNeeded;
             int servicesReturned;
             int resumeHandle = 0;
 
             T[] services;
 
-            try
+            using (SafeServiceHandle databaseHandle = GetDataBaseHandleWithAccess(machineName, Interop.Advapi32.ServiceControllerOptions.SC_MANAGER_ENUMERATE_SERVICE))
             {
-                databaseHandle = GetDataBaseHandleWithEnumerateAccess(machineName);
-                Interop.mincore.EnumServicesStatusEx(
+                Interop.Advapi32.EnumServicesStatusEx(
                     databaseHandle,
-                    Interop.mincore.ServiceControllerOptions.SC_ENUM_PROCESS_INFO,
+                    Interop.Advapi32.ServiceControllerOptions.SC_ENUM_PROCESS_INFO,
                     serviceType,
-                    Interop.mincore.StatusOptions.STATUS_ALL,
+                    Interop.Advapi32.StatusOptions.STATUS_ALL,
                     IntPtr.Zero,
                     0,
                     out bytesNeeded,
@@ -640,42 +706,39 @@ namespace System.ServiceProcess
                     ref resumeHandle,
                     group);
 
-                memory = Marshal.AllocHGlobal((IntPtr)bytesNeeded);
-
-                //
-                // Get the set of services
-                //
-                Interop.mincore.EnumServicesStatusEx(
-                    databaseHandle,
-                    Interop.mincore.ServiceControllerOptions.SC_ENUM_PROCESS_INFO,
-                    serviceType,
-                    Interop.mincore.StatusOptions.STATUS_ALL,
-                    memory,
-                    bytesNeeded,
-                    out bytesNeeded,
-                    out servicesReturned,
-                    ref resumeHandle,
-                    group);
-
-                //
-                // Go through the block of memory it returned to us and select the results
-                //
-                services = new T[servicesReturned];
-                for (int i = 0; i < servicesReturned; i++)
+                IntPtr memory = Marshal.AllocHGlobal((IntPtr)bytesNeeded);
+                try
                 {
-                    IntPtr structPtr = (IntPtr)((long)memory + (i * Marshal.SizeOf<Interop.mincore.ENUM_SERVICE_STATUS_PROCESS>()));
-                    Interop.mincore.ENUM_SERVICE_STATUS_PROCESS status = new Interop.mincore.ENUM_SERVICE_STATUS_PROCESS();
-                    Marshal.PtrToStructure(structPtr, status);
-                    services[i] = selector(status);
+                    //
+                    // Get the set of services
+                    //
+                    Interop.Advapi32.EnumServicesStatusEx(
+                        databaseHandle,
+                        Interop.Advapi32.ServiceControllerOptions.SC_ENUM_PROCESS_INFO,
+                        serviceType,
+                        Interop.Advapi32.StatusOptions.STATUS_ALL,
+                        memory,
+                        bytesNeeded,
+                        out bytesNeeded,
+                        out servicesReturned,
+                        ref resumeHandle,
+                        group);
+
+                    //
+                    // Go through the block of memory it returned to us and select the results
+                    //
+                    services = new T[servicesReturned];
+                    for (int i = 0; i < servicesReturned; i++)
+                    {
+                        IntPtr structPtr = (IntPtr)((long)memory + (i * Marshal.SizeOf<Interop.Advapi32.ENUM_SERVICE_STATUS_PROCESS>()));
+                        Interop.Advapi32.ENUM_SERVICE_STATUS_PROCESS status = new Interop.Advapi32.ENUM_SERVICE_STATUS_PROCESS();
+                        Marshal.PtrToStructure(structPtr, status);
+                        services[i] = selector(status);
+                    }
                 }
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(memory);
-
-                if (databaseHandle != IntPtr.Zero)
+                finally
                 {
-                    Interop.mincore.CloseServiceHandle(databaseHandle);
+                    Marshal.FreeHGlobal(memory);
                 }
             }
 
@@ -685,40 +748,44 @@ namespace System.ServiceProcess
         /// Suspends a service's operation.
         public unsafe void Pause()
         {
-            IntPtr serviceHandle = GetServiceHandle(Interop.mincore.ServiceOptions.SERVICE_PAUSE_CONTINUE);
-            try
+            using (var serviceHandle = GetServiceHandle(Interop.Advapi32.ServiceOptions.SERVICE_PAUSE_CONTINUE))
             {
-                Interop.mincore.SERVICE_STATUS status = new Interop.mincore.SERVICE_STATUS();
-                bool result = Interop.mincore.ControlService(serviceHandle, Interop.mincore.ControlOptions.CONTROL_PAUSE, &status);
+                Interop.Advapi32.SERVICE_STATUS status = new Interop.Advapi32.SERVICE_STATUS();
+                bool result = Interop.Advapi32.ControlService(serviceHandle, Interop.Advapi32.ControlOptions.CONTROL_PAUSE, &status);
                 if (!result)
                 {
                     Exception inner = new Win32Exception(Marshal.GetLastWin32Error());
                     throw new InvalidOperationException(SR.Format(SR.PauseService, ServiceName, _machineName), inner);
                 }
             }
-            finally
-            {
-                Interop.mincore.CloseServiceHandle(serviceHandle);
-            }
         }
 
         /// Continues a service after it has been paused.
         public unsafe void Continue()
         {
-            IntPtr serviceHandle = GetServiceHandle(Interop.mincore.ServiceOptions.SERVICE_PAUSE_CONTINUE);
-            try
+            using (var serviceHandle = GetServiceHandle(Interop.Advapi32.ServiceOptions.SERVICE_PAUSE_CONTINUE))
             {
-                Interop.mincore.SERVICE_STATUS status = new Interop.mincore.SERVICE_STATUS();
-                bool result = Interop.mincore.ControlService(serviceHandle, Interop.mincore.ControlOptions.CONTROL_CONTINUE, &status);
+                Interop.Advapi32.SERVICE_STATUS status = new Interop.Advapi32.SERVICE_STATUS();
+                bool result = Interop.Advapi32.ControlService(serviceHandle, Interop.Advapi32.ControlOptions.CONTROL_CONTINUE, &status);
                 if (!result)
                 {
                     Exception inner = new Win32Exception(Marshal.GetLastWin32Error());
                     throw new InvalidOperationException(SR.Format(SR.ResumeService, ServiceName, _machineName), inner);
                 }
             }
-            finally
+        }
+
+        public unsafe void ExecuteCommand(int command)
+        {
+            using (var serviceHandle = GetServiceHandle(Interop.Advapi32.ServiceOptions.SERVICE_USER_DEFINED_CONTROL))
             {
-                Interop.mincore.CloseServiceHandle(serviceHandle);
+                Interop.Advapi32.SERVICE_STATUS status = new Interop.Advapi32.SERVICE_STATUS();
+                bool result = Interop.Advapi32.ControlService(serviceHandle, command, &status);
+                if (!result)
+                {
+                    Exception inner = new Win32Exception(Marshal.GetLastWin32Error());
+                    throw new InvalidOperationException(SR.Format(SR.ControlService, ServiceName, MachineName), inner);
+                }
             }
         }
 
@@ -741,11 +808,9 @@ namespace System.ServiceProcess
         public void Start(string[] args)
         {
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
 
-            IntPtr serviceHandle = GetServiceHandle(Interop.mincore.ServiceOptions.SERVICE_START);
-
-            try
+            using (SafeServiceHandle serviceHandle = GetServiceHandle(Interop.Advapi32.ServiceOptions.SERVICE_START))
             {
                 IntPtr[] argPtrs = new IntPtr[args.Length];
                 int i = 0;
@@ -754,7 +819,7 @@ namespace System.ServiceProcess
                     for (i = 0; i < args.Length; i++)
                     {
                         if (args[i] == null)
-                            throw new ArgumentNullException(SR.ArgsCantBeNull, "args");
+                            throw new ArgumentNullException($"{nameof(args)}[{i}]", SR.ArgsCantBeNull);
 
                         argPtrs[i] = Marshal.StringToHGlobalUni(args[i]);
                     }
@@ -770,7 +835,7 @@ namespace System.ServiceProcess
                 try
                 {
                     argPtrsHandle = GCHandle.Alloc(argPtrs, GCHandleType.Pinned);
-                    bool result = Interop.mincore.StartService(serviceHandle, args.Length, (IntPtr)argPtrsHandle.AddrOfPinnedObject());
+                    bool result = Interop.Advapi32.StartService(serviceHandle, args.Length, (IntPtr)argPtrsHandle.AddrOfPinnedObject());
                     if (!result)
                     {
                         Exception inner = new Win32Exception(Marshal.GetLastWin32Error());
@@ -785,10 +850,6 @@ namespace System.ServiceProcess
                         argPtrsHandle.Free();
                 }
             }
-            finally
-            {
-                Interop.mincore.CloseServiceHandle(serviceHandle);
-            }
         }
 
         /// Stops the service. If any other services depend on this one for operation,
@@ -796,9 +857,7 @@ namespace System.ServiceProcess
         /// of services.
         public unsafe void Stop()
         {
-            IntPtr serviceHandle = GetServiceHandle(Interop.mincore.ServiceOptions.SERVICE_STOP);
-
-            try
+            using (SafeServiceHandle serviceHandle = GetServiceHandle(Interop.Advapi32.ServiceOptions.SERVICE_STOP))
             {
                 // Before stopping this service, stop all the dependent services that are running.
                 // (It's OK not to cache the result of getting the DependentServices property because it caches on its own.)
@@ -813,17 +872,13 @@ namespace System.ServiceProcess
                     }
                 }
 
-                Interop.mincore.SERVICE_STATUS status = new Interop.mincore.SERVICE_STATUS();
-                bool result = Interop.mincore.ControlService(serviceHandle, Interop.mincore.ControlOptions.CONTROL_STOP, &status);
+                Interop.Advapi32.SERVICE_STATUS status = new Interop.Advapi32.SERVICE_STATUS();
+                bool result = Interop.Advapi32.ControlService(serviceHandle, Interop.Advapi32.ControlOptions.CONTROL_STOP, &status);
                 if (!result)
                 {
                     Exception inner = new Win32Exception(Marshal.GetLastWin32Error());
                     throw new InvalidOperationException(SR.Format(SR.StopService, ServiceName, _machineName), inner);
                 }
-            }
-            finally
-            {
-                Interop.mincore.CloseServiceHandle(serviceHandle);
             }
         }
 
@@ -838,7 +893,7 @@ namespace System.ServiceProcess
         public void WaitForStatus(ServiceControllerStatus desiredStatus, TimeSpan timeout)
         {
             if (!Enum.IsDefined(typeof(ServiceControllerStatus), desiredStatus))
-                throw new ArgumentException(SR.Format(SR.InvalidEnumArgument, "desiredStatus", (int)desiredStatus, typeof(ServiceControllerStatus)));
+                throw new ArgumentException(SR.Format(SR.InvalidEnumArgument, nameof(desiredStatus), (int)desiredStatus, typeof(ServiceControllerStatus)));
 
             DateTime start = DateTime.UtcNow;
             Refresh();

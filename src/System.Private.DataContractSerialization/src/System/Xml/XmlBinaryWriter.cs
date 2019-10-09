@@ -1,7 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-//------------------------------------------------------------
-//------------------------------------------------------------
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 
 // Uncomment to turn on logging of non-dictionary strings written to binary writers.
@@ -14,11 +13,14 @@ using System.Diagnostics;
 using System.Runtime.Serialization;
 using System.Globalization;
 using System.Collections.Generic;
-using System.Security;
-
 
 namespace System.Xml
 {
+    public interface IXmlBinaryWriterInitializer
+    {
+        void SetOutput(Stream stream, IXmlDictionary dictionary, XmlBinaryWriterSession session, bool ownsStream);
+    }
+
     internal class XmlBinaryNodeWriter : XmlStreamNodeWriter
     {
         private IXmlDictionary _dictionary;
@@ -58,7 +60,7 @@ namespace System.Xml
         private void WroteAttributeValue()
         {
             if (_wroteAttributeValue && !_inList)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.XmlOnlySingleValue)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.XmlOnlySingleValue));
             _wroteAttributeValue = true;
         }
 
@@ -94,7 +96,7 @@ namespace System.Xml
             else if (length < 65536)
             {
                 buffer[offset + 0] = (byte)(nodeType + 1 * 2); // WithEndElements interleave
-                buffer[offset + 1] = (byte)length;
+                buffer[offset + 1] = unchecked((byte)length);
                 length >>= 8;
                 buffer[offset + 2] = (byte)length;
                 Advance(3);
@@ -113,7 +115,7 @@ namespace System.Xml
             }
         }
 
-        private void WriteTextNodeWithInt64(XmlBinaryNodeType nodeType, Int64 value)
+        private void WriteTextNodeWithInt64(XmlBinaryNodeType nodeType, long value)
         {
             int offset;
             byte[] buffer = GetTextNodeBuffer(9, out offset);
@@ -373,11 +375,6 @@ namespace System.Xml
             WriteMultiByteInt32(key);
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
         private unsafe void WriteName(string s)
         {
             int length = s.Length;
@@ -394,11 +391,6 @@ namespace System.Xml
             }
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        ///            caller needs to validate arguments
-        /// </SecurityNote>
-        [SecurityCritical]
         private unsafe void UnsafeWriteName(char* chars, int charCount)
         {
             if (charCount < 128 / maxBytesPerChar)
@@ -512,7 +504,7 @@ namespace System.Xml
             }
         }
 
-        public override void WriteInt64Text(Int64 value)
+        public override void WriteInt64Text(long value)
         {
             if (value >= int.MinValue && value <= int.MaxValue)
             {
@@ -524,19 +516,19 @@ namespace System.Xml
             }
         }
 
-        public override void WriteUInt64Text(UInt64 value)
+        public override void WriteUInt64Text(ulong value)
         {
-            if (value <= Int64.MaxValue)
+            if (value <= long.MaxValue)
             {
-                WriteInt64Text((Int64)value);
+                WriteInt64Text((long)value);
             }
             else
             {
-                WriteTextNodeWithInt64(XmlBinaryNodeType.UInt64Text, (Int64)value);
+                WriteTextNodeWithInt64(XmlBinaryNodeType.UInt64Text, (long)value);
             }
         }
 
-        private void WriteInt64(Int64 value)
+        private void WriteInt64(long value)
         {
             int offset;
             byte[] buffer = GetBuffer(8, out offset);
@@ -611,12 +603,7 @@ namespace System.Xml
             }
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteText(string value)
+        public unsafe override void WriteText(string value)
         {
             if (_inAttribute)
             {
@@ -638,12 +625,7 @@ namespace System.Xml
             }
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteText(char[] chars, int offset, int count)
+        public unsafe override void WriteText(char[] chars, int offset, int count)
         {
             if (_inAttribute)
             {
@@ -671,11 +653,6 @@ namespace System.Xml
             WriteBytes(chars, charOffset, charCount);
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        ///            caller needs to validate arguments
-        /// </SecurityNote>
-        [SecurityCritical]
         private unsafe void UnsafeWriteText(char* chars, int charCount)
         {
             // Callers should handle zero
@@ -770,12 +747,7 @@ namespace System.Xml
             }
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteFloatText(float f)
+        public unsafe override void WriteFloatText(float f)
         {
             long l;
             if (f >= long.MinValue && f <= long.MaxValue && (l = (long)f) == f)
@@ -796,12 +768,7 @@ namespace System.Xml
             }
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteDoubleText(double d)
+        public unsafe override void WriteDoubleText(double d)
         {
             float f;
             if (d >= float.MinValue && d <= float.MaxValue && (f = (float)d) == d)
@@ -826,12 +793,7 @@ namespace System.Xml
             }
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteDecimalText(decimal d)
+        public unsafe override void WriteDecimalText(decimal d)
         {
             int offset;
             byte[] buffer = GetTextNodeBuffer(1 + sizeof(decimal), out offset);
@@ -929,22 +891,12 @@ namespace System.Xml
             WriteMultiByteInt32(count);
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        ///            caller needs to validate arguments
-        /// </SecurityNote>
-        [SecurityCritical]
-        unsafe public void UnsafeWriteArray(XmlBinaryNodeType nodeType, int count, byte* array, byte* arrayMax)
+        public unsafe void UnsafeWriteArray(XmlBinaryNodeType nodeType, int count, byte* array, byte* arrayMax)
         {
             WriteArrayInfo(nodeType, count);
             UnsafeWriteArray(array, (int)(arrayMax - array));
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        ///            caller needs to validate arguments
-        /// </SecurityNote>
-        [SecurityCritical]
         private unsafe void UnsafeWriteArray(byte* array, int byteCount)
         {
             base.UnsafeWriteBytes(array, byteCount);
@@ -1117,7 +1069,7 @@ namespace System.Xml
         }
     }
 
-    internal class XmlBinaryWriter : XmlBaseWriter
+    internal class XmlBinaryWriter : XmlBaseWriter, IXmlBinaryWriterInitializer
     {
         private XmlBinaryNodeWriter _writer;
         private char[] _chars;
@@ -1127,13 +1079,17 @@ namespace System.Xml
         public void SetOutput(Stream stream, IXmlDictionary dictionary, XmlBinaryWriterSession session, bool ownsStream)
         {
             if (stream == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("stream"));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(stream)));
             if (_writer == null)
                 _writer = new XmlBinaryNodeWriter();
             _writer.SetOutput(stream, dictionary, session, ownsStream);
             SetOutput(_writer);
         }
 
+        protected override XmlSigningNodeWriter CreateSigningNodeWriter()
+        {
+            return new XmlSigningNodeWriter(false);
+        }
 
         protected override void WriteTextNode(XmlDictionaryReader reader, bool attribute)
         {
@@ -1238,11 +1194,6 @@ namespace System.Xml
             EndArray();
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        ///            caller needs to validate arguments
-        /// </SecurityNote>
-        [SecurityCritical]
         private unsafe void UnsafeWriteArray(string prefix, string localName, string namespaceUri,
                                XmlBinaryNodeType nodeType, int count, byte* array, byte* arrayMax)
         {
@@ -1251,11 +1202,6 @@ namespace System.Xml
             WriteEndArray();
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        ///            caller needs to validate arguments
-        /// </SecurityNote>
-        [SecurityCritical]
         private unsafe void UnsafeWriteArray(string prefix, XmlDictionaryString localName, XmlDictionaryString namespaceUri,
                                XmlBinaryNodeType nodeType, int count, byte* array, byte* arrayMax)
         {
@@ -1267,24 +1213,18 @@ namespace System.Xml
         private void CheckArray(Array array, int offset, int count)
         {
             if (array == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("array"));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(array)));
             if (offset < 0)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("offset", SR.Format(SR.ValueMustBeNonNegative)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(offset), SR.ValueMustBeNonNegative));
             if (offset > array.Length)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("offset", SR.Format(SR.OffsetExceedsBufferSize, array.Length)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(offset), SR.Format(SR.OffsetExceedsBufferSize, array.Length)));
             if (count < 0)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("count", SR.Format(SR.ValueMustBeNonNegative)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(count), SR.ValueMustBeNonNegative));
             if (count > array.Length - offset)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("count", SR.Format(SR.SizeExceedsRemainingBufferSpace, array.Length - offset)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(count), SR.Format(SR.SizeExceedsRemainingBufferSpace, array.Length - offset)));
         }
 
-        // bool
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteArray(string prefix, string localName, string namespaceUri, bool[] array, int offset, int count)
+        public unsafe override void WriteArray(string prefix, string localName, string namespaceUri, bool[] array, int offset, int count)
         {
             {
                 CheckArray(array, offset, count);
@@ -1298,12 +1238,7 @@ namespace System.Xml
             }
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteArray(string prefix, XmlDictionaryString localName, XmlDictionaryString namespaceUri, bool[] array, int offset, int count)
+        public unsafe override void WriteArray(string prefix, XmlDictionaryString localName, XmlDictionaryString namespaceUri, bool[] array, int offset, int count)
         {
             {
                 CheckArray(array, offset, count);
@@ -1317,19 +1252,13 @@ namespace System.Xml
             }
         }
 
-        // Int16
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteArray(string prefix, string localName, string namespaceUri, Int16[] array, int offset, int count)
+        public unsafe override void WriteArray(string prefix, string localName, string namespaceUri, short[] array, int offset, int count)
         {
             {
                 CheckArray(array, offset, count);
                 if (count > 0)
                 {
-                    fixed (Int16* items = &array[offset])
+                    fixed (short* items = &array[offset])
                     {
                         UnsafeWriteArray(prefix, localName, namespaceUri, XmlBinaryNodeType.Int16TextWithEndElement, count, (byte*)items, (byte*)&items[count]);
                     }
@@ -1337,18 +1266,13 @@ namespace System.Xml
             }
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteArray(string prefix, XmlDictionaryString localName, XmlDictionaryString namespaceUri, Int16[] array, int offset, int count)
+        public unsafe override void WriteArray(string prefix, XmlDictionaryString localName, XmlDictionaryString namespaceUri, short[] array, int offset, int count)
         {
             {
                 CheckArray(array, offset, count);
                 if (count > 0)
                 {
-                    fixed (Int16* items = &array[offset])
+                    fixed (short* items = &array[offset])
                     {
                         UnsafeWriteArray(prefix, localName, namespaceUri, XmlBinaryNodeType.Int16TextWithEndElement, count, (byte*)items, (byte*)&items[count]);
                     }
@@ -1356,19 +1280,13 @@ namespace System.Xml
             }
         }
 
-        // Int32
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteArray(string prefix, string localName, string namespaceUri, Int32[] array, int offset, int count)
+        public unsafe override void WriteArray(string prefix, string localName, string namespaceUri, int[] array, int offset, int count)
         {
             {
                 CheckArray(array, offset, count);
                 if (count > 0)
                 {
-                    fixed (Int32* items = &array[offset])
+                    fixed (int* items = &array[offset])
                     {
                         UnsafeWriteArray(prefix, localName, namespaceUri, XmlBinaryNodeType.Int32TextWithEndElement, count, (byte*)items, (byte*)&items[count]);
                     }
@@ -1376,18 +1294,13 @@ namespace System.Xml
             }
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteArray(string prefix, XmlDictionaryString localName, XmlDictionaryString namespaceUri, Int32[] array, int offset, int count)
+        public unsafe override void WriteArray(string prefix, XmlDictionaryString localName, XmlDictionaryString namespaceUri, int[] array, int offset, int count)
         {
             {
                 CheckArray(array, offset, count);
                 if (count > 0)
                 {
-                    fixed (Int32* items = &array[offset])
+                    fixed (int* items = &array[offset])
                     {
                         UnsafeWriteArray(prefix, localName, namespaceUri, XmlBinaryNodeType.Int32TextWithEndElement, count, (byte*)items, (byte*)&items[count]);
                     }
@@ -1395,19 +1308,13 @@ namespace System.Xml
             }
         }
 
-        // Int64
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteArray(string prefix, string localName, string namespaceUri, Int64[] array, int offset, int count)
+        public unsafe override void WriteArray(string prefix, string localName, string namespaceUri, long[] array, int offset, int count)
         {
             {
                 CheckArray(array, offset, count);
                 if (count > 0)
                 {
-                    fixed (Int64* items = &array[offset])
+                    fixed (long* items = &array[offset])
                     {
                         UnsafeWriteArray(prefix, localName, namespaceUri, XmlBinaryNodeType.Int64TextWithEndElement, count, (byte*)items, (byte*)&items[count]);
                     }
@@ -1415,18 +1322,13 @@ namespace System.Xml
             }
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteArray(string prefix, XmlDictionaryString localName, XmlDictionaryString namespaceUri, Int64[] array, int offset, int count)
+        public unsafe override void WriteArray(string prefix, XmlDictionaryString localName, XmlDictionaryString namespaceUri, long[] array, int offset, int count)
         {
             {
                 CheckArray(array, offset, count);
                 if (count > 0)
                 {
-                    fixed (Int64* items = &array[offset])
+                    fixed (long* items = &array[offset])
                     {
                         UnsafeWriteArray(prefix, localName, namespaceUri, XmlBinaryNodeType.Int64TextWithEndElement, count, (byte*)items, (byte*)&items[count]);
                     }
@@ -1434,13 +1336,7 @@ namespace System.Xml
             }
         }
 
-        // float
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteArray(string prefix, string localName, string namespaceUri, float[] array, int offset, int count)
+        public unsafe override void WriteArray(string prefix, string localName, string namespaceUri, float[] array, int offset, int count)
         {
             {
                 CheckArray(array, offset, count);
@@ -1454,12 +1350,7 @@ namespace System.Xml
             }
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteArray(string prefix, XmlDictionaryString localName, XmlDictionaryString namespaceUri, float[] array, int offset, int count)
+        public unsafe override void WriteArray(string prefix, XmlDictionaryString localName, XmlDictionaryString namespaceUri, float[] array, int offset, int count)
         {
             {
                 CheckArray(array, offset, count);
@@ -1473,13 +1364,7 @@ namespace System.Xml
             }
         }
 
-        // double
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteArray(string prefix, string localName, string namespaceUri, double[] array, int offset, int count)
+        public unsafe override void WriteArray(string prefix, string localName, string namespaceUri, double[] array, int offset, int count)
         {
             {
                 CheckArray(array, offset, count);
@@ -1493,12 +1378,7 @@ namespace System.Xml
             }
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteArray(string prefix, XmlDictionaryString localName, XmlDictionaryString namespaceUri, double[] array, int offset, int count)
+        public unsafe override void WriteArray(string prefix, XmlDictionaryString localName, XmlDictionaryString namespaceUri, double[] array, int offset, int count)
         {
             {
                 CheckArray(array, offset, count);
@@ -1512,13 +1392,7 @@ namespace System.Xml
             }
         }
 
-        // decimal
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteArray(string prefix, string localName, string namespaceUri, decimal[] array, int offset, int count)
+        public unsafe override void WriteArray(string prefix, string localName, string namespaceUri, decimal[] array, int offset, int count)
         {
             {
                 CheckArray(array, offset, count);
@@ -1532,12 +1406,7 @@ namespace System.Xml
             }
         }
 
-        /// <SecurityNote>
-        /// Critical - contains unsafe code
-        /// Safe - unsafe code is effectively encapsulated, all inputs are validated
-        /// </SecurityNote>
-        [SecuritySafeCritical]
-        unsafe public override void WriteArray(string prefix, XmlDictionaryString localName, XmlDictionaryString namespaceUri, decimal[] array, int offset, int count)
+        public unsafe override void WriteArray(string prefix, XmlDictionaryString localName, XmlDictionaryString namespaceUri, decimal[] array, int offset, int count)
         {
             {
                 CheckArray(array, offset, count);

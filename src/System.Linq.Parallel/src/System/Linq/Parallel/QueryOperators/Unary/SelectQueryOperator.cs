@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -15,14 +16,14 @@ namespace System.Linq.Parallel
 {
     /// <summary>
     /// The operator type for Select statements. This operator transforms elements as it
-    /// enumerates them through the use of a selector delegate. 
+    /// enumerates them through the use of a selector delegate.
     /// </summary>
     /// <typeparam name="TInput"></typeparam>
     /// <typeparam name="TOutput"></typeparam>
     internal sealed class SelectQueryOperator<TInput, TOutput> : UnaryQueryOperator<TInput, TOutput>
     {
         // Selector function. Used to project elements to a transformed view during execution.
-        private Func<TInput, TOutput> _selector;
+        private readonly Func<TInput, TOutput> _selector;
 
         //---------------------------------------------------------------------------------------
         // Initializes a new select operator.
@@ -89,7 +90,7 @@ namespace System.Linq.Parallel
         // The enumerator type responsible for projecting elements as it is walked.
         //
 
-        class SelectQueryOperatorEnumerator<TKey> : QueryOperatorEnumerator<TOutput, TKey>
+        private class SelectQueryOperatorEnumerator<TKey> : QueryOperatorEnumerator<TOutput, TKey>
         {
             private readonly QueryOperatorEnumerator<TInput, TKey> _source; // The data source to enumerate.
             private readonly Func<TInput, TOutput> _selector;  // The actual select function.
@@ -131,14 +132,14 @@ namespace System.Linq.Parallel
         }
 
         //-----------------------------------------------------------------------------------
-        // Query results for a Select operator. The results are indexible if the child
-        // results were indexible.
+        // Query results for a Select operator. The results are indexable if the child
+        // results were indexable.
         //
 
-        class SelectQueryOperatorResults : UnaryQueryOperatorResults
+        private class SelectQueryOperatorResults : UnaryQueryOperatorResults
         {
-            private Func<TInput, TOutput> _selector; // Selector function
-            private int _childCount; // The number of elements in child results
+            private readonly Func<TInput, TOutput> _selector; // Selector function
+            private readonly int _childCount; // The number of elements in child results
 
             public static QueryResults<TOutput> NewResults(
                 QueryResults<TInput> childQueryResults, SelectQueryOperator<TInput, TOutput> op,

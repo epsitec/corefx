@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named01a.named01a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named01a.named01a;
-
     // <Area>Named Parameters</Area>
     // <Title> Basic Named Parameter</Title>
     // <Description>Basic testing of a simple function with named parameters</Description>
@@ -44,8 +43,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named01b.named01b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named01b.named01b;
-
     // <Area>Named Parameters</Area>
     // <Title> Basic Named Parameter</Title>
     // <Description>Basic testing of a simple function with named parameters</Description>
@@ -84,8 +81,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named01c.named01c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named01c.named01c;
-
     // <Area>Named Parameters</Area>
     // <Title> Basic Named Parameter</Title>
     // <Description>Basic testing of a simple function with named parameters</Description>
@@ -124,8 +119,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named02a.named02a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named02a.named02a;
-
     // <Area>Named Parameters</Area>
     // <Title> Basic Named Parameter</Title>
     // <Description>Basic testing of a simple function with named parameters</Description>
@@ -163,8 +156,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named02b.named02b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named02b.named02b;
-
     // <Area>Named Parameters</Area>
     // <Title> Basic Named Parameter</Title>
     // <Description>Basic testing of a simple function with named parameters</Description>
@@ -204,8 +195,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named02c.named02c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named02c.named02c;
-
     // <Area>Named Parameters</Area>
     // <Title> Basic Named Parameter</Title>
     // <Description>Basic testing of a simple function with named parameters</Description>
@@ -245,8 +234,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named03a.named03a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named03a.named03a;
-
     // <Area>Named Parameters</Area>
     // <Title> Basic Named Parameter</Title>
     // <Description>Basic testing of a simple function with and incorrect parameter</Description>
@@ -295,8 +282,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named03c.named03c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.named03c.named03c;
-
     // <Area>Named Parameters</Area>
     // <Title> Basic Named Parameter</Title>
     // <Description>Basic testing of a simple function with and incorrect parameter</Description>
@@ -346,8 +331,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.optional03.optional03
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.optional03.optional03;
-
     // <Area>Optional Parameters</Area>
     // <Title> Basic Optional Parameter</Title>
     // <Description>Basic testing of a simple function with non-optional parameters</Description>
@@ -396,8 +379,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.optional02a.optional02a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.optional02a.optional02a;
-
     // <Area>Optional Parameters</Area>
     // <Title> Basic Optional Parameter</Title>
     // <Description>Basic testing of a simple function with optional parameters</Description>
@@ -435,8 +416,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.optional02b.optional02b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.optional02b.optional02b;
-
     // <Area>Optional Parameters</Area>
     // <Title> Basic Optional Parameter</Title>
     // <Description>Basic testing of a simple function with optional parameters</Description>
@@ -475,8 +454,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.optional02c.optional02c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.optional02c.optional02c;
-
     // <Area>Optional Parameters</Area>
     // <Title> Basic Optional Parameter</Title>
     // <Description>Basic testing of a simple function with optional parameters</Description>
@@ -515,8 +492,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.optional01.optional01
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.basic.optional01.optional01;
-
     // <Area>Optional Parameters</Area>
     // <Title> Basic Optional Parameter</Title>
     // <Description>Basic testing of a simple function with optional parameters</Description>

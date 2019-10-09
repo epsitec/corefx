@@ -1,61 +1,41 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Globalization;
 
 namespace System.ComponentModel
 {
-    /// <devdoc>
-    ///    <para>Provides a type converter to convert 32-bit signed integer objects to and
-    ///       from various other representations.</para>
-    /// </devdoc>
+    /// <summary>
+    /// Provides a type converter to convert 32-bit signed integer objects to and
+    /// from various other representations.
+    /// </summary>
     public class Int32Converter : BaseNumberConverter
     {
-        /// <devdoc>
+        /// <summary>
         /// The Type this converter is targeting (e.g. Int16, UInt32, etc.)
-        /// </devdoc>
-        internal override Type TargetType
-        {
-            get
-            {
-                return typeof(Int32);
-            }
-        }
+        /// </summary>
+        internal override Type TargetType => typeof(int);
 
-        /// <devdoc>
+        /// <summary>
         /// Convert the given value to a string using the given radix
-        /// </devdoc>
-        internal override object FromString(string value, int radix)
-        {
-            return Convert.ToInt32(value, radix);
-        }
+        /// </summary>
+        internal override object FromString(string value, int radix) => Convert.ToInt32(value, radix);
 
-        /// <devdoc>
+        /// <summary>
         /// Convert the given value to a string using the given formatInfo
-        /// </devdoc>
+        /// </summary>
         internal override object FromString(string value, NumberFormatInfo formatInfo)
         {
-            return Int32.Parse(value, NumberStyles.Integer, formatInfo);
+            return int.Parse(value, NumberStyles.Integer, formatInfo);
         }
 
-
-        /// <devdoc>
-        /// Convert the given value to a string using the given CultureInfo
-        /// </devdoc>
-        internal override object FromString(string value, CultureInfo culture)
-        {
-            return Int32.Parse(value, culture);
-        }
-
-
-
-        /// <devdoc>
+        /// <summary>
         /// Convert the given value from a string using the given formatInfo
-        /// </devdoc>
+        /// </summary>
         internal override string ToString(object value, NumberFormatInfo formatInfo)
         {
-            return ((Int32)value).ToString("G", formatInfo);
+            return ((int)value).ToString("G", formatInfo);
         }
     }
 }
-

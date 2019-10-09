@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Concurrent;
@@ -21,7 +22,7 @@ namespace System.Threading.Tasks
         private readonly bool _stopOnFirstFailure;
 
         private readonly ConcurrentQueue<Replica> _pendingReplicas = new ConcurrentQueue<Replica>();
-        private ConcurrentQueue<Exception> _exceptions;
+        private ConcurrentQueue<Exception>? _exceptions;
         private bool _stopReplicating;
 
         private abstract class Replica
@@ -29,20 +30,20 @@ namespace System.Threading.Tasks
             protected readonly TaskReplicator _replicator;
             protected readonly int _timeout;
             protected int _remainingConcurrency;
-            protected volatile Task _pendingTask; // the most recently queued Task for this replica, or null if we're done.
+            protected volatile Task? _pendingTask; // the most recently queued Task for this replica, or null if we're done.
 
             protected Replica(TaskReplicator replicator, int maxConcurrency, int timeout)
             {
                 _replicator = replicator;
                 _timeout = timeout;
                 _remainingConcurrency = maxConcurrency - 1;
-                _pendingTask = new Task(s => ((Replica)s).Execute(), this);
+                _pendingTask = new Task(s => ((Replica)s!).Execute(), this);
                 _replicator._pendingReplicas.Enqueue(this);
             }
 
             public void Start()
             {
-                _pendingTask.RunSynchronously(_replicator._scheduler);
+                _pendingTask!.RunSynchronously(_replicator._scheduler);
             }
 
             public void Wait()
@@ -57,7 +58,7 @@ namespace System.Threading.Tasks
                 // if it hasn't started running on another thread.  That's essential for preventing deadlocks,
                 // in the case where all other threads are blocked for other reasons.
                 //
-                Task pendingTask;
+                Task? pendingTask;
                 while ((pendingTask = _pendingTask) != null)
                     pendingTask.Wait();
             }
@@ -78,7 +79,7 @@ namespace System.Threading.Tasks
 
                     if (userActionYieldedBeforeCompletion)
                     {
-                        _pendingTask = new Task(s => ((Replica)s).Execute(), this, CancellationToken.None, TaskCreationOptions.PreferFairness);
+                        _pendingTask = new Task(s => ((Replica)s!).Execute(), this, CancellationToken.None, TaskCreationOptions.None);
                         _pendingTask.Start(_replicator._scheduler);
                     }
                     else
@@ -103,7 +104,7 @@ namespace System.Threading.Tasks
         private sealed class Replica<TState> : Replica
         {
             private readonly ReplicatableUserAction<TState> _action;
-            private TState _state;
+            private TState _state = default!;
 
             public Replica(TaskReplicator replicator, int maxConcurrency, int timeout, ReplicatableUserAction<TState> action)
                 : base(replicator, maxConcurrency, timeout)
@@ -114,7 +115,7 @@ namespace System.Threading.Tasks
             protected override void CreateNewReplica()
             {
                 Replica<TState> newReplica = new Replica<TState>(_replicator, _remainingConcurrency, GenerateCooperativeMultitaskingTaskTimeout(), _action);
-                newReplica._pendingTask.Start(_replicator._scheduler);
+                newReplica._pendingTask!.Start(_replicator._scheduler);
             }
 
             protected override void ExecuteAction(out bool yieldedBeforeCompletion)
@@ -136,7 +137,7 @@ namespace System.Threading.Tasks
             TaskReplicator replicator = new TaskReplicator(options, stopOnFirstFailure);
             new Replica<TState>(replicator, maxConcurrencyLevel, CooperativeMultitaskingTaskTimeout_RootTask, action).Start();
 
-            Replica nextReplica;
+            Replica? nextReplica;
             while (replicator._pendingReplicas.TryDequeue(out nextReplica))
                 nextReplica.Wait();
 
@@ -145,16 +146,16 @@ namespace System.Threading.Tasks
         }
 
 
-        private const Int32 CooperativeMultitaskingTaskTimeout_Min = 100;  // millisec
-        private const Int32 CooperativeMultitaskingTaskTimeout_Increment = 50;  // millisec
-        private const Int32 CooperativeMultitaskingTaskTimeout_RootTask = (Int32.MaxValue / 2);
+        private const int CooperativeMultitaskingTaskTimeout_Min = 100;  // millisec
+        private const int CooperativeMultitaskingTaskTimeout_Increment = 50;  // millisec
+        private const int CooperativeMultitaskingTaskTimeout_RootTask = (int.MaxValue / 2);
 
-        private static Int32 GenerateCooperativeMultitaskingTaskTimeout()
+        private static int GenerateCooperativeMultitaskingTaskTimeout()
         {
             // This logic ensures that we have a diversity of timeouts across worker tasks (100, 150, 200, 250, 100, etc)
             // Otherwise all worker will try to timeout at precisely the same point, which is bad if the work is just about to finish.
-            Int32 period = PlatformHelper.ProcessorCount;
-            Int32 pseudoRnd = Environment.TickCount;
+            int period = PlatformHelper.ProcessorCount;
+            int pseudoRnd = Environment.TickCount;
             return CooperativeMultitaskingTaskTimeout_Min + (pseudoRnd % period) * CooperativeMultitaskingTaskTimeout_Increment;
         }
     }

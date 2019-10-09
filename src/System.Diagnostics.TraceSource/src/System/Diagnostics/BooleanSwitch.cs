@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
 using System;
@@ -10,6 +11,7 @@ namespace System.Diagnostics
     ///    <para>Provides a simple on/off switch that can be used to control debugging and tracing
     ///       output.</para>
     /// </devdoc>
+    [SwitchLevel(typeof(bool))]
     public class BooleanSwitch : Switch
     {
         /// <devdoc>
@@ -44,11 +46,10 @@ namespace System.Diagnostics
         protected override void OnValueChanged()
         {
             bool b;
-            if (Boolean.TryParse(Value, out b))
+            if (bool.TryParse(Value, out b))
                 SwitchSetting = (b ? 1 : 0);
             else
                 base.OnValueChanged();
         }
     }
 }
-

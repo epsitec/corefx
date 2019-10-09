@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.extensionmethod004.extensionmethod004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.extensionmethod004.extensionmethod004;
-
     static // <Title>Extension method that extends dynamic</Title>
            // <Description>
            // </Description>
@@ -15,7 +14,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
            // <Code>
 public class MyClass
     {
-        static public dynamic Foo(this int x)
+        public static dynamic Foo(this int x)
         {
             return x;
         }
@@ -53,8 +52,6 @@ public class MyClass
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.extensionmethod005.extensionmethod005
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.extensionmethod005.extensionmethod005;
-
     static // <Title>Extension method that extends dynamic</Title>
            // <Description>
            // </Description>
@@ -63,7 +60,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
            // <Code>
 public class MyClass
     {
-        static public dynamic Foo(this int x, dynamic d)
+        public static dynamic Foo(this int x, dynamic d)
         {
             return d;
         }
@@ -102,8 +99,6 @@ public class MyClass
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.extensionmethod006.extensionmethod006
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.extensionmethod006.extensionmethod006;
-
     static // <Title>Extension method that extends dynamic</Title>
            // <Description>
            // </Description>
@@ -112,7 +107,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
            // <Code>
 public class MyClass
     {
-        static public string Foo(this object x, dynamic d)
+        public static string Foo(this object x, dynamic d)
         {
             return d.ToString();
         }
@@ -152,14 +147,12 @@ public class MyClass
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.extensionmethod008.extensionmethod008
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.extensionmethod008.extensionmethod008;
     // <Title>Extension method that extends dynamic</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -197,8 +190,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method001.method001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method001.method001;
-
     public class Test
     {
         private static bool s_ok = false;
@@ -234,8 +225,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method002.method002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method002.method002;
-
     public class Test
     {
         private static bool s_ok = false;
@@ -272,8 +261,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method003.method003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method003.method003;
-
     public class Test
     {
         private static bool s_ok = false;
@@ -308,8 +295,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method004.method004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method004.method004;
-
     public class Test
     {
         private static bool s_ok = false;
@@ -346,8 +331,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method005.method005
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method005.method005;
-
     public class Test
     {
         private static bool s_ok = false;
@@ -385,8 +368,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method007.method007
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method007.method007;
-
     public class Test
     {
         private static bool s_ok = false;
@@ -423,8 +404,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method008.method008
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method008.method008;
-
     public class Test
     {
         private static bool s_ok = false;
@@ -460,8 +439,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method009.method009
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method009.method009;
-
     public class Test
     {
         private static bool s_ok = false;
@@ -497,8 +474,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method010.method010
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method010.method010;
-
     public class Test
     {
         private static bool s_ok = false;
@@ -535,8 +510,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method011.method011
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method011.method011;
-
     public class Test
     {
         private static bool s_ok = false;
@@ -571,8 +544,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method012.method012
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method012.method012;
-
     public class Test
     {
         private static bool s_ok = false;
@@ -609,8 +580,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method013.method013
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method013.method013;
-
     public class Test
     {
         private static bool s_ok = false;
@@ -647,14 +616,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method015.method015
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method015.method015;
     // <Title> Having dynamic as a parameter</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Program
     {
@@ -690,14 +657,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method016.method016
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method016.method016;
     // <Title> Having more than 10 parameters but less than 32 should not crash the binder </Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Program
     {
@@ -730,14 +695,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method017.method017
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method017.method017;
     // <Title> Having more than 10 parameters but less than 32 should not crash the binder </Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Program
     {
@@ -748,7 +711,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
         public static int Status;
 
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -771,14 +734,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method018.method018
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method018.method018;
     // <Title> Having more than 10 parameters but less than 32 should not crash the binder </Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Program
     {
@@ -789,7 +750,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
         public static int Status;
 
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -810,8 +771,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method019.method019
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.method019.method019;
-
     public class Test
     {
         private static bool s_ok = false;
@@ -847,8 +806,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.genericbaseclass001.genericbaseclass001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.genericbaseclass001.genericbaseclass001;
-
     // <Title> Having dynamic as a type parameter in base class</Title>
     // <Description></Description>
     // <RelatedBugs></RelatedBugs>
@@ -868,7 +825,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
     public class Base2<U, V>
     {
-        virtual internal int M()
+        internal virtual int M()
         {
             return 101;
         }
@@ -916,13 +873,11 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.genericbaseclass002.genericbaseclass002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.genericbaseclass002.genericbaseclass002;
     // <Title> Having dynamic as a type parameter in base class</Title>
     // <Description></Description>
     // <RelatedBugs></RelatedBugs>
     // <Expects Status=success></Expects>
     // <Code>
-    using System;
 
     namespace NS
     {
@@ -974,13 +929,11 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.genericbaseclass003.genericbaseclass003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.genericbaseclass003.genericbaseclass003;
     // <Title> Having dynamic as a type parameter in base class</Title>
     // <Description></Description>
     // <RelatedBugs></RelatedBugs>
     // <Expects Status=success></Expects>
     // <Code>
-    using System;
 
     namespace NS
     {
@@ -1029,13 +982,11 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.genericbaseclass004.genericbaseclass004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.genericbaseclass004.genericbaseclass004;
     // <Title> Having dynamic as a type parameter in base class</Title>
     // <Description>ICE</Description>
     // <RelatedBugs></RelatedBugs>
     // <Expects Status=success></Expects>
     // <Code>
-    using System;
 
     namespace NS
     {
@@ -1113,13 +1064,11 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.genericbaseclass005.genericbaseclass005
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Methods.genericbaseclass005.genericbaseclass005;
     // <Title> Having dynamic as a type parameter in base class</Title>
     // <Description></Description>
     // <RelatedBugs></RelatedBugs>
     // <Expects Status=success></Expects>
     // <Code>
-    using System;
 
     namespace NS
     {

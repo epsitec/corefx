@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -50,7 +51,7 @@ namespace System.Linq.Parallel
         // A static delegate used by RunSynchronously
         //
 
-        private static Action<object> s_runTaskSynchronouslyDelegate = RunTaskSynchronously;
+        private static readonly Action<object> s_runTaskSynchronouslyDelegate = RunTaskSynchronously;
 
         //-----------------------------------------------------------------------------------
         // Executes the task synchronously (on the current thread).
@@ -69,7 +70,7 @@ namespace System.Linq.Parallel
         // Executes the task asynchronously (elsewhere, unspecified).
         //
 
-        private static Action<object> s_baseWorkDelegate = delegate (object o)
+        private static readonly Action<object> s_baseWorkDelegate = delegate (object o)
         {
             ((QueryTask)o).BaseWork(null);
         };

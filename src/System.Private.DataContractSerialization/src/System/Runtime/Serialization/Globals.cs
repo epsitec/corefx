@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.ComponentModel;
@@ -9,19 +10,12 @@ using System.Xml.Serialization;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
-using System.Security;
 using System.Linq;
 using System.Diagnostics;
 
 
 namespace System.Runtime.Serialization
 {
-    /// <SecurityNote>
-    /// Critical - Class holds static instances used in serializer. 
-    ///            Static fields are marked SecurityCritical or readonly to prevent
-    ///            data from being modified or leaked to other components in appdomain.
-    /// Safe - All get-only properties marked safe since they only need to be protected for write.
-    /// </SecurityNote>
     internal static class Globals
     {
         /// <SecurityNote>
@@ -29,11 +23,9 @@ namespace System.Runtime.Serialization
         /// </SecurityNote>
         internal const BindingFlags ScanAllMembers = BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 
-        [SecurityCritical]
         private static XmlQualifiedName s_idQualifiedName;
         internal static XmlQualifiedName IdQualifiedName
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_idQualifiedName == null)
@@ -42,11 +34,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static XmlQualifiedName s_refQualifiedName;
         internal static XmlQualifiedName RefQualifiedName
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_refQualifiedName == null)
@@ -55,11 +45,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfObject;
         internal static Type TypeOfObject
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfObject == null)
@@ -68,11 +56,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfValueType;
         internal static Type TypeOfValueType
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfValueType == null)
@@ -81,11 +67,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfArray;
         internal static Type TypeOfArray
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfArray == null)
@@ -94,24 +78,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
-        private static Type s_typeOfException;
-        internal static Type TypeOfException
-        {
-            [SecuritySafeCritical]
-            get
-            {
-                if (s_typeOfException == null)
-                    s_typeOfException = typeof(Exception);
-                return s_typeOfException;
-            }
-        }
-
-        [SecurityCritical]
         private static Type s_typeOfString;
         internal static Type TypeOfString
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfString == null)
@@ -120,11 +89,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfInt;
         internal static Type TypeOfInt
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfInt == null)
@@ -133,11 +100,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfULong;
         internal static Type TypeOfULong
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfULong == null)
@@ -146,11 +111,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfVoid;
         internal static Type TypeOfVoid
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfVoid == null)
@@ -159,11 +122,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfByteArray;
         internal static Type TypeOfByteArray
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfByteArray == null)
@@ -172,11 +133,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfTimeSpan;
         internal static Type TypeOfTimeSpan
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfTimeSpan == null)
@@ -185,11 +144,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfGuid;
         internal static Type TypeOfGuid
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfGuid == null)
@@ -198,11 +155,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfDateTimeOffset;
         internal static Type TypeOfDateTimeOffset
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfDateTimeOffset == null)
@@ -211,11 +166,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfDateTimeOffsetAdapter;
         internal static Type TypeOfDateTimeOffsetAdapter
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfDateTimeOffsetAdapter == null)
@@ -224,11 +177,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfUri;
         internal static Type TypeOfUri
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfUri == null)
@@ -237,11 +188,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfTypeEnumerable;
         internal static Type TypeOfTypeEnumerable
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfTypeEnumerable == null)
@@ -250,11 +199,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfStreamingContext;
         internal static Type TypeOfStreamingContext
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfStreamingContext == null)
@@ -263,12 +210,42 @@ namespace System.Runtime.Serialization
             }
         }
 
+        private static Type s_typeOfISerializable;
+        internal static Type TypeOfISerializable
+        {
+            get
+            {
+                if (s_typeOfISerializable == null)
+                    s_typeOfISerializable = typeof(ISerializable);
+                return s_typeOfISerializable;
+            }
+        }
 
-        [SecurityCritical]
+        private static Type s_typeOfIDeserializationCallback;
+        internal static Type TypeOfIDeserializationCallback
+        {
+            get
+            {
+                if (s_typeOfIDeserializationCallback == null)
+                    s_typeOfIDeserializationCallback = typeof(IDeserializationCallback);
+                return s_typeOfIDeserializationCallback;
+            }
+        }
+
+        private static Type s_typeOfIObjectReference;
+        internal static Type TypeOfIObjectReference
+        {
+            get
+            {
+                if (s_typeOfIObjectReference == null)
+                    s_typeOfIObjectReference = typeof(IObjectReference);
+                return s_typeOfIObjectReference;
+            }
+        }
+
         private static Type s_typeOfXmlFormatClassWriterDelegate;
         internal static Type TypeOfXmlFormatClassWriterDelegate
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfXmlFormatClassWriterDelegate == null)
@@ -277,11 +254,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfXmlFormatCollectionWriterDelegate;
         internal static Type TypeOfXmlFormatCollectionWriterDelegate
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfXmlFormatCollectionWriterDelegate == null)
@@ -290,11 +265,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfXmlFormatClassReaderDelegate;
         internal static Type TypeOfXmlFormatClassReaderDelegate
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfXmlFormatClassReaderDelegate == null)
@@ -303,11 +276,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfXmlFormatCollectionReaderDelegate;
         internal static Type TypeOfXmlFormatCollectionReaderDelegate
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfXmlFormatCollectionReaderDelegate == null)
@@ -316,11 +287,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfXmlFormatGetOnlyCollectionReaderDelegate;
         internal static Type TypeOfXmlFormatGetOnlyCollectionReaderDelegate
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfXmlFormatGetOnlyCollectionReaderDelegate == null)
@@ -329,11 +298,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfKnownTypeAttribute;
         internal static Type TypeOfKnownTypeAttribute
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfKnownTypeAttribute == null)
@@ -342,18 +309,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        /// <SecurityNote>
-        /// Critical - attrbute type used in security decision
-        /// </SecurityNote>
-        [SecurityCritical]
         private static Type s_typeOfDataContractAttribute;
         internal static Type TypeOfDataContractAttribute
         {
-            /// <SecurityNote>
-            /// Critical - accesses critical field for attribute type
-            /// Safe - controls inputs and logic
-            /// </SecurityNote>
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfDataContractAttribute == null)
@@ -362,11 +320,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfDataMemberAttribute;
         internal static Type TypeOfDataMemberAttribute
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfDataMemberAttribute == null)
@@ -375,11 +331,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfEnumMemberAttribute;
         internal static Type TypeOfEnumMemberAttribute
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfEnumMemberAttribute == null)
@@ -388,11 +342,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfCollectionDataContractAttribute;
         internal static Type TypeOfCollectionDataContractAttribute
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfCollectionDataContractAttribute == null)
@@ -401,11 +353,23 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
+        private static Type s_typeOfOptionalFieldAttribute;
+        internal static Type TypeOfOptionalFieldAttribute
+        {
+            get
+            {
+                if (s_typeOfOptionalFieldAttribute == null)
+                {
+                    s_typeOfOptionalFieldAttribute = typeof(OptionalFieldAttribute);
+                }
+
+                return s_typeOfOptionalFieldAttribute;
+            }
+        }
+
         private static Type s_typeOfObjectArray;
         internal static Type TypeOfObjectArray
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfObjectArray == null)
@@ -414,12 +378,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-
-        [SecurityCritical]
         private static Type s_typeOfOnSerializingAttribute;
         internal static Type TypeOfOnSerializingAttribute
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfOnSerializingAttribute == null)
@@ -428,11 +389,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfOnSerializedAttribute;
         internal static Type TypeOfOnSerializedAttribute
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfOnSerializedAttribute == null)
@@ -441,11 +400,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfOnDeserializingAttribute;
         internal static Type TypeOfOnDeserializingAttribute
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfOnDeserializingAttribute == null)
@@ -454,11 +411,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfOnDeserializedAttribute;
         internal static Type TypeOfOnDeserializedAttribute
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfOnDeserializedAttribute == null)
@@ -467,12 +422,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-
-        [SecurityCritical]
         private static Type s_typeOfFlagsAttribute;
         internal static Type TypeOfFlagsAttribute
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfFlagsAttribute == null)
@@ -481,11 +433,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfIXmlSerializable;
         internal static Type TypeOfIXmlSerializable
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfIXmlSerializable == null)
@@ -494,11 +444,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfXmlSchemaProviderAttribute;
         internal static Type TypeOfXmlSchemaProviderAttribute
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfXmlSchemaProviderAttribute == null)
@@ -507,11 +455,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfXmlRootAttribute;
         internal static Type TypeOfXmlRootAttribute
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfXmlRootAttribute == null)
@@ -520,11 +466,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfXmlQualifiedName;
         internal static Type TypeOfXmlQualifiedName
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfXmlQualifiedName == null)
@@ -533,12 +477,29 @@ namespace System.Runtime.Serialization
             }
         }
 
-#if NET_NATIVE
-        [SecurityCritical]
+        private static Type s_typeOfXmlSchemaType;
+        internal static Type TypeOfXmlSchemaType
+        {
+            get
+            {
+                if (s_typeOfXmlSchemaType == null)
+                {
+                    s_typeOfXmlSchemaType = typeof(XmlSchemaType);
+                }
+
+                return s_typeOfXmlSchemaType;
+            }
+        }
+
+        private static Type s_typeOfIExtensibleDataObject;
+        internal static Type TypeOfIExtensibleDataObject => s_typeOfIExtensibleDataObject ?? (s_typeOfIExtensibleDataObject = typeof(IExtensibleDataObject));
+
+        private static Type s_typeOfExtensionDataObject;
+        internal static Type TypeOfExtensionDataObject => s_typeOfExtensionDataObject ?? (s_typeOfExtensionDataObject = typeof(ExtensionDataObject));
+
         private static Type s_typeOfISerializableDataNode;
         internal static Type TypeOfISerializableDataNode
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfISerializableDataNode == null)
@@ -547,11 +508,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfClassDataNode;
         internal static Type TypeOfClassDataNode
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfClassDataNode == null)
@@ -560,11 +519,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfCollectionDataNode;
         internal static Type TypeOfCollectionDataNode
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfCollectionDataNode == null)
@@ -573,29 +530,12 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
-        private static Type s_typeOfSafeSerializationManager;
-        private static bool s_typeOfSafeSerializationManagerSet;
-        internal static Type TypeOfSafeSerializationManager
-        {
-            [SecuritySafeCritical]
-            get
-            {
-                if (!s_typeOfSafeSerializationManagerSet)
-                {
-                    s_typeOfSafeSerializationManager = TypeOfInt.GetTypeInfo().Assembly.GetType("System.Runtime.Serialization.SafeSerializationManager");
-                    s_typeOfSafeSerializationManagerSet = true;
-                }
-                return s_typeOfSafeSerializationManager;
-            }
-        }
-#endif
+        private static Type s_typeOfXmlDataNode;
+        internal static Type TypeOfXmlDataNode => s_typeOfXmlDataNode ?? (s_typeOfXmlDataNode = typeof(XmlDataNode));
 
-        [SecurityCritical]
         private static Type s_typeOfNullable;
         internal static Type TypeOfNullable
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfNullable == null)
@@ -604,11 +544,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfIDictionaryGeneric;
         internal static Type TypeOfIDictionaryGeneric
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfIDictionaryGeneric == null)
@@ -617,11 +555,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfIDictionary;
         internal static Type TypeOfIDictionary
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfIDictionary == null)
@@ -630,11 +566,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfIListGeneric;
         internal static Type TypeOfIListGeneric
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfIListGeneric == null)
@@ -643,11 +577,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfIList;
         internal static Type TypeOfIList
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfIList == null)
@@ -656,11 +588,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfICollectionGeneric;
         internal static Type TypeOfICollectionGeneric
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfICollectionGeneric == null)
@@ -669,11 +599,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfICollection;
         internal static Type TypeOfICollection
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfICollection == null)
@@ -682,11 +610,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfIEnumerableGeneric;
         internal static Type TypeOfIEnumerableGeneric
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfIEnumerableGeneric == null)
@@ -695,11 +621,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfIEnumerable;
         internal static Type TypeOfIEnumerable
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfIEnumerable == null)
@@ -708,11 +632,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfIEnumeratorGeneric;
         internal static Type TypeOfIEnumeratorGeneric
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfIEnumeratorGeneric == null)
@@ -721,11 +643,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfIEnumerator;
         internal static Type TypeOfIEnumerator
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfIEnumerator == null)
@@ -734,11 +654,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfKeyValuePair;
         internal static Type TypeOfKeyValuePair
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfKeyValuePair == null)
@@ -747,11 +665,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfKeyValuePairAdapter;
         internal static Type TypeOfKeyValuePairAdapter
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfKeyValuePairAdapter == null)
@@ -760,11 +676,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfKeyValue;
         internal static Type TypeOfKeyValue
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfKeyValue == null)
@@ -773,11 +687,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfIDictionaryEnumerator;
         internal static Type TypeOfIDictionaryEnumerator
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfIDictionaryEnumerator == null)
@@ -786,11 +698,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfDictionaryEnumerator;
         internal static Type TypeOfDictionaryEnumerator
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfDictionaryEnumerator == null)
@@ -799,11 +709,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfGenericDictionaryEnumerator;
         internal static Type TypeOfGenericDictionaryEnumerator
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfGenericDictionaryEnumerator == null)
@@ -812,11 +720,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfDictionaryGeneric;
         internal static Type TypeOfDictionaryGeneric
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfDictionaryGeneric == null)
@@ -825,11 +731,9 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
         private static Type s_typeOfHashtable;
         internal static Type TypeOfHashtable
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_typeOfHashtable == null)
@@ -838,78 +742,47 @@ namespace System.Runtime.Serialization
             }
         }
 
-        [SecurityCritical]
-        private static Type s_typeOfListGeneric;
-        internal static Type TypeOfListGeneric
+        private static Type s_typeOfXmlElement;
+        internal static Type TypeOfXmlElement
         {
-            [SecuritySafeCritical]
             get
             {
-                if (s_typeOfListGeneric == null)
-                    s_typeOfListGeneric = typeof(List<>);
-                return s_typeOfListGeneric;
+                if (s_typeOfXmlElement == null)
+                    s_typeOfXmlElement = typeof(XmlElement);
+                return s_typeOfXmlElement;
             }
         }
 
-        private static bool s_shouldGetDBNullType = true;
+        private static Type s_typeOfXmlNodeArray;
+        internal static Type TypeOfXmlNodeArray
+        {
+            get
+            {
+                if (s_typeOfXmlNodeArray == null)
+                    s_typeOfXmlNodeArray = typeof(XmlNode[]);
+                return s_typeOfXmlNodeArray;
+            }
+        }
 
-        [SecurityCritical]
         private static Type s_typeOfDBNull;
         internal static Type TypeOfDBNull
         {
-            [SecuritySafeCritical]
             get
             {
-                if (s_typeOfDBNull == null && s_shouldGetDBNullType)
-                {
-                    s_typeOfDBNull = Type.GetType("System.DBNull, System.Data.Common, Version=0.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", false);
-                    s_shouldGetDBNullType = false;
-                }
+                if (s_typeOfDBNull == null)
+                    s_typeOfDBNull = typeof(DBNull);
                 return s_typeOfDBNull;
             }
         }
 
-        [SecurityCritical]
-        private static object s_valueOfDBNull;
-        internal static object ValueOfDBNull
-        {
-            [SecuritySafeCritical]
-            get
-            {
-                if (s_valueOfDBNull == null && TypeOfDBNull != null)
-                {
-                    var fieldInfo = TypeOfDBNull.GetField("Value");
-                    if (fieldInfo != null)
-                        s_valueOfDBNull = fieldInfo.GetValue(null);
-                }
-
-                return s_valueOfDBNull;
-            }
-        }
-
-        [SecurityCritical]
         private static Uri s_dataContractXsdBaseNamespaceUri;
         internal static Uri DataContractXsdBaseNamespaceUri
         {
-            [SecuritySafeCritical]
             get
             {
                 if (s_dataContractXsdBaseNamespaceUri == null)
                     s_dataContractXsdBaseNamespaceUri = new Uri(DataContractXsdBaseNamespace);
                 return s_dataContractXsdBaseNamespaceUri;
-            }
-        }
-
-        [SecurityCritical]
-        private static string[] s_dataContractSerializationPatterns;
-        internal static string[] DataContractSerializationPatterns
-        {
-            [SecuritySafeCritical]
-            get
-            {
-                if (s_dataContractSerializationPatterns == null)
-                    s_dataContractSerializationPatterns = new string[] { SimpleSRSInternalsVisiblePattern, FullSRSInternalsVisiblePattern };
-                return s_dataContractSerializationPatterns;
             }
         }
 
@@ -953,9 +826,7 @@ namespace System.Runtime.Serialization
 
         #endregion
 
-        private static Type s_typeOfScriptObject;
-        private static Func<object, string> s_serializeFunc;
-        private static Func<string, object> s_deserializeFunc;
+        private static readonly Type s_typeOfScriptObject;
 
         internal static ClassDataContract CreateScriptObjectClassDataContract()
         {
@@ -968,39 +839,14 @@ namespace System.Runtime.Serialization
             return s_typeOfScriptObject != null && s_typeOfScriptObject.IsAssignableFrom(type);
         }
 
-        internal static void SetScriptObjectJsonSerializer(Type typeOfScriptObject, Func<object, string> serializeFunc, Func<string, object> deserializeFunc)
-        {
-            Globals.s_typeOfScriptObject = typeOfScriptObject;
-            Globals.s_serializeFunc = serializeFunc;
-            Globals.s_deserializeFunc = deserializeFunc;
-        }
-
-        internal static string ScriptObjectJsonSerialize(object obj)
-        {
-            Debug.Assert(s_serializeFunc != null);
-            return Globals.s_serializeFunc(obj);
-        }
-
-        internal static object ScriptObjectJsonDeserialize(string json)
-        {
-            Debug.Assert(s_deserializeFunc != null);
-            return Globals.s_deserializeFunc(json);
-        }
-
-        internal static bool IsDBNullValue(object o)
-        {
-            return o != null && ValueOfDBNull != null && ValueOfDBNull.Equals(o);
-        }
-
         public const bool DefaultIsRequired = false;
         public const bool DefaultEmitDefaultValue = true;
         public const int DefaultOrder = 0;
         public const bool DefaultIsReference = false;
         // The value string.Empty aids comparisons (can do simple length checks
         //     instead of string comparison method calls in IL.)
-        public readonly static string NewObjectId = string.Empty;
+        public static readonly string NewObjectId = string.Empty;
         public const string NullObjectId = null;
-        public const string SimpleSRSInternalsVisiblePattern = @"^[\s]*System\.Runtime\.Serialization[\s]*$";
         public const string FullSRSInternalsVisiblePattern = @"^[\s]*System\.Runtime\.Serialization[\s]*,[\s]*PublicKey[\s]*=[\s]*(?i:00240000048000009400000006020000002400005253413100040000010001008d56c76f9e8649383049f383c44be0ec204181822a6c31cf5eb7ef486944d032188ea1d3920763712ccb12d75fb77e9811149e6148e5d32fbaab37611c1878ddc19e20ef135d0cb2cff2bfec3d115810c3d9069638fe4be215dbf795861920e5ab6f7db2e2ceef136ac23d5dd2bf031700aec232f6c6b1c785b4305c123b37ab)[\s]*$";
         public const string Space = " ";
         public const string XsiPrefix = "i";
@@ -1087,13 +933,52 @@ namespace System.Runtime.Serialization
         public const string KeyLocalName = "Key";
         public const string ValueLocalName = "Value";
         public const string MscorlibAssemblyName = "0";
-#if !NET_NATIVE && MERGE_DCJS
         public const string ParseMethodName = "Parse";
-#endif
-#if NET_NATIVE || MERGE_DCJS
         public const string SafeSerializationManagerName = "SafeSerializationManager";
         public const string SafeSerializationManagerNamespace = "http://schemas.datacontract.org/2004/07/System.Runtime.Serialization";
         public const string ISerializableFactoryTypeLocalName = "FactoryType";
-#endif
+        public const string SerializationSchema = @"<?xml version='1.0' encoding='utf-8'?>
+<xs:schema elementFormDefault='qualified' attributeFormDefault='qualified' xmlns:tns='http://schemas.microsoft.com/2003/10/Serialization/' targetNamespace='http://schemas.microsoft.com/2003/10/Serialization/' xmlns:xs='http://www.w3.org/2001/XMLSchema'>
+  <xs:element name='anyType' nillable='true' type='xs:anyType' />
+  <xs:element name='anyURI' nillable='true' type='xs:anyURI' />
+  <xs:element name='base64Binary' nillable='true' type='xs:base64Binary' />
+  <xs:element name='boolean' nillable='true' type='xs:boolean' />
+  <xs:element name='byte' nillable='true' type='xs:byte' />
+  <xs:element name='dateTime' nillable='true' type='xs:dateTime' />
+  <xs:element name='decimal' nillable='true' type='xs:decimal' />
+  <xs:element name='double' nillable='true' type='xs:double' />
+  <xs:element name='float' nillable='true' type='xs:float' />
+  <xs:element name='int' nillable='true' type='xs:int' />
+  <xs:element name='long' nillable='true' type='xs:long' />
+  <xs:element name='QName' nillable='true' type='xs:QName' />
+  <xs:element name='short' nillable='true' type='xs:short' />
+  <xs:element name='string' nillable='true' type='xs:string' />
+  <xs:element name='unsignedByte' nillable='true' type='xs:unsignedByte' />
+  <xs:element name='unsignedInt' nillable='true' type='xs:unsignedInt' />
+  <xs:element name='unsignedLong' nillable='true' type='xs:unsignedLong' />
+  <xs:element name='unsignedShort' nillable='true' type='xs:unsignedShort' />
+  <xs:element name='char' nillable='true' type='tns:char' />
+  <xs:simpleType name='char'>
+    <xs:restriction base='xs:int'/>
+  </xs:simpleType>
+  <xs:element name='duration' nillable='true' type='tns:duration' />
+  <xs:simpleType name='duration'>
+    <xs:restriction base='xs:duration'>
+      <xs:pattern value='\-?P(\d*D)?(T(\d*H)?(\d*M)?(\d*(\.\d*)?S)?)?' />
+      <xs:minInclusive value='-P10675199DT2H48M5.4775808S' />
+      <xs:maxInclusive value='P10675199DT2H48M5.4775807S' />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name='guid' nillable='true' type='tns:guid' />
+  <xs:simpleType name='guid'>
+    <xs:restriction base='xs:string'>
+      <xs:pattern value='[\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12}' />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:attribute name='FactoryType' type='xs:QName' />
+  <xs:attribute name='Id' type='xs:ID' />
+  <xs:attribute name='Ref' type='xs:IDREF' />
+</xs:schema>
+";
     }
 }

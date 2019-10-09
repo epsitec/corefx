@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Diagnostics;
@@ -13,16 +14,31 @@ using ErrorCode = Interop.NCrypt.ErrorCode;
 
 namespace Internal.Cryptography
 {
-    internal static class Helpers
+    internal static partial class Helpers
     {
-        public static byte[] CloneByteArray(this byte[] src)
+        public static bool UsesIv(this CipherMode cipherMode)
         {
-            return (byte[])(src.Clone());
+            return cipherMode != CipherMode.ECB;
+        }
+
+        public static byte[] GetCipherIv(this CipherMode cipherMode, byte[] iv)
+        {
+            if (cipherMode.UsesIv())
+            {
+                if (iv == null)
+                {
+                    throw new CryptographicException(SR.Cryptography_MissingIV);
+                }
+
+                return iv;
+            }
+
+            return null;
         }
 
         //
         // The C# construct
-        //   
+        //
         //    fixed (byte* p = new byte[0])
         //
         // sets "p" to 0 rather than a valid address. Sometimes, we actually want a non-NULL pointer instead. (Some CNG apis actually care whether the buffer pointer is
@@ -32,18 +48,13 @@ namespace Internal.Cryptography
         //
         //    fixed (byte* p = new byte[0].MapZeroLengthArrayToNonNullPointer())
         //
-        // which always sets "p" to a non-NULL pointer for a non-null byte array. 
+        // which always sets "p" to a non-NULL pointer for a non-null byte array.
         //
         public static byte[] MapZeroLengthArrayToNonNullPointer(this byte[] src)
         {
             if (src != null && src.Length == 0)
                 return new byte[1];
             return src;
-        }
-
-        public static CryptographicException ToCryptographicException(this ErrorCode errorCode)
-        {
-            return new CryptographicException((int)errorCode);
         }
 
         public static SafeNCryptProviderHandle OpenStorageProvider(this CngProvider provider)
@@ -87,11 +98,11 @@ namespace Internal.Cryptography
                 Array.Resize(ref propertyValue, numBytesNeeded);
                 return propertyValue;
             }
-        } 
+        }
 
         /// <summary>
         /// Retrieve a well-known CNG string property. (Note: desktop compat: this helper likes to return special values rather than throw exceptions for missing
-        /// or ill-formatted property values. Only use it for well-known properties that are unlikely to be ill-formatted.) 
+        /// or ill-formatted property values. Only use it for well-known properties that are unlikely to be ill-formatted.)
         /// </summary>
         public static string GetPropertyAsString(this SafeNCryptHandle ncryptHandle, string propertyName, CngPropertyOptions options)
         {
@@ -102,7 +113,7 @@ namespace Internal.Cryptography
                 return string.Empty; // Desktop compat: return empty if property value is 0-length.
             unsafe
             {
-                fixed (byte* pValue = value)
+                fixed (byte* pValue = &value[0])
                 {
                     string valueAsString = Marshal.PtrToStringUni((IntPtr)pValue);
                     return valueAsString;
@@ -112,7 +123,7 @@ namespace Internal.Cryptography
 
         /// <summary>
         /// Retrieve a well-known CNG dword property. (Note: desktop compat: this helper likes to return special values rather than throw exceptions for missing
-        /// or ill-formatted property values. Only use it for well-known properties that are unlikely to be ill-formatted.) 
+        /// or ill-formatted property values. Only use it for well-known properties that are unlikely to be ill-formatted.)
         /// </summary>
         public static int GetPropertyAsDword(this SafeNCryptHandle ncryptHandle, string propertyName, CngPropertyOptions options)
         {
@@ -124,7 +135,7 @@ namespace Internal.Cryptography
 
         /// <summary>
         /// Retrieve a well-known CNG pointer property. (Note: desktop compat: this helper likes to return special values rather than throw exceptions for missing
-        /// or ill-formatted property values. Only use it for well-known properties that are unlikely to be ill-formatted.) 
+        /// or ill-formatted property values. Only use it for well-known properties that are unlikely to be ill-formatted.)
         /// </summary>
         public static IntPtr GetPropertyAsIntPtr(this SafeNCryptHandle ncryptHandle, string propertyName, CngPropertyOptions options)
         {
@@ -153,7 +164,17 @@ namespace Internal.Cryptography
                     throw errorCode.ToCryptographicException();
             }
         }
+
+        public static int BitSizeToByteSize(this int bits)
+        {
+            return (bits + 7) / 8;
+        }
+
+        public static byte[] GenerateRandom(int count)
+        {
+            byte[] buffer = new byte[count];
+            RandomNumberGenerator.Fill(buffer);
+            return buffer;
+        }
     }
 }
-
-

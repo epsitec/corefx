@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.Security.Cryptography
 {
@@ -9,17 +10,18 @@ namespace System.Security.Cryptography
     /// <summary>
     /// Specifies the name of a cryptographic hash algorithm.
     /// </summary>
+    /// <remarks>
     /// Asymmetric Algorithms implemented using Microsoft's CNG (Cryptography Next Generation) API
-    /// will interpret the underlying string value as a CNG algorithm identifier: 
+    /// will interpret the underlying string value as a CNG algorithm identifier:
     ///   * https://msdn.microsoft.com/en-us/library/windows/desktop/aa375534(v=vs.85).aspx
     ///
-    /// As with CNG, the names are case-sensitive. 
-    /// 
+    /// As with CNG, the names are case-sensitive.
+    ///
     /// Asymmetric Algorithms implemented using other technologies:
     ///    * Must recognize at least "MD5", "SHA1", "SHA256", "SHA384", and "SHA512".
     ///    * Should recognize additional CNG IDs for any other hash algorithms that they also support.
     /// </remarks>
-    public struct HashAlgorithmName : IEquatable<HashAlgorithmName>
+    public readonly struct HashAlgorithmName : IEquatable<HashAlgorithmName>
     {
         // Returning a new instance every time is free here since HashAlgorithmName is a struct with
         // a single string field. The optimized codegen should be equivalent to return "MD5".
@@ -62,7 +64,7 @@ namespace System.Security.Cryptography
         }
 
         /// <summary>
-        /// Gets the underlying string representation of the algorithm name. 
+        /// Gets the underlying string representation of the algorithm name.
         /// </summary>
         /// <remarks>
         /// May be null or empty to indicate that no hash algorithm is applicable.
@@ -74,7 +76,7 @@ namespace System.Security.Cryptography
 
         public override string ToString()
         {
-            return _name ?? String.Empty;
+            return _name ?? string.Empty;
         }
 
         public override bool Equals(object obj)
@@ -101,6 +103,46 @@ namespace System.Security.Cryptography
         public static bool operator !=(HashAlgorithmName left, HashAlgorithmName right)
         {
             return !(left == right);
+        }
+
+        public static bool TryFromOid(string oidValue, out HashAlgorithmName value)
+        {
+            if (oidValue is null)
+            {
+                throw new ArgumentNullException(nameof(oidValue));
+            }
+
+            switch (oidValue)
+            {
+                case Oids.Md5:
+                    value = MD5;
+                    return true;
+                case Oids.Sha1:
+                    value = SHA1;
+                    return true;
+                case Oids.Sha256:
+                    value = SHA256;
+                    return true;
+                case Oids.Sha384:
+                    value = SHA384;
+                    return true;
+                case Oids.Sha512:
+                    value = SHA512;
+                    return true;
+                default:
+                    value = default;
+                    return false;
+            }
+        }
+
+        public static HashAlgorithmName FromOid(string oidValue)
+        {
+            if (TryFromOid(oidValue, out HashAlgorithmName value))
+            {
+                return value;
+            }
+
+            throw new CryptographicException(SR.Format(SR.Cryptography_InvalidHashAlgorithmOid, oidValue));
         }
     }
 }

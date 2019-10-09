@@ -1,17 +1,17 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Reflection.Internal;
-using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
 using Xunit;
 using RowCounts = System.Reflection.Metadata.Ecma335.MetadataAggregator.RowCounts;
 
-namespace System.Reflection.Metadata.Tests
+namespace System.Reflection.Metadata.Ecma335.Tests
 {
     public class MetadataAggregatorTests
     {
-        private unsafe static EnCMapTableReader CreateEncMapTable(int[] tokens)
+        private static unsafe EnCMapTableReader CreateEncMapTable(int[] tokens)
         {
             GCHandle handle = GCHandle.Alloc(tokens, GCHandleType.Pinned);
             var block = new MemoryBlock((byte*)handle.AddrOfPinnedObject(), tokens.Length * sizeof(uint));
@@ -35,10 +35,10 @@ namespace System.Reflection.Metadata.Tests
             Assert.Equal(expected, string.Join(" | ", actual));
         }
 
-        private static void TestGenerationHandle(MetadataAggregator aggregator, Handle handle, Handle expectedHandle, int expectedGeneration)
+        private static void TestGenerationHandle(MetadataAggregator aggregator, Handle aggregateHandle, Handle expectedHandle, int expectedGeneration)
         {
             int actualGeneration;
-            var actualHandle = aggregator.GetGenerationHandle(handle, out actualGeneration);
+            var actualHandle = aggregator.GetGenerationHandle(aggregateHandle, out actualGeneration);
             Assert.Equal(expectedGeneration, actualGeneration);
             Assert.Equal(expectedHandle, actualHandle);
         }
@@ -120,7 +120,7 @@ namespace System.Reflection.Metadata.Tests
 
             TestGenerationHandle(aggregator, MetadataTokens.Handle(0x1800003a), expectedHandle: MetadataTokens.Handle(0x18000002), expectedGeneration: 3);
 
-            Assert.Throws<ArgumentException>(() => TestGenerationHandle(aggregator, MetadataTokens.Handle(0x11000032), expectedHandle: MetadataTokens.Handle(0x00000000), expectedGeneration: 0));
+            AssertExtensions.Throws<ArgumentException>("handle", () => TestGenerationHandle(aggregator, MetadataTokens.Handle(0x11000032), expectedHandle: MetadataTokens.Handle(0x00000000), expectedGeneration: 0));
         }
 
         [Fact]
@@ -152,13 +152,13 @@ namespace System.Reflection.Metadata.Tests
                     200,    // Gen3
                     400,    // Gen4
                 },
-                new int[] // #Guid
+                new int[] // #Guid (sizes are numbers of GUIDs on the heap, not bytes; GUIDs on the heap accumulate, previous content is copied to the next gen).
                 {
-                    2,      // Gen0
-                    4,      // Gen1
-                    8,      // Gen2
-                    16,     // Gen3
-                    32,     // Gen4
+                    1,      // Gen0: Guid #1
+                    2,      // Gen1: Guid #1, #2
+                    2,      // Gen2: Guid #1, #2
+                    2,      // Gen3: Guid #1, #2
+                    3,      // Gen4: Guid #1, #2, #3
                 }
             };
 
@@ -170,7 +170,12 @@ namespace System.Reflection.Metadata.Tests
             TestGenerationHandle(aggregator, MetadataTokens.UserStringHandle(12), expectedHandle: MetadataTokens.UserStringHandle(2), expectedGeneration: 2);
             TestGenerationHandle(aggregator, MetadataTokens.StringHandle(0), expectedHandle: MetadataTokens.StringHandle(0), expectedGeneration: 2);
 
-            Assert.Throws<ArgumentException>(() => TestGenerationHandle(aggregator, MetadataTokens.StringHandle(22), expectedHandle: MetadataTokens.StringHandle(0), expectedGeneration: 0));
+            // GUIDs on the heap accumulate, previous content is copied to the next gen, so the expected handle is the same as the given handle
+            TestGenerationHandle(aggregator, MetadataTokens.GuidHandle(1), expectedHandle: MetadataTokens.GuidHandle(1), expectedGeneration: 0);
+            TestGenerationHandle(aggregator, MetadataTokens.GuidHandle(2), expectedHandle: MetadataTokens.GuidHandle(2), expectedGeneration: 1);
+            TestGenerationHandle(aggregator, MetadataTokens.GuidHandle(3), expectedHandle: MetadataTokens.GuidHandle(3), expectedGeneration: 4);
+
+            AssertExtensions.Throws<ArgumentException>("handle", () => TestGenerationHandle(aggregator, MetadataTokens.StringHandle(22), expectedHandle: MetadataTokens.StringHandle(0), expectedGeneration: 0));
         }
     }
 }

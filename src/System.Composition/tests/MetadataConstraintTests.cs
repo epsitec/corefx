@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -31,6 +32,7 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void AnImportMetadataConstraintMatchesMetadataOnTheExport()
         {
             var cc = CreateContainer(typeof(SomeSetting), typeof(SomeSettingUser));
@@ -39,6 +41,7 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void AnImportMetadataConstraintMatchesMetadataOnTheExportEvenIfDiscoveryHasCompletedForTheExport()
         {
             var cc = CreateContainer(typeof(SomeSetting), typeof(SomeSettingUser));
@@ -48,6 +51,7 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void ImportMetadataConstraintsComposeWithOtherRelationshipTypes()
         {
             var cc = CreateContainer(typeof(SomeSetting), typeof(ManySettingUser));
@@ -59,6 +63,7 @@ namespace System.Composition.UnitTests
         public class SomeSetting<T> { }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void ConstraintsCanBeAppliedToGenerics()
         {
             var contract = new CompositionContract(typeof(SomeSetting<string>), null, new Dictionary<string, object>
@@ -82,11 +87,12 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void ItemEqualityIsUsedWhenMatchingMetadataValuesThatAreArrays()
         {
             var c = CreateContainer(typeof(Presenter), typeof(Controller));
             var ctrl = c.GetExport<Controller>();
-            Assert.IsAssignableFrom(typeof(Presenter), ctrl.Presenter);
+            Assert.IsAssignableFrom<Presenter>(ctrl.Presenter);
         }
     }
 }

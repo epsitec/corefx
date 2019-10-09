@@ -1,7 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-using Xunit;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 #if CAP_TypeOfPointer
 
@@ -20,7 +19,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.unsfe.PointegeregererOp
 
 
     [TestClass]
-    unsafe public class Test
+    public unsafe class Test
     {
         [Test]
         [Priority(Priority.Priority0)]
@@ -64,7 +63,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.unsfe.PointegeregererOp
 
 
     [TestClass]
-    unsafe public class Test
+    public unsafe class Test
     {
         [Test]
         [Priority(Priority.Priority0)]
@@ -121,7 +120,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.unsfe.PointegeregererOp
     // <Code>
 
     [TestClass]
-    unsafe public class Test
+    public unsafe class Test
     {
         [Test]
         [Priority(Priority.Priority1)]
@@ -152,7 +151,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.unsfe.PointegeregererOp
     // <Code>
 
     [TestClass]
-    unsafe public class Test
+    public unsafe class Test
     {
         [Test]
         [Priority(Priority.Priority1)]
@@ -220,4 +219,4 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.unsfe.PointegeregererOp
     // </Code>
 }
 
- #endif
+#endif

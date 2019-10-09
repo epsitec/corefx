@@ -1,11 +1,10 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Collections;
 using Xunit;
 
-namespace System.ObjectModel.Tests
+namespace System.Collections.ObjectModel.Tests
 {
     public class KeyedCollectionTest
     {
@@ -19,27 +18,17 @@ namespace System.ObjectModel.Tests
                     new KeyedItem<string, int>("foo", 0),
                     new KeyedItem<string, int>("bar", 1)
                 };
-            Assert.Throws<ArgumentException>(
-                () =>
-                collection.Add(new KeyedItem<string, int>("Foo", 0)));
-            Assert.Throws<ArgumentException>(
-                () =>
-                collection.Add(new KeyedItem<string, int>("fOo", 0)));
-            Assert.Throws<ArgumentException>(
-                () =>
-                collection.Add(new KeyedItem<string, int>("baR", 0)));
+            AssertExtensions.Throws<ArgumentException>("key", null, () => collection.Add(new KeyedItem<string, int>("Foo", 0)));
+            AssertExtensions.Throws<ArgumentException>("key", null, () => collection.Add(new KeyedItem<string, int>("fOo", 0)));
+            AssertExtensions.Throws<ArgumentException>("key", null, () => collection.Add(new KeyedItem<string, int>("baR", 0)));
         }
 
-        [Fact]
-        public void ThresholdThrows()
+        [Theory]
+        [InlineData(-2)]
+        [InlineData(int.MinValue)]
+        public void Ctor_InvalidDictionaryCreationThreshold_ThrowsArgumentOutOfRangeException(int dictionaryCreationThreshold)
         {
-            Assert.Throws<ArgumentOutOfRangeException>(
-                () =>
-                new TestKeyedCollectionOfIKeyedItem<string, int>(-2));
-            Assert.Throws<ArgumentOutOfRangeException>(
-                () =>
-                new TestKeyedCollectionOfIKeyedItem<string, int>(
-                    int.MinValue));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("dictionaryCreationThreshold", () => new TestKeyedCollectionOfIKeyedItem<string, int>(dictionaryCreationThreshold));
         }
     }
 

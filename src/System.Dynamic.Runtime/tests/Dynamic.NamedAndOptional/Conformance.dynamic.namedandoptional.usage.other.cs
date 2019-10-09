@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.base01.base01
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.base01.base01;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>Parameters names are based off the most derived type</Description>
@@ -49,8 +48,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.base01a.base01a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.base01a.base01a;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>Parameters names are based off the most derived type</Description>
@@ -93,8 +90,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.base02.base02
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.base02.base02;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>Parameters names are based off the most derived type</Description>
@@ -137,8 +132,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.base02a.base02a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.base02a.base02a;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>Parameters names are based off the most derived type</Description>
@@ -181,8 +174,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.base03.base03
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.base03.base03;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>Parameters names are based off the most derived type</Description>
@@ -225,8 +216,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.base03a.base03a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.base03a.base03a;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>Parameters names are based off the most derived type</Description>
@@ -269,8 +258,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer01.indexer01
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer01.indexer01;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -313,8 +300,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer01a.indexer01a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer01a.indexer01a;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -357,8 +342,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer01b.indexer01b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer01b.indexer01b;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -401,8 +384,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer01c.indexer01c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer01c.indexer01c;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -446,8 +427,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer02.indexer02
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer02.indexer02;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -489,8 +468,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer02a.indexer02a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer02a.indexer02a;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -532,8 +509,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer02b.indexer02b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer02b.indexer02b;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -575,8 +550,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer02c.indexer02c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer02c.indexer02c;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -619,8 +592,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer03.indexer03
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer03.indexer03;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -664,8 +635,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer03a.indexer03a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer03a.indexer03a;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -709,8 +678,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer03b.indexer03b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer03b.indexer03b;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -754,8 +721,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer03c.indexer03c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer03c.indexer03c;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -801,8 +766,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer09.indexer09
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer09.indexer09;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -847,8 +810,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer09a.indexer09a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer09a.indexer09a;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -893,8 +854,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer09b.indexer09b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer09b.indexer09b;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -939,8 +898,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer09c.indexer09c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer09c.indexer09c;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -986,8 +943,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer10.indexer10
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer10.indexer10;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1032,8 +987,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer10a.indexer10a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer10a.indexer10a;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1078,8 +1031,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer10b.indexer10b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer10b.indexer10b;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1124,8 +1075,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer10c.indexer10c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer10c.indexer10c;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1172,8 +1121,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer11.indexer11
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer11.indexer11;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1218,8 +1165,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer11a.indexer11a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer11a.indexer11a;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1264,8 +1209,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer11b.indexer11b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer11b.indexer11b;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1310,8 +1253,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer11c.indexer11c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer11c.indexer11c;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1358,8 +1299,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer12.indexer12
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer12.indexer12;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1404,8 +1343,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer12a.indexer12a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer12a.indexer12a;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1450,8 +1387,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer12b.indexer12b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer12b.indexer12b;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1650,8 +1585,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer14.indexer14
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer14.indexer14;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1696,8 +1629,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer14b.indexer14b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer14b.indexer14b;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1802,8 +1733,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer16.indexer16
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer16.indexer16;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1848,8 +1777,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer16b.indexer16b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer16b.indexer16b;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1894,8 +1821,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer17.indexer17
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer17.indexer17;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1940,8 +1865,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer18.indexer18
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer18.indexer18;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -1990,8 +1913,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer18b.indexer18b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer18b.indexer18b;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Simple Declaration of an indexer with optional parameters</Description>
@@ -2040,13 +1961,11 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer19.indexer19
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer19.indexer19;
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Operations on indexers with pre/post increment</Description>
     // <Expects status=success></Expects>
     // <Code>
-    using System;
 
     public class Program
     {
@@ -2088,13 +2007,11 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer20.indexer20
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer20.indexer20;
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Operations on indexers with pre/post increment</Description>
     // <Expects status=success></Expects>
     // <Code>
-    using System;
 
     public class Program
     {
@@ -2136,13 +2053,11 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer21.indexer21
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.indexer21.indexer21;
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>Named params on an indexer</Title>
     // <Description>Operations on indexers with pre/post increment</Description>
     // <Expects status=success></Expects>
     // <Code>
-    using System;
 
     public class Program
     {
@@ -2184,8 +2099,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.out01.out01
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.out01.out01;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2204,7 +2117,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
     public class Test
     {
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -2224,8 +2137,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.out01b.out01b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.out01b.out01b;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2244,7 +2155,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
     public class Test
     {
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -2275,8 +2186,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.out01c.out01c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.out01c.out01c;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2315,8 +2224,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref01.ref01
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref01.ref01;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2334,7 +2241,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
     public class Test
     {
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -2354,8 +2261,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref01b.ref01b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref01b.ref01b;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2373,7 +2278,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
     public class Test
     {
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -2404,8 +2309,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref01c.ref01c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref01c.ref01c;
-
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2443,7 +2346,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref03.ref03
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref03.ref03;
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2496,7 +2398,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref03a.ref03a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref03a.ref03a;
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2549,7 +2450,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref03b.ref03b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref03b.ref03b;
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2602,7 +2502,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref03c.ref03c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref03c.ref03c;
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2655,7 +2554,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref04.ref04
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref04.ref04;
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2677,7 +2575,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
     public class Test
     {
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -2697,7 +2595,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref04b.ref04b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref04b.ref04b;
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2719,7 +2616,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
     public class Test
     {
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -2750,7 +2647,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref04c.ref04c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref04c.ref04c;
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2792,7 +2688,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref05.ref05
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref05.ref05;
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2846,7 +2741,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref05b.ref05b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref05b.ref05b;
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2899,7 +2793,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref06.ref06
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref06.ref06;
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2921,7 +2814,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
     public class Test
     {
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -2952,7 +2845,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref06b.ref06b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.ref06b.ref06b;
     // <Area>Declaration of Methods with Optional Parameters</Area>
     // <Title>calling with a ref parameter </Title>
     // <Description>Should be able to call a ref parameter</Description>
@@ -2974,7 +2866,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
     public class Test
     {
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -3005,8 +2897,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.literals01.literals01
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.other.literals01.literals01;
-
     // <Title> Passing literals to the binder using N&O</Title>
     // <Description>
     // </Description>

@@ -1,11 +1,12 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Runtime.InteropServices;
 using Xunit;
 
-public partial class SafeHandle_4000_Tests
+public partial class SafeHandleTests
 {
     private class MySafeHandle : SafeHandle
     {
@@ -37,15 +38,83 @@ public partial class SafeHandle_4000_Tests
     public static void SafeHandle_invalid()
     {
         MySafeHandle mch = new MySafeHandle();
-        Assert.Equal(false, mch.IsClosed);
-        Assert.Equal(true, mch.IsInvalid);
+        Assert.False(mch.IsClosed);
+        Assert.True(mch.IsInvalid);
+        Assert.False(mch.IsReleased);
+
+        mch.Dispose();
+        Assert.True(mch.IsClosed);
+        Assert.True(mch.IsInvalid);
+        Assert.False(mch.IsReleased);
     }
 
     [Fact]
     public static void SafeHandle_valid()
     {
         MySafeHandle mch = new MySafeHandle(new IntPtr(1));
-        Assert.Equal(false, mch.IsClosed);
-        Assert.Equal(false, mch.IsInvalid);
+        Assert.False(mch.IsClosed);
+        Assert.False(mch.IsInvalid);
+        Assert.False(mch.IsReleased);
+
+        mch.Dispose();
+        Assert.True(mch.IsClosed);
+        Assert.False(mch.IsInvalid);
+        Assert.True(mch.IsReleased);
+    }
+
+    [Fact]
+    public static void SafeHandle_invalid_close()
+    {
+        MySafeHandle mch = new MySafeHandle();
+        mch.Close();
+        Assert.True(mch.IsClosed);
+        Assert.True(mch.IsInvalid);
+        Assert.False(mch.IsReleased);
+    }
+
+    [Fact]
+    public static void SafeHandle_valid_close()
+    {
+        MySafeHandle mch = new MySafeHandle(new IntPtr(1));
+        mch.Close();
+        Assert.True(mch.IsClosed);
+        Assert.False(mch.IsInvalid);
+        Assert.True(mch.IsReleased);
+    }
+
+    [DllImport("Kernel32", SetLastError = true)]
+    private static extern void SetLastError(int error);
+
+    private class LastErrorSafeHandle : SafeHandle
+    {
+        internal LastErrorSafeHandle(IntPtr h)
+            : base(h, true)
+        {
+        }
+
+        public override bool IsInvalid => handle == IntPtr.Zero;
+
+        protected override bool ReleaseHandle()
+        {
+            SetLastError(-1);
+            return true;
+        }
+    }
+
+    [Fact]
+    [PlatformSpecific(TestPlatforms.Windows)]
+    public static void SafeHandle_DangerousReleasePreservesLastError()
+    {
+        LastErrorSafeHandle handle = new LastErrorSafeHandle((IntPtr)1);
+
+        bool success = false;
+        handle.DangerousAddRef(ref success);
+        handle.Dispose();
+
+        SetLastError(42);
+        handle.DangerousRelease();
+
+        int error = Marshal.GetLastWin32Error();
+        Assert.Equal(42, error);
     }
 }

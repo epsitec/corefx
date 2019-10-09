@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Net.Http.Headers;
 
@@ -17,7 +18,6 @@ namespace System.Net.Http.Tests
             Assert.Equal(StringComparer.OrdinalIgnoreCase, parser.Comparer);
         }
 
-        [ActiveIssue(846, PlatformID.AnyUnix)]
         [Fact]
         public void TryParse_SetOfValidValueStrings_ParsedCorrectly()
         {
@@ -26,7 +26,7 @@ namespace System.Net.Http.Tests
             CheckValidParsedValue("\r\n host\r\n ", 0, "host", 10);
             CheckValidParsedValue("!host", 1, "host", 5);
             CheckValidParsedValue("!host:50", 1, "host:50", 8);
-            CheckValidParsedValue("//host会", 2, "host会", 7);
+            CheckValidParsedValue("//host\u4F1A", 2, "host\u4F1A", 7);
             CheckValidParsedValue("192.168.0.1", 0, "192.168.0.1", 11);
             CheckValidParsedValue(" 192.168.0.1:80 ", 0, "192.168.0.1:80", 16);
             CheckValidParsedValue("[::1]", 0, "[::1]", 5);
@@ -76,7 +76,7 @@ namespace System.Net.Http.Tests
             int newIndex = startIndex;
             Assert.False(parser.TryParseValue(input, null, ref newIndex, out result),
                 string.Format("TryParse returned true: {0}", input));
-            Assert.Equal(null, result);
+            Assert.Null(result);
             Assert.Equal(startIndex, newIndex);
         }
         #endregion

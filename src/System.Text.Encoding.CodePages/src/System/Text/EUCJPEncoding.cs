@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Text;
 using System.Globalization;
@@ -32,7 +33,7 @@ using System.Globalization;
 //
 // Regarding Normalization:
 //  Forms KC & KD are precluded because of things like halfwidth Katakana that has compatibility mappings
-//  Form D is precluded because of 0x00a8, which changes to space + dierises.
+//  Form D is precluded because of 0x00a8, which changes to space + dieresis.
 //
 // I think that IsAlwaysNormalized should probably return true for form C (but not certain)
 //
@@ -47,7 +48,6 @@ namespace System.Text
     internal class EUCJPEncoding : DBCSCodePageEncoding
     {
         // This pretends to be CP 932 as far as memory tables are concerned.
-        [System.Security.SecurityCritical]  // auto-generated
         public EUCJPEncoding() : base(51932, 932)
         {
         }
@@ -144,7 +144,6 @@ namespace System.Text
             return true;
         }
 
-        [System.Security.SecurityCritical]  // auto-generated
         protected override unsafe void CleanUpEndBytes(char* chars)
         {
             // Need to special case CP 51932

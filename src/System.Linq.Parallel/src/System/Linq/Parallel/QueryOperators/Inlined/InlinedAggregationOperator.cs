@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -9,6 +10,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace System.Linq.Parallel
@@ -18,7 +20,7 @@ namespace System.Linq.Parallel
     /// inlined operators ensure that real MSIL instructions are used to perform elementary
     /// operations versus general purpose delegate-based binary operators.  For obvious reasons
     /// this is a quite bit more efficient, although it does lead to a fair bit of unfortunate
-    /// code duplication. 
+    /// code duplication.
     /// </summary>
     /// <typeparam name="TSource"></typeparam>
     /// <typeparam name="TIntermediate"></typeparam>
@@ -141,6 +143,7 @@ namespace System.Linq.Parallel
         protected abstract QueryOperatorEnumerator<TIntermediate, int> CreateEnumerator<TKey>(
             int index, int count, QueryOperatorEnumerator<TSource, TKey> source, object sharedData, CancellationToken cancellationToken);
 
+        [ExcludeFromCodeCoverage]
         internal override IEnumerable<TIntermediate> AsSequentialQuery(CancellationToken token)
         {
             Debug.Fail("This method should never be called. Associative aggregation can always be parallelized.");

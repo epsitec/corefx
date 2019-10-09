@@ -1,8 +1,7 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using Microsoft.Internal;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -41,7 +40,12 @@ namespace System.Composition.Hosting.Core
 
         private object Activate(LifetimeContext context, CompositionOperation operation)
         {
-            Assumes.IsTrue(_exportDescriptor.IsValueCreated, "Activation in progress before all descriptors fully initialized.");
+            if (!_exportDescriptor.IsValueCreated)
+            {
+                var ex = new NotImplementedException(SR.NotImplemented_MetadataCycles);
+                Debug.WriteLine(SR.Diagnostic_ThrowingException, ex.ToString());
+                throw ex;
+            }
 
             Debug.WriteLine("[System.Composition] Activating via cycle-breaking proxy.");
             return _exportDescriptor.Value.Activator(context, operation);

@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -105,6 +106,7 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void SharedPartsAreSharedBetweenAllScopes()
         {
             var cc = CreateContainer(typeof(SharedUnbounded), typeof(DataConsistencyBoundaryProvider));
@@ -115,6 +117,7 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void TheSameSharedInstanceIsReusedWithinItsSharingBoundary()
         {
             var cc = CreateContainer(typeof(SharedBoundedByDC), typeof(SharedPartConsumer), typeof(DataConsistencyBoundaryProvider));
@@ -128,18 +131,20 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void NonSharedInstancesCreatedByAnExportFactoryAreControlledByTheirExportLifetimeContext()
         {
             var cc = CreateContainer(typeof(A), typeof(UseExportFactory));
             var bef = cc.GetExport<UseExportFactory>();
             var a = bef.AFactory.CreateExport();
-            Assert.IsAssignableFrom(typeof(A), a.Value);
+            Assert.IsAssignableFrom<A>(a.Value);
             Assert.False(((A)a.Value).IsDisposed);
             a.Dispose();
             Assert.True(((A)a.Value).IsDisposed);
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void DependenciesOfSharedPartsAreResolvedInTheGlobalScope()
         {
             var cc = new ContainerConfiguration()
@@ -155,13 +160,15 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void WhenABoundaryIsPresentBoundedPartsCannotBeCreatedOutsideIt()
         {
             var container = CreateContainer(typeof(DataConsistencyBoundaryProvider), typeof(SharedBoundedByDC));
-            var x = AssertX.Throws<CompositionFailedException>(() => container.GetExport<SharedBoundedByDC>());
+            var x = Assert.Throws<CompositionFailedException>(() => container.GetExport<SharedBoundedByDC>());
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void TheProductOfAnExportFactoryCanBeDisposedDuringDisposalOfTheParent()
         {
             var container = new ContainerConfiguration()
@@ -193,6 +200,7 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void ExportFactoryCanBeComposedWithImportManyAndNames()
         {
             var cc = CreateContainer(typeof(AConsumer), typeof(A1), typeof(A2));
@@ -226,6 +234,7 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void WhenReleasingAnExportFromAnExportFactoryItsNonSharedDependenciesAreDisposed()
         {
             var cc = CreateContainer(typeof(Disposable), typeof(HasDisposableDependency), typeof(HasFactory));

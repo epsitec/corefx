@@ -1,9 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
-// Test class using UnitTestDriver that ensures that the FromAsync overload methods are tested 
+// Test class using UnitTestDriver that ensures that the FromAsync overload methods are tested
 //
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 
@@ -619,7 +620,7 @@ namespace System.Threading.Tasks.Tests.FromAsync
 
     public enum API
     {
-        IAsyncResult,  // test the API_FromAsync takes in an IAsyncResult 
+        IAsyncResult,  // test the API_FromAsync takes in an IAsyncResult
         APM,           // test the API_FromAsync takes in the begin/endMethod with no arg
         APM_T,         // test the API_FromAsync takes in the begin/endMethod with 1 arg
         APM_T2,        // test the API_FromAsync takes in the begin/endMethod with 2 args

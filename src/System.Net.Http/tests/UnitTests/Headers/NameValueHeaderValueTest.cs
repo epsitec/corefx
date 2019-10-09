@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -16,26 +17,26 @@ namespace System.Net.Http.Tests
         [Fact]
         public void Ctor_NameNull_Throw()
         {
-            Assert.Throws<ArgumentException>(() => { NameValueHeaderValue nameValue = new NameValueHeaderValue(null); });
+            AssertExtensions.Throws<ArgumentException>("name", () => { NameValueHeaderValue nameValue = new NameValueHeaderValue(null); });
         }
 
         [Fact]
         public void Ctor_NameEmpty_Throw()
         {
             // null and empty should be treated the same. So we also throw for empty strings.
-            Assert.Throws<ArgumentException>(() => { NameValueHeaderValue nameValue = new NameValueHeaderValue(string.Empty); });
+            AssertExtensions.Throws<ArgumentException>("name", () => { NameValueHeaderValue nameValue = new NameValueHeaderValue(string.Empty); });
         }
 
         [Fact]
         public void Ctor_NameInvalidFormat_ThrowFormatException()
         {
-            // When adding values using strongly typed objects, no leading/trailing LWS (whitespaces) are allowed.
+            // When adding values using strongly typed objects, no leading/trailing LWS (whitespace) are allowed.
             AssertFormatException(" text ", null);
             AssertFormatException("text ", null);
             AssertFormatException(" text", null);
             AssertFormatException("te xt", null);
             AssertFormatException("te=xt", null); // The ctor takes a name which must not contain '='.
-            AssertFormatException("teäxt", null);
+            AssertFormatException("te\u00E4xt", null);
         }
 
         [Fact]
@@ -48,7 +49,7 @@ namespace System.Net.Http.Tests
         [Fact]
         public void Ctor_ValueInvalidFormat_ThrowFormatException()
         {
-            // When adding values using strongly typed objects, no leading/trailing LWS (whitespaces) are allowed.
+            // When adding values using strongly typed objects, no leading/trailing LWS (whitespace) are allowed.
             AssertFormatException("text", " token ");
             AssertFormatException("text", "token ");
             AssertFormatException("text", " token");

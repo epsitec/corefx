@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections;
@@ -41,7 +42,7 @@ namespace System.Net.Http.Tests
             // This test verifies that Parse() correctly calls TryParse().
             Int64NumberHeaderParser parser = Int64NumberHeaderParser.Parser;
             int index = 0;
-            
+
             Assert.Throws<FormatException>(() => { parser.ParseValue("a", null, ref index); });
         }
 
@@ -50,7 +51,7 @@ namespace System.Net.Http.Tests
         {
             Int64NumberHeaderParser parser = Int64NumberHeaderParser.Parser;
             int index = 0;
-            
+
             Assert.Throws<FormatException>(() => { parser.ParseValue(null, null, ref index); });
         }
 
@@ -118,7 +119,7 @@ namespace System.Net.Http.Tests
             int newIndex = startIndex;
             Assert.False(parser.TryParseValue(input, null, ref newIndex, out result),
                 string.Format("TryParse returned true: {0}", input));
-            Assert.Equal(null, result);
+            Assert.Null(result);
             Assert.Equal(startIndex, newIndex);
         }
         #endregion

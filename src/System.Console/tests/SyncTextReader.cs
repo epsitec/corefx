@@ -1,10 +1,12 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.IO;
 using System.Text;
 using Xunit;
+
 
 public class SyncTextReader
 {
@@ -104,7 +106,7 @@ public class SyncTextReader
             // Then
             Assert.Equal(5, result);
             Assert.Equal(expected, buffer);
-            Assert.Equal(-1, Console.Read()); // We should be at EOF now. 
+            Assert.Equal(-1, Console.Read()); // We should be at EOF now.
         });
     }
 
@@ -167,13 +169,13 @@ public class SyncTextReader
             // Then
             Assert.Equal(5, result);
             Assert.Equal(expected, buffer);
-            Assert.Equal(-1, Console.Read()); // We should be at EOF now. 
+            Assert.Equal(-1, Console.Read()); // We should be at EOF now.
 
             // Invalid args
             Assert.Throws<ArgumentNullException>(() => { Console.In.ReadBlockAsync(null, 0, 0); });
             Assert.Throws<ArgumentOutOfRangeException>(() => { Console.In.ReadBlockAsync(new char[1], -1, 0); });
             Assert.Throws<ArgumentOutOfRangeException>(() => { Console.In.ReadBlockAsync(new char[1], 0, -1); });
-            Assert.Throws<ArgumentException>(() => { Console.In.ReadBlockAsync(new char[1], 1, 1); });
+            AssertExtensions.Throws<ArgumentException>(null, () => { Console.In.ReadBlockAsync(new char[1], 1, 1); });
         });
     }
 
@@ -197,7 +199,7 @@ public class SyncTextReader
             Assert.Throws<ArgumentNullException>(() => { Console.In.ReadAsync(null, 0, 0); });
             Assert.Throws<ArgumentOutOfRangeException>(() => { Console.In.ReadAsync(new char[1], -1, 0); });
             Assert.Throws<ArgumentOutOfRangeException>(() => { Console.In.ReadAsync(new char[1], 0, -1); });
-            Assert.Throws<ArgumentException>(() => { Console.In.ReadAsync(new char[1], 1, 1); });
+            AssertExtensions.Throws<ArgumentException>(null, () => { Console.In.ReadAsync(new char[1], 1, 1); });
         });
     }
 

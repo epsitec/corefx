@@ -1,14 +1,15 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
+using System.IO;
 using System.Text;
 
 namespace System.Net.Http.Headers
 {
-    // According to the RFC, in places where a "parameter" is required, the value is mandatory 
+    // According to the RFC, in places where a "parameter" is required, the value is mandatory
     // (e.g. Media-Type, Accept). However, we don't introduce a dedicated type for it. So NameValueHeaderValue supports
     // name-only values in addition to name/value pairs.
     public class NameValueHeaderValue : ICloneable
@@ -52,7 +53,7 @@ namespace System.Net.Http.Headers
 
         protected NameValueHeaderValue(NameValueHeaderValue source)
         {
-            Contract.Requires(source != null);
+            Debug.Assert(source != null);
 
             _name = source._name;
             _value = source._value;
@@ -66,7 +67,7 @@ namespace System.Net.Http.Headers
 
             if (!string.IsNullOrEmpty(_value))
             {
-                // If we have a quoted-string, then just use the hash code. If we have a token, convert to lowercase 
+                // If we have a quoted-string, then just use the hash code. If we have a token, convert to lowercase
                 // and retrieve the hash code.
                 if (_value[0] == '"')
                 {
@@ -95,7 +96,7 @@ namespace System.Net.Http.Headers
 
             // RFC2616: 14.20: unquoted tokens should use case-INsensitive comparison; quoted-strings should use
             // case-sensitive comparison. The RFC doesn't mention how to compare quoted-strings outside the "Expect"
-            // header. We treat all quoted-strings the same: case-sensitive comparison. 
+            // header. We treat all quoted-strings the same: case-sensitive comparison.
 
             if (string.IsNullOrEmpty(_value))
             {
@@ -143,6 +144,27 @@ namespace System.Net.Http.Headers
             return _name;
         }
 
+        private void AddToStringBuilder(StringBuilder sb)
+        {
+            if (GetType() != typeof(NameValueHeaderValue))
+            {
+                // If this is a derived instance, we need to give its
+                // ToString a chance.
+                sb.Append(ToString());
+            }
+            else
+            {
+                // Otherwise, we can use the base behavior and avoid
+                // the string concatenation.
+                sb.Append(_name);
+                if (!string.IsNullOrEmpty(_value))
+                {
+                    sb.Append('=');
+                    sb.Append(_value);
+                }
+            }
+        }
+
         internal static void ToString(ObjectCollection<NameValueHeaderValue> values, char separator, bool leadingSeparator,
             StringBuilder destination)
         {
@@ -160,22 +182,8 @@ namespace System.Net.Http.Headers
                     destination.Append(separator);
                     destination.Append(' ');
                 }
-                destination.Append(value.ToString());
+                value.AddToStringBuilder(destination);
             }
-        }
-
-        internal static string ToString(ObjectCollection<NameValueHeaderValue> values, char separator, bool leadingSeparator)
-        {
-            if ((values == null) || (values.Count == 0))
-            {
-                return null;
-            }
-
-            StringBuilder sb = new StringBuilder();
-
-            ToString(values, separator, leadingSeparator, sb);
-
-            return sb.ToString();
         }
 
         internal static int GetHashCode(ObjectCollection<NameValueHeaderValue> values)
@@ -201,9 +209,9 @@ namespace System.Net.Http.Headers
         internal static int GetNameValueLength(string input, int startIndex,
             Func<NameValueHeaderValue> nameValueCreator, out NameValueHeaderValue parsedValue)
         {
-            Contract.Requires(input != null);
-            Contract.Requires(startIndex >= 0);
-            Contract.Requires(nameValueCreator != null);
+            Debug.Assert(input != null);
+            Debug.Assert(startIndex >= 0);
+            Debug.Assert(nameValueCreator != null);
 
             parsedValue = null;
 
@@ -212,8 +220,8 @@ namespace System.Net.Http.Headers
                 return 0;
             }
 
-            // Parse the name, i.e. <name> in name/value string "<name>=<value>". Caller must remove 
-            // leading whitespaces.
+            // Parse the name, i.e. <name> in name/value string "<name>=<value>". Caller must remove
+            // leading whitespace.
             int nameLength = HttpRuleParser.GetTokenLength(input, startIndex);
 
             if (nameLength == 0)
@@ -231,7 +239,7 @@ namespace System.Net.Http.Headers
                 // We only have a name and that's OK. Return.
                 parsedValue = nameValueCreator();
                 parsedValue._name = name;
-                current = current + HttpRuleParser.GetWhitespaceLength(input, current); // skip whitespaces
+                current = current + HttpRuleParser.GetWhitespaceLength(input, current); // skip whitespace
                 return current - startIndex;
             }
 
@@ -243,7 +251,7 @@ namespace System.Net.Http.Headers
 
             if (valueLength == 0)
             {
-                return 0; // We have an invalid value. 
+                return 0; // We have an invalid value.
             }
 
             // Use parameterless ctor to avoid double-parsing of name and value, i.e. skip public ctor validation.
@@ -251,7 +259,7 @@ namespace System.Net.Http.Headers
             parsedValue._name = name;
             parsedValue._value = input.Substring(current, valueLength);
             current = current + valueLength;
-            current = current + HttpRuleParser.GetWhitespaceLength(input, current); // skip whitespaces
+            current = current + HttpRuleParser.GetWhitespaceLength(input, current); // skip whitespace
             return current - startIndex;
         }
 
@@ -260,8 +268,8 @@ namespace System.Net.Http.Headers
         internal static int GetNameValueListLength(string input, int startIndex, char delimiter,
             ObjectCollection<NameValueHeaderValue> nameValueCollection)
         {
-            Contract.Requires(nameValueCollection != null);
-            Contract.Requires(startIndex >= 0);
+            Debug.Assert(nameValueCollection != null);
+            Debug.Assert(startIndex >= 0);
 
             if ((string.IsNullOrEmpty(input)) || (startIndex >= input.Length))
             {
@@ -290,7 +298,7 @@ namespace System.Net.Http.Headers
                     return current - startIndex;
                 }
 
-                // input[current] is 'delimiter'. Skip the delimiter and whitespaces and try to parse again.
+                // input[current] is 'delimiter'. Skip the delimiter and whitespace and try to parse again.
                 current++; // skip delimiter.
                 current = current + HttpRuleParser.GetWhitespaceLength(input, current);
             }
@@ -298,7 +306,7 @@ namespace System.Net.Http.Headers
 
         internal static NameValueHeaderValue Find(ObjectCollection<NameValueHeaderValue> values, string name)
         {
-            Contract.Requires((name != null) && (name.Length > 0));
+            Debug.Assert((name != null) && (name.Length > 0));
 
             if ((values == null) || (values.Count == 0))
             {
@@ -317,7 +325,7 @@ namespace System.Net.Http.Headers
 
         internal static int GetValueLength(string input, int startIndex)
         {
-            Contract.Requires(input != null);
+            Debug.Assert(input != null);
 
             if (startIndex >= input.Length)
             {
@@ -340,7 +348,7 @@ namespace System.Net.Http.Headers
 
         private static void CheckNameValueFormat(string name, string value)
         {
-            HeaderUtilities.CheckValidToken(name, "name");
+            HeaderUtilities.CheckValidToken(name, nameof(name));
             CheckValueFormat(value);
         }
 
@@ -349,7 +357,7 @@ namespace System.Net.Http.Headers
             // Either value is null/empty or a valid token/quoted string
             if (!(string.IsNullOrEmpty(value) || (GetValueLength(value, 0) == value.Length)))
             {
-                throw new FormatException(string.Format(System.Globalization.CultureInfo.InvariantCulture, SR.net_http_headers_invalid_value, value));
+                throw new FormatException(SR.Format(System.Globalization.CultureInfo.InvariantCulture, SR.net_http_headers_invalid_value, value));
             }
         }
 

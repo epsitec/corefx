@@ -1,42 +1,39 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-using System.Runtime.InteropServices;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.ComponentModel
 {
-    /// <devdoc>
-    ///    <para> 
-    ///       Provides information about a context to a type converter or a value editor,
-    ///       so that the type converter or editor can perform a conversion.</para>
-    /// </devdoc>
+    /// <summary>
+    /// Provides information about a context to a type converter or a value editor,
+    /// so that the type converter or editor can perform a conversion.
+    /// </summary>
     public interface ITypeDescriptorContext : IServiceProvider
     {
-        /// <devdoc>
-        ///    <para>Gets the container with the set of objects for this formatter.</para>
-        /// </devdoc>
+        /// <summary>
+        /// Gets the container with the set of objects for this formatter.
+        /// </summary>
         IContainer Container { get; }
 
-        /// <devdoc>
-        ///    <para>Gets the instance that is invoking the method on the formatter object.</para>
-        /// </devdoc>
+        /// <summary>
+        /// Gets the instance that is invoking the method on the formatter object.
+        /// </summary>
         object Instance { get; }
 
-        /// <devdoc>
-        ///      Retrieves the PropertyDescriptor that is surfacing the given context item.
-        /// </devdoc>
+        /// <summary>
+        /// Retrieves the PropertyDescriptor that is surfacing the given context item.
+        /// </summary>
         PropertyDescriptor PropertyDescriptor { get; }
 
-        /// <devdoc>
-        ///    <para>Gets a value indicating whether this object can be changed.</para>
-        /// </devdoc>
+        /// <summary>
+        /// Gets a value indicating whether this object can be changed.
+        /// </summary>
         bool OnComponentChanging();
 
-        /// <devdoc>
-        /// <para>Raises the <see cref='System.ComponentModel.Design.IComponentChangeService.ComponentChanged'/>
-        /// event.</para>
-        /// </devdoc>
+        /// <summary>
+        /// Raises the <see cref='System.ComponentModel.Design.IComponentChangeService.ComponentChanged'/>
+        /// event.
+        /// </summary>
         void OnComponentChanged();
     }
 }
-

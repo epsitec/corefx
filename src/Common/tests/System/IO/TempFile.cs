@@ -1,31 +1,50 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System.Runtime.CompilerServices;
+using Xunit;
 
 namespace System.IO
 {
     /// <summary>
-    /// Represents a temporary file.  Creating an instance creates a file at the specified path,
+    /// Represents a temporary file. Creating an instance creates a file at the specified path,
     /// and disposing the instance deletes the file.
     /// </summary>
     public sealed class TempFile : IDisposable
     {
         /// <summary>Gets the created file's path.</summary>
-        public string Path { get; private set; }
+        public string Path { get; }
 
-        public TempFile(string path, long length = 0)
+        public TempFile(string path, long length = 0) : this(path, length > -1 ? new byte[length] : null)
+        {
+        }
+
+        public TempFile(string path, byte[] data)
         {
             Path = path;
-            using (FileStream fs = File.Create(path))
+
+            if (data != null)
             {
-                if (length > 0)
-                {
-                    // Fill with zeros up to the desired length.
-                    fs.Write(new byte[length], 0, (int)length);
-                }
+                File.WriteAllBytes(path, data);
             }
         }
 
-        ~TempFile() { DeleteFile(); }
+        ~TempFile() => DeleteFile();
+
+        public static TempFile Create(byte[] bytes, [CallerMemberName] string memberName = null, [CallerLineNumber] int lineNumber = 0)
+        {
+            return new TempFile(GetFilePath(memberName, lineNumber), bytes);
+        }
+
+        public static TempFile Create(long length = -1, [CallerMemberName] string memberName = null, [CallerLineNumber] int lineNumber = 0)
+        {
+            return new TempFile(GetFilePath(memberName, lineNumber), length);
+        }
+
+        public void AssertExists() => Assert.True(File.Exists(Path));
+
+        public string ReadAllText() => File.ReadAllText(Path);
 
         public void Dispose()
         {
@@ -37,6 +56,12 @@ namespace System.IO
         {
             try { File.Delete(Path); }
             catch { /* Ignore exceptions on disposal paths */ }
+        }
+
+        private static string GetFilePath(string memberName, int lineNumber)
+        {
+            string file = $"{IO.Path.GetRandomFileName()}_{memberName}_{lineNumber}";
+            return IO.Path.Combine(IO.Path.GetTempPath(), file);
         }
     }
 }

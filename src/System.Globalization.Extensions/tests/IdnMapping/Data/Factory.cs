@@ -1,14 +1,13 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using Xunit;
-using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
-using System.Text;
 
-namespace System.Globalization.Extensions.Tests
+namespace System.Globalization.Tests
 {
     public static class Factory
     {
@@ -27,16 +26,19 @@ namespace System.Globalization.Extensions.Tests
         /// </summary>
         private static Stream GetIdnaTestTxt()
         {
-            foreach (var name in typeof(Factory).GetTypeInfo().Assembly.GetManifestResourceNames())
-            {
-                if (name.EndsWith("IdnaTest.txt", StringComparison.Ordinal))
-                {
-                    return typeof(Factory).GetTypeInfo().Assembly.GetManifestResourceStream(name);
-                }
-            }
+            string fileName = null;
+            if (PlatformDetection.IsWindows7)
+                fileName = "IdnaTest_Win7.txt";
+            else if (PlatformDetection.IsWindows10Version1903OrGreater)
+                fileName = "IdnaTest_11.txt";
+            else if (PlatformDetection.IsWindows10Version1703OrGreater)
+                fileName = "IdnaTest_9.txt";
+            else
+                fileName = "IdnaTest_6.txt";
 
-            Assert.False(true, "Verify test file 'IdnaTest.txt' is included as an embedded resource");
-            return null;
+            // test file 'IdnaTest.txt' is included as an embedded resource
+            var name = typeof(Factory).GetTypeInfo().Assembly.GetManifestResourceNames().First(n => n.EndsWith(fileName, StringComparison.Ordinal));
+            return typeof(Factory).GetTypeInfo().Assembly.GetManifestResourceStream(name);
         }
 
         private static IEnumerable<IConformanceIdnaTest> ParseFile(Stream stream, Func<string, int, IConformanceIdnaTest> f)
@@ -50,19 +52,30 @@ namespace System.Globalization.Extensions.Tests
 
                     var noComment = RemoveComment(reader.ReadLine());
 
-                    if (!String.IsNullOrWhiteSpace(noComment))
+                    if (!string.IsNullOrWhiteSpace(noComment))
                         yield return f(noComment, lineCount);
                 }
             }
         }
 
+        private static IConformanceIdnaTest GetConformanceIdnaTest(string line, int lineCount)
+        {
+            if (PlatformDetection.IsWindows7)
+                return new Unicode_Win7_IdnaTest(line, lineCount);
+            else if (PlatformDetection.IsWindows10Version1903OrGreater)
+                return new Unicode_11_0_IdnaTest(line, lineCount);
+            else if (PlatformDetection.IsWindows10Version1703OrGreater)
+                return new Unicode_9_0_IdnaTest(line, lineCount);
+            else
+                return new Unicode_6_0_IdnaTest(line, lineCount);
+        }
+
         /// <summary>
         /// Abstracts retrieving the dataset so this can be changed depending on platform support, such as
-        /// when the IDNA implementation is updated to a newer version of Unicode.  Windows currently supports
-        /// and uses 6.0 in IDNA processing but 6.3 is the latest version available and may be used at
-        /// some point.
-        /// 
-        /// This method retrieves the dataset to be used by the test.  Windows implementation uses transitional 
+        /// when the IDNA implementation is updated to a newer version of Unicode.  Windows 10 up to 1607 supports
+        /// and uses 6.0 in IDNA processing. Windows 10 1703 and greater currently uses 9.0 in IDNA processing.
+        ///
+        /// This method retrieves the dataset to be used by the test.  Windows implementation uses transitional
         /// mappings, which only affect 4 characters, known as deviations.  See the description at
         /// http://www.unicode.org/reports/tr46/#Deviations for more information.  Windows also throws an error
         /// when an empty string is given, so we want to filter that from the IDNA test set
@@ -70,9 +83,9 @@ namespace System.Globalization.Extensions.Tests
         /// <returns></returns>
         public static IEnumerable<IConformanceIdnaTest> GetDataset()
         {
-            foreach (var entry in ParseFile(GetIdnaTestTxt(), (line, lineCount) => new Unicode_6_0_IdnaTest(line, lineCount)))
+            foreach (var entry in ParseFile(GetIdnaTestTxt(), GetConformanceIdnaTest))
             {
-                if (entry.Type != IdnType.Nontransitional && entry.Source != String.Empty)
+                if (entry.Type != IdnType.Nontransitional && entry.Source != string.Empty)
                     yield return entry;
             }
         }

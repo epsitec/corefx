@@ -1,10 +1,11 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
 
-namespace System.Globalization.Extensions.Tests
+namespace System.Globalization.Tests
 {
     public class ConformanceIdnaTestResult
     {
@@ -14,16 +15,12 @@ namespace System.Globalization.Extensions.Tests
         public bool Success { get; private set; }
 
         /// <summary>
-        /// If Success is true, then the value shows the expected value of the test 
+        /// If Success is true, then the value shows the expected value of the test
         /// If Success is false, then the value shows the conversion steps that have issues
-        /// 
+        ///
         /// For details, see the explanation in IdnaTest.txt for the Unicode version being tested
         /// </summary>
         public string Value { get; private set; }
-
-        public ConformanceIdnaTestResult(string entry)
-            : this(entry, null)
-        { }
 
         public ConformanceIdnaTestResult(string entry, string fallbackValue)
         {
@@ -35,16 +32,8 @@ namespace System.Globalization.Extensions.Tests
 
         private void SetValues(string entry)
         {
-            if (entry.Trim().StartsWith("[", StringComparison.Ordinal))
-            {
-                Success = false;
-                Value = entry.Trim();
-            }
-            else
-            {
-                Success = true;
-                Value = entry.Trim();
-            }
+            Value = entry.Trim();
+            Success = !Value.StartsWith("[", StringComparison.Ordinal);
         }
     }
 }

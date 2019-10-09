@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Linq;
@@ -32,9 +33,9 @@ namespace System.Threading.Tasks.Dataflow.Tests
         public void TestArgumentExceptions()
         {
             Assert.Throws<ArgumentNullException>(() => new BroadcastBlock<int>(i => i, null));
-            Assert.Throws<ArgumentException>(() =>
+            AssertExtensions.Throws<ArgumentException>("messageHeader", () =>
                 ((ITargetBlock<int>)new BroadcastBlock<int>(null)).OfferMessage(default(DataflowMessageHeader), 0, null, consumeToAccept: false));
-            Assert.Throws<ArgumentException>(() =>
+            AssertExtensions.Throws<ArgumentException>("consumeToAccept", () =>
                 ((ITargetBlock<int>)new BroadcastBlock<int>(null)).OfferMessage(new DataflowMessageHeader(1), 0, null, consumeToAccept: true));
             DataflowTestHelpers.TestArgumentsExceptions(new BroadcastBlock<int>(i => i));
         }
@@ -160,7 +161,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
 
                     IList<int> items;
                     Assert.True(((IReceivableSourceBlock<int>)bb).TryReceiveAll(out items));
-                    Assert.Equal(expected: items.Count, actual: 1);
+                    Assert.Equal(expected: 1, actual: items.Count);
                     Assert.Equal(expected: -data, actual: items[0]);
                 }
 

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -130,7 +131,7 @@ namespace System.Linq.Parallel
         // The enumerator type responsible for projecting elements as it is walked.
         //
 
-        class IndexedSelectQueryOperatorEnumerator : QueryOperatorEnumerator<TOutput, int>
+        private class IndexedSelectQueryOperatorEnumerator : QueryOperatorEnumerator<TOutput, int>
         {
             private readonly QueryOperatorEnumerator<TInput, int> _source; // The data source to enumerate.
             private readonly Func<TInput, int, TOutput> _selector;  // The actual select function.
@@ -182,14 +183,14 @@ namespace System.Linq.Parallel
         }
 
         //-----------------------------------------------------------------------------------
-        // Query results for an indexed Select operator. The results are indexible if the child
-        // results were indexible.
+        // Query results for an indexed Select operator. The results are indexable if the child
+        // results were indexable.
         //
 
-        class IndexedSelectQueryOperatorResults : UnaryQueryOperatorResults
+        private class IndexedSelectQueryOperatorResults : UnaryQueryOperatorResults
         {
-            private IndexedSelectQueryOperator<TInput, TOutput> _selectOp;  // Operator that generated the results
-            private int _childCount; // The number of elements in child results
+            private readonly IndexedSelectQueryOperator<TInput, TOutput> _selectOp;  // Operator that generated the results
+            private readonly int _childCount; // The number of elements in child results
 
             public static QueryResults<TOutput> NewResults(
                 QueryResults<TInput> childQueryResults, IndexedSelectQueryOperator<TInput, TOutput> op,

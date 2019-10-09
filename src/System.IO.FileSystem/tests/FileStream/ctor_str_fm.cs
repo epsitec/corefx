@@ -1,11 +1,10 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.IO;
 using Xunit;
 
-namespace System.IO.FileSystem.Tests
+namespace System.IO.Tests
 {
     public class FileStream_ctor_str_fm : FileSystemTest
     {
@@ -23,7 +22,7 @@ namespace System.IO.FileSystem.Tests
         [Fact]
         public void EmptyPathThrows()
         {
-            Assert.Throws<ArgumentException>(() => CreateFileStream(String.Empty, FileMode.Open));
+            Assert.Throws<ArgumentException>(() => CreateFileStream(string.Empty, FileMode.Open));
         }
 
         [Fact]
@@ -35,20 +34,56 @@ namespace System.IO.FileSystem.Tests
         [Fact]
         public void InvalidModeThrows()
         {
-            Assert.Throws<ArgumentOutOfRangeException>("mode", () => CreateFileStream(GetTestFilePath(), ~FileMode.Open));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("mode", () => CreateFileStream(GetTestFilePath(), ~FileMode.Open));
         }
 
-        [Fact]
-        public void FileModeCreate()
+        [Theory, MemberData(nameof(TrailingCharacters))]
+        public void MissingFile_ThrowsFileNotFound(char trailingChar)
         {
-            using (CreateFileStream(GetTestFilePath(), FileMode.Create))
-            { }
+            string path = GetTestFilePath() + trailingChar;
+            Assert.Throws<FileNotFoundException>(() => CreateFileStream(path, FileMode.Open));
         }
 
-        [Fact]
-        public void FileModeCreateExisting()
+        [Theory, MemberData(nameof(TrailingCharacters))]
+        public void MissingDirectory_ThrowsDirectoryNotFound(char trailingChar)
         {
-            string fileName = GetTestFilePath();
+            string path = Path.Combine(GetTestFilePath(), "file" + trailingChar);
+            Assert.Throws<DirectoryNotFoundException>(() => CreateFileStream(path, FileMode.Open));
+        }
+
+
+        public static TheoryData<string> StreamSpecifiers
+        {
+            get
+            {
+                TheoryData<string> data = new TheoryData<string>();
+                data.Add("");
+
+                if (PlatformDetection.IsWindows && PlatformDetection.IsNetCore)
+                {
+                    data.Add("::$DATA");        // Same as default stream (e.g. main file)
+                    data.Add(":bar");           // $DATA isn't necessary
+                    data.Add(":bar:$DATA");     // $DATA can be explicitly specified
+                }
+
+                return data;
+            }
+        }
+
+        [Theory, MemberData(nameof(StreamSpecifiers))]
+        public void FileModeCreate(string streamSpecifier)
+        {
+            string fileName = GetTestFilePath() + streamSpecifier;
+            using (CreateFileStream(fileName, FileMode.Create))
+            {
+                Assert.True(File.Exists(fileName));
+            }
+        }
+
+        [Theory, MemberData(nameof(StreamSpecifiers))]
+        public void FileModeCreateExisting(string streamSpecifier)
+        {
+            string fileName = GetTestFilePath() + streamSpecifier;
             using (FileStream fs = CreateFileStream(fileName, FileMode.Create))
             {
                 fs.WriteByte(0);
@@ -64,17 +99,20 @@ namespace System.IO.FileSystem.Tests
             }
         }
 
-        [Fact]
-        public void FileModeCreateNew()
+        [Theory, MemberData(nameof(StreamSpecifiers))]
+        public void FileModeCreateNew(string streamSpecifier)
         {
-            using (CreateFileStream(GetTestFilePath(), FileMode.CreateNew))
-            { }
+            string fileName = GetTestFilePath() + streamSpecifier;
+            using (CreateFileStream(fileName, FileMode.CreateNew))
+            {
+                Assert.True(File.Exists(fileName));
+            }
         }
 
-        [Fact]
-        public void FileModeCreateNewExistingThrows()
+        [Theory, MemberData(nameof(StreamSpecifiers))]
+        public void FileModeCreateNewExistingThrows(string streamSpecifier)
         {
-            string fileName = GetTestFilePath();
+            string fileName = GetTestFilePath() + streamSpecifier;
             using (FileStream fs = CreateFileStream(fileName, FileMode.CreateNew))
             {
                 fs.WriteByte(0);
@@ -85,18 +123,18 @@ namespace System.IO.FileSystem.Tests
             Assert.Throws<IOException>(() => CreateFileStream(fileName, FileMode.CreateNew));
         }
 
-        [Fact]
-        public void FileModeOpenThrows()
+        [Theory, MemberData(nameof(StreamSpecifiers))]
+        public void FileModeOpenThrows(string streamSpecifier)
         {
-            string fileName = GetTestFilePath();
+            string fileName = GetTestFilePath() + streamSpecifier;
             FileNotFoundException fnfe = Assert.Throws<FileNotFoundException>(() => CreateFileStream(fileName, FileMode.Open));
             Assert.Equal(fileName, fnfe.FileName);
         }
 
-        [Fact]
-        public void FileModeOpenExisting()
+        [Theory, MemberData(nameof(StreamSpecifiers))]
+        public void FileModeOpenExisting(string streamSpecifier)
         {
-            string fileName = GetTestFilePath();
+            string fileName = GetTestFilePath() + streamSpecifier;
             using (FileStream fs = CreateFileStream(fileName, FileMode.Create))
             {
                 fs.WriteByte(0);
@@ -112,17 +150,20 @@ namespace System.IO.FileSystem.Tests
             }
         }
 
-        [Fact]
-        public void FileModeOpenOrCreate()
+        [Theory, MemberData(nameof(StreamSpecifiers))]
+        public void FileModeOpenOrCreate(string streamSpecifier)
         {
-            using (CreateFileStream(GetTestFilePath(), FileMode.OpenOrCreate))
-            {}
+            string fileName = GetTestFilePath() + streamSpecifier;
+            using (CreateFileStream(fileName, FileMode.OpenOrCreate))
+            {
+                Assert.True(File.Exists(fileName));
+            }
         }
 
-        [Fact]
-        public void FileModeOpenOrCreateExisting()
+        [Theory, MemberData(nameof(StreamSpecifiers))]
+        public void FileModeOpenOrCreateExisting(string streamSpecifier)
         {
-            string fileName = GetTestFilePath();
+            string fileName = GetTestFilePath() + streamSpecifier;
             using (FileStream fs = CreateFileStream(fileName, FileMode.Create))
             {
                 fs.WriteByte(0);
@@ -138,18 +179,18 @@ namespace System.IO.FileSystem.Tests
             }
         }
 
-        [Fact]
-        public void FileModeTruncateThrows()
+        [Theory, MemberData(nameof(StreamSpecifiers))]
+        public void FileModeTruncateThrows(string streamSpecifier)
         {
-            string fileName = GetTestFilePath();
+            string fileName = GetTestFilePath() + streamSpecifier;
             FileNotFoundException fnfe = Assert.Throws<FileNotFoundException>(() => CreateFileStream(fileName, FileMode.Truncate));
             Assert.Equal(fileName, fnfe.FileName);
         }
 
-        [Fact]
-        public void FileModeTruncateExisting()
+        [Theory, MemberData(nameof(StreamSpecifiers))]
+        public void FileModeTruncateExisting(string streamSpecifier)
         {
-            string fileName = GetTestFilePath();
+            string fileName = GetTestFilePath() + streamSpecifier;
             using (FileStream fs = CreateFileStream(fileName, FileMode.Create))
             {
                 fs.WriteByte(0);
@@ -165,20 +206,20 @@ namespace System.IO.FileSystem.Tests
             }
         }
 
-        [Fact]
-        public void FileModeAppend()
+        [Theory, MemberData(nameof(StreamSpecifiers))]
+        public virtual void FileModeAppend(string streamSpecifier)
         {
-            using (FileStream fs = CreateFileStream(GetTestFilePath(), FileMode.Append))
+            using (FileStream fs = CreateFileStream(GetTestFilePath() + streamSpecifier, FileMode.Append))
             {
-                Assert.Equal(false, fs.CanRead);
-                Assert.Equal(true, fs.CanWrite);
+                Assert.False(fs.CanRead);
+                Assert.True(fs.CanWrite);
             }
         }
 
-        [Fact]
-        public void FileModeAppendExisting()
+        [Theory, MemberData(nameof(StreamSpecifiers))]
+        public virtual void FileModeAppendExisting(string streamSpecifier)
         {
-            string fileName = GetTestFilePath();
+            string fileName = GetTestFilePath() + streamSpecifier;
             using (FileStream fs = CreateFileStream(fileName, FileMode.Create))
             {
                 fs.WriteByte(0);

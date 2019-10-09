@@ -1,26 +1,14 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Globalization;
+using System.Collections.Generic;
 using Xunit;
 
-namespace System.Globalization.CalendarsTests
+namespace System.Globalization.Tests
 {
     public static class CalendarsTests
     {
-        [Fact]
-        public static void GregorianTest()
-        {
-            GregorianCalendar cal = new GregorianCalendar();
-            cal = new GregorianCalendar(GregorianCalendarTypes.Arabic);
-            cal = new GregorianCalendar(GregorianCalendarTypes.Localized);
-            cal = new GregorianCalendar(GregorianCalendarTypes.MiddleEastFrench);
-            cal = new GregorianCalendar(GregorianCalendarTypes.TransliteratedEnglish);
-            cal = new GregorianCalendar(GregorianCalendarTypes.TransliteratedFrench);
-            cal = new GregorianCalendar(GregorianCalendarTypes.USEnglish);
-        }
-
         [Fact]
         public static void HijriTest()
         {
@@ -52,19 +40,10 @@ namespace System.Globalization.CalendarsTests
         }
 
         [Fact]
-        [ActiveIssue(846, PlatformID.AnyUnix)]
         public static void JapaneseTest()
         {
             JapaneseCalendar cal = new JapaneseCalendar();
             Assert.True(cal.Eras.Length >= 4);
-        }
-
-        [Fact]
-        [ActiveIssue(846, PlatformID.AnyUnix)]
-        public static void JapaneseLunisolarTest()
-        {
-            JapaneseLunisolarCalendar cal = new JapaneseLunisolarCalendar();
-            Assert.True(cal.Eras.Length >= 2);
         }
 
         [Fact]
@@ -75,31 +54,10 @@ namespace System.Globalization.CalendarsTests
         }
 
         [Fact]
-        public static void KoreanTest()
-        {
-            KoreanCalendar kc = new KoreanCalendar();
-            Assert.Equal(1, kc.Eras.Length);
-        }
-
-        [Fact]
         public static void KoreanLunisolarTest()
         {
             KoreanLunisolarCalendar kls = new KoreanLunisolarCalendar();
             Assert.Equal(1, kls.Eras.Length);
-        }
-
-        [Fact]
-        public static void PersianTest()
-        {
-            PersianCalendar pc = new PersianCalendar();
-            Assert.Equal(1, pc.Eras.Length);
-        }
-
-        [Fact]
-        public static void TaiwanTest()
-        {
-            TaiwanCalendar tc = new TaiwanCalendar();
-            Assert.Equal(1, tc.Eras.Length);
         }
 
         [Fact]
@@ -109,11 +67,87 @@ namespace System.Globalization.CalendarsTests
             Assert.Equal(1, tc.Eras.Length);
         }
 
-        [Fact]
-        public static void ThaiBuddhistTest()
+        public static IEnumerable<object[]> Calendars_TestData()
         {
-            ThaiBuddhistCalendar tc = new ThaiBuddhistCalendar();
-            Assert.Equal(1, tc.Eras.Length);
+            //                              Calendar               yearHasLeapMonth        CalendarAlgorithmType
+            yield return new object[] { new ChineseLunisolarCalendar()  , 2017  , CalendarAlgorithmType.LunisolarCalendar   };
+            yield return new object[] { new GregorianCalendar()         , 0     , CalendarAlgorithmType.SolarCalendar       };
+            yield return new object[] { new HebrewCalendar()            , 5345  , CalendarAlgorithmType.LunisolarCalendar   };
+            yield return new object[] { new HijriCalendar()             , 0     , CalendarAlgorithmType.LunarCalendar       };
+            yield return new object[] { new JapaneseCalendar()          , 0     , CalendarAlgorithmType.SolarCalendar       };
+            yield return new object[] { new JapaneseLunisolarCalendar() , 29    , CalendarAlgorithmType.LunisolarCalendar   };
+            yield return new object[] { new JulianCalendar()            , 0     , CalendarAlgorithmType.SolarCalendar       };
+            yield return new object[] { new KoreanCalendar()            , 0     , CalendarAlgorithmType.SolarCalendar       };
+            yield return new object[] { new KoreanLunisolarCalendar()   , 2017  , CalendarAlgorithmType.LunisolarCalendar   };
+            yield return new object[] { new PersianCalendar()           , 0     , CalendarAlgorithmType.SolarCalendar       };
+            yield return new object[] { new TaiwanCalendar()            , 0     , CalendarAlgorithmType.SolarCalendar       };
+            yield return new object[] { new TaiwanLunisolarCalendar()   , 106   , CalendarAlgorithmType.LunisolarCalendar   };
+            yield return new object[] { new ThaiBuddhistCalendar()      , 0     , CalendarAlgorithmType.SolarCalendar       };
+            yield return new object[] { new UmAlQuraCalendar()          , 0     , CalendarAlgorithmType.LunarCalendar       };
+        }
+
+        [Theory]
+        [MemberData(nameof(Calendars_TestData))]
+        public static void CloningTest(Calendar calendar, int yearHasLeapMonth, CalendarAlgorithmType algorithmType)
+        {
+            _ = yearHasLeapMonth;
+            _ = algorithmType;
+            Calendar cloned = (Calendar) calendar.Clone();
+            Assert.Equal(calendar.GetType(), cloned.GetType());
+        }
+
+        [Theory]
+        [MemberData(nameof(Calendars_TestData))]
+        public static void GetLeapMonthTest(Calendar calendar, int yearHasLeapMonth, CalendarAlgorithmType algorithmType)
+        {
+            _ = algorithmType;
+            if (yearHasLeapMonth > 0)
+            {
+                Assert.NotEqual(0, calendar.GetLeapMonth(yearHasLeapMonth));
+                Assert.Equal(0, calendar.GetLeapMonth(yearHasLeapMonth - 1));
+            }
+            else
+            {
+                Assert.True(calendar.GetLeapMonth(calendar.GetYear(DateTime.Today)) == 0,
+                            "calendar.GetLeapMonth returned wrong value");
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(Calendars_TestData))]
+        public static void ReadOnlyTest(Calendar calendar, int yearHasLeapMonth, CalendarAlgorithmType algorithmType)
+        {
+            _ = yearHasLeapMonth;
+            _ = algorithmType;
+            Assert.False(calendar.IsReadOnly);
+            var readOnlyCal = Calendar.ReadOnly(calendar);
+            Assert.True(readOnlyCal.IsReadOnly, "expect readOnlyCal.IsReadOnly returns true");
+            var colnedCal = (Calendar) readOnlyCal.Clone();
+            Assert.False(colnedCal.IsReadOnly, "expect colnedCal.IsReadOnly returns false");
+        }
+
+        [Theory]
+        [MemberData(nameof(Calendars_TestData))]
+        public static void AlgorithmTypeTest(Calendar calendar, int yearHasLeapMonth, CalendarAlgorithmType algorithmType)
+        {
+            _ = yearHasLeapMonth;
+            Assert.Equal(calendar.AlgorithmType, algorithmType);
+        }
+
+        [Fact]
+        public static void CalendarErasTest()
+        {
+            Assert.Equal(1, ChineseLunisolarCalendar.ChineseEra);
+            Assert.Equal(1, GregorianCalendar.ADEra);
+            Assert.Equal(1, JapaneseLunisolarCalendar.JapaneseEra);
+            Assert.Equal(1, HebrewCalendar.HebrewEra);
+            Assert.Equal(1, HijriCalendar.HijriEra);
+            Assert.Equal(1, JulianCalendar.JulianEra);
+            Assert.Equal(1, KoreanCalendar.KoreanEra);
+            Assert.Equal(1, KoreanLunisolarCalendar.GregorianEra);
+            Assert.Equal(1, PersianCalendar.PersianEra);
+            Assert.Equal(1, ThaiBuddhistCalendar.ThaiBuddhistEra);
+            Assert.Equal(1, UmAlQuraCalendar.UmAlQuraEra);
         }
     }
 }

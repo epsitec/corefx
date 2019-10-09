@@ -1,6 +1,8 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
+using System;
 using System.Linq;
 using Xunit;
 
@@ -9,20 +11,20 @@ namespace System.IO.FileSystem.DriveInfoTests
     public partial class DriveInfoUnixTests
     {
         [Fact]
-        [PlatformSpecific(PlatformID.AnyUnix)]
+        [PlatformSpecific(TestPlatforms.AnyUnix)]
         public void TestConstructor()
         {
             Assert.All(
                 new[] { "", "\0", "\0/" },
-                driveName => Assert.Throws<ArgumentException>("driveName", () => { new DriveInfo(driveName); }));
+                driveName => AssertExtensions.Throws<ArgumentException>("driveName", () => { new DriveInfo(driveName); }));
 
-            Assert.Throws<ArgumentNullException>("driveName", () => { new DriveInfo(null); });
+            AssertExtensions.Throws<ArgumentNullException>("driveName", () => { new DriveInfo(null); });
 
             Assert.Equal("/", new DriveInfo("/").Name);
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.AnyUnix)]
+        [PlatformSpecific(TestPlatforms.AnyUnix)]
         public void TestGetDrives()
         {
             var drives = DriveInfo.GetDrives();
@@ -40,28 +42,47 @@ namespace System.IO.FileSystem.DriveInfoTests
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.AnyUnix)]
-        public void TestInvalidDriveName()
+        [PlatformSpecific(TestPlatforms.AnyUnix)]
+        public void PropertiesOfInvalidDrive()
         {
-            var invalidDrive = new DriveInfo("NonExistentDriveName");
-            Assert.Throws<DriveNotFoundException>(() => { var df = invalidDrive.DriveFormat; });
-            Assert.Throws<DriveNotFoundException>(() => { var size = invalidDrive.TotalFreeSpace; });
-            Assert.Throws<DriveNotFoundException>(() => { var size = invalidDrive.TotalSize; });
+            string invalidDriveName = "NonExistentDriveName";
+            var invalidDrive = new DriveInfo(invalidDriveName);
+
+            Assert.Throws<DriveNotFoundException>(() =>invalidDrive.AvailableFreeSpace);
+            Assert.Throws<DriveNotFoundException>(() => invalidDrive.DriveFormat);
             Assert.Equal(DriveType.NoRootDirectory, invalidDrive.DriveType);
+            Assert.False(invalidDrive.IsReady);
+            Assert.Equal(invalidDriveName, invalidDrive.Name);
+            Assert.Equal(invalidDriveName, invalidDrive.ToString());
+            Assert.Equal(invalidDriveName, invalidDrive.RootDirectory.Name);
+            Assert.Throws<DriveNotFoundException>(() => invalidDrive.TotalFreeSpace);
+            Assert.Throws<DriveNotFoundException>(() => invalidDrive.TotalSize);
+            Assert.Equal(invalidDriveName, invalidDrive.VolumeLabel);   // VolumeLabel is equivalent to Name on Unix
+        }
+
+        [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotWindowsSubsystemForLinux))] // https://github.com/dotnet/corefx/issues/11570
+        [PlatformSpecific(TestPlatforms.AnyUnix)]
+        public void PropertiesOfValidDrive()
+        {
+            var root = new DriveInfo("/");
+            Assert.True(root.AvailableFreeSpace > 0);
+            var format = root.DriveFormat;
+            Assert.Equal(DriveType.Fixed, root.DriveType);
+            Assert.True(root.IsReady);
+            Assert.Equal("/", root.Name);
+            Assert.Equal("/", root.ToString());
+            Assert.Equal("/", root.RootDirectory.FullName);
+            Assert.True(root.TotalFreeSpace > 0);
+            Assert.True(root.TotalSize > 0);
+            Assert.Equal("/", root.VolumeLabel);
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.AnyUnix)]
-        public void TestProperties()
+        [PlatformSpecific(TestPlatforms.AnyUnix)]
+        public void SetVolumeLabel_Throws_PlatformNotSupportedException()
         {
             var root = new DriveInfo("/");
-            Assert.Equal("/", root.Name);
-            Assert.Equal("/", root.RootDirectory.FullName);
-            Assert.Equal(DriveType.Fixed, root.DriveType);
-            Assert.True(root.IsReady);
-            Assert.True(root.AvailableFreeSpace > 0);
-            Assert.True(root.TotalFreeSpace > 0);
-            Assert.True(root.TotalSize > 0);
+            Assert.Throws<PlatformNotSupportedException>(() => root.VolumeLabel = root.Name);
         }
     }
 }

@@ -1,22 +1,19 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
 // CDSCollectionETWBCLProvider.cs
 //
-// A helper class for firing ETW events related to the Coordination Data Structure 
-// collection types. This provider is used by CDS collections in both mscorlib.dll 
-// and System.dll. The purpose of sharing the provider class is to be able to enable 
+// A helper class for firing ETW events related to the Coordination Data Structure
+// collection types. This provider is used by CDS collections in both mscorlib.dll
+// and System.dll. The purpose of sharing the provider class is to be able to enable
 // ETW tracing on all CDS collection with a single ETW provider GUID, and to minimize
 // the number of providers in use.
 //
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-#if FEATURE_TRACING
 using System.Diagnostics.Tracing;
 
 namespace System.Collections.Concurrent
@@ -42,7 +39,7 @@ namespace System.Collections.Concurrent
         private const EventKeywords ALL_KEYWORDS = (EventKeywords)(-1);
 
         //-----------------------------------------------------------------------------------
-        //        
+        //
         // CDS Collection Event IDs (must be unique)
         //
 
@@ -117,4 +114,3 @@ namespace System.Collections.Concurrent
         }
     }
 }
-#endif // FEATURE_TRACING

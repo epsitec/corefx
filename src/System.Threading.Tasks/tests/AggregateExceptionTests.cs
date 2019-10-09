@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 using System;
@@ -14,15 +15,15 @@ namespace System.Threading.Tasks.Tests
         public static void ConstructorBasic()
         {
             AggregateException ex = new AggregateException();
-            Assert.Equal(ex.InnerExceptions.Count, 0);
+            Assert.Equal(0, ex.InnerExceptions.Count);
             Assert.True(ex.Message != null, "RunAggregateException_Constructor:  FAILED. Message property is null when the default constructor is used, expected a default message");
 
             ex = new AggregateException("message");
-            Assert.Equal(ex.InnerExceptions.Count, 0);
+            Assert.Equal(0, ex.InnerExceptions.Count);
             Assert.True(ex.Message != null, "RunAggregateException_Constructor:  FAILED. Message property is  null when the default constructor(string) is used");
 
             ex = new AggregateException("message", new Exception());
-            Assert.Equal(ex.InnerExceptions.Count, 1);
+            Assert.Equal(1, ex.InnerExceptions.Count);
             Assert.True(ex.Message != null, "RunAggregateException_Constructor:  FAILED. Message property is  null when the default constructor(string, Exception) is used");
         }
 
@@ -30,14 +31,11 @@ namespace System.Threading.Tasks.Tests
         public static void ConstructorInvalidArguments()
         {
             AggregateException ex = new AggregateException();
-            Assert.Throws<ArgumentNullException>(
-               () => ex = new AggregateException("message", (Exception)null));
+            Assert.Throws<ArgumentNullException>(() => new AggregateException("message", (Exception)null));
 
-            Assert.Throws<ArgumentNullException>(
-               () => ex = new AggregateException("message", (IEnumerable<Exception>)null));
+            Assert.Throws<ArgumentNullException>(() => new AggregateException("message", (IEnumerable<Exception>)null));
 
-            Assert.Throws<ArgumentException>(
-               () => ex = new AggregateException("message", new[] { new Exception(), null }));
+            AssertExtensions.Throws<ArgumentException>(null, () => ex = new AggregateException("message", new[] { new Exception(), null }));
         }
 
         [Fact]

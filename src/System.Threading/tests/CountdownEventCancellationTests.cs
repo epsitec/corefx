@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using Xunit;
-using System;
-using System.Threading;
 using System.Threading.Tasks;
+using Xunit;
 
-namespace Test
+namespace System.Threading.Tests
 {
     public static class CountdownEventCancellationTests
     {
@@ -20,10 +19,9 @@ namespace Test
 
             const int millisec = 100;
             TimeSpan timeSpan = new TimeSpan(100);
-            string message = "CancelBeforeWait:  > Cancellation token does not match.";
-            EnsureOperationCanceledExceptionThrown(() => countdownEvent.Wait(ct), ct, message);
-            EnsureOperationCanceledExceptionThrown(() => countdownEvent.Wait(millisec, ct), ct, message);
-            EnsureOperationCanceledExceptionThrown(() => countdownEvent.Wait(timeSpan, ct), ct, message);
+            EnsureOperationCanceledExceptionThrown(() => countdownEvent.Wait(ct), ct);
+            EnsureOperationCanceledExceptionThrown(() => countdownEvent.Wait(millisec, ct), ct);
+            EnsureOperationCanceledExceptionThrown(() => countdownEvent.Wait(timeSpan, ct), ct);
 
             countdownEvent.Dispose();
         }
@@ -42,23 +40,17 @@ namespace Test
             });
 
             //Now wait.. the wait should abort and an exception should be thrown
-            EnsureOperationCanceledExceptionThrown(() => countdownEvent.Wait(cancellationToken), cancellationToken,
-               "CancelAfterWait:  An OCE(null) should have been thrown that references the cancellationToken.");
+            EnsureOperationCanceledExceptionThrown(() => countdownEvent.Wait(cancellationToken), cancellationToken);
 
             // the token should not have any listeners.
             // currently we don't expose this.. but it was verified manually
         }
 
-        private static void EnsureOperationCanceledExceptionThrown(Action action, CancellationToken token, string message)
+        private static void EnsureOperationCanceledExceptionThrown(Action action, CancellationToken token)
         {
             OperationCanceledException operationCanceledEx =
                 Assert.Throws<OperationCanceledException>(action);
-
-            if (operationCanceledEx.CancellationToken != token)
-            {
-                Assert.True(false, string.Format("CountdownEventCancellationTests: Failed.  " + message));
-            }
+            Assert.Equal(token, operationCanceledEx.CancellationToken);
         }
     }
 }
-

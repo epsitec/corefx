@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.IO;
@@ -35,7 +36,7 @@ namespace Microsoft.Win32.RegistryTests
             Assert.Equal(expected: 0, actual: TestRegistryKey.SubKeyCount);
             Assert.NotNull(TestRegistryKey.CreateSubKey(TestRegistryKeyName));
             Assert.Equal(expected: 1, actual: TestRegistryKey.SubKeyCount);
-            
+
             TestRegistryKey.DeleteSubKey(TestRegistryKeyName);
             Assert.Equal(expected: 0, actual: TestRegistryKey.SubKeyCount);
         }
@@ -49,7 +50,7 @@ namespace Microsoft.Win32.RegistryTests
             {
                 TestRegistryKey.CreateSubKey(subKey);
             }
-            
+
             Assert.Equal(testSubKeys.Length, TestRegistryKey.SubKeyCount);
         }
     }

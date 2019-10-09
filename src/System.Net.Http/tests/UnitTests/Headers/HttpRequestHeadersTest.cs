@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -611,29 +612,40 @@ namespace System.Net.Http.Tests
         }
 
         [Fact]
+        public void UserAgent_TryGetValuesAndGetValues_Malformed()
+        {
+            string malformedUserAgent = "Mozilla/4.0 (compatible (compatible; MSIE 8.0; Windows NT 6.1; Trident/7.0)";
+            headers.TryAddWithoutValidation("User-Agent", malformedUserAgent);
+            Assert.True(headers.TryGetValues("User-Agent", out IEnumerable<string> ua));
+            Assert.Equal(1, ua.Count());
+            Assert.Equal(malformedUserAgent, ua.First());
+            Assert.Equal(malformedUserAgent, headers.GetValues("User-Agent").First());
+        }
+
+        [Fact]
         public void UserAgent_UseAddMethodWithInvalidValue_InvalidValueRecognized()
         {
             headers.TryAddWithoutValidation("User-Agent", "custom\u4F1A");
-            Assert.Null(headers.GetParsedValues("User-Agent"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.UserAgent.Descriptor));
             Assert.Equal(1, headers.GetValues("User-Agent").Count());
             Assert.Equal("custom\u4F1A", headers.GetValues("User-Agent").First());
 
             headers.Clear();
-            // Note that "User-Agent" uses whitespaces as separators, so the following is an invalid value
+            // Note that "User-Agent" uses whitespace as separators, so the following is an invalid value
             headers.TryAddWithoutValidation("User-Agent", "custom1, custom2");
-            Assert.Null(headers.GetParsedValues("User-Agent"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.UserAgent.Descriptor));
             Assert.Equal(1, headers.GetValues("User-Agent").Count());
             Assert.Equal("custom1, custom2", headers.GetValues("User-Agent").First());
 
             headers.Clear();
             headers.TryAddWithoutValidation("User-Agent", "custom1, ");
-            Assert.Null(headers.GetParsedValues("User-Agent"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.UserAgent.Descriptor));
             Assert.Equal(1, headers.GetValues("User-Agent").Count());
             Assert.Equal("custom1, ", headers.GetValues("User-Agent").First());
 
             headers.Clear();
             headers.TryAddWithoutValidation("User-Agent", ",custom1");
-            Assert.Null(headers.GetParsedValues("User-Agent"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.UserAgent.Descriptor));
             Assert.Equal(1, headers.GetValues("User-Agent").Count());
             Assert.Equal(",custom1", headers.GetValues("User-Agent").First());
         }
@@ -685,13 +697,13 @@ namespace System.Net.Http.Tests
         public void IfRange_UseAddMethodWithInvalidValue_InvalidValueRecognized()
         {
             headers.TryAddWithoutValidation("If-Range", "\"tag\"\u4F1A");
-            Assert.Null(headers.GetParsedValues("If-Range"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.IfRange.Descriptor));
             Assert.Equal(1, headers.GetValues("If-Range").Count());
             Assert.Equal("\"tag\"\u4F1A", headers.GetValues("If-Range").First());
 
             headers.Clear();
             headers.TryAddWithoutValidation("If-Range", " \"tag\", ");
-            Assert.Null(headers.GetParsedValues("If-Range"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.IfRange.Descriptor));
             Assert.Equal(1, headers.GetValues("If-Range").Count());
             Assert.Equal(" \"tag\", ", headers.GetValues("If-Range").First());
         }
@@ -729,13 +741,13 @@ namespace System.Net.Http.Tests
         public void From_UseAddMethodWithInvalidValue_InvalidValueRecognized()
         {
             headers.TryAddWithoutValidation("From", " info@example.com ,");
-            Assert.Null(headers.GetParsedValues("From"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.From.Descriptor));
             Assert.Equal(1, headers.GetValues("From").Count());
             Assert.Equal(" info@example.com ,", headers.GetValues("From").First());
 
             headers.Clear();
             headers.TryAddWithoutValidation("From", "info@");
-            Assert.Null(headers.GetParsedValues("From"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.From.Descriptor));
             Assert.Equal(1, headers.GetValues("From").Count());
             Assert.Equal("info@", headers.GetValues("From").First());
         }
@@ -770,13 +782,13 @@ namespace System.Net.Http.Tests
         public void IfModifiedSince_UseAddMethodWithInvalidValue_InvalidValueRecognized()
         {
             headers.TryAddWithoutValidation("If-Modified-Since", " Sun, 06 Nov 1994 08:49:37 GMT ,");
-            Assert.Null(headers.GetParsedValues("If-Modified-Since"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.IfModifiedSince.Descriptor));
             Assert.Equal(1, headers.GetValues("If-Modified-Since").Count());
             Assert.Equal(" Sun, 06 Nov 1994 08:49:37 GMT ,", headers.GetValues("If-Modified-Since").First());
 
             headers.Clear();
             headers.TryAddWithoutValidation("If-Modified-Since", " Sun, 06 Nov ");
-            Assert.Null(headers.GetParsedValues("If-Modified-Since"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.IfModifiedSince.Descriptor));
             Assert.Equal(1, headers.GetValues("If-Modified-Since").Count());
             Assert.Equal(" Sun, 06 Nov ", headers.GetValues("If-Modified-Since").First());
         }
@@ -811,13 +823,13 @@ namespace System.Net.Http.Tests
         public void IfUnmodifiedSince_UseAddMethodWithInvalidValue_InvalidValueRecognized()
         {
             headers.TryAddWithoutValidation("If-Unmodified-Since", " Sun, 06 Nov 1994 08:49:37 GMT ,");
-            Assert.Null(headers.GetParsedValues("If-Unmodified-Since"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.IfUnmodifiedSince.Descriptor));
             Assert.Equal(1, headers.GetValues("If-Unmodified-Since").Count());
             Assert.Equal(" Sun, 06 Nov 1994 08:49:37 GMT ,", headers.GetValues("If-Unmodified-Since").First());
 
             headers.Clear();
             headers.TryAddWithoutValidation("If-Unmodified-Since", " Sun, 06 Nov ");
-            Assert.Null(headers.GetParsedValues("If-Unmodified-Since"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.IfUnmodifiedSince.Descriptor));
             Assert.Equal(1, headers.GetValues("If-Unmodified-Since").Count());
             Assert.Equal(" Sun, 06 Nov ", headers.GetValues("If-Unmodified-Since").First());
         }
@@ -852,13 +864,13 @@ namespace System.Net.Http.Tests
         public void Referrer_UseAddMethodWithInvalidValue_InvalidValueRecognized()
         {
             headers.TryAddWithoutValidation("Referer", " http://example.com http://other");
-            Assert.Null(headers.GetParsedValues("Referer"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.Referer.Descriptor));
             Assert.Equal(1, headers.GetValues("Referer").Count());
             Assert.Equal(" http://example.com http://other", headers.GetValues("Referer").First());
 
             headers.Clear();
             headers.TryAddWithoutValidation("Referer", "http://host /other");
-            Assert.Null(headers.GetParsedValues("Referer"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.Referer.Descriptor));
             Assert.Equal(1, headers.GetValues("Referer").Count());
             Assert.Equal("http://host /other", headers.GetValues("Referer").First());
         }
@@ -896,13 +908,13 @@ namespace System.Net.Http.Tests
         public void MaxForwards_UseAddMethodWithInvalidValue_InvalidValueRecognized()
         {
             headers.TryAddWithoutValidation("Max-Forwards", "15,");
-            Assert.Null(headers.GetParsedValues("Max-Forwards"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.MaxForwards.Descriptor));
             Assert.Equal(1, headers.GetValues("Max-Forwards").Count());
             Assert.Equal("15,", headers.GetValues("Max-Forwards").First());
 
             headers.Clear();
             headers.TryAddWithoutValidation("Max-Forwards", "1.0");
-            Assert.Null(headers.GetParsedValues("Max-Forwards"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.MaxForwards.Descriptor));
             Assert.Equal(1, headers.GetValues("Max-Forwards").Count());
             Assert.Equal("1.0", headers.GetValues("Max-Forwards").First());
         }
@@ -929,7 +941,7 @@ namespace System.Net.Http.Tests
             Assert.True(destination.TransferEncodingChunked.Value);
             Assert.True(destination.ConnectionClose.Value);
 
-            // Negitive
+            // Negative
             source = new HttpRequestHeaders();
             source.ExpectContinue = false;
             source.TransferEncodingChunked = false;
@@ -980,7 +992,7 @@ namespace System.Net.Http.Tests
             Assert.True(destination.TransferEncodingChunked.Value);
             Assert.True(destination.ConnectionClose.Value);
 
-            // Negitive
+            // Negative
             destination = new HttpRequestHeaders();
             destination.ExpectContinue = false;
             destination.TransferEncodingChunked = false;
@@ -1116,7 +1128,7 @@ namespace System.Net.Http.Tests
             // Connection collection has 2 values plus 'chunked'
             Assert.Equal(3, headers.TransferEncoding.Count);
             Assert.Equal(3, headers.GetValues("Transfer-Encoding").Count());
-            Assert.Equal(true, headers.TransferEncodingChunked);
+            Assert.True(headers.TransferEncodingChunked);
             Assert.Equal(new TransferCodingHeaderValue("custom1"), headers.TransferEncoding.ElementAt(0));
             Assert.Equal(new TransferCodingHeaderValue("custom2"), headers.TransferEncoding.ElementAt(1));
 
@@ -1172,13 +1184,13 @@ namespace System.Net.Http.Tests
         public void TransferEncoding_UseAddMethodWithInvalidValue_InvalidValueRecognized()
         {
             headers.TryAddWithoutValidation("Transfer-Encoding", "custom\u4F1A");
-            Assert.Null(headers.GetParsedValues("Transfer-Encoding"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.TransferEncoding.Descriptor));
             Assert.Equal(1, headers.GetValues("Transfer-Encoding").Count());
             Assert.Equal("custom\u4F1A", headers.GetValues("Transfer-Encoding").First());
 
             headers.Clear();
             headers.TryAddWithoutValidation("Transfer-Encoding", "custom1 custom2");
-            Assert.Null(headers.GetParsedValues("Transfer-Encoding"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.TransferEncoding.Descriptor));
             Assert.Equal(1, headers.GetValues("Transfer-Encoding").Count());
             Assert.Equal("custom1 custom2", headers.GetValues("Transfer-Encoding").First());
 
@@ -1226,13 +1238,13 @@ namespace System.Net.Http.Tests
         public void Upgrade_UseAddMethodWithInvalidValue_InvalidValueRecognized()
         {
             headers.TryAddWithoutValidation("Upgrade", "custom\u4F1A");
-            Assert.Null(headers.GetParsedValues("Upgrade"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.Upgrade.Descriptor));
             Assert.Equal(1, headers.GetValues("Upgrade").Count());
             Assert.Equal("custom\u4F1A", headers.GetValues("Upgrade").First());
 
             headers.Clear();
             headers.TryAddWithoutValidation("Upgrade", "custom1 custom2");
-            Assert.Null(headers.GetParsedValues("Upgrade"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.Upgrade.Descriptor));
             Assert.Equal(1, headers.GetValues("Upgrade").Count());
             Assert.Equal("custom1 custom2", headers.GetValues("Upgrade").First());
         }
@@ -1271,13 +1283,13 @@ namespace System.Net.Http.Tests
         public void Date_UseAddMethodWithInvalidValue_InvalidValueRecognized()
         {
             headers.TryAddWithoutValidation("Date", " Sun, 06 Nov 1994 08:49:37 GMT ,");
-            Assert.Null(headers.GetParsedValues("Date"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.Date.Descriptor));
             Assert.Equal(1, headers.GetValues("Date").Count());
             Assert.Equal(" Sun, 06 Nov 1994 08:49:37 GMT ,", headers.GetValues("Date").First());
 
             headers.Clear();
             headers.TryAddWithoutValidation("Date", " Sun, 06 Nov ");
-            Assert.Null(headers.GetParsedValues("Date"));
+            Assert.Null(headers.GetParsedValues(KnownHeaders.Date.Descriptor));
             Assert.Equal(1, headers.GetValues("Date").Count());
             Assert.Equal(" Sun, 06 Nov ", headers.GetValues("Date").First());
         }
@@ -1524,16 +1536,16 @@ namespace System.Net.Http.Tests
 
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml"));
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/xml"));
-            expected += HttpKnownHeaderNames.Accept + ": application/xml, */xml\r\n";
+            expected += HttpKnownHeaderNames.Accept + ": application/xml, */xml" + Environment.NewLine;
 
             request.Headers.Authorization = new AuthenticationHeaderValue("Basic");
-            expected += HttpKnownHeaderNames.Authorization + ": Basic\r\n";
+            expected += HttpKnownHeaderNames.Authorization + ": Basic" + Environment.NewLine;
 
             request.Headers.ExpectContinue = true;
-            expected += HttpKnownHeaderNames.Expect + ": 100-continue\r\n";
+            expected += HttpKnownHeaderNames.Expect + ": 100-continue" + Environment.NewLine;
 
             request.Headers.TransferEncodingChunked = true;
-            expected += HttpKnownHeaderNames.TransferEncoding + ": chunked\r\n";
+            expected += HttpKnownHeaderNames.TransferEncoding + ": chunked" + Environment.NewLine;
 
             Assert.Equal(expected, request.Headers.ToString());
         }

@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Linq;
@@ -53,14 +54,16 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void CreatesInstanceWithNoDependencies()
         {
             var cc = CreateContainer(typeof(A));
             var x = cc.GetExport<IA>();
-            Assert.IsAssignableFrom(typeof(A), x);
+            Assert.IsAssignableFrom<A>(x);
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void DefaultLifetimeIsNonShared()
         {
             var cc = CreateContainer(typeof(A));
@@ -70,14 +73,16 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void Composes()
         {
             var cc = CreateContainer(typeof(A), typeof(B));
             var x = cc.GetExport<B>();
-            Assert.IsAssignableFrom(typeof(A), x.A);
+            Assert.IsAssignableFrom<A>(x.A);
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void CanSpecifyExportsWithConventionBuilder()
         {
             var rb = new ConventionBuilder();
@@ -88,6 +93,7 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void CanSpecifyLifetimeWithConventionBuilder()
         {
             var rb = new ConventionBuilder();
@@ -99,16 +105,18 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void InjectsPropertyImports()
         {
             var rb = new ConventionBuilder();
             rb.ForType<HasPropertyA>().ImportProperty(a => a.A).Export();
             var cc = CreateContainer(rb, typeof(HasPropertyA), typeof(A));
             var x = cc.GetExport<HasPropertyA>();
-            Assert.IsAssignableFrom(typeof(A), x.A);
+            Assert.IsAssignableFrom<A>(x.A);
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void VerifyAssemblyNameCanBeUsedWithContainer()
         {
             var test = new ContainerConfiguration()
@@ -120,6 +128,7 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void VerifyAssemblyWithTwoBaseTypeWithOnlyOneExportedWorks()
         {
             var test = new ContainerConfiguration()
@@ -128,7 +137,7 @@ namespace System.Composition.UnitTests
             var b = test.GetExport<ClassWithDependecyAndSameBaseType>();
             Assert.NotNull(b);
             Assert.NotNull(b._dep);
-            Assert.Equal(b._dep.GetType(), typeof(TestDependency));
+            Assert.Equal(typeof(TestDependency), b._dep.GetType());
         }
     }
 }

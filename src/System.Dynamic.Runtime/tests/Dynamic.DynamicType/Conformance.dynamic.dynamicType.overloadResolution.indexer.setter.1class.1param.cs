@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadResolution.indexer.setter.Oneclass.Oneparam.noaccessibility004.noaccessibility004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadResolution.indexer.setter.Oneclass.Oneparam.noaccessibility004.noaccessibility004;
-
     // <Title>Call methods that have different accessibility</Title>
     // <Description>
     // </Description>
@@ -27,7 +26,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadRes
     public class Test
     {
         public static int Status = -1;
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod(null));
@@ -48,15 +47,10 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadRes
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadResolution.indexer.setter.Oneclass.Oneparam.errorverifier.errorverifier
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadResolution.indexer.setter.Oneclass.Oneparam.errorverifier.errorverifier;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadResolution.indexer.setter.Oneclass.Oneparam.param012.param012;
     using System;
-    using System.Collections;
-    using System.IO;
     using System.Globalization;
     using System.Reflection;
     using System.Resources;
-    using Microsoft.CSharp.RuntimeBinder;
 
     public enum ErrorElementId
     {
@@ -262,7 +256,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadRes
             // should not happen
             if (null == rm)
                 return false;
-            if (String.IsNullOrEmpty(id) || String.IsNullOrEmpty(actualError))
+            if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(actualError))
             {
                 System.Console.WriteLine("Empty error id or actual message");
                 return false;
@@ -271,10 +265,10 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadRes
             string message = rm.GetString(id, null);
             if ((null != args) && (0 < args.Length))
             {
-                message = String.Format(CultureInfo.InvariantCulture, message, args);
+                message = string.Format(CultureInfo.InvariantCulture, message, args);
             }
 
-            bool ret = 0 == String.CompareOrdinal(message, actualError);
+            bool ret = 0 == string.CompareOrdinal(message, actualError);
             // debug
             if (!ret)
             {
@@ -291,7 +285,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadRes
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadResolution.indexer.setter.Oneclass.Oneparam.param012.param012
 {
     using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadResolution.indexer.setter.Oneclass.Oneparam.errorverifier.errorverifier;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadResolution.indexer.setter.Oneclass.Oneparam.param012.param012;
 
     // <Title>Call methods that have different parameter modifiers with dynamic</Title>
     // <Description>
@@ -349,7 +342,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadRes
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadResolution.indexer.setter.Oneclass.Oneparam.param014.param014
 {
     using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadResolution.indexer.setter.Oneclass.Oneparam.errorverifier.errorverifier;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.overloadResolution.indexer.setter.Oneclass.Oneparam.param014.param014;
 
     // <Title>Call methods that have different parameter modifiers with dynamic</Title>
     // <Description>

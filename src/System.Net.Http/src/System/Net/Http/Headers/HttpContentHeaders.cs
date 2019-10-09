@@ -1,9 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Contracts;
 
 namespace System.Net.Http.Headers
 {
@@ -11,10 +12,7 @@ namespace System.Net.Http.Headers
         Justification = "This is not a collection")]
     public sealed class HttpContentHeaders : HttpHeaders
     {
-        private static readonly Dictionary<string, HttpHeaderParser> s_parserStore;
-        private static readonly HashSet<string> s_invalidHeaders;
-
-        private Func<long?> _calculateLengthFunc;
+        private readonly HttpContent _parent;
         private bool _contentLengthSet;
 
         private HttpHeaderValueCollection<string> _allow;
@@ -27,7 +25,7 @@ namespace System.Net.Http.Headers
             {
                 if (_allow == null)
                 {
-                    _allow = new HttpHeaderValueCollection<string>(HttpKnownHeaderNames.Allow,
+                    _allow = new HttpHeaderValueCollection<string>(KnownHeaders.Allow.Descriptor,
                         this, HeaderUtilities.TokenValidator);
                 }
                 return _allow;
@@ -36,11 +34,11 @@ namespace System.Net.Http.Headers
 
         public ContentDispositionHeaderValue ContentDisposition
         {
-            get { return (ContentDispositionHeaderValue)GetParsedValues(HttpKnownHeaderNames.ContentDisposition); }
-            set { SetOrRemoveParsedValue(HttpKnownHeaderNames.ContentDisposition, value); }
+            get { return (ContentDispositionHeaderValue)GetParsedValues(KnownHeaders.ContentDisposition.Descriptor); }
+            set { SetOrRemoveParsedValue(KnownHeaders.ContentDisposition.Descriptor, value); }
         }
 
-        // Must be a collection (and not provide properties like "GZip", "Deflate", etc.) since the 
+        // Must be a collection (and not provide properties like "GZip", "Deflate", etc.) since the
         // order matters!
         public ICollection<string> ContentEncoding
         {
@@ -48,7 +46,7 @@ namespace System.Net.Http.Headers
             {
                 if (_contentEncoding == null)
                 {
-                    _contentEncoding = new HttpHeaderValueCollection<string>(HttpKnownHeaderNames.ContentEncoding,
+                    _contentEncoding = new HttpHeaderValueCollection<string>(KnownHeaders.ContentEncoding.Descriptor,
                         this, HeaderUtilities.TokenValidator);
                 }
                 return _contentEncoding;
@@ -61,7 +59,7 @@ namespace System.Net.Http.Headers
             {
                 if (_contentLanguage == null)
                 {
-                    _contentLanguage = new HttpHeaderValueCollection<string>(HttpKnownHeaderNames.ContentLanguage,
+                    _contentLanguage = new HttpHeaderValueCollection<string>(KnownHeaders.ContentLanguage.Descriptor,
                         this, HeaderUtilities.TokenValidator);
                 }
                 return _contentLanguage;
@@ -73,7 +71,7 @@ namespace System.Net.Http.Headers
             get
             {
                 // 'Content-Length' can only hold one value. So either we get 'null' back or a boxed long value.
-                object storedValue = GetParsedValues(HttpKnownHeaderNames.ContentLength);
+                object storedValue = GetParsedValues(KnownHeaders.ContentLength.Descriptor);
 
                 // Only try to calculate the length if the user didn't set the value explicitly using the setter.
                 if (!_contentLengthSet && (storedValue == null))
@@ -81,11 +79,11 @@ namespace System.Net.Http.Headers
                     // If we don't have a value for Content-Length in the store, try to let the content calculate
                     // it's length. If the content object is able to calculate the length, we'll store it in the
                     // store.
-                    long? calculatedLength = _calculateLengthFunc();
+                    long? calculatedLength = _parent.GetComputedOrBufferLength();
 
                     if (calculatedLength != null)
                     {
-                        SetParsedValue(HttpKnownHeaderNames.ContentLength, (object)calculatedLength.Value);
+                        SetParsedValue(KnownHeaders.ContentLength.Descriptor, (object)calculatedLength.Value);
                     }
 
                     return calculatedLength;
@@ -102,93 +100,53 @@ namespace System.Net.Http.Headers
             }
             set
             {
-                SetOrRemoveParsedValue(HttpKnownHeaderNames.ContentLength, value); // box long value
+                SetOrRemoveParsedValue(KnownHeaders.ContentLength.Descriptor, value); // box long value
                 _contentLengthSet = true;
             }
         }
 
         public Uri ContentLocation
         {
-            get { return (Uri)GetParsedValues(HttpKnownHeaderNames.ContentLocation); }
-            set { SetOrRemoveParsedValue(HttpKnownHeaderNames.ContentLocation, value); }
+            get { return (Uri)GetParsedValues(KnownHeaders.ContentLocation.Descriptor); }
+            set { SetOrRemoveParsedValue(KnownHeaders.ContentLocation.Descriptor, value); }
         }
 
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays",
             Justification = "In this case the 'value' is the byte array. I.e. the array is treated as a value.")]
         public byte[] ContentMD5
         {
-            get { return (byte[])GetParsedValues(HttpKnownHeaderNames.ContentMD5); }
-            set { SetOrRemoveParsedValue(HttpKnownHeaderNames.ContentMD5, value); }
+            get { return (byte[])GetParsedValues(KnownHeaders.ContentMD5.Descriptor); }
+            set { SetOrRemoveParsedValue(KnownHeaders.ContentMD5.Descriptor, value); }
         }
 
         public ContentRangeHeaderValue ContentRange
         {
-            get { return (ContentRangeHeaderValue)GetParsedValues(HttpKnownHeaderNames.ContentRange); }
-            set { SetOrRemoveParsedValue(HttpKnownHeaderNames.ContentRange, value); }
+            get { return (ContentRangeHeaderValue)GetParsedValues(KnownHeaders.ContentRange.Descriptor); }
+            set { SetOrRemoveParsedValue(KnownHeaders.ContentRange.Descriptor, value); }
         }
 
         public MediaTypeHeaderValue ContentType
         {
-            get { return (MediaTypeHeaderValue)GetParsedValues(HttpKnownHeaderNames.ContentType); }
-            set { SetOrRemoveParsedValue(HttpKnownHeaderNames.ContentType, value); }
+            get { return (MediaTypeHeaderValue)GetParsedValues(KnownHeaders.ContentType.Descriptor); }
+            set { SetOrRemoveParsedValue(KnownHeaders.ContentType.Descriptor, value); }
         }
 
         public DateTimeOffset? Expires
         {
-            get { return HeaderUtilities.GetDateTimeOffsetValue(HttpKnownHeaderNames.Expires, this); }
-            set { SetOrRemoveParsedValue(HttpKnownHeaderNames.Expires, value); }
+            get { return HeaderUtilities.GetDateTimeOffsetValue(KnownHeaders.Expires.Descriptor, this, DateTimeOffset.MinValue); }
+            set { SetOrRemoveParsedValue(KnownHeaders.Expires.Descriptor, value); }
         }
 
         public DateTimeOffset? LastModified
         {
-            get { return HeaderUtilities.GetDateTimeOffsetValue(HttpKnownHeaderNames.LastModified, this); }
-            set { SetOrRemoveParsedValue(HttpKnownHeaderNames.LastModified, value); }
+            get { return HeaderUtilities.GetDateTimeOffsetValue(KnownHeaders.LastModified.Descriptor, this); }
+            set { SetOrRemoveParsedValue(KnownHeaders.LastModified.Descriptor, value); }
         }
 
-        internal HttpContentHeaders(Func<long?> calculateLengthFunc)
+        internal HttpContentHeaders(HttpContent parent)
+            : base(HttpHeaderType.Content | HttpHeaderType.Custom, HttpHeaderType.None)
         {
-            _calculateLengthFunc = calculateLengthFunc;
-
-            SetConfiguration(s_parserStore, s_invalidHeaders);
-        }
-
-        static HttpContentHeaders()
-        {
-            s_parserStore = new Dictionary<string, HttpHeaderParser>(StringComparer.OrdinalIgnoreCase);
-
-            s_parserStore.Add(HttpKnownHeaderNames.Allow, GenericHeaderParser.TokenListParser);
-            s_parserStore.Add(HttpKnownHeaderNames.ContentDisposition, GenericHeaderParser.ContentDispositionParser);
-            s_parserStore.Add(HttpKnownHeaderNames.ContentEncoding, GenericHeaderParser.TokenListParser);
-            s_parserStore.Add(HttpKnownHeaderNames.ContentLanguage, GenericHeaderParser.TokenListParser);
-            s_parserStore.Add(HttpKnownHeaderNames.ContentLength, Int64NumberHeaderParser.Parser);
-            s_parserStore.Add(HttpKnownHeaderNames.ContentLocation, UriHeaderParser.RelativeOrAbsoluteUriParser);
-            s_parserStore.Add(HttpKnownHeaderNames.ContentMD5, ByteArrayHeaderParser.Parser);
-            s_parserStore.Add(HttpKnownHeaderNames.ContentRange, GenericHeaderParser.ContentRangeParser);
-            s_parserStore.Add(HttpKnownHeaderNames.ContentType, MediaTypeHeaderParser.SingleValueParser);
-            s_parserStore.Add(HttpKnownHeaderNames.Expires, DateHeaderParser.Parser);
-            s_parserStore.Add(HttpKnownHeaderNames.LastModified, DateHeaderParser.Parser);
-
-            s_invalidHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            HttpRequestHeaders.AddKnownHeaders(s_invalidHeaders);
-            HttpResponseHeaders.AddKnownHeaders(s_invalidHeaders);
-            HttpGeneralHeaders.AddKnownHeaders(s_invalidHeaders);
-        }
-
-        internal static void AddKnownHeaders(HashSet<string> headerSet)
-        {
-            Contract.Requires(headerSet != null);
-
-            headerSet.Add(HttpKnownHeaderNames.Allow);
-            headerSet.Add(HttpKnownHeaderNames.ContentDisposition);
-            headerSet.Add(HttpKnownHeaderNames.ContentEncoding);
-            headerSet.Add(HttpKnownHeaderNames.ContentLanguage);
-            headerSet.Add(HttpKnownHeaderNames.ContentLength);
-            headerSet.Add(HttpKnownHeaderNames.ContentLocation);
-            headerSet.Add(HttpKnownHeaderNames.ContentMD5);
-            headerSet.Add(HttpKnownHeaderNames.ContentRange);
-            headerSet.Add(HttpKnownHeaderNames.ContentType);
-            headerSet.Add(HttpKnownHeaderNames.Expires);
-            headerSet.Add(HttpKnownHeaderNames.LastModified);
+            _parent = parent;
         }
     }
 }

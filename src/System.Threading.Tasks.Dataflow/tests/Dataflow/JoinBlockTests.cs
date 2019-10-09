@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Linq;
@@ -64,8 +65,8 @@ namespace System.Threading.Tasks.Dataflow.Tests
             Assert.Throws<NotSupportedException>(() => { var ignored = new JoinBlock<int, int>().Target1.Completion; });
             Assert.Throws<NotSupportedException>(() => { var ignored = new JoinBlock<int, int, int>().Target3.Completion; });
             Assert.Throws<ArgumentNullException>(() => new JoinBlock<int, int>().Target1.Fault(null));
-            Assert.Throws<ArgumentException>(() => new JoinBlock<int, int>().Target1.OfferMessage(default(DataflowMessageHeader), 1, null, false));
-            Assert.Throws<ArgumentException>(() => new JoinBlock<int, int>().Target1.OfferMessage(new DataflowMessageHeader(1), 1, null, true));
+            AssertExtensions.Throws<ArgumentException>("messageHeader", () => new JoinBlock<int, int>().Target1.OfferMessage(default(DataflowMessageHeader), 1, null, false));
+            AssertExtensions.Throws<ArgumentException>("consumeToAccept", () => new JoinBlock<int, int>().Target1.OfferMessage(new DataflowMessageHeader(1), 1, null, true));
 
             DataflowTestHelpers.TestArgumentsExceptions<Tuple<int, int>>(new JoinBlock<int, int>());
             DataflowTestHelpers.TestArgumentsExceptions<Tuple<int, int, int>>(new JoinBlock<int, int, int>());
@@ -114,7 +115,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
             }
             for (int i = 0; i < iter; i++)
             {
-                Tuple<int, int> msg = await block2.ReceiveAsync(); 
+                Tuple<int, int> msg = await block2.ReceiveAsync();
                 Assert.Equal(expected: i, actual: msg.Item1);
                 Assert.Equal(expected: i + 1, actual: msg.Item2);
             }
@@ -196,14 +197,14 @@ namespace System.Threading.Tasks.Dataflow.Tests
         [Fact]
         public async Task TestPrecancellation2()
         {
-            var b = new JoinBlock<int, int>(new GroupingDataflowBlockOptions { 
-                CancellationToken = new CancellationToken(canceled: true), MaxNumberOfGroups = 1 
+            var b = new JoinBlock<int, int>(new GroupingDataflowBlockOptions {
+                CancellationToken = new CancellationToken(canceled: true), MaxNumberOfGroups = 1
             });
 
             Assert.NotNull(b.LinkTo(DataflowBlock.NullTarget<Tuple<int, int>>()));
             Assert.False(b.Target1.Post(42));
             Assert.False(b.Target2.Post(43));
-            
+
             Task<bool> t1 = b.Target1.SendAsync(42);
             Task<bool> t2 = b.Target2.SendAsync(43);
             Assert.True(t1.IsCompleted);
@@ -355,7 +356,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
                     return 0;
                 }
             }).ToArray();
-                
+
             var options = new GroupingDataflowBlockOptions { Greedy = false };
             JoinBlock<int, int> join = new JoinBlock<int, int>(options);
 

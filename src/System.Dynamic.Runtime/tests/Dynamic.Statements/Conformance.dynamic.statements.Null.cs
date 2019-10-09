@@ -1,16 +1,15 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.Null.nullable01.nullable01
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.Null.nullable01.nullable01;
     // <Description>Nullable invocation of GetValueOrDefault</Description>
     // <RelatedBugs></RelatedBugs>
     // <Expects status=success></Expects>
     // <Code>
-    using System;
 
     public class A
     {
@@ -35,8 +34,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.Null.nullabl
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.Null.null002.null002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.Null.null002.null002;
-
     public class Test
     {
         [Fact]
@@ -83,8 +80,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.Null.null002
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.Null.null003.null003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.Null.null003.null003;
-
     public class Test
     {
         [Fact]
@@ -123,8 +118,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.Null.null003
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.Null.null004.null004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.Null.null004.null004;
-
     public class Test
     {
         [Fact]
@@ -163,8 +156,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.Null.null004
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.Null.void001.void001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.Null.void001.void001;
-
     public class Test
     {
         [Fact]

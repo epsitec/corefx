@@ -1,10 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Text;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 
 using Xunit;
 
@@ -14,28 +14,44 @@ namespace System.Net.Http.Tests
     {
         private const string ValidTokenChars = "!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz^_`|~";
 
-        [Fact]
-        public void IsTokenChar_IterateArrayWithAllValidTokenChars_AllCharsConsideredValid()
+        public static IEnumerable<object[]> ValidTokenCharsArguments
         {
-            for (int i = 0; i < ValidTokenChars.Length; i++)
+            get
             {
-                // TODO: This test should be a [Theory]
-                Assert.True(HttpRuleParser.IsTokenChar(ValidTokenChars[i]));
+                foreach (var c in ValidTokenChars)
+                {
+                    yield return new object[] { c };
+                }
             }
         }
 
-        [Fact]
-        public void IsTokenChar_IterateArrayWithAllInvalidTokenChars_AllCharsConsideredInvalid()
+        public static IEnumerable<object[]> InvalidTokenCharsArguments
         {
-            // All octets not in 'validTokenChars' must be considered invalid characters.
-            for (int i = 0; i < 256; i++)
+            get
             {
-                if (ValidTokenChars.IndexOf((char)i) == -1)
+                // All octets not in 'ValidTokenChars' must be considered invalid characters.
+                for (int i = 0; i < 256; i++)
                 {
-                    // TODO: This test should be a [Theory]
-                    Assert.False(HttpRuleParser.IsTokenChar((char)i));
+                    if (ValidTokenChars.IndexOf((char)i) == -1)
+                    {
+                        yield return new object[] { (char)i };
+                    }
                 }
             }
+        }
+
+        [Theory]
+        [MemberData(nameof(ValidTokenCharsArguments))]
+        public void IsTokenChar_ValidTokenChars_ConsideredValid(char token)
+        {
+            Assert.True(HttpRuleParser.IsTokenChar(token));
+        }
+
+        [Theory]
+        [MemberData(nameof(InvalidTokenCharsArguments))]
+        public void IsTokenChar_InvalidTokenChars_ConsideredInvalid(char token)
+        {
+            Assert.False(HttpRuleParser.IsTokenChar(token));
         }
 
         [Fact]
@@ -143,7 +159,7 @@ namespace System.Net.Http.Tests
         public void GetQuotedPairLength_SetOfInvalidQuotedPairs_AllConsideredInvalid()
         {
             // only ASCII chars allowed in quoted-pair
-            AssertGetQuotedPairLength("\\ü", 0, 0, HttpParseResult.InvalidFormat);
+            AssertGetQuotedPairLength("\\\u00FC", 0, 0, HttpParseResult.InvalidFormat);
 
             // a quoted-pair needs 1 char after '\'
             AssertGetQuotedPairLength("\\", 0, 0, HttpParseResult.InvalidFormat);
@@ -163,8 +179,8 @@ namespace System.Net.Http.Tests
             AssertGetQuotedStringLength("\"\\x\"", 0, 4, HttpParseResult.Parsed); // "\x"
             AssertGetQuotedStringLength("\"\\\"\"", 0, 4, HttpParseResult.Parsed); // "\""
             AssertGetQuotedStringLength("\"before \\\" after\"", 0, 17, HttpParseResult.Parsed); // "before \" after"
-            AssertGetQuotedStringLength("\"\\ü\"", 0, 4, HttpParseResult.Parsed); // "\ü"
-            AssertGetQuotedStringLength("\"a\\ü\\\"b\"", 0, 8, HttpParseResult.Parsed); // "a\ü\"b"
+            AssertGetQuotedStringLength("\"\\\u00FC\"", 0, 4, HttpParseResult.Parsed); // "\\u00FC"
+            AssertGetQuotedStringLength("\"a\\\u00FC\\\"b\"", 0, 8, HttpParseResult.Parsed); // "a\\u00FC\"b"
             AssertGetQuotedStringLength("\"\\\"", 0, 3, HttpParseResult.Parsed); // "\"
             AssertGetQuotedStringLength("\"\\\"\"", 0, 4, HttpParseResult.Parsed); // "\""
             AssertGetQuotedStringLength(" \"\\\"", 1, 3, HttpParseResult.Parsed); // "\"
@@ -175,7 +191,7 @@ namespace System.Net.Http.Tests
             AssertGetQuotedStringLength("\"(x)\"", 0, 5, HttpParseResult.Parsed); // "(x)"
             AssertGetQuotedStringLength(" \" (x) \" ", 1, 7, HttpParseResult.Parsed); // " (x) "
             AssertGetQuotedStringLength("\"text\r\n new line\"", 0, 17, HttpParseResult.Parsed); // "text<crlf> new line"
-            AssertGetQuotedStringLength("\"a\\ü\\\"b\\\"c\\\"\\\"d\\\"\"", 0, 18, HttpParseResult.Parsed); // "a\ü\"b\"c\"\"d\""
+            AssertGetQuotedStringLength("\"a\\\u00FC\\\"b\\\"c\\\"\\\"d\\\"\"", 0, 18, HttpParseResult.Parsed); // "a\\u00FC\"b\"c\"\"d\""
             AssertGetQuotedStringLength("\"\\\" \"", 0, 5, HttpParseResult.Parsed); // "\" "
         }
 
@@ -203,7 +219,7 @@ namespace System.Net.Http.Tests
             AssertGetCommentLength("(\\x)", 0, 4, HttpParseResult.Parsed); // (\x)
             AssertGetCommentLength("(\\))", 0, 4, HttpParseResult.Parsed); // (\))
             AssertGetCommentLength("(\\()", 0, 4, HttpParseResult.Parsed); // (\()
-            AssertGetCommentLength("(\\ü)", 0, 4, HttpParseResult.Parsed); // (\ü)
+            AssertGetCommentLength("(\\\u00FC)", 0, 4, HttpParseResult.Parsed); // (\\u00FC)
             AssertGetCommentLength("(\\)", 0, 3, HttpParseResult.Parsed); // (\)
             AssertGetCommentLength("(s\\x)", 0, 5, HttpParseResult.Parsed); // (s\x)
             AssertGetCommentLength("(\\xx)", 0, 5, HttpParseResult.Parsed); // (\xx)
@@ -225,6 +241,8 @@ namespace System.Net.Http.Tests
             AssertGetCommentLength("((\\)))", 0, 6, HttpParseResult.Parsed); // ((\))) -> quoted-pair )
             AssertGetCommentLength("((\\())", 0, 6, HttpParseResult.Parsed); // ((\()) -> quoted-pair (
             AssertGetCommentLength("((x)))", 0, 5, HttpParseResult.Parsed); // final ) ignored
+            AssertGetCommentLength("(x (y)(z))", 0, 10, HttpParseResult.Parsed);
+            AssertGetCommentLength("(x(y)\\()", 0, 8, HttpParseResult.Parsed);
         }
 
         [Fact]
@@ -238,9 +256,15 @@ namespace System.Net.Http.Tests
             AssertGetCommentLength("(x(((((((((x ", 0, 0, HttpParseResult.InvalidFormat);
 
             // To prevent attacker from sending comments resulting in stack overflow exceptions, we limit the depth
-            // of nested comments. I.e. the following comment is considered invalid since it is considered a 
+            // of nested comments. I.e. the following comment is considered invalid since it is considered a
             // "malicious" comment.
             AssertGetCommentLength("((((((((((x))))))))))", 0, 0, HttpParseResult.InvalidFormat);
+            AssertGetCommentLength("(x(x)", 0, 0, HttpParseResult.InvalidFormat);
+            AssertGetCommentLength("(x(x(", 0, 0, HttpParseResult.InvalidFormat);
+            AssertGetCommentLength("(x(()", 0, 0, HttpParseResult.InvalidFormat);
+            AssertGetCommentLength("(()", 0, 0, HttpParseResult.InvalidFormat);
+            AssertGetCommentLength("(", 0, 0, HttpParseResult.InvalidFormat);
+            AssertGetCommentLength("((x)", 0, 0, HttpParseResult.InvalidFormat);
         }
 
         [Fact]
@@ -249,70 +273,6 @@ namespace System.Net.Http.Tests
             AssertGetCommentLength("a(x", 0, 0, HttpParseResult.NotParsed); // a"x"
             AssertGetCommentLength("\"(x", 0, 0, HttpParseResult.NotParsed); // ("x"
             AssertGetCommentLength("\\(x", 0, 0, HttpParseResult.NotParsed); // \"x"
-        }
-
-        [Fact]
-        public void DateToString_UseRfcSampleTimestamp_FormattedAccordingToRfc1123()
-        {
-            // We don't need extensive tests, since we let DateTimeOffset do the formatting. This test is just
-            // to validate that we use the correct parameters when calling into DateTimeOffset.ToString().
-            DateTimeOffset dateTime = new DateTimeOffset(1994, 11, 6, 8, 49, 37, TimeSpan.Zero);
-            Assert.Equal("Sun, 06 Nov 1994 08:49:37 GMT", HttpRuleParser.DateToString(dateTime));
-        }
-
-        [Fact]
-        public void TryStringToDate_UseOfValidDateTimeStringsInDifferentFormats_ParsedCorrectly()
-        {
-            // We don't need extensive tests, since we let DateTimeOffset do the parsing. This test is just
-            // to validate that we use the correct parameters when calling into DateTimeOffset.ToString().
-
-            // RFC1123 date/time value
-            DateTimeOffset expected = new DateTimeOffset(1994, 11, 6, 8, 49, 37, TimeSpan.Zero);
-            DateTimeOffset result = DateTimeOffset.MinValue;
-            Assert.True(HttpRuleParser.TryStringToDate("Sun, 06 Nov 1994 08:49:37 GMT", out result));
-            Assert.Equal(expected, result);
-            Assert.True(HttpRuleParser.TryStringToDate("Sun, 06 Nov 1994 08:49:37", out result));
-            Assert.Equal(expected, result);
-            Assert.True(HttpRuleParser.TryStringToDate("6 Nov 1994 8:49:37 GMT", out result));
-            Assert.Equal(expected, result);
-            Assert.True(HttpRuleParser.TryStringToDate("6 Nov 1994 8:49:37", out result));
-            Assert.Equal(expected, result);
-            Assert.True(HttpRuleParser.TryStringToDate("Sun, 06 Nov 94 08:49:37", out result));
-            Assert.Equal(expected, result);
-            Assert.True(HttpRuleParser.TryStringToDate("6 Nov 94 8:49:37", out result));
-            Assert.Equal(expected, result);
-
-            // RFC850 date/time value
-            Assert.True(HttpRuleParser.TryStringToDate("Sunday, 06-Nov-94 08:49:37 GMT", out result));
-            Assert.Equal(expected, result);
-            Assert.True(HttpRuleParser.TryStringToDate("Sunday, 6-Nov-94 8:49:37", out result));
-            Assert.Equal(expected, result);
-
-            // ANSI C's asctime() format
-            Assert.True(HttpRuleParser.TryStringToDate("Sun Nov  06 08:49:37 1994", out result));
-            Assert.Equal(expected, result);
-            Assert.True(HttpRuleParser.TryStringToDate("Sun Nov  6 8:49:37 1994", out result));
-            Assert.Equal(expected, result);
-
-            // RFC5322 date/time
-            expected = new DateTimeOffset(1997, 11, 8, 9, 55, 6, new TimeSpan(-6, 0, 0));
-            Assert.True(HttpRuleParser.TryStringToDate("Sat, 08 Nov 1997 09:55:06 -0600", out result));
-            Assert.Equal(expected, result);
-            expected = new DateTimeOffset(1997, 11, 8, 9, 55, 6, TimeSpan.Zero);
-            Assert.True(HttpRuleParser.TryStringToDate("8 Nov 1997 9:55:6", out result));
-            Assert.Equal(expected, result);
-            expected = new DateTimeOffset(1997, 11, 8, 9, 55, 6, new TimeSpan(2, 0, 0));
-            Assert.True(HttpRuleParser.TryStringToDate("Sat, 8 Nov 1997 9:55:6 +0200", out result));
-            Assert.Equal(expected, result);
-        }
-
-        [Fact]
-        public void TryStringToDate_UseInvalidDateTimeString_Throw()
-        {
-            DateTimeOffset result = DateTimeOffset.MinValue;
-            Assert.False(HttpRuleParser.TryStringToDate("Sun, 06 Nov 1994 08:49:37 GMT invalid", out result));
-            Assert.False(HttpRuleParser.TryStringToDate("Sun, 06 Nov 1994 08:49:37 GMT,", out result));
-            Assert.False(HttpRuleParser.TryStringToDate(",Sun, 06 Nov 1994 08:49:37 GMT", out result));
         }
 
         [Fact]

@@ -1,11 +1,9 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Diagnostics;
-using System.Security.Cryptography;
-
-using Internal.Cryptography;
 
 namespace Internal.Cryptography
 {
@@ -19,52 +17,71 @@ namespace Internal.Cryptography
     //
     internal sealed class HMACCommon
     {
-        public HMACCommon(String hashAlgorithmId, byte[] key)
+        public HMACCommon(string hashAlgorithmId, byte[] key, int blockSize)
         {
+            Debug.Assert(!string.IsNullOrEmpty(hashAlgorithmId));
+            Debug.Assert(blockSize > 0 || blockSize == -1);
+
             _hashAlgorithmId = hashAlgorithmId;
+            _blockSize = blockSize;
             ChangeKey(key);
         }
 
-        public int HashSizeInBits
-        {
-            get
-            {
-                return _hashProvider.HashSizeInBytes * 8;
-            }
-        }
+        public int HashSizeInBits => _hMacProvider.HashSizeInBytes * 8;
 
         public void ChangeKey(byte[] key)
         {
-            HashProvider oldHashProvider = _hashProvider;
-            _hashProvider = null;
-            if (oldHashProvider != null)
-                oldHashProvider.Dispose(true);
-            _hashProvider = HashProviderDispenser.CreateMacProvider(_hashAlgorithmId, key);
+            // If _blockSize is -1 the key isn't going to be extractable by the object holder,
+            // so there's no point in recalculating it in managed code.
+            if (key.Length > _blockSize && _blockSize > 0)
+            {
+                // Perform RFC 2104, section 2 key adjustment.
+                if (_lazyHashProvider == null)
+                {
+                    _lazyHashProvider = HashProviderDispenser.CreateHashProvider(_hashAlgorithmId);
+                }
+                _lazyHashProvider.AppendHashData(key, 0, key.Length);
+                key = _lazyHashProvider.FinalizeHashAndReset();
+            }
+
+            HashProvider oldHashProvider = _hMacProvider;
+            _hMacProvider = null;
+            oldHashProvider?.Dispose(true);
+            _hMacProvider = HashProviderDispenser.CreateMacProvider(_hashAlgorithmId, key);
+
+            ActualKey = key;
         }
 
-        // Adds new data to be hashed. This can be called repeatedly in order to hash data from incontiguous sources.
-        public void AppendHashData(byte[] data, int offset, int count)
-        {
-            _hashProvider.AppendHashData(data, offset, count);
-        }
+        // The actual key used for hashing. This will not be the same as the original key passed to ChangeKey() if the original key exceeded the
+        // hash algorithm's block size. (See RFC 2104, section 2)
+        public byte[] ActualKey { get; private set; }
+
+        // Adds new data to be hashed. This can be called repeatedly in order to hash data from noncontiguous sources.
+        public void AppendHashData(byte[] data, int offset, int count) =>
+            _hMacProvider.AppendHashData(data, offset, count);
+
+        public void AppendHashData(ReadOnlySpan<byte> source) =>
+            _hMacProvider.AppendHashData(source);
 
         // Compute the hash based on the appended data and resets the HashProvider for more hashing.
-        public byte[] FinalizeHashAndReset()
-        {
-            return _hashProvider.FinalizeHashAndReset();
-        }
+        public byte[] FinalizeHashAndReset() =>
+            _hMacProvider.FinalizeHashAndReset();
+
+        public bool TryFinalizeHashAndReset(Span<byte> destination, out int bytesWritten) =>
+            _hMacProvider.TryFinalizeHashAndReset(destination, out bytesWritten);
 
         public void Dispose(bool disposing)
         {
-            if (disposing)
+            if (disposing && _hMacProvider != null)
             {
-                if (_hashProvider != null)
-                    _hashProvider.Dispose(true);
-                _hashProvider = null;
+                _hMacProvider.Dispose(true);
+                _hMacProvider = null;
             }
         }
 
-        private readonly String _hashAlgorithmId;
-        private HashProvider _hashProvider;
+        private readonly string _hashAlgorithmId;
+        private HashProvider _hMacProvider;
+        private volatile HashProvider _lazyHashProvider;
+        private readonly int _blockSize;
     }
 }

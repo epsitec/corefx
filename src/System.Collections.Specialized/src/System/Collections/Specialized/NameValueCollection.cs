@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 /*
  * Ordered String/String[] collection of name/value pairs with support for null key
@@ -7,20 +8,20 @@
  *
  */
 
-using System.Collections;
+using System.Diagnostics;
+using System.Runtime.Serialization;
 using System.Text;
-using System.Globalization;
 
 namespace System.Collections.Specialized
 {
     /// <devdoc>
-    /// <para>Represents a sorted collection of associated <see cref='System.String' qualify='true'/> keys and <see cref='System.String' qualify='true'/> values that
+    /// <para>Represents a sorted collection of associated <see cref='string' qualify='true'/> keys and <see cref='string' qualify='true'/> values that
     ///    can be accessed either with the hash code of the key or with the index.</para>
     /// </devdoc>
     public class NameValueCollection : NameObjectCollectionBase
     {
-        private String[] _all;
-        private String[] _allKeys;
+        private string?[]? _all; // Do not rename (binary serialization)
+        private string?[]? _allKeys; // Do not rename (binary serialization)
 
         //
         // Constructors
@@ -43,7 +44,13 @@ namespace System.Collections.Specialized
         public NameValueCollection(NameValueCollection col)
             : base(col != null ? col.Comparer : null)
         {
-            Add(col);
+            Add(col!);
+        }
+
+        [Obsolete("Please use NameValueCollection(IEqualityComparer) instead.")]
+        public NameValueCollection(IHashCodeProvider? hashProvider, IComparer? comparer)
+            : base(hashProvider, comparer)
+        {
         }
 
         /// <devdoc>
@@ -55,11 +62,11 @@ namespace System.Collections.Specialized
         {
         }
 
-        public NameValueCollection(IEqualityComparer equalityComparer) : base(equalityComparer)
+        public NameValueCollection(IEqualityComparer? equalityComparer) : base(equalityComparer)
         {
         }
 
-        public NameValueCollection(Int32 capacity, IEqualityComparer equalityComparer)
+        public NameValueCollection(int capacity, IEqualityComparer? equalityComparer)
             : base(capacity, equalityComparer)
         {
         }
@@ -75,11 +82,21 @@ namespace System.Collections.Specialized
         {
             if (col == null)
             {
-                throw new ArgumentNullException("col");
+                throw new ArgumentNullException(nameof(col));
             }
 
             this.Comparer = col.Comparer;
             Add(col);
+        }
+
+        [Obsolete("Please use NameValueCollection(Int32, IEqualityComparer) instead.")]
+        public NameValueCollection(int capacity, IHashCodeProvider? hashProvider, IComparer? comparer)
+            : base(capacity, hashProvider, comparer)
+        {
+        }
+
+        protected NameValueCollection(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
         }
 
         //
@@ -95,22 +112,24 @@ namespace System.Collections.Specialized
             _allKeys = null;
         }
 
-        private static String GetAsOneString(ArrayList list)
+        private static string? GetAsOneString(ArrayList? list)
         {
             int n = (list != null) ? list.Count : 0;
 
             if (n == 1)
             {
-                return (String)list[0];
+                Debug.Assert(list != null);
+                return (string?)list[0];
             }
             else if (n > 1)
             {
-                StringBuilder s = new StringBuilder((String)list[0]);
+                Debug.Assert(list != null);
+                StringBuilder s = new StringBuilder((string?)list[0]);
 
                 for (int i = 1; i < n; i++)
                 {
                     s.Append(',');
-                    s.Append((String)list[i]);
+                    s.Append((string?)list[i]);
                 }
 
                 return s.ToString();
@@ -121,14 +140,14 @@ namespace System.Collections.Specialized
             }
         }
 
-        private static String[] GetAsStringArray(ArrayList list)
+        private static string[]? GetAsStringArray(ArrayList? list)
         {
             int n = (list != null) ? list.Count : 0;
             if (n == 0)
                 return null;
 
-            String[] array = new String[n];
-            list.CopyTo(0, array, 0, n);
+            string[] array = new string[n];
+            list!.CopyTo(0, array, 0, n);
             return array;
         }
 
@@ -143,7 +162,7 @@ namespace System.Collections.Specialized
         {
             if (c == null)
             {
-                throw new ArgumentNullException("c");
+                throw new ArgumentNullException(nameof(c));
             }
 
             InvalidateCachedArrays();
@@ -152,8 +171,8 @@ namespace System.Collections.Specialized
 
             for (int i = 0; i < n; i++)
             {
-                String key = c.GetKey(i);
-                String[] values = c.GetValues(i);
+                string? key = c.GetKey(i);
+                string[]? values = c.GetValues(i);
 
                 if (values != null)
                 {
@@ -184,17 +203,17 @@ namespace System.Collections.Specialized
         {
             if (dest == null)
             {
-                throw new ArgumentNullException("dest");
+                throw new ArgumentNullException(nameof(dest));
             }
 
             if (dest.Rank != 1)
             {
-                throw new ArgumentException(SR.Arg_MultiRank);
+                throw new ArgumentException(SR.Arg_MultiRank, nameof(dest));
             }
 
             if (index < 0)
             {
-                throw new ArgumentOutOfRangeException("index", SR.Format(SR.IndexOutOfRange, index.ToString(CultureInfo.CurrentCulture)));
+                throw new ArgumentOutOfRangeException(nameof(index), index, SR.ArgumentOutOfRange_NeedNonNegNum_Index);
             }
 
             if (dest.Length - index < Count)
@@ -205,7 +224,7 @@ namespace System.Collections.Specialized
             int n = Count;
             if (_all == null)
             {
-                String[] all = new String[n];
+                string?[] all = new string[n];
                 for (int i = 0; i < n; i++)
                 {
                     all[i] = Get(i);
@@ -246,14 +265,14 @@ namespace System.Collections.Specialized
         ///    <para>Adds an entry with the specified name and value into the
         ///    <see cref='System.Collections.Specialized.NameValueCollection'/>.</para>
         /// </devdoc>
-        public virtual void Add(String name, String value)
+        public virtual void Add(string? name, string? value)
         {
             if (IsReadOnly)
                 throw new NotSupportedException(SR.CollectionReadOnly);
 
             InvalidateCachedArrays();
 
-            ArrayList values = (ArrayList)BaseGet(name);
+            ArrayList? values = (ArrayList?)BaseGet(name);
 
             if (values == null)
             {
@@ -274,25 +293,25 @@ namespace System.Collections.Specialized
         /// <devdoc>
         /// <para> Gets the values associated with the specified key from the <see cref='System.Collections.Specialized.NameValueCollection'/> combined into one comma-separated list.</para>
         /// </devdoc>
-        public virtual String Get(String name)
+        public virtual string? Get(string? name)
         {
-            ArrayList values = (ArrayList)BaseGet(name);
+            ArrayList? values = (ArrayList?)BaseGet(name);
             return GetAsOneString(values);
         }
 
         /// <devdoc>
         /// <para>Gets the values associated with the specified key from the <see cref='System.Collections.Specialized.NameValueCollection'/>.</para>
         /// </devdoc>
-        public virtual String[] GetValues(String name)
+        public virtual string[]? GetValues(string? name)
         {
-            ArrayList values = (ArrayList)BaseGet(name);
+            ArrayList? values = (ArrayList?)BaseGet(name);
             return GetAsStringArray(values);
         }
 
         /// <devdoc>
         /// <para>Adds a value to an entry in the <see cref='System.Collections.Specialized.NameValueCollection'/>.</para>
         /// </devdoc>
-        public virtual void Set(String name, String value)
+        public virtual void Set(string? name, string? value)
         {
             if (IsReadOnly)
                 throw new NotSupportedException(SR.CollectionReadOnly);
@@ -307,7 +326,7 @@ namespace System.Collections.Specialized
         /// <devdoc>
         /// <para>Removes the entries with the specified key from the <see cref='System.Collections.Specialized.NameObjectCollectionBase'/> instance.</para>
         /// </devdoc>
-        public virtual void Remove(String name)
+        public virtual void Remove(string? name)
         {
             InvalidateCachedArrays();
             BaseRemove(name);
@@ -317,7 +336,7 @@ namespace System.Collections.Specialized
         ///    <para> Represents the entry with the specified key in the
         ///    <see cref='System.Collections.Specialized.NameValueCollection'/>.</para>
         /// </devdoc>
-        public String this[String name]
+        public string? this[string? name]
         {
             get
             {
@@ -339,25 +358,25 @@ namespace System.Collections.Specialized
         ///       Gets the values at the specified index of the <see cref='System.Collections.Specialized.NameValueCollection'/> combined into one
         ///       comma-separated list.</para>
         /// </devdoc>
-        public virtual String Get(int index)
+        public virtual string? Get(int index)
         {
-            ArrayList values = (ArrayList)BaseGet(index);
+            ArrayList? values = (ArrayList?)BaseGet(index);
             return GetAsOneString(values);
         }
 
         /// <devdoc>
         ///    <para> Gets the values at the specified index of the <see cref='System.Collections.Specialized.NameValueCollection'/>.</para>
         /// </devdoc>
-        public virtual String[] GetValues(int index)
+        public virtual string[]? GetValues(int index)
         {
-            ArrayList values = (ArrayList)BaseGet(index);
+            ArrayList? values = (ArrayList?)BaseGet(index);
             return GetAsStringArray(values);
         }
 
         /// <devdoc>
         /// <para>Gets the key at the specified index of the <see cref='System.Collections.Specialized.NameValueCollection'/>.</para>
         /// </devdoc>
-        public virtual String GetKey(int index)
+        public virtual string? GetKey(int index)
         {
             return BaseGetKey(index);
         }
@@ -365,7 +384,7 @@ namespace System.Collections.Specialized
         /// <devdoc>
         /// <para>Represents the entry at the specified index of the <see cref='System.Collections.Specialized.NameValueCollection'/>.</para>
         /// </devdoc>
-        public String this[int index]
+        public string? this[int index]
         {
             get
             {
@@ -380,7 +399,7 @@ namespace System.Collections.Specialized
         /// <devdoc>
         /// <para>Gets all the keys in the <see cref='System.Collections.Specialized.NameValueCollection'/>. </para>
         /// </devdoc>
-        public virtual String[] AllKeys
+        public virtual string?[] AllKeys
         {
             get
             {

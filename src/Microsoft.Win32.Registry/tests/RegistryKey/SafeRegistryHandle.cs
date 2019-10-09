@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.IO;
@@ -17,8 +18,8 @@ namespace Microsoft.Win32.RegistryTests
             Assert.Throws<ArgumentNullException>(() => RegistryKey.FromHandle(handle: null, view: RegistryView.Default));
 
             // invalid view
-            Assert.Throws<ArgumentException>(() => RegistryKey.FromHandle(TestRegistryKey.Handle, (RegistryView)(-1)));
-            Assert.Throws<ArgumentException>(() => RegistryKey.FromHandle(TestRegistryKey.Handle, (RegistryView)3));
+            AssertExtensions.Throws<ArgumentException>("view", () => RegistryKey.FromHandle(TestRegistryKey.Handle, (RegistryView)(-1)));
+            AssertExtensions.Throws<ArgumentException>("view", () => RegistryKey.FromHandle(TestRegistryKey.Handle, (RegistryView)3));
 
             // get handle of disposed RegistryKey
             Assert.Throws<ObjectDisposedException>(() =>

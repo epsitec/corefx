@@ -1,11 +1,13 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Runtime.InteropServices;
 
 using Microsoft.Win32.SafeHandles;
 
+#pragma warning disable SA1121 // we don't want to simplify built-ins here as we're using aliasing
 using CFStringRef = System.IntPtr;
 using CFArrayRef = System.IntPtr;
 using FSEventStreamRef = System.IntPtr;
@@ -29,6 +31,7 @@ internal static partial class Interop
         [Flags]
         internal enum FSEventStreamEventFlags : uint
         {
+            /* flags when creating the stream. */
             kFSEventStreamEventFlagNone                 = 0x00000000,
             kFSEventStreamEventFlagMustScanSubDirs      = 0x00000001,
             kFSEventStreamEventFlagUserDropped          = 0x00000002,
@@ -37,8 +40,8 @@ internal static partial class Interop
             kFSEventStreamEventFlagHistoryDone          = 0x00000010,
             kFSEventStreamEventFlagRootChanged          = 0x00000020,
             kFSEventStreamEventFlagMount                = 0x00000040,
-            kFSEventStreamEventFlagUnmount              = 0x00000080, /* These flags are only set if you specified the FileEvents */
-            /* flags when creating the stream. */
+            kFSEventStreamEventFlagUnmount              = 0x00000080,
+            /* These flags are only set if you specified the FileEvents */
             kFSEventStreamEventFlagItemCreated          = 0x00000100,
             kFSEventStreamEventFlagItemRemoved          = 0x00000200,
             kFSEventStreamEventFlagItemInodeMetaMod     = 0x00000400,
@@ -49,7 +52,10 @@ internal static partial class Interop
             kFSEventStreamEventFlagItemXattrMod         = 0x00008000,
             kFSEventStreamEventFlagItemIsFile           = 0x00010000,
             kFSEventStreamEventFlagItemIsDir            = 0x00020000,
-            kFSEventStreamEventFlagItemIsSymlink        = 0x00040000
+            kFSEventStreamEventFlagItemIsSymlink        = 0x00040000,
+            kFSEventStreamEventFlagOwnEvent             = 0x00080000,
+            kFSEventStreamEventFlagItemIsHardlink       = 0x00100000,
+            kFSEventStreamEventFlagItemIsLastHardlink   = 0x00200000,
         }
 
         /// <summary>
@@ -77,16 +83,13 @@ internal static partial class Interop
         /// <param name="eventFlags">The events for the corresponding path.</param>
         /// <param name="eventIds">The machine-and-disk-drive-unique Event ID for the specific event.</param>
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        internal delegate void FSEventStreamCallback(
+        internal unsafe delegate void FSEventStreamCallback(
             FSEventStreamRef streamReference,
             IntPtr clientCallBackInfo,
             size_t numEvents,
-            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)]
-            String[] eventPaths,
-            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)]
-            FSEventStreamEventFlags[] eventFlags,
-            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)]
-            FSEventStreamEventId[] eventIds);
+            byte** eventPaths,
+            FSEventStreamEventFlags* eventFlags,
+            FSEventStreamEventId* eventIds);
 
         /// <summary>
         /// Internal wrapper to create a new EventStream to listen to events from the core OS (such as File System events).
@@ -96,7 +99,7 @@ internal static partial class Interop
         /// <param name="context">Should be IntPtr.Zero</param>
         /// <param name="pathsToWatch">A CFArray of the path(s) to watch for events.</param>
         /// <param name="sinceWhen">
-        /// The start point to receive events from. This can be to retrieve historical events or only new events. 
+        /// The start point to receive events from. This can be to retrieve historical events or only new events.
         /// To get historical events, pass in the corresponding ID of the event you want to start from.
         /// To get only new events, pass in kFSEventStreamEventIdSinceNow.
         /// </param>
@@ -120,7 +123,7 @@ internal static partial class Interop
         /// <param name="cb">A callback instance that will be called for every event batch.</param>
         /// <param name="pathsToWatch">A CFArray of the path(s) to watch for events.</param>
         /// <param name="sinceWhen">
-        /// The start point to receive events from. This can be to retrieve historical events or only new events. 
+        /// The start point to receive events from. This can be to retrieve historical events or only new events.
         /// To get historical events, pass in the corresponding ID of the event you want to start from.
         /// To get only new events, pass in kFSEventStreamEventIdSinceNow.
         /// </param>

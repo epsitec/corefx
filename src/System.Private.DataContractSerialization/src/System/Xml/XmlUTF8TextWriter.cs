@@ -1,14 +1,14 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.IO;
-using System.Runtime;
-using System.Security;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace System.Xml
 {
-    internal interface IXmlTextWriterInitializer
+    public interface IXmlTextWriterInitializer
     {
         void SetOutput(Stream stream, Encoding encoding, bool ownsStream);
     }
@@ -20,9 +20,9 @@ namespace System.Xml
         public void SetOutput(Stream stream, Encoding encoding, bool ownsStream)
         {
             if (stream == null)
-                throw new ArgumentNullException("stream");
+                throw new ArgumentNullException(nameof(stream));
             if (encoding == null)
-                throw new ArgumentNullException("encoding");
+                throw new ArgumentNullException(nameof(encoding));
             if (encoding.WebName != Encoding.UTF8.WebName)
             {
                 stream = new EncodingStreamWrapper(stream, encoding, true);
@@ -35,17 +35,21 @@ namespace System.Xml
             _writer.SetOutput(stream, ownsStream, encoding);
             SetOutput(_writer);
         }
+
+        protected override XmlSigningNodeWriter CreateSigningNodeWriter()
+        {
+            return new XmlSigningNodeWriter(true);
+        }
     }
 
     internal class XmlUTF8NodeWriter : XmlStreamNodeWriter
     {
         private byte[] _entityChars;
-        private bool[] _isEscapedAttributeChar;
-        private bool[] _isEscapedElementChar;
+        private readonly bool[] _isEscapedAttributeChar;
+        private readonly bool[] _isEscapedElementChar;
         private bool _inAttribute;
         private const int bufferLength = 512;
         private const int maxEntityLength = 32;
-        private const int maxBytesPerChar = 3;
         private Encoding _encoding;
         private char[] _chars;
 
@@ -98,10 +102,10 @@ namespace System.Xml
             _inAttribute = false;
         }
 
-        new public void SetOutput(Stream stream, bool ownsStream, Encoding encoding)
+        public new void SetOutput(Stream stream, bool ownsStream, Encoding encoding)
         {
             Encoding utf8Encoding = null;
-            if (encoding != null && encoding == Encoding.UTF8)
+            if (encoding != null && encoding.CodePage == Encoding.UTF8.CodePage)
             {
                 utf8Encoding = encoding;
                 encoding = null;
@@ -109,14 +113,6 @@ namespace System.Xml
             base.SetOutput(stream, ownsStream, utf8Encoding);
             _encoding = encoding;
             _inAttribute = false;
-        }
-
-        public Encoding Encoding
-        {
-            get
-            {
-                return _encoding;
-            }
         }
 
         private byte[] GetCharEntityBuffer()
@@ -219,6 +215,20 @@ namespace System.Xml
             WriteLocalName(localName);
         }
 
+        public override async Task WriteStartElementAsync(string prefix, string localName)
+        {
+            await WriteByteAsync('<').ConfigureAwait(false);
+            if (prefix.Length != 0)
+            {
+                // This method calls into unsafe method which cannot run asyncly.
+                WritePrefix(prefix);
+                await WriteByteAsync(':').ConfigureAwait(false);
+            }
+
+            // This method calls into unsafe method which cannot run asyncly.
+            WriteLocalName(localName);
+        }
+
         public override void WriteStartElement(string prefix, XmlDictionaryString localName)
         {
             WriteStartElement(prefix, localName.Value);
@@ -247,6 +257,18 @@ namespace System.Xml
             }
         }
 
+        public override async Task WriteEndStartElementAsync(bool isEmpty)
+        {
+            if (!isEmpty)
+            {
+                await WriteByteAsync('>').ConfigureAwait(false);
+            }
+            else
+            {
+                await WriteBytesAsync('/', '>').ConfigureAwait(false);
+            }
+        }
+
         public override void WriteEndElement(string prefix, string localName)
         {
             WriteBytes('<', '/');
@@ -257,6 +279,18 @@ namespace System.Xml
             }
             WriteLocalName(localName);
             WriteByte('>');
+        }
+
+        public override async Task WriteEndElementAsync(string prefix, string localName)
+        {
+            await WriteBytesAsync('<', '/').ConfigureAwait(false);
+            if (prefix.Length != 0)
+            {
+                WritePrefix(prefix);
+                await WriteByteAsync(':').ConfigureAwait(false);
+            }
+            WriteLocalName(localName);
+            await WriteByteAsync('>').ConfigureAwait(false);
         }
 
         public override void WriteEndElement(byte[] prefixBuffer, int prefixOffset, int prefixLength, byte[] localNameBuffer, int localNameOffset, int localNameLength)
@@ -353,6 +387,12 @@ namespace System.Xml
             _inAttribute = false;
         }
 
+        public override async Task WriteEndAttributeAsync()
+        {
+            await WriteByteAsync('"').ConfigureAwait(false);
+            _inAttribute = false;
+        }
+
         private void WritePrefix(string prefix)
         {
             if (prefix.Length == 1)
@@ -392,8 +432,7 @@ namespace System.Xml
             WriteEscapedText(s.Value);
         }
 
-        [SecuritySafeCritical]
-        unsafe public override void WriteEscapedText(string s)
+        public unsafe override void WriteEscapedText(string s)
         {
             int count = s.Length;
             if (count > 0)
@@ -405,8 +444,7 @@ namespace System.Xml
             }
         }
 
-        [SecuritySafeCritical]
-        unsafe public override void WriteEscapedText(char[] s, int offset, int count)
+        public unsafe override void WriteEscapedText(char[] s, int offset, int count)
         {
             if (count > 0)
             {
@@ -417,7 +455,6 @@ namespace System.Xml
             }
         }
 
-        [SecurityCritical]
         private unsafe void UnsafeWriteEscapedText(char* chars, int count)
         {
             bool[] isEscapedChar = (_inAttribute ? _isEscapedAttributeChar : _isEscapedElementChar);
@@ -478,8 +515,7 @@ namespace System.Xml
             WriteUTF8Chars(chars, offset, count);
         }
 
-        [SecuritySafeCritical]
-        unsafe public override void WriteText(char[] chars, int offset, int count)
+        public unsafe override void WriteText(char[] chars, int offset, int count)
         {
             if (count > 0)
             {
@@ -695,6 +731,16 @@ namespace System.Xml
             InternalWriteBase64Text(buffer, offset, count);
         }
 
+        public override async Task WriteBase64TextAsync(byte[] trailBytes, int trailByteCount, byte[] buffer, int offset, int count)
+        {
+            if (trailByteCount > 0)
+            {
+                await InternalWriteBase64TextAsync(trailBytes, 0, trailByteCount).ConfigureAwait(false);
+            }
+
+            await InternalWriteBase64TextAsync(buffer, offset, count).ConfigureAwait(false);
+        }
+
         private void InternalWriteBase64Text(byte[] buffer, int offset, int count)
         {
             Base64Encoding encoding = XmlConverter.Base64Encoding;
@@ -712,6 +758,31 @@ namespace System.Xml
             {
                 int charOffset;
                 byte[] chars = GetBuffer(4, out charOffset);
+                Advance(encoding.GetChars(buffer, offset, count, chars, charOffset));
+            }
+        }
+
+        private async Task InternalWriteBase64TextAsync(byte[] buffer, int offset, int count)
+        {
+            Base64Encoding encoding = XmlConverter.Base64Encoding;
+            while (count >= 3)
+            {
+                int byteCount = Math.Min(bufferLength / 4 * 3, count - count % 3);
+                int charCount = byteCount / 3 * 4;
+                int charOffset;
+                BytesWithOffset bufferResult = await GetBufferAsync(charCount).ConfigureAwait(false);
+                byte[] chars = bufferResult.Bytes;
+                charOffset = bufferResult.Offset;
+                Advance(encoding.GetChars(buffer, offset, byteCount, chars, charOffset));
+                offset += byteCount;
+                count -= byteCount;
+            }
+            if (count > 0)
+            {
+                int charOffset;
+                BytesWithOffset bufferResult = await GetBufferAsync(4).ConfigureAwait(false);
+                byte[] chars = bufferResult.Bytes;
+                charOffset = bufferResult.Offset;
                 Advance(encoding.GetChars(buffer, offset, count, chars, charOffset));
             }
         }

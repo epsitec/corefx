@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 /*=============================================================================
 **
@@ -9,10 +10,8 @@
 **
 =============================================================================*/
 
-using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Contracts;
 
 namespace System.Collections
 {
@@ -20,18 +19,18 @@ namespace System.Collections
     // buffer, so Enqueue can be O(n).  Dequeue is O(1).
     [DebuggerTypeProxy(typeof(System.Collections.Queue.QueueDebugView))]
     [DebuggerDisplay("Count = {Count}")]
-    public class Queue : ICollection
+    [Serializable]
+    [System.Runtime.CompilerServices.TypeForwardedFrom("mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
+    public class Queue : ICollection, ICloneable
     {
-        private Object[] _array;
-        private int _head;       // First valid element in the queue
-        private int _tail;       // Last valid element in the queue
-        private int _size;       // Number of elements.
-        private int _growFactor; // 100 == 1.0, 130 == 1.3, 200 == 2.0
-        private int _version;
-        private Object _syncRoot;
+        private object?[] _array; // Do not rename (binary serialization)
+        private int _head; // First valid element in the queue. Do not rename (binary serialization)
+        private int _tail; // Last valid element in the queue. Do not rename (binary serialization)
+        private int _size; // Number of elements. Do not rename (binary serialization)
+        private readonly int _growFactor; // 100 == 1.0, 130 == 1.3, 200 == 2.0. Do not rename (binary serialization)
+        private int _version; // Do not rename (binary serialization)
 
-        private const int _MinimumGrow = 4;
-        private const int _ShrinkThreshold = 32;
+        private const int MinimumGrow = 4;
 
         // Creates a queue with room for capacity objects. The default initial
         // capacity and grow factor are used.
@@ -54,12 +53,11 @@ namespace System.Collections
         public Queue(int capacity, float growFactor)
         {
             if (capacity < 0)
-                throw new ArgumentOutOfRangeException("capacity", SR.ArgumentOutOfRange_NeedNonNegNum);
+                throw new ArgumentOutOfRangeException(nameof(capacity), SR.ArgumentOutOfRange_NeedNonNegNum);
             if (!(growFactor >= 1.0 && growFactor <= 10.0))
-                throw new ArgumentOutOfRangeException("growFactor", SR.Format(SR.ArgumentOutOfRange_QueueGrowFactor, 1, 10));
-            Contract.EndContractBlock();
+                throw new ArgumentOutOfRangeException(nameof(growFactor), SR.Format(SR.ArgumentOutOfRange_QueueGrowFactor, 1, 10));
 
-            _array = new Object[capacity];
+            _array = new object[capacity];
             _head = 0;
             _tail = 0;
             _size = 0;
@@ -72,8 +70,8 @@ namespace System.Collections
         public Queue(ICollection col) : this((col == null ? 32 : col.Count))
         {
             if (col == null)
-                throw new ArgumentNullException("col");
-            Contract.EndContractBlock();
+                throw new ArgumentNullException(nameof(col));
+
             IEnumerator en = col.GetEnumerator();
             while (en.MoveNext())
                 Enqueue(en.Current);
@@ -85,7 +83,7 @@ namespace System.Collections
             get { return _size; }
         }
 
-        public virtual Object Clone()
+        public virtual object Clone()
         {
             Queue q = new Queue(_size);
             q._size = _size;
@@ -106,47 +104,41 @@ namespace System.Collections
             get { return false; }
         }
 
-        public virtual Object SyncRoot
-        {
-            get
-            {
-                if (_syncRoot == null)
-                {
-                    System.Threading.Interlocked.CompareExchange(ref _syncRoot, new Object(), null);
-                }
-                return _syncRoot;
-            }
-        }
+        public virtual object SyncRoot => this;
 
         // Removes all Objects from the queue.
         public virtual void Clear()
         {
-            if (_head < _tail)
-                Array.Clear(_array, _head, _size);
-            else
+            if (_size != 0)
             {
-                Array.Clear(_array, _head, _array.Length - _head);
-                Array.Clear(_array, 0, _tail);
+                if (_head < _tail)
+                    Array.Clear(_array, _head, _size);
+                else
+                {
+                    Array.Clear(_array, _head, _array.Length - _head);
+                    Array.Clear(_array, 0, _tail);
+                }
+
+                _size = 0;
             }
 
             _head = 0;
             _tail = 0;
-            _size = 0;
             _version++;
         }
 
         // CopyTo copies a collection into an Array, starting at a particular
         // index into the array.
-        // 
+        //
         public virtual void CopyTo(Array array, int index)
         {
             if (array == null)
-                throw new ArgumentNullException("array");
+                throw new ArgumentNullException(nameof(array));
             if (array.Rank != 1)
-                throw new ArgumentException(SR.Arg_RankMultiDimNotSupported);
+                throw new ArgumentException(SR.Arg_RankMultiDimNotSupported, nameof(array));
             if (index < 0)
-                throw new ArgumentOutOfRangeException("index", SR.ArgumentOutOfRange_Index);
-            Contract.EndContractBlock();
+                throw new ArgumentOutOfRangeException(nameof(index), SR.ArgumentOutOfRange_Index);
+
             int arrayLen = array.Length;
             if (arrayLen - index < _size)
                 throw new ArgumentException(SR.Argument_InvalidOffLen);
@@ -163,14 +155,14 @@ namespace System.Collections
 
         // Adds obj to the tail of the queue.
         //
-        public virtual void Enqueue(Object obj)
+        public virtual void Enqueue(object? obj)
         {
             if (_size == _array.Length)
             {
                 int newcapacity = (int)((long)_array.Length * (long)_growFactor / 100);
-                if (newcapacity < _array.Length + _MinimumGrow)
+                if (newcapacity < _array.Length + MinimumGrow)
                 {
-                    newcapacity = _array.Length + _MinimumGrow;
+                    newcapacity = _array.Length + MinimumGrow;
                 }
                 SetCapacity(newcapacity);
             }
@@ -183,7 +175,7 @@ namespace System.Collections
 
         // GetEnumerator returns an IEnumerator over this Queue.  This
         // Enumerator will support removing.
-        // 
+        //
         public virtual IEnumerator GetEnumerator()
         {
             return new QueueEnumerator(this);
@@ -191,13 +183,12 @@ namespace System.Collections
 
         // Removes the object at the head of the queue and returns it. If the queue
         // is empty, this method simply returns null.
-        public virtual Object Dequeue()
+        public virtual object? Dequeue()
         {
             if (Count == 0)
                 throw new InvalidOperationException(SR.InvalidOperation_EmptyQueue);
-            Contract.EndContractBlock();
 
-            Object removed = _array[_head];
+            object? removed = _array[_head];
             _array[_head] = null;
             _head = (_head + 1) % _array.Length;
             _size--;
@@ -206,13 +197,12 @@ namespace System.Collections
         }
 
         // Returns the object at the head of the queue. The object remains in the
-        // queue. If the queue is empty, this method throws an 
+        // queue. If the queue is empty, this method throws an
         // InvalidOperationException.
-        public virtual Object Peek()
+        public virtual object? Peek()
         {
             if (Count == 0)
                 throw new InvalidOperationException(SR.InvalidOperation_EmptyQueue);
-            Contract.EndContractBlock();
 
             return _array[_head];
         }
@@ -220,20 +210,19 @@ namespace System.Collections
         // Returns a synchronized Queue.  Returns a synchronized wrapper
         // class around the queue - the caller must not use references to the
         // original queue.
-        // 
+        //
         public static Queue Synchronized(Queue queue)
         {
             if (queue == null)
-                throw new ArgumentNullException("queue");
-            Contract.EndContractBlock();
+                throw new ArgumentNullException(nameof(queue));
+
             return new SynchronizedQueue(queue);
         }
 
         // Returns true if the queue contains at least one object equal to obj.
         // Equality is determined using obj.Equals().
         //
-        // Exceptions: ArgumentNullException if obj == null.
-        public virtual bool Contains(Object obj)
+        public virtual bool Contains(object? obj)
         {
             int index = _head;
             int count = _size;
@@ -245,7 +234,7 @@ namespace System.Collections
                     if (_array[index] == null)
                         return true;
                 }
-                else if (_array[index] != null && _array[index].Equals(obj))
+                else if (_array[index] != null && _array[index]!.Equals(obj))
                 {
                     return true;
                 }
@@ -255,7 +244,7 @@ namespace System.Collections
             return false;
         }
 
-        internal Object GetElement(int i)
+        internal object? GetElement(int i)
         {
             return _array[(_head + i) % _array.Length];
         }
@@ -264,12 +253,12 @@ namespace System.Collections
         // objects in the Queue, or an empty array if the queue is empty.
         // The order of elements in the array is first in to last in, the same
         // order produced by successive calls to Dequeue.
-        public virtual Object[] ToArray()
+        public virtual object?[] ToArray()
         {
             if (_size == 0)
-                return Array.Empty<Object>();
+                return Array.Empty<object>();
 
-            Object[] arr = new Object[_size];
+            object[] arr = new object[_size];
             if (_head < _tail)
             {
                 Array.Copy(_array, _head, arr, 0, _size);
@@ -288,7 +277,7 @@ namespace System.Collections
         // must be >= _size.
         private void SetCapacity(int capacity)
         {
-            Object[] newarray = new Object[capacity];
+            object[] newarray = new object[capacity];
             if (_size > 0)
             {
                 if (_head < _tail)
@@ -317,8 +306,8 @@ namespace System.Collections
         // Implements a synchronization wrapper around a queue.
         private class SynchronizedQueue : Queue
         {
-            private Queue _q;
-            private Object _root;
+            private readonly Queue _q;
+            private readonly object _root;
 
             internal SynchronizedQueue(Queue q)
             {
@@ -331,7 +320,7 @@ namespace System.Collections
                 get { return true; }
             }
 
-            public override Object SyncRoot
+            public override object SyncRoot
             {
                 get
                 {
@@ -358,7 +347,7 @@ namespace System.Collections
                 }
             }
 
-            public override Object Clone()
+            public override object Clone()
             {
                 lock (_root)
                 {
@@ -366,7 +355,7 @@ namespace System.Collections
                 }
             }
 
-            public override bool Contains(Object obj)
+            public override bool Contains(object? obj)
             {
                 lock (_root)
                 {
@@ -382,7 +371,7 @@ namespace System.Collections
                 }
             }
 
-            public override void Enqueue(Object value)
+            public override void Enqueue(object? value)
             {
                 lock (_root)
                 {
@@ -390,8 +379,7 @@ namespace System.Collections
                 }
             }
 
-            [SuppressMessage("Microsoft.Contracts", "CC1055")]  // Thread safety problems with precondition - can't express the precondition as of Dev10.
-            public override Object Dequeue()
+            public override object? Dequeue()
             {
                 lock (_root)
                 {
@@ -407,8 +395,7 @@ namespace System.Collections
                 }
             }
 
-            [SuppressMessage("Microsoft.Contracts", "CC1055")]  // Thread safety problems with precondition - can't express the precondition as of Dev10.
-            public override Object Peek()
+            public override object? Peek()
             {
                 lock (_root)
                 {
@@ -416,7 +403,7 @@ namespace System.Collections
                 }
             }
 
-            public override Object[] ToArray()
+            public override object?[] ToArray()
             {
                 lock (_root)
                 {
@@ -437,12 +424,12 @@ namespace System.Collections
         // Implements an enumerator for a Queue.  The enumerator uses the
         // internal version number of the list to ensure that no modifications are
         // made to the list while an enumeration is in progress.
-        private class QueueEnumerator : IEnumerator
+        private class QueueEnumerator : IEnumerator, ICloneable
         {
-            private Queue _q;
+            private readonly Queue _q;
             private int _index;
-            private int _version;
-            private Object _currentElement;
+            private readonly int _version;
+            private object? _currentElement;
 
             internal QueueEnumerator(Queue q)
             {
@@ -453,6 +440,8 @@ namespace System.Collections
                 if (_q._size == 0)
                     _index = -1;
             }
+
+            public object Clone() => MemberwiseClone();
 
             public virtual bool MoveNext()
             {
@@ -472,7 +461,7 @@ namespace System.Collections
                 return true;
             }
 
-            public virtual Object Current
+            public virtual object? Current
             {
                 get
                 {
@@ -500,19 +489,18 @@ namespace System.Collections
 
         internal class QueueDebugView
         {
-            private Queue _queue;
+            private readonly Queue _queue;
 
             public QueueDebugView(Queue queue)
             {
                 if (queue == null)
-                    throw new ArgumentNullException("queue");
-                Contract.EndContractBlock();
+                    throw new ArgumentNullException(nameof(queue));
 
                 _queue = queue;
             }
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            public Object[] Items
+            public object?[] Items
             {
                 get
                 {

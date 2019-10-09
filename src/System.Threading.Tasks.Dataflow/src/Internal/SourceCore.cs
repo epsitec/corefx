@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -13,7 +14,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Security;
 
@@ -23,7 +23,7 @@ namespace System.Threading.Tasks.Dataflow.Internal
     // --------------------
     // SourceCore employs two locks: OutgoingLock and ValueLock.  Additionally, targets we call out to
     // likely utilize their own IncomingLock.  We can hold OutgoingLock while acquiring ValueLock or IncomingLock.
-    // However, we cannot hold ValueLock while calling out to external code or while acquiring OutgoingLock, and 
+    // However, we cannot hold ValueLock while calling out to external code or while acquiring OutgoingLock, and
     // we cannot hold IncomingLock when acquiring OutgoingLock. Additionally, the locks employed must be reentrant.
 
     /// <summary>Provides a core implementation for blocks that implement <see cref="ISourceBlock{TOutput}"/>.</summary>
@@ -89,7 +89,7 @@ namespace System.Threading.Tasks.Dataflow.Internal
         private bool _enableOffering = true; // Protected by ValueLock, sometimes read with volatile reads
         /// <summary>Whether someone has reserved the right to call CompleteBlockOncePossible.</summary>
         private bool _completionReserved; // Protected by OutgoingLock
-        /// <summary>Exceptions that may have occured and gone unhandled during processing.</summary>
+        /// <summary>Exceptions that may have occurred and gone unhandled during processing.</summary>
         private List<Exception> _exceptions; // Protected by ValueLock, sometimes read with volatile reads
 
         /// <summary>Initializes the source core.</summary>
@@ -107,9 +107,9 @@ namespace System.Threading.Tasks.Dataflow.Internal
             Action<ISourceBlock<TOutput>, int> itemsRemovedAction = null,
             Func<ISourceBlock<TOutput>, TOutput, IList<TOutput>, int> itemCountingFunc = null)
         {
-            Contract.Requires(owningSource != null, "Core must be associated with a source.");
-            Contract.Requires(dataflowBlockOptions != null, "Options must be provided to configure the core.");
-            Contract.Requires(completeAction != null, "Action to invoke on completion is required.");
+            Debug.Assert(owningSource != null, "Core must be associated with a source.");
+            Debug.Assert(dataflowBlockOptions != null, "Options must be provided to configure the core.");
+            Debug.Assert(completeAction != null, "Action to invoke on completion is required.");
 
             // Store the args
             _owningSource = owningSource;
@@ -127,9 +127,8 @@ namespace System.Threading.Tasks.Dataflow.Internal
         internal IDisposable LinkTo(ITargetBlock<TOutput> target, DataflowLinkOptions linkOptions)
         {
             // Validate arguments
-            if (target == null) throw new ArgumentNullException("target");
-            if (linkOptions == null) throw new ArgumentNullException("linkOptions");
-            Contract.EndContractBlock();
+            if (target == null) throw new ArgumentNullException(nameof(target));
+            if (linkOptions == null) throw new ArgumentNullException(nameof(linkOptions));
 
             // If the block is already completed, there is not much to do -
             // we have to propagate completion if that was requested, and
@@ -143,7 +142,7 @@ namespace System.Threading.Tasks.Dataflow.Internal
             lock (OutgoingLock)
             {
                 // If completion has been reserved, the target registry has either been cleared already
-                // or is about to be cleared. So we can link and offer only if completion is not reserved. 
+                // or is about to be cleared. So we can link and offer only if completion is not reserved.
                 if (!_completionReserved)
                 {
                     _targetRegistry.Add(ref target, linkOptions);
@@ -159,19 +158,18 @@ namespace System.Threading.Tasks.Dataflow.Internal
         }
 
         /// <include file='XmlDocs/CommonXmlDocComments.xml' path='CommonXmlDocComments/Sources/Member[@name="ConsumeMessage"]/*' />
-        internal TOutput ConsumeMessage(DataflowMessageHeader messageHeader, ITargetBlock<TOutput> target, out Boolean messageConsumed)
+        internal TOutput ConsumeMessage(DataflowMessageHeader messageHeader, ITargetBlock<TOutput> target, out bool messageConsumed)
         {
             // Validate arguments
-            if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, "messageHeader");
-            if (target == null) throw new ArgumentNullException("target");
-            Contract.EndContractBlock();
+            if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, nameof(messageHeader));
+            if (target == null) throw new ArgumentNullException(nameof(target));
 
             TOutput consumedMessageValue = default(TOutput);
 
             lock (OutgoingLock)
             {
                 // If this target doesn't hold the reservation, then for this ConsumeMessage
-                // to be valid, there must not be any reservation (since otherwise we can't 
+                // to be valid, there must not be any reservation (since otherwise we can't
                 // consume a message destined for someone else).
                 if (_nextMessageReservedFor != target &&
                     _nextMessageReservedFor != null)
@@ -216,12 +214,11 @@ namespace System.Threading.Tasks.Dataflow.Internal
         }
 
         /// <include file='XmlDocs/CommonXmlDocComments.xml' path='CommonXmlDocComments/Sources/Member[@name="ReserveMessage"]/*' />
-        internal Boolean ReserveMessage(DataflowMessageHeader messageHeader, ITargetBlock<TOutput> target)
+        internal bool ReserveMessage(DataflowMessageHeader messageHeader, ITargetBlock<TOutput> target)
         {
             // Validate arguments
-            if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, "messageHeader");
-            if (target == null) throw new ArgumentNullException("target");
-            Contract.EndContractBlock();
+            if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, nameof(messageHeader));
+            if (target == null) throw new ArgumentNullException(nameof(target));
 
             lock (OutgoingLock)
             {
@@ -247,9 +244,8 @@ namespace System.Threading.Tasks.Dataflow.Internal
         internal void ReleaseReservation(DataflowMessageHeader messageHeader, ITargetBlock<TOutput> target)
         {
             // Validate arguments
-            if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, "messageHeader");
-            if (target == null) throw new ArgumentNullException("target");
-            Contract.EndContractBlock();
+            if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, nameof(messageHeader));
+            if (target == null) throw new ArgumentNullException(nameof(target));
 
             lock (OutgoingLock)
             {
@@ -280,7 +276,7 @@ namespace System.Threading.Tasks.Dataflow.Internal
         internal Task Completion { get { return _completionTask.Task; } }
 
         /// <include file='XmlDocs/CommonXmlDocComments.xml' path='CommonXmlDocComments/Sources/Member[@name="TryReceive"]/*' />
-        internal Boolean TryReceive(Predicate<TOutput> filter, out TOutput item)
+        internal bool TryReceive(Predicate<TOutput> filter, out TOutput item)
         {
             item = default(TOutput);
             bool itemReceived = false;
@@ -378,7 +374,7 @@ namespace System.Threading.Tasks.Dataflow.Internal
         internal int OutputCount { get { lock (OutgoingLock) lock (ValueLock) return _messages.Count; } }
 
         /// <summary>
-        /// Adds a message to the source block for propagation. 
+        /// Adds a message to the source block for propagation.
         /// This method must only be used by one thread at a time, and must not be used concurrently
         /// with any other producer side methods, e.g. AddMessages, Complete.
         /// </summary>
@@ -401,21 +397,21 @@ namespace System.Threading.Tasks.Dataflow.Internal
         }
 
         /// <summary>
-        /// Adds messages to the source block for propagation. 
+        /// Adds messages to the source block for propagation.
         /// This method must only be used by one thread at a time, and must not be used concurrently
         /// with any other producer side methods, e.g. AddMessage, Complete.
         /// </summary>
         /// <param name="items">The list of items to be wrapped in messages to be added.</param>
         internal void AddMessages(IEnumerable<TOutput> items)
         {
-            Contract.Requires(items != null, "Items list must be valid.");
+            Debug.Assert(items != null, "Items list must be valid.");
 
             // This method must not take the OutgoingLock, as it will likely be called in situations
             // where an IncomingLock is held.
 
             if (_decliningPermanently) return;
 
-            // Special case arrays and lists, for which we can avoid the 
+            // Special case arrays and lists, for which we can avoid the
             // enumerator allocation that'll result from using a foreach.
             // This also avoids virtual method calls that we'd get if we
             // didn't special case.
@@ -454,12 +450,12 @@ namespace System.Threading.Tasks.Dataflow.Internal
             }
         }
 
-        /// <summary>Adds an individual exceptionto this source.</summary>
+        /// <summary>Adds an individual exception to this source.</summary>
         /// <param name="exception">The exception to add</param>
         internal void AddException(Exception exception)
         {
-            Contract.Requires(exception != null, "Valid exception must be provided to be added.");
-            Contract.Requires(!Completion.IsCompleted || Completion.IsFaulted, "The block must either not be completed or be faulted if we're still storing exceptions.");
+            Debug.Assert(exception != null, "Valid exception must be provided to be added.");
+            Debug.Assert(!Completion.IsCompleted || Completion.IsFaulted, "The block must either not be completed or be faulted if we're still storing exceptions.");
             lock (ValueLock)
             {
                 Common.AddException(ref _exceptions, exception);
@@ -470,8 +466,8 @@ namespace System.Threading.Tasks.Dataflow.Internal
         /// <param name="exceptions">The exceptions to add</param>
         internal void AddExceptions(List<Exception> exceptions)
         {
-            Contract.Requires(exceptions != null, "Valid exceptions must be provided to be added.");
-            Contract.Requires(!Completion.IsCompleted || Completion.IsFaulted, "The block must either not be completed or be faulted if we're still storing exceptions.");
+            Debug.Assert(exceptions != null, "Valid exceptions must be provided to be added.");
+            Debug.Assert(!Completion.IsCompleted || Completion.IsFaulted, "The block must either not be completed or be faulted if we're still storing exceptions.");
             lock (ValueLock)
             {
                 foreach (Exception exception in exceptions)
@@ -485,8 +481,8 @@ namespace System.Threading.Tasks.Dataflow.Internal
         /// <param name="aggregateException">The exception to add</param>
         internal void AddAndUnwrapAggregateException(AggregateException aggregateException)
         {
-            Contract.Requires(aggregateException != null && aggregateException.InnerExceptions.Count > 0, "Aggregate must be valid and contain inner exceptions to unwrap.");
-            Contract.Requires(!Completion.IsCompleted || Completion.IsFaulted, "The block must either not be completed or be faulted if we're still storing exceptions.");
+            Debug.Assert(aggregateException != null && aggregateException.InnerExceptions.Count > 0, "Aggregate must be valid and contain inner exceptions to unwrap.");
+            Debug.Assert(!Completion.IsCompleted || Completion.IsFaulted, "The block must either not be completed or be faulted if we're still storing exceptions.");
             lock (ValueLock)
             {
                 Common.AddException(ref _exceptions, aggregateException, unwrapInnerExceptions: true);
@@ -510,7 +506,7 @@ namespace System.Threading.Tasks.Dataflow.Internal
             {
                 _decliningPermanently = true;
 
-                // CompleteAdding may be called in a context where an incoming lock is held.  We need to 
+                // CompleteAdding may be called in a context where an incoming lock is held.  We need to
                 // call CompleteBlockIfPossible, but we can't do so if the incoming lock is held.
                 // However, we know that _decliningPermanently has been set, and thus the timing of
                 // CompleteBlockIfPossible doesn't matter, so we schedule it to run asynchronously
@@ -551,9 +547,9 @@ namespace System.Threading.Tasks.Dataflow.Internal
             TOutput message = default(TOutput);
             bool offerJustToLinkToTarget = false;
 
-            // If offering isn't enabled and if we're not doing this as 
-            // a result of LinkTo, bail. Otherwise, with offering disabled, we must have 
-            // already offered this message to all existing targets, so we can just offer 
+            // If offering isn't enabled and if we're not doing this as
+            // a result of LinkTo, bail. Otherwise, with offering disabled, we must have
+            // already offered this message to all existing targets, so we can just offer
             // it to the newly linked target.
             if (!Volatile.Read(ref _enableOffering))
             {
@@ -580,13 +576,13 @@ namespace System.Threading.Tasks.Dataflow.Internal
                 }
                 else
                 {
-                    // Otherwise, we've not yet offered this message to anyone, so even 
+                    // Otherwise, we've not yet offered this message to anyone, so even
                     // if linkToTarget is non-null, we need to propagate the message in order
                     // through all of the registered targets, the last of which will be the linkToTarget
                     // if it's non-null (no need to special-case it, though).
 
                     // Note that during OfferMessageToTarget, a target may call ConsumeMessage (taking advantage of the
-                    // reentrancy of OutgoingLock), which may unlink the target if the target is registered as "unlinkAfterOne".  
+                    // reentrancy of OutgoingLock), which may unlink the target if the target is registered as "unlinkAfterOne".
                     // Doing so will remove the target from the targets list. As such, we maintain the next node
                     // separately from cur.Next, in case cur.Next changes by cur being removed from the list.
                     // No other node in the list should change, as we're protected by OutgoingLock.
@@ -617,7 +613,7 @@ namespace System.Threading.Tasks.Dataflow.Internal
                 {
                     // SourceCore set consumeToAccept to false.  However, it's possible
                     // that an incorrectly written target may ignore that parameter and synchronously consume
-                    // even though they weren't supposed to.  To recover from that, 
+                    // even though they weren't supposed to.  To recover from that,
                     // we'll only dequeue if the correct message is still at the head of the queue.
                     // However, we'll assert so that we can at least catch this in our own debug builds.
                     TOutput dropped;
@@ -662,14 +658,14 @@ namespace System.Threading.Tasks.Dataflow.Internal
         /// <param name="target">The single target to which the message should be offered.</param>
         /// <param name="messageWasAccepted">true if the message was accepted by the target; otherwise, false.</param>
         /// <returns>
-        /// true if the message should not be offered to additional targets; 
+        /// true if the message should not be offered to additional targets;
         /// false if propagation should be allowed to continue.
         /// </returns>
         private bool OfferMessageToTarget(
             DataflowMessageHeader header, TOutput message, ITargetBlock<TOutput> target,
             out bool messageWasAccepted)
         {
-            Contract.Requires(target != null, "Valid target to offer to is required.");
+            Debug.Assert(target != null, "Valid target to offer to is required.");
             Common.ContractAssertMonitorStatus(OutgoingLock, held: true);
             Common.ContractAssertMonitorStatus(ValueLock, held: false);
 
@@ -768,9 +764,7 @@ namespace System.Threading.Tasks.Dataflow.Internal
 #endif
 
                 // Start the task handling scheduling exceptions
-#pragma warning disable 0420
                 Exception exception = Common.StartTaskSafe(_taskForOutputProcessing, _dataflowBlockOptions.TaskScheduler);
-#pragma warning restore 0420
                 if (exception != null)
                 {
                     // First, log the exception while the processing state is dirty which is preventing the block from completing.
@@ -813,13 +807,13 @@ namespace System.Threading.Tasks.Dataflow.Internal
                 // possible offerings.  The former ensures that other operations don't get starved,
                 // while the latter is much more efficient (not continually acquiring and releasing
                 // the lock).  For blocks that aren't linked to any targets, this won't matter
-                // (no offering is done), and for blocks that are only linked to targets, this shouldn't 
+                // (no offering is done), and for blocks that are only linked to targets, this shouldn't
                 // matter (no one is contending for the lock), thus
                 // the only case it would matter is when a block both has targets and is being
                 // explicitly received from, which is an uncommon scenario.  Thus, we want to lock
                 // around the whole thing to improve performance, but just in case we do hit
-                // an uncommon scenario, in the default case we release the lock every now and again.  
-                // If a developer wants to control this, they can limit the duration of the 
+                // an uncommon scenario, in the default case we release the lock every now and again.
+                // If a developer wants to control this, they can limit the duration of the
                 // lock by using MaxMessagesPerTask.
 
                 const int DEFAULT_RELEASE_LOCK_ITERATIONS = 10; // Dialable
@@ -909,12 +903,12 @@ namespace System.Threading.Tasks.Dataflow.Internal
         }
 
         /// <summary>
-        /// Slow path for CompleteBlockIfPossible. 
+        /// Slow path for CompleteBlockIfPossible.
         /// Separating out the slow path into its own method makes it more likely that the fast path method will get inlined.
         /// </summary>
         private void CompleteBlockIfPossible_Slow()
         {
-            Contract.Requires(
+            Debug.Assert(
                 _decliningPermanently && _taskForOutputProcessing == null && _nextMessageReservedFor == null,
                 "The block must be declining permanently, there must be no reservations, and there must be no processing tasks");
             Common.ContractAssertMonitorStatus(OutgoingLock, held: true);
@@ -1006,7 +1000,7 @@ namespace System.Threading.Tasks.Dataflow.Internal
         internal sealed class DebuggingInformation
         {
             /// <summary>The source being viewed.</summary>
-            private SourceCore<TOutput> _source;
+            private readonly SourceCore<TOutput> _source;
 
             /// <summary>Initializes the type proxy.</summary>
             /// <param name="source">The source being viewed.</param>
@@ -1021,8 +1015,7 @@ namespace System.Threading.Tasks.Dataflow.Internal
 
             /// <summary>Gets the DataflowBlockOptions used to configure this block.</summary>
             internal DataflowBlockOptions DataflowBlockOptions { get { return _source._dataflowBlockOptions; } }
-            /// <summary>Gets whether the block is declining further messages.</summary>
-            internal bool IsDecliningPermanently { get { return _source._decliningPermanently; } }
+
             /// <summary>Gets whether the block is completed.</summary>
             internal bool IsCompleted { get { return _source.Completion.IsCompleted; } }
 

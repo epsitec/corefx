@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -49,6 +50,17 @@ namespace System.Net.Http.Tests
             CheckInvalidParsedValue("p/1.0\r\n", 0); // for \r\n to be a valid whitespace, it must be followed by space/tab
             CheckInvalidParsedValue("p/1.0(comment)", 0);
             CheckInvalidParsedValue("(comment)[", 0);
+            CheckInvalidParsedValue("(comment(subcomment)", 0);
+            CheckInvalidParsedValue("(comment(subcomment(", 0);
+            CheckInvalidParsedValue("(comment(()", 0);
+            CheckInvalidParsedValue("(", 0);
+            CheckInvalidParsedValue(")", 0);
+            CheckInvalidParsedValue("(()", 0);
+            CheckInvalidParsedValue("())", 0);
+            CheckInvalidParsedValue("((comment)", 0);
+            CheckInvalidParsedValue("(comment))", 0);
+            CheckInvalidParsedValue("(comment)(comment)", 0);
+            CheckInvalidParsedValue("Mozilla/4.0 (compatible (compatible; MSIE 8.0; Windows NT 6.1; Trident/7.0)", 12);
 
             // "User-Agent" and "Server" don't allow empty values (unlike most other headers supporting lists of values)
             CheckInvalidParsedValue(null, 0);
@@ -77,7 +89,7 @@ namespace System.Net.Http.Tests
             int newIndex = startIndex;
             Assert.False(parser.TryParseValue(input, null, ref newIndex, out result),
                 string.Format("TryParse returned true. Input: '{0}'", input));
-            Assert.Equal(null, result);
+            Assert.Null(result);
             Assert.Equal(startIndex, newIndex);
         }
         #endregion

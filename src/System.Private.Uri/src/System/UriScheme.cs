@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Globalization;
 
@@ -11,7 +12,7 @@ namespace System
     //
     // A developer must implement at least internal default .ctor to participate in the Uri extensibility game.
     //
-    internal abstract partial class UriParser
+    public abstract partial class UriParser
     {
         internal string SchemeName
         {
@@ -49,7 +50,7 @@ namespace System
 
         //
         // Is called whenever a parser gets registered with some scheme
-        // The base implementaion is a nop.
+        // The base implementation is a nop.
         //
         protected virtual void OnRegister(string schemeName, int defaultPort)
         {
@@ -60,7 +61,7 @@ namespace System
         //
         // This method returns a non null parsingError if Uri being created is invalid:
         //
-        protected virtual void InitializeAndValidate(Uri uri, out UriFormatException parsingError)
+        protected virtual void InitializeAndValidate(Uri uri, out UriFormatException? parsingError)
         {
             parsingError = uri.ParseMinimal();
         }
@@ -74,18 +75,18 @@ namespace System
         // This method returns:
         // The result Uri value used to represent a new Uri
         //
-        protected virtual string Resolve(Uri baseUri, Uri relativeUri, out UriFormatException parsingError)
+        protected virtual string? Resolve(Uri baseUri, Uri? relativeUri, out UriFormatException? parsingError)
         {
             if (baseUri.UserDrivenParsing)
-                throw new InvalidOperationException(SR.Format(SR.net_uri_UserDrivenParsing, this.GetType().ToString()));
+                throw new InvalidOperationException(SR.Format(SR.net_uri_UserDrivenParsing, this.GetType()));
 
             if (!baseUri.IsAbsoluteUri)
                 throw new InvalidOperationException(SR.net_uri_NotAbsolute);
 
 
-            string newUriString = null;
+            string? newUriString = null;
             bool userEscaped = false;
-            Uri result = Uri.ResolveHelper(baseUri, relativeUri, ref newUriString, ref userEscaped, out parsingError);
+            Uri? result = Uri.ResolveHelper(baseUri, relativeUri, ref newUriString, ref userEscaped, out parsingError);
 
             if (parsingError != null)
                 return null;
@@ -102,8 +103,8 @@ namespace System
         }
 
         //
-        // This method is invoked to allow a cutsom parser to override the
-        // internal parser when serving application with Uri componenet strings.
+        // This method is invoked to allow a custom parser to override the
+        // internal parser when serving application with Uri component strings.
         // The output format depends on the "format" parameter
         //
         // Parameters:
@@ -111,18 +112,18 @@ namespace System
         //  uriFormat       - The requested output format.
         //
         // This method returns:
-        // The final result. The base impementaion could be invoked to get a suggested value
+        // The final result. The base implementation could be invoked to get a suggested value
         //
         protected virtual string GetComponents(Uri uri, UriComponents components, UriFormat format)
         {
             if (((components & UriComponents.SerializationInfoString) != 0) && components != UriComponents.SerializationInfoString)
-                throw new ArgumentOutOfRangeException("components", components, SR.net_uri_NotJustSerialization);
+                throw new ArgumentOutOfRangeException(nameof(components), components, SR.net_uri_NotJustSerialization);
 
             if ((format & ~UriFormat.SafeUnescaped) != 0)
-                throw new ArgumentOutOfRangeException("format");
+                throw new ArgumentOutOfRangeException(nameof(format));
 
             if (uri.UserDrivenParsing)
-                throw new InvalidOperationException(SR.Format(SR.net_uri_UserDrivenParsing, this.GetType().ToString()));
+                throw new InvalidOperationException(SR.Format(SR.net_uri_UserDrivenParsing, this.GetType()));
 
             if (!uri.IsAbsoluteUri)
                 throw new InvalidOperationException(SR.net_uri_NotAbsolute);
@@ -136,17 +137,44 @@ namespace System
         }
 
         //
+        // Static Registration methods
+        //
+        //
+        // Registers a custom Uri parser based on a scheme string
+        //
+        public static void Register(UriParser uriParser, string schemeName, int defaultPort)
+        {
+            if (uriParser == null)
+                throw new ArgumentNullException(nameof(uriParser));
+
+            if (schemeName == null)
+                throw new ArgumentNullException(nameof(schemeName));
+
+            if (schemeName.Length == 1)
+                throw new ArgumentOutOfRangeException(nameof(schemeName));
+
+            if (!Uri.CheckSchemeName(schemeName))
+                throw new ArgumentOutOfRangeException(nameof(schemeName));
+
+            if ((defaultPort >= 0xFFFF || defaultPort < 0) && defaultPort != -1)
+                throw new ArgumentOutOfRangeException(nameof(defaultPort));
+
+            schemeName = schemeName.ToLower();
+            FetchSyntax(uriParser, schemeName, defaultPort);
+        }
+
+        //
         // Is a Uri scheme known to System.Uri?
         //
         public static bool IsKnownScheme(string schemeName)
         {
             if (schemeName == null)
-                throw new ArgumentNullException("schemeName");
+                throw new ArgumentNullException(nameof(schemeName));
 
             if (!Uri.CheckSchemeName(schemeName))
-                throw new ArgumentOutOfRangeException("schemeName");
+                throw new ArgumentOutOfRangeException(nameof(schemeName));
 
-            UriParser syntax = UriParser.GetSyntax(schemeName.ToLowerInvariant());
+            UriParser? syntax = UriParser.GetSyntax(schemeName.ToLowerInvariant());
             return syntax != null && syntax.NotAny(UriSyntaxFlags.V1_UnknownUri);
         }
     }

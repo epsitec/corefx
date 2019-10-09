@@ -1,14 +1,15 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Microsoft.Win32.SafeHandles;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 
-namespace System.Diagnostics.ProcessTests
+namespace System.Diagnostics.Tests
 {
-    internal class Interop
+    internal partial class Interop
     {
         [StructLayout(LayoutKind.Sequential, Size = 40)]
         public struct PROCESS_MEMORY_COUNTERS
@@ -25,7 +26,7 @@ namespace System.Diagnostics.ProcessTests
             public uint PeakPagefileUsage;
         }
 
-        [StructLayout(LayoutKind.Sequential)]
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         internal struct USER_INFO_1
         {
             public string usri1_name;
@@ -51,41 +52,35 @@ namespace System.Diagnostics.ProcessTests
             public int Attributes;
         }
 
-        [DllImport("api-ms-win-core-memory-l1-1-1.dll")]
+        [DllImport("kernel32.dll")]
         public static extern bool GetProcessWorkingSetSizeEx(SafeProcessHandle hProcess, out IntPtr lpMinimumWorkingSetSize, out IntPtr lpMaximumWorkingSetSize, out uint flags);
-        
-        [DllImport("api-ms-win-core-processthreads-l1-1-0.dll")]
+
+        [DllImport("kernel32.dll")]
         internal static extern int GetCurrentProcessId();
 
-        [DllImport("libc")]
-        internal static extern int getpid();
-
-        [DllImport("libc")]
-        internal static extern int getsid(int pid);
-
-        [DllImport("api-ms-win-core-processthreads-l1-1-2.dll")]
+        [DllImport("kernel32.dll")]
         internal static extern bool ProcessIdToSessionId(uint dwProcessId, out uint pSessionId);
 
-        [DllImport("api-ms-win-core-processthreads-l1-1-0.dll")]
+        [DllImport("kernel32.dll")]
         public static extern int GetProcessId(SafeProcessHandle nativeHandle);
 
-        [DllImport("api-ms-win-core-console-l1-1-0.dll")]
-        internal extern static int GetConsoleCP();
+        [DllImport("kernel32.dll")]
+        internal static extern int GetConsoleCP();
 
-        [DllImport("api-ms-win-core-console-l1-1-0.dll")]
-        internal extern static int GetConsoleOutputCP();
+        [DllImport("kernel32.dll")]
+        internal static extern int GetConsoleOutputCP();
 
-        [DllImport("api-ms-win-core-console-l1-1-0.dll")]
-        internal extern static int SetConsoleCP(int codePage);
+        [DllImport("kernel32.dll")]
+        internal static extern int SetConsoleCP(int codePage);
 
-        [DllImport("api-ms-win-core-console-l1-1-0.dll")]
-        internal extern static int SetConsoleOutputCP(int codePage);
+        [DllImport("kernel32.dll")]
+        internal static extern int SetConsoleOutputCP(int codePage);
 
         [DllImport("netapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        internal extern static uint NetUserAdd(string servername, uint level, ref USER_INFO_1 buf, out uint parm_err);
+        internal static extern uint NetUserAdd(string servername, uint level, ref USER_INFO_1 buf, out uint parm_err);
 
         [DllImport("netapi32.dll")]
-        internal extern static uint NetUserDel(string servername, string username);
+        internal static extern uint NetUserDel(string servername, string username);
 
         [DllImport("advapi32.dll")]
         internal static extern bool OpenProcessToken(SafeProcessHandle ProcessHandle, uint DesiredAccess, out SafeProcessHandle TokenHandle);
@@ -105,7 +100,7 @@ namespace System.Diagnostics.ProcessTests
 
             if (result != 0) // NERR_Success
             {
-                // most likely result == ERROR_ACCESS_DENIED 
+                // most likely result == ERROR_ACCESS_DENIED
                 // due to running without elevated privileges
                 throw new Win32Exception((int)result);
             }

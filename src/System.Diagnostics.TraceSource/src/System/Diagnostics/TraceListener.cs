@@ -1,11 +1,13 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Text;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Collections;
+using System.Collections.Specialized;
 
 namespace System.Diagnostics
 {
@@ -13,12 +15,13 @@ namespace System.Diagnostics
     /// <para>Provides the <see langword='abstract '/>base class for the listeners who
     ///    monitor trace and debug output.</para>
     /// </devdoc>
-    public abstract class TraceListener : IDisposable
+    public abstract class TraceListener : MarshalByRefObject, IDisposable
     {
         private int _indentLevel;
         private int _indentSize = 4;
         private TraceOptions _traceOptions = TraceOptions.None;
         private bool _needIndent = true;
+        private StringDictionary _attributes;
 
         private string _listenerName;
         private TraceFilter _filter = null;
@@ -37,6 +40,16 @@ namespace System.Diagnostics
         protected TraceListener(string name)
         {
             _listenerName = name;
+        }
+
+        public StringDictionary Attributes
+        {
+            get
+            {
+                if (_attributes == null)
+                    _attributes = new StringDictionary();
+                return _attributes;
+            }
         }
 
         /// <devdoc>
@@ -106,7 +119,7 @@ namespace System.Diagnostics
             set
             {
                 if (value < 0)
-                    throw new ArgumentOutOfRangeException("IndentSize", value, SR.TraceListenerIndentSize);
+                    throw new ArgumentOutOfRangeException(nameof(IndentSize), value, SR.TraceListenerIndentSize);
                 _indentSize = value;
             }
         }
@@ -147,11 +160,30 @@ namespace System.Diagnostics
             {
                 if (((int)value >> 6) != 0)
                 {
-                    throw new ArgumentOutOfRangeException("value");
+                    throw new ArgumentOutOfRangeException(nameof(value));
                 }
 
                 _traceOptions = value;
             }
+        }
+
+        /// <devdoc>
+        ///    <para>When overridden in a derived class, closes the output stream
+        ///       so that it no longer receives tracing or debugging output.</para>
+        /// </devdoc>
+        public virtual void Close()
+        {
+            return;
+        }
+
+        protected internal virtual string[] GetSupportedAttributes()
+        {
+            return null;
+        }
+
+        public virtual void TraceTransfer(TraceEventCache eventCache, string source, int id, string message, Guid relatedActivityId)
+        {
+            TraceEvent(eventCache, source, TraceEventType.Transfer, id, message + ", relatedActivityId=" + relatedActivityId.ToString());
         }
 
         /// <devdoc>
@@ -306,13 +338,13 @@ namespace System.Diagnostics
 
         // new write methods used by TraceSource
 
-        public virtual void TraceData(TraceEventCache eventCache, String source, TraceEventType eventType, int id, object data)
+        public virtual void TraceData(TraceEventCache eventCache, string source, TraceEventType eventType, int id, object data)
         {
             if (Filter != null && !Filter.ShouldTrace(eventCache, source, eventType, id, null, null, data))
                 return;
 
             WriteHeader(source, eventType, id);
-            string datastring = String.Empty;
+            string datastring = string.Empty;
             if (data != null)
                 datastring = data.ToString();
 
@@ -320,7 +352,7 @@ namespace System.Diagnostics
             WriteFooter(eventCache);
         }
 
-        public virtual void TraceData(TraceEventCache eventCache, String source, TraceEventType eventType, int id, params object[] data)
+        public virtual void TraceData(TraceEventCache eventCache, string source, TraceEventType eventType, int id, params object[] data)
         {
             if (Filter != null && !Filter.ShouldTrace(eventCache, source, eventType, id, null, null, null, data))
                 return;
@@ -344,13 +376,13 @@ namespace System.Diagnostics
             WriteFooter(eventCache);
         }
 
-        public virtual void TraceEvent(TraceEventCache eventCache, String source, TraceEventType eventType, int id)
+        public virtual void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id)
         {
-            TraceEvent(eventCache, source, eventType, id, String.Empty);
+            TraceEvent(eventCache, source, eventType, id, string.Empty);
         }
 
         // All other TraceEvent methods come through this one.
-        public virtual void TraceEvent(TraceEventCache eventCache, String source, TraceEventType eventType, int id, string message)
+        public virtual void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, string message)
         {
             if (Filter != null && !Filter.ShouldTrace(eventCache, source, eventType, id, message))
                 return;
@@ -361,23 +393,23 @@ namespace System.Diagnostics
             WriteFooter(eventCache);
         }
 
-        public virtual void TraceEvent(TraceEventCache eventCache, String source, TraceEventType eventType, int id, string format, params object[] args)
+        public virtual void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, string format, params object[] args)
         {
             if (Filter != null && !Filter.ShouldTrace(eventCache, source, eventType, id, format, args))
                 return;
 
             WriteHeader(source, eventType, id);
             if (args != null)
-                WriteLine(String.Format(CultureInfo.InvariantCulture, format, args));
+                WriteLine(string.Format(CultureInfo.InvariantCulture, format, args));
             else
                 WriteLine(format);
 
             WriteFooter(eventCache);
         }
 
-        private void WriteHeader(String source, TraceEventType eventType, int id)
+        private void WriteHeader(string source, TraceEventType eventType, int id)
         {
-            Write(String.Format(CultureInfo.InvariantCulture, "{0} {1}: {2} : ", source, eventType.ToString(), id.ToString(CultureInfo.InvariantCulture)));
+            Write(string.Format(CultureInfo.InvariantCulture, "{0} {1}: {2} : ", source, eventType.ToString(), id.ToString(CultureInfo.InvariantCulture)));
         }
 
         private void WriteFooter(TraceEventCache eventCache)

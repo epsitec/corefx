@@ -1,12 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
-using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace System.Threading.Tasks.Tests
 {
@@ -51,7 +49,7 @@ namespace System.Threading.Tasks.Tests
 
             //Test constructor that accepts cancellationToken
 
-            // Exercising TF<int>(cancellationToken) with a noncancelled token 
+            // Exercising TF<int>(cancellationToken) with a noncancelled token
             cancellationSrc = new CancellationTokenSource();
             tfi = new TaskFactory<int>(cancellationSrc.Token);
             task = tfi.StartNew(() => 0);
@@ -107,19 +105,19 @@ namespace System.Threading.Tasks.Tests
             Assert.Throws<ArgumentOutOfRangeException>(
                () => tf = new TaskFactory(TaskCreationOptions.None, TaskContinuationOptions.NotOnFaulted));
 
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tf.FromAsync(null, (obj) => { }, TaskCreationOptions.None));
+            Assert.Throws<ArgumentNullException>(
+               () => { tf.FromAsync(null, (obj) => { }, TaskCreationOptions.None); });
 
             // testing exceptions in null endMethods
 
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tf.FromAsync(new myAsyncResult((obj) => { }, null), null, TaskCreationOptions.None));
+            Assert.Throws<ArgumentNullException>(
+               () => { tf.FromAsync(new myAsyncResult((obj) => { }, null), null, TaskCreationOptions.None); });
 
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tf.FromAsync<int>(new myAsyncResult((obj) => { }, null), null, TaskCreationOptions.None));
+            Assert.Throws<ArgumentNullException>(
+               () => { tf.FromAsync<int>(new myAsyncResult((obj) => { }, null), null, TaskCreationOptions.None); });
 
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tf.FromAsync<int>(new myAsyncResult((obj) => { }, null), null, TaskCreationOptions.None, null));
+            Assert.Throws<ArgumentNullException>(
+               () => { tf.FromAsync<int>(new myAsyncResult((obj) => { }, null), null, TaskCreationOptions.None, null); });
 
             TaskFactory<int> tfi = new TaskFactory<int>();
 
@@ -146,42 +144,42 @@ namespace System.Threading.Tasks.Tests
 
             tf = new TaskFactory(TaskCreationOptions.LongRunning, TaskContinuationOptions.None);
 
-            Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-               () => tf.FromAsync(fac.StartWrite, fac.EndWrite, null /* state */));
+            Assert.Throws<ArgumentOutOfRangeException>(
+               () => { tf.FromAsync(fac.StartWrite, fac.EndWrite, null /* state */); });
 
-            Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-               () => tf.FromAsync(fac.StartWrite, fac.EndWrite, "abc", null /* state */));
+            Assert.Throws<ArgumentOutOfRangeException>(
+               () => { tf.FromAsync(fac.StartWrite, fac.EndWrite, "abc", null /* state */); });
 
-            Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-               () => tf.FromAsync(fac.StartWrite, fac.EndWrite, "abc", 2, null /* state */));
+            Assert.Throws<ArgumentOutOfRangeException>(
+               () => { tf.FromAsync(fac.StartWrite, fac.EndWrite, "abc", 2, null /* state */); });
 
-            Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-               () => tf.FromAsync(fac.StartWrite, fac.EndWrite, "abc", 0, 2, null /* state */));
+            Assert.Throws<ArgumentOutOfRangeException>(
+               () => { tf.FromAsync(fac.StartWrite, fac.EndWrite, "abc", 0, 2, null /* state */); });
 
             // testing exceptions in null endMethods or begin method
             //0 parameter
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tf.FromAsync<string>(fac.StartWrite, null, (Object)null, TaskCreationOptions.None));
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tf.FromAsync<string>(null, fac.EndRead, (Object)null, TaskCreationOptions.None));
+            Assert.Throws<ArgumentNullException>(
+               () => { tf.FromAsync<string>(fac.StartWrite, null, (object)null, TaskCreationOptions.None); });
+            Assert.Throws<ArgumentNullException>(
+               () => { tf.FromAsync<string>(null, fac.EndRead, (object)null, TaskCreationOptions.None); });
 
             //1 parameter
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tf.FromAsync<string, int>(fac.StartWrite, null, "arg1", (Object)null, TaskCreationOptions.None));
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tf.FromAsync<string, string>(null, fac.EndRead, "arg1", (Object)null, TaskCreationOptions.None));
+            Assert.Throws<ArgumentNullException>(
+               () => { tf.FromAsync<string, int>(fac.StartWrite, null, "arg1", (object)null, TaskCreationOptions.None); });
+            Assert.Throws<ArgumentNullException>(
+               () => { tf.FromAsync<string, string>(null, fac.EndRead, "arg1", (object)null, TaskCreationOptions.None); });
 
             //2 parameters
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tf.FromAsync<string, int, int>(fac.StartWrite, null, "arg1", 1, (Object)null, TaskCreationOptions.None));
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tf.FromAsync<string, string, string>(null, fac.EndRead, "arg1", "arg2", (Object)null, TaskCreationOptions.None));
+            Assert.Throws<ArgumentNullException>(
+               () => { tf.FromAsync<string, int, int>(fac.StartWrite, null, "arg1", 1, (object)null, TaskCreationOptions.None); });
+            Assert.Throws<ArgumentNullException>(
+               () => { tf.FromAsync<string, string, string>(null, fac.EndRead, "arg1", "arg2", (object)null, TaskCreationOptions.None); });
 
             //3 parameters
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tf.FromAsync<string, int, int, int>(fac.StartWrite, null, "arg1", 1, 2, (Object)null, TaskCreationOptions.None));
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tf.FromAsync<string, string, string, string>(null, fac.EndRead, "arg1", "arg2", "arg3", (Object)null, TaskCreationOptions.None));
+            Assert.Throws<ArgumentNullException>(
+               () => { tf.FromAsync<string, int, int, int>(fac.StartWrite, null, "arg1", 1, 2, (object)null, TaskCreationOptions.None); });
+            Assert.Throws<ArgumentNullException>(
+               () => { tf.FromAsync<string, string, string, string>(null, fac.EndRead, "arg1", "arg2", "arg3", (object)null, TaskCreationOptions.None); });
 
             // Checking TF<string> special FromAsync exception handling.
             TaskFactory<string> tfs = new TaskFactory<string>(TaskCreationOptions.LongRunning, TaskContinuationOptions.None);
@@ -207,33 +205,33 @@ namespace System.Threading.Tasks.Tests
             Assert.Throws<ArgumentNullException>(
                () => { tfs.FromAsync(fac.StartRead, null, 64, charbuf, 0, null); });
 
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tfs.FromAsync(null, (obj) => "", TaskCreationOptions.None));
+            Assert.Throws<ArgumentNullException>(
+               () => { tfs.FromAsync(null, (obj) => "", TaskCreationOptions.None); });
 
             //test null begin or end methods with various overloads
             //0 parameter
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tfs.FromAsync(fac.StartWrite, null, null, TaskCreationOptions.None));
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tfs.FromAsync(null, fac.EndRead, null, TaskCreationOptions.None));
+            Assert.Throws<ArgumentNullException>(
+               () => { tfs.FromAsync(fac.StartWrite, null, null, TaskCreationOptions.None); });
+            Assert.Throws<ArgumentNullException>(
+               () => { tfs.FromAsync(null, fac.EndRead, null, TaskCreationOptions.None); });
 
             //1 parameter
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tfs.FromAsync<string>(fac.StartWrite, null, "arg1", null, TaskCreationOptions.None));
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tfs.FromAsync<string>(null, fac.EndRead, "arg1", null, TaskCreationOptions.None));
+            Assert.Throws<ArgumentNullException>(
+               () => { tfs.FromAsync<string>(fac.StartWrite, null, "arg1", null, TaskCreationOptions.None); });
+            Assert.Throws<ArgumentNullException>(
+               () => { tfs.FromAsync<string>(null, fac.EndRead, "arg1", null, TaskCreationOptions.None); });
 
             //2 parameters
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tfs.FromAsync<string, int>(fac.StartWrite, null, "arg1", 2, null, TaskCreationOptions.None));
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tfs.FromAsync<string, int>(null, fac.EndRead, "arg1", 2, null, TaskCreationOptions.None));
+            Assert.Throws<ArgumentNullException>(
+               () => { tfs.FromAsync<string, int>(fac.StartWrite, null, "arg1", 2, null, TaskCreationOptions.None); });
+            Assert.Throws<ArgumentNullException>(
+               () => { tfs.FromAsync<string, int>(null, fac.EndRead, "arg1", 2, null, TaskCreationOptions.None); });
 
             //3 parameters
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tfs.FromAsync<string, int, int>(fac.StartWrite, null, "arg1", 2, 3, null, TaskCreationOptions.None));
-            Assert.ThrowsAsync<ArgumentNullException>(
-               () => tfs.FromAsync<string, int, int>(null, fac.EndRead, "arg1", 2, 3, null, TaskCreationOptions.None));
+            Assert.Throws<ArgumentNullException>(
+               () => { tfs.FromAsync<string, int, int>(fac.StartWrite, null, "arg1", 2, 3, null, TaskCreationOptions.None); });
+            Assert.Throws<ArgumentNullException>(
+               () => { tfs.FromAsync<string, int, int>(null, fac.EndRead, "arg1", 2, 3, null, TaskCreationOptions.None); });
         }
 
         #endregion
@@ -551,7 +549,7 @@ namespace System.Threading.Tasks.Tests
                 myAsyncResult mar = new myAsyncResult(cb, o);
 
                 // Allow for exception throwing to test our handling of that.
-                if (s == null) throw new ArgumentNullException("s");
+                if (s == null) throw new ArgumentNullException(nameof(s));
 
                 Task t = Task.Factory.StartNew(delegate
                 {
@@ -597,7 +595,7 @@ namespace System.Threading.Tasks.Tests
                 myAsyncResult mar = new myAsyncResult(cb, o);
 
                 // Allow for exception throwing to test our handling of that.
-                if (maxBytes == -1) throw new ArgumentException("maxBytes");
+                if (maxBytes == -1) throw new ArgumentException("Value was not valid", nameof(maxBytes));
 
                 Task t = Task.Factory.StartNew(delegate
                 {

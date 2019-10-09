@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 
@@ -24,9 +25,6 @@ namespace System.ComponentModel.DataAnnotations
         ///     should compare the values to <see cref="ValidationResult.Success" /> rather than checking for null.
         /// </remarks>
         public static readonly ValidationResult Success;
-
-        private readonly IEnumerable<string> _memberNames;
-        private string _errorMessage;
 
         #endregion
 
@@ -59,8 +57,8 @@ namespace System.ComponentModel.DataAnnotations
         /// </param>
         public ValidationResult(string errorMessage, IEnumerable<string> memberNames)
         {
-            _errorMessage = errorMessage;
-            _memberNames = memberNames ?? Array.Empty<string>();
+            ErrorMessage = errorMessage;
+            MemberNames = memberNames ?? Array.Empty<string>();
         }
 
         /// <summary>
@@ -72,11 +70,11 @@ namespace System.ComponentModel.DataAnnotations
         {
             if (validationResult == null)
             {
-                throw new ArgumentNullException("validationResult");
+                throw new ArgumentNullException(nameof(validationResult));
             }
 
-            _errorMessage = validationResult._errorMessage;
-            _memberNames = validationResult._memberNames;
+            ErrorMessage = validationResult.ErrorMessage;
+            MemberNames = validationResult.MemberNames;
         }
 
         #endregion
@@ -86,19 +84,12 @@ namespace System.ComponentModel.DataAnnotations
         /// <summary>
         ///     Gets the collection of member names affected by this result.  The collection may be empty but will never be null.
         /// </summary>
-        public IEnumerable<string> MemberNames
-        {
-            get { return _memberNames; }
-        }
+        public IEnumerable<string> MemberNames { get; }
 
         /// <summary>
         ///     Gets the error message for this result.  It may be null.
         /// </summary>
-        public string ErrorMessage
-        {
-            get { return _errorMessage; }
-            set { _errorMessage = value; }
-        }
+        public string ErrorMessage { get; set; }
 
         #endregion
 
@@ -107,7 +98,7 @@ namespace System.ComponentModel.DataAnnotations
         /// <summary>
         ///     Override the string representation of this instance, returning
         ///     the <see cref="ErrorMessage" /> if not <c>null</c>, otherwise
-        ///     the base <see cref="Object.ToString" /> result.
+        ///     the base <see cref="object.ToString" /> result.
         /// </summary>
         /// <remarks>
         ///     If the <see cref="ErrorMessage" /> is empty, it will still qualify
@@ -115,12 +106,9 @@ namespace System.ComponentModel.DataAnnotations
         /// </remarks>
         /// <returns>
         ///     The <see cref="ErrorMessage" /> property value if specified,
-        ///     otherwise, the base <see cref="Object.ToString" /> result.
+        ///     otherwise, the base <see cref="object.ToString" /> result.
         /// </returns>
-        public override string ToString()
-        {
-            return ErrorMessage ?? base.ToString();
-        }
+        public override string ToString() => ErrorMessage ?? base.ToString();
         #endregion Methods
     }
 }

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Xml;
@@ -197,7 +198,7 @@ namespace System.Runtime.Serialization
         internal void AddQualifiedNameAttribute(ElementData element, string elementPrefix, string elementName, string elementNs, string valueName, string valueNs)
         {
             string prefix = ExtensionDataReader.GetPrefix(valueNs);
-            element.AddAttribute(elementPrefix, elementNs, elementName, String.Format(CultureInfo.InvariantCulture, "{0}:{1}", prefix, valueName));
+            element.AddAttribute(elementPrefix, elementNs, elementName, prefix + ":" + valueName);
 
             bool prefixDeclaredOnElement = false;
             if (element.attributes != null)
@@ -236,6 +237,44 @@ namespace System.Runtime.Serialization
         {
             base.Clear();
             _members = null;
+        }
+    }
+
+    internal class XmlDataNode : DataNode<object>
+    {
+        private IList<XmlAttribute> _xmlAttributes;
+        private IList<XmlNode> _xmlChildNodes;
+        private XmlDocument _ownerDocument;
+
+        internal XmlDataNode()
+        {
+            dataType = Globals.TypeOfXmlDataNode;
+        }
+
+        internal IList<XmlAttribute> XmlAttributes
+        {
+            get { return _xmlAttributes; }
+            set { _xmlAttributes = value; }
+        }
+
+        internal IList<XmlNode> XmlChildNodes
+        {
+            get { return _xmlChildNodes; }
+            set { _xmlChildNodes = value; }
+        }
+
+        internal XmlDocument OwnerDocument
+        {
+            get { return _ownerDocument; }
+            set { _ownerDocument = value; }
+        }
+
+        public override void Clear()
+        {
+            base.Clear();
+            _xmlAttributes = null;
+            _xmlChildNodes = null;
+            _ownerDocument = null;
         }
     }
 

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -40,7 +41,7 @@ namespace System.Threading.Tasks.Tests
 
     public enum WorkloadType
     {
-        CreateChildTask, //Start a attached childTask in the workload
+        CreateChildTask, //Start an attached childTask in the workload
         CreateDetachedChildTask, //start a detached childTask in the workload
         ContinueInside, //Invoke continuewith as the workload inside the task
         RunWithUserScheduler, //create a task with custom task scheduler that runs that task inline
@@ -88,13 +89,11 @@ namespace System.Threading.Tasks.Tests
             }
         }
 
-        [SecuritySafeCritical]
         private bool ExecuteTask(Task task)
         {
             return TryExecuteTask(task);
         }
 
-        [SecurityCritical]
         protected override void QueueTask(Task task)
         {
             _tasks.Add(task);
@@ -108,7 +107,6 @@ namespace System.Threading.Tasks.Tests
             }
         }
 
-        [SecurityCritical]
         protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
         {
             RunSyncCalledCount++;
@@ -127,7 +125,6 @@ namespace System.Threading.Tasks.Tests
             }
         }
 
-        [SecurityCritical]
         protected override IEnumerable<Task> GetScheduledTasks()
         {
             return _tasks;
@@ -178,7 +175,7 @@ namespace System.Threading.Tasks.Tests
         private TaskSchedulerType _taskSchedulerType;
 
         private Task _task;                   // the main task to be run synchronously
-        private CancellationTokenSource _cts; // The CancellationTokenSource of which the Token is apssed to the Main task
+        private CancellationTokenSource _cts; // The CancellationTokenSource of which the Token is passed to the Main task
         private int _taskThreadID;
 
         public TaskRunSyncTest(TestParameters_RunSync parameters)
@@ -215,7 +212,7 @@ namespace System.Threading.Tasks.Tests
             // Stage 1 -- create task
             CreateTask();
 
-            // Stage 2 - start with the pre-action 
+            // Stage 2 - start with the pre-action
             switch (_preTaskStatus)
             {
                 case PreTaskStatus.Continued:
@@ -299,7 +296,7 @@ namespace System.Threading.Tasks.Tests
             }
 
             //
-            // Extra verification to ensure the Task was RunSynchronously on 
+            // Extra verification to ensure the Task was RunSynchronously on
             // specified TaskScheduler
             //
             if (_taskSchedulerType == TaskSchedulerType.CustomWithInlineExecution ||
@@ -384,8 +381,8 @@ namespace System.Threading.Tasks.Tests
             get
             {
                 // The following cases will cause an exception
-                // 1. Task already started / canceled / disposed / completed 
-                // 2. Task is an contination task 
+                // 1. Task already started / canceled / disposed / completed
+                // 2. Task is a continuation task
                 return (_preTaskStatus != PreTaskStatus.Created);
             }
         }
@@ -400,12 +397,19 @@ namespace System.Threading.Tasks.Tests
             if (_workloadType == WorkloadType.ThrowException)
                 ae.Flatten().Handle((e) => e is TPLTestException);
             else
-                Assert.True(false, string.Format("Caught un-expected exception - {0]. Fail to re-progogate the test exception via Wait", ae));
+                Assert.True(false, string.Format("Caught un-expected exception - {0]. Fail to re-propagate the test exception via Wait", ae));
         }
     }
 
     public class TaskRunSyncTests
     {
+        static TaskRunSyncTests()
+        {
+            // Tests that create tasks which need to run concurrently require us to bump up the number
+            // of threads in the pool, or else we need to wait for it to grow dynamically to the desired number
+            ThreadPoolHelpers.EnsureMinThreadsAtLeast(10);
+        }
+
         #region Test methods
 
         [Fact]

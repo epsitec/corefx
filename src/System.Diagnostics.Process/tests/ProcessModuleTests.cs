@@ -1,40 +1,74 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System.Collections.Generic;
-using System.Security;
-using System.IO;
+using System.Linq;
+using Microsoft.DotNet.RemoteExecutor;
 using Xunit;
-using System.Threading;
-using System.ComponentModel;
 
-namespace System.Diagnostics.ProcessTests
+namespace System.Diagnostics.Tests
 {
     public class ProcessModuleTests : ProcessTestBase
     {
-        [Fact, PlatformSpecific(~PlatformID.OSX)]
-        public void TestModulePropertiesExceptOnOSX()
+        [Fact]
+        public void TestModuleProperties()
         {
-            ProcessModuleCollection moduleCollection = Process.GetCurrentProcess().Modules;
-            Assert.True(moduleCollection.Count > 0);
+            ProcessModuleCollection modules = Process.GetCurrentProcess().Modules;
+            Assert.InRange(modules.Count, 1, int.MaxValue);
 
-            for (int i = 0; i < moduleCollection.Count; i++)
+            foreach (ProcessModule module in modules)
             {
-                Assert.True(moduleCollection[i].BaseAddress.ToInt64() > 0);
-                // From MSDN: Due to changes in the way that Windows loads assemblies, 
-                // EntryPointAddress will always return 0 on Windows 8 or Windows 8.1 and should not be relied on for those platforms.
-                Assert.True(moduleCollection[i].EntryPointAddress.ToInt64() >= 0);
-                Assert.True(moduleCollection[i].ModuleMemorySize > 0);
+                Assert.NotNull(module);
+
+                Assert.NotNull(module.FileName);
+                Assert.NotEmpty(module.FileName);
+
+                Assert.InRange(module.BaseAddress.ToInt64(), long.MinValue, long.MaxValue);
+                Assert.InRange(module.EntryPointAddress.ToInt64(), long.MinValue, long.MaxValue);
+                Assert.InRange(module.ModuleMemorySize, 0, long.MaxValue);
             }
         }
 
-        [Fact, PlatformSpecific(PlatformID.OSX)]
-        public void TestModulePropertiesOnOSX()
+        [Fact]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap, "Process.Modules is not supported on uap")]
+        public void Modules_Get_ContainsHostFileName()
         {
-            // Getting modules for a process given a pid is not supported on OSX.
-            ProcessModuleCollection moduleCollection = _process.Modules;
-            Assert.Equal(0, moduleCollection.Count);
-            Assert.Null(_process.MainModule);
+            ProcessModuleCollection modules = Process.GetCurrentProcess().Modules;
+            Assert.Contains(modules.Cast<ProcessModule>(), m => m.FileName.Contains(RemoteExecutor.HostRunnerName));
+        }
+
+        [Fact]
+        [PlatformSpecific(TestPlatforms.Linux)] // OSX only includes the main module
+        public void TestModulesContainsUnixNativeLibs()
+        {
+            ProcessModuleCollection modules = Process.GetCurrentProcess().Modules;
+            Assert.Contains(modules.Cast<ProcessModule>(), m => m.FileName.Contains("libcoreclr"));
+            Assert.Contains(modules.Cast<ProcessModule>(), m => m.FileName.Contains("System.Native"));
+        }
+
+        [Fact]
+        public void Modules_GetMultipleTimes_ReturnsSameInstance()
+        {
+            Process currentProcess = Process.GetCurrentProcess();
+            Assert.Same(currentProcess.Modules, currentProcess.Modules);
+        }
+
+        [Fact]
+        public void Modules_GetNotStarted_ThrowsInvalidOperationException()
+        {
+            var process = new Process();
+            Assert.Throws<InvalidOperationException>(() => process.Modules);
+        }
+
+        [Fact]
+        public void ModuleCollectionSubClass_DefaultConstructor_Success()
+        {
+            Assert.Empty(new ModuleCollectionSubClass());
+        }
+
+        public class ModuleCollectionSubClass : ProcessModuleCollection
+        {
+            public ModuleCollectionSubClass() : base() { }
         }
     }
 }

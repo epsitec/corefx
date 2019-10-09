@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Text.Internal;
@@ -12,7 +13,7 @@ namespace System.Text.Encodings.Web
     /// </summary>
     public class TextEncoderSettings
     {
-        private AllowedCharactersBitmap _allowedCharactersBitmap;
+        private readonly AllowedCharactersBitmap _allowedCharactersBitmap;
 
         /// <summary>
         /// Instantiates an empty filter (allows no code points through by default).
@@ -27,6 +28,11 @@ namespace System.Text.Encodings.Web
         /// </summary>
         public TextEncoderSettings(TextEncoderSettings other)
         {
+            if (other == null)
+            {
+                throw new ArgumentNullException(nameof(other));
+            }
+
             _allowedCharactersBitmap = AllowedCharactersBitmap.CreateNew();
             AllowCodePoints(other.GetAllowedCodePoints());
         }
@@ -37,9 +43,9 @@ namespace System.Text.Encodings.Web
         /// </summary>
         public TextEncoderSettings(params UnicodeRange[] allowedRanges)
         {
-            if(allowedRanges == null)
+            if (allowedRanges == null)
             {
-                throw new ArgumentNullException("allowedRanges");
+                throw new ArgumentNullException(nameof(allowedRanges));
             }
             _allowedCharactersBitmap = AllowedCharactersBitmap.CreateNew();
             AllowRanges(allowedRanges);
@@ -60,7 +66,7 @@ namespace System.Text.Encodings.Web
         {
             if (characters == null)
             {
-                throw new ArgumentNullException("characters");
+                throw new ArgumentNullException(nameof(characters));
             }
 
             for (int i = 0; i < characters.Length; i++)
@@ -76,7 +82,7 @@ namespace System.Text.Encodings.Web
         {
             if (codePoints == null)
             {
-                throw new ArgumentNullException("codePoints");
+                throw new ArgumentNullException(nameof(codePoints));
             }
 
             foreach (var allowedCodePoint in codePoints)
@@ -97,7 +103,7 @@ namespace System.Text.Encodings.Web
         {
             if (range == null)
             {
-                throw new ArgumentNullException("range");
+                throw new ArgumentNullException(nameof(range));
             }
 
             int firstCodePoint = range.FirstCodePoint;
@@ -115,7 +121,7 @@ namespace System.Text.Encodings.Web
         {
             if (ranges == null)
             {
-                throw new ArgumentNullException("ranges");
+                throw new ArgumentNullException(nameof(ranges));
             }
 
             for (int i = 0; i < ranges.Length; i++)
@@ -147,7 +153,7 @@ namespace System.Text.Encodings.Web
         {
             if (characters == null)
             {
-                throw new ArgumentNullException("characters");
+                throw new ArgumentNullException(nameof(characters));
             }
 
             for (int i = 0; i < characters.Length; i++)
@@ -163,7 +169,7 @@ namespace System.Text.Encodings.Web
         {
             if (range == null)
             {
-                throw new ArgumentNullException("range");
+                throw new ArgumentNullException(nameof(range));
             }
 
             int firstCodePoint = range.FirstCodePoint;
@@ -181,7 +187,7 @@ namespace System.Text.Encodings.Web
         {
             if (ranges == null)
             {
-                throw new ArgumentNullException("ranges");
+                throw new ArgumentNullException(nameof(ranges));
             }
 
             for (int i = 0; i < ranges.Length; i++)

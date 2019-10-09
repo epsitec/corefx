@@ -1,12 +1,13 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Globalization;
 
 namespace System.ComponentModel.DataAnnotations
 {
     /// <summary>
-    ///     Specifies the minimum length of array/string data allowed in a property.
+    ///     Specifies the minimum length of collection/string data allowed in a property.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter,
         AllowMultiple = false)]
@@ -16,7 +17,7 @@ namespace System.ComponentModel.DataAnnotations
         ///     Initializes a new instance of the <see cref="MinLengthAttribute" /> class.
         /// </summary>
         /// <param name="length">
-        ///     The minimum allowable length of array/string data.
+        ///     The minimum allowable length of collection/string data.
         ///     Value must be greater than or equal to zero.
         /// </param>
         public MinLengthAttribute(int length)
@@ -26,9 +27,9 @@ namespace System.ComponentModel.DataAnnotations
         }
 
         /// <summary>
-        ///     Gets the minimum allowable length of the array/string data.
+        ///     Gets the minimum allowable length of the collection/string data.
         /// </summary>
-        public int Length { get; private set; }
+        public int Length { get; }
 
         /// <summary>
         ///     Determines whether a specified object is valid. (Overrides <see cref="ValidationAttribute.IsValid(object)" />)
@@ -48,21 +49,23 @@ namespace System.ComponentModel.DataAnnotations
             // Check the lengths for legality
             EnsureLegalLengths();
 
-            var length = 0;
+            int length;
             // Automatically pass if value is null. RequiredAttribute should be used to assert a value is not null.
             if (value == null)
             {
                 return true;
             }
-            var str = value as string;
-            if (str != null)
+            if (value is string str)
             {
                 length = str.Length;
             }
+            else if (CountPropertyHelper.TryGetCount(value, out var count))
+            {
+                length = count;
+            }
             else
             {
-                // We expect a cast exception if a non-{string|array} property was passed in.
-                length = ((Array)value).Length;
+                throw new InvalidCastException(SR.Format(SR.LengthAttribute_InvalidValueType, value.GetType()));
             }
 
             return length >= Length;
@@ -73,11 +76,9 @@ namespace System.ComponentModel.DataAnnotations
         /// </summary>
         /// <param name="name">The name to include in the formatted string.</param>
         /// <returns>A localized string to describe the minimum acceptable length.</returns>
-        public override string FormatErrorMessage(string name)
-        {
+        public override string FormatErrorMessage(string name) =>
             // An error occurred, so we know the value is less than the minimum
-            return string.Format(CultureInfo.CurrentCulture, ErrorMessageString, name, Length);
-        }
+            string.Format(CultureInfo.CurrentCulture, ErrorMessageString, name, Length);
 
         /// <summary>
         ///     Checks that Length has a legal value.
@@ -87,8 +88,7 @@ namespace System.ComponentModel.DataAnnotations
         {
             if (Length < 0)
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture,
-                    SR.MinLengthAttribute_InvalidMinLength));
+                throw new InvalidOperationException(SR.MinLengthAttribute_InvalidMinLength);
             }
         }
     }

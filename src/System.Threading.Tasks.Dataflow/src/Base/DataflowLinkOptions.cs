@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -20,7 +21,7 @@ namespace System.Threading.Tasks.Dataflow
     /// Provides options used to configure a link between dataflow blocks.
     /// </summary>
     /// <remarks>
-    /// <see cref="DataflowLinkOptions"/> is mutable and can be configured through its properties.  
+    /// <see cref="DataflowLinkOptions"/> is mutable and can be configured through its properties.
     /// When specific configuration options are not set, the following defaults are used:
     /// <list type="table">
     ///     <listheader>
@@ -47,17 +48,17 @@ namespace System.Threading.Tasks.Dataflow
     public class DataflowLinkOptions
     {
         /// <summary>
-        /// A constant used to specify an unlimited quantity for <see cref="DataflowLinkOptions"/> members 
+        /// A constant used to specify an unlimited quantity for <see cref="DataflowLinkOptions"/> members
         /// that provide an upper bound. This field is a constant tied to <see cref="DataflowLinkOptions.Unbounded"/>.
         /// </summary>
-        internal const Int32 Unbounded = DataflowBlockOptions.Unbounded;
+        internal const int Unbounded = DataflowBlockOptions.Unbounded;
 
         /// <summary>Whether the linked target will have completion and faulting notification propagated to it automatically.</summary>
-        private Boolean _propagateCompletion = false;
+        private bool _propagateCompletion = false;
         /// <summary>The maximum number of messages that may be consumed across the link.</summary>
-        private Int32 _maxNumberOfMessages = Unbounded;
-        /// <summary>Whether the link should be appended to the source’s list of links, or whether it should be prepended.</summary>
-        private Boolean _append = true;
+        private int _maxNumberOfMessages = Unbounded;
+        /// <summary>Whether the link should be appended to the source?s list of links, or whether it should be prepended.</summary>
+        private bool _append = true;
 
         /// <summary>A default instance of <see cref="DataflowLinkOptions"/>.</summary>
         /// <remarks>
@@ -77,7 +78,7 @@ namespace System.Threading.Tasks.Dataflow
         }
 
         /// <summary>Gets or sets whether the linked target will have completion and faulting notification propagated to it automatically.</summary>
-        public Boolean PropagateCompletion
+        public bool PropagateCompletion
         {
             get { return _propagateCompletion; }
             set
@@ -88,19 +89,19 @@ namespace System.Threading.Tasks.Dataflow
         }
 
         /// <summary>Gets or sets the maximum number of messages that may be consumed across the link.</summary>
-        public Int32 MaxMessages
+        public int MaxMessages
         {
             get { return _maxNumberOfMessages; }
             set
             {
                 Debug.Assert(this != Default && this != UnlinkAfterOneAndPropagateCompletion, "Default and UnlinkAfterOneAndPropagateCompletion instances are supposed to be immutable.");
-                if (value < 1 && value != Unbounded) throw new ArgumentOutOfRangeException("value");
+                if (value < 1 && value != Unbounded) throw new ArgumentOutOfRangeException(nameof(value));
                 _maxNumberOfMessages = value;
             }
         }
 
-        /// <summary>Gets or sets whether the link should be appended to the source’s list of links, or whether it should be prepended.</summary>
-        public Boolean Append
+        /// <summary>Gets or sets whether the link should be appended to the source?s list of links, or whether it should be prepended.</summary>
+        public bool Append
         {
             get { return _append; }
             set

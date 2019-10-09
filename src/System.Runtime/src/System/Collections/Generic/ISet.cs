@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Runtime.CompilerServices;
 
@@ -7,7 +8,7 @@ namespace System.Collections.Generic
 {
     /// <summary>
     /// Generic collection that guarantees the uniqueness of its elements, as defined
-    /// by some comparer. It also supports basic set operations such as Union, Intersection, 
+    /// by some comparer. It also supports basic set operations such as Union, Intersection,
     /// Complement and Exclusive Complement.
     /// </summary>
     public interface ISet<T> : ICollection<T>
@@ -18,7 +19,7 @@ namespace System.Collections.Generic
         //Transform this set into its union with the IEnumerable<T> other
         void UnionWith(IEnumerable<T> other);
 
-        //Transform this set into its intersection with the IEnumberable<T> other
+        //Transform this set into its intersection with the IEnumerable<T> other
         void IntersectWith(IEnumerable<T> other);
 
         //Transform this set so it contains no elements that are also in other

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Globalization;
 
@@ -25,7 +26,7 @@ namespace System.ComponentModel.DataAnnotations
         /// <summary>
         ///     Gets the maximum acceptable length of the string
         /// </summary>
-        public int MaximumLength { get; private set; }
+        public int MaximumLength { get; }
 
         /// <summary>
         ///     Gets or sets the minimum acceptable length of the string
@@ -49,8 +50,13 @@ namespace System.ComponentModel.DataAnnotations
 
             // Automatically pass if value is null. RequiredAttribute should be used to assert a value is not null.
             // We expect a cast exception if a non-string was passed in.
-            var length = value == null ? 0 : ((string)value).Length;
-            return value == null || (length >= MinimumLength && length <= MaximumLength);
+            if (value == null)
+            {
+                return true;
+            }
+
+            int length = ((string)value).Length;
+            return length >= MinimumLength && length <= MaximumLength;
         }
 
         /// <summary>
@@ -85,8 +91,7 @@ namespace System.ComponentModel.DataAnnotations
 
             if (MaximumLength < MinimumLength)
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture,
-                    SR.RangeAttribute_MinGreaterThanMax, MaximumLength, MinimumLength));
+                throw new InvalidOperationException(SR.Format(SR.RangeAttribute_MinGreaterThanMax, MaximumLength, MinimumLength));
             }
         }
     }

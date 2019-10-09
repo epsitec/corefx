@@ -1,13 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-//-----------------------------------------------------------------------------
-//
-// Description:
-//  This is a subclass for the abstract PackagePart class.
-//  This implementation is specific to Zip file format.
-//
-//-----------------------------------------------------------------------------
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -17,28 +10,11 @@ namespace System.IO.Packaging
 {
     /// <summary>
     /// This class represents a Part within a Zip container.
-    /// This is a part of the Packaging Layer APIs
+    /// This is a part of the Packaging Layer APIs.
+    /// This implementation is specific to the Zip file format.
     /// </summary>
     public sealed class ZipPackagePart : PackagePart
     {
-        //------------------------------------------------------
-        //
-        //  Public Constructors
-        //
-        //------------------------------------------------------
-        // None
-        //------------------------------------------------------
-        //
-        //  Public Properties
-        //
-        //------------------------------------------------------
-        // None
-        //------------------------------------------------------
-        //
-        //  Public Methods
-        //
-        //------------------------------------------------------
-
         #region Public Methods
 
         /// <summary>
@@ -51,7 +27,12 @@ namespace System.IO.Packaging
         {
             if (_zipArchiveEntry != null)
             {
-                if (streamFileMode == FileMode.Create)
+                // Reset the stream when FileMode.Create is specified.  Since ZipArchiveEntry only
+                // ever supports opening once when the backing archive is in Create mode, we'll avoid
+                // calling SetLength since the stream returned won't be seekable. You could still open
+                // an archive in Update mode then call part.GetStream(FileMode.Create), in which case
+                // we'll want this call to SetLength.
+                if (streamFileMode == FileMode.Create && _zipArchiveEntry.Archive.Mode != ZipArchiveMode.Create)
                 {
                     using (var tempStream = _zipStreamManager.Open(_zipArchiveEntry, streamFileMode, streamFileAccess))
                     {
@@ -67,24 +48,12 @@ namespace System.IO.Packaging
 
         #endregion Public Methods
 
-        //------------------------------------------------------
-        //
-        //  Public Events
-        //
-        //------------------------------------------------------
-        // None
-        //------------------------------------------------------
-        //
-        //  Internal Constructors
-        //
-        //------------------------------------------------------
-
         #region Internal Constructors
 
         /// <summary>
         /// Constructs a ZipPackagePart for an atomic (i.e. non-interleaved) part.
         /// This is called from the ZipPackage class as a result of GetPartCore,
-        /// GetPartsCore or CreatePartCore methods     
+        /// GetPartsCore or CreatePartCore methods
         /// </summary>
         /// <param name="zipPackage"></param>
         /// <param name="zipArchive"></param>
@@ -110,12 +79,6 @@ namespace System.IO.Packaging
 
         #endregion Internal Constructors
 
-        //------------------------------------------------------
-        //
-        //  Internal Properties
-        //
-        //------------------------------------------------------
-
         #region Internal Properties
 
         /// <summary>
@@ -131,39 +94,13 @@ namespace System.IO.Packaging
 
         #endregion Internal Properties
 
-        //------------------------------------------------------
-        //
-        //  Internal Methods
-        //
-        //------------------------------------------------------
-        // None
-        //------------------------------------------------------
-        //
-        //  Internal Events
-        //
-        //------------------------------------------------------
-        // None
-        //------------------------------------------------------
-        //
-        //  Private Methods
-        //
-        //------------------------------------------------------
-        // None
-        //------------------------------------------------------
-        //
-        //  Private Fields
-        //
-        //------------------------------------------------------
-
         #region Private Variables
 
-        private ZipPackage _zipPackage;
-        private ZipArchiveEntry _zipArchiveEntry;
-        private ZipArchive _zipArchive;
-        private ZipStreamManager _zipStreamManager;
+        private readonly ZipPackage _zipPackage;
+        private readonly ZipArchiveEntry _zipArchiveEntry;
+        private readonly ZipArchive _zipArchive;
+        private readonly ZipStreamManager _zipStreamManager;
 
         #endregion Private Variables
-
-        //------------------------------------------------------
     }
 }

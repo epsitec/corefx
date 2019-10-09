@@ -1,80 +1,237 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Linq;
+using System.Threading;
 using Xunit;
 
-namespace System.IO.FileSystem.Tests
+namespace System.IO.Tests
 {
-    public class FileInfo_GetSetTimes : FileSystemTest
+    public class FileInfo_GetSetTimes : InfoGetSetTimes<FileInfo>
     {
-        public delegate void SetTime(FileInfo testFile, DateTime time);
-        public delegate DateTime GetTime(FileInfo testFile);
-
-        public IEnumerable<Tuple<SetTime, GetTime, DateTimeKind>> TimeFunctions()
+        protected override FileInfo GetExistingItem()
         {
-            if (IOInputs.SupportsCreationTime)
+            string path = GetTestFilePath();
+            File.Create(path).Dispose();
+            return new FileInfo(path);
+        }
+
+        private static bool HasNonZeroNanoseconds(DateTime dt) => dt.Ticks % 10 != 0;
+
+        public FileInfo GetNonZeroMilliseconds()
+        {
+            FileInfo fileinfo = new FileInfo(GetTestFilePath());
+            fileinfo.Create().Dispose();
+
+            if (fileinfo.LastWriteTime.Millisecond == 0)
             {
-                yield return Tuple.Create<SetTime, GetTime, DateTimeKind>(
+                DateTime dt = fileinfo.LastWriteTime;
+                dt = dt.AddMilliseconds(1);
+                fileinfo.LastWriteTime = dt;
+            }
+
+            Assert.NotEqual(0, fileinfo.LastWriteTime.Millisecond);
+            return fileinfo;
+        }
+
+        public FileInfo GetNonZeroNanoseconds()
+        {
+            FileInfo fileinfo = new FileInfo(GetTestFilePath());
+            fileinfo.Create().Dispose();
+
+            if (!HasNonZeroNanoseconds(fileinfo.LastWriteTime))
+            {
+                if (PlatformDetection.IsOSX)
+                    return null;
+
+                DateTime dt = fileinfo.LastWriteTime;
+                dt = dt.AddTicks(1);
+                fileinfo.LastWriteTime = dt;
+            }
+
+            Assert.True(HasNonZeroNanoseconds(fileinfo.LastWriteTime));
+            return fileinfo;
+        }
+
+        protected override FileInfo GetMissingItem() => new FileInfo(GetTestFilePath());
+
+        protected override string GetItemPath(FileInfo item) => item.FullName;
+
+        protected override void InvokeCreate(FileInfo item) => item.Create();
+
+        public override IEnumerable<TimeFunction> TimeFunctions(bool requiresRoundtripping = false)
+        {
+            if (IOInputs.SupportsGettingCreationTime && (!requiresRoundtripping || IOInputs.SupportsSettingCreationTime))
+            {
+                yield return TimeFunction.Create(
                     ((testFile, time) => { testFile.CreationTime = time; }),
                     ((testFile) => testFile.CreationTime),
                     DateTimeKind.Local);
-                yield return Tuple.Create<SetTime, GetTime, DateTimeKind>(
+                yield return TimeFunction.Create(
+                    ((testFile, time) => { testFile.CreationTimeUtc = time; }),
+                    ((testFile) => testFile.CreationTimeUtc),
+                    DateTimeKind.Unspecified);
+                yield return TimeFunction.Create(
                     ((testFile, time) => { testFile.CreationTimeUtc = time; }),
                     ((testFile) => testFile.CreationTimeUtc),
                     DateTimeKind.Utc);
             }
-            yield return Tuple.Create<SetTime, GetTime, DateTimeKind>(
+            yield return TimeFunction.Create(
                 ((testFile, time) => { testFile.LastAccessTime = time; }),
                 ((testFile) => testFile.LastAccessTime),
                 DateTimeKind.Local);
-            yield return Tuple.Create<SetTime, GetTime, DateTimeKind>(
+            yield return TimeFunction.Create(
+                ((testFile, time) => { testFile.LastAccessTimeUtc = time; }),
+                ((testFile) => testFile.LastAccessTimeUtc),
+                DateTimeKind.Unspecified);
+            yield return TimeFunction.Create(
                 ((testFile, time) => { testFile.LastAccessTimeUtc = time; }),
                 ((testFile) => testFile.LastAccessTimeUtc),
                 DateTimeKind.Utc);
-            yield return Tuple.Create<SetTime, GetTime, DateTimeKind>(
+            yield return TimeFunction.Create(
                 ((testFile, time) => { testFile.LastWriteTime = time; }),
                 ((testFile) => testFile.LastWriteTime),
                 DateTimeKind.Local);
-            yield return Tuple.Create<SetTime, GetTime, DateTimeKind>(
+            yield return TimeFunction.Create(
+                ((testFile, time) => { testFile.LastWriteTimeUtc = time; }),
+                ((testFile) => testFile.LastWriteTimeUtc),
+                DateTimeKind.Unspecified);
+            yield return TimeFunction.Create(
                 ((testFile, time) => { testFile.LastWriteTimeUtc = time; }),
                 ((testFile) => testFile.LastWriteTimeUtc),
                 DateTimeKind.Utc);
         }
 
-        [Fact]
-        public void SettingUpdatesProperties()
+        [ConditionalFact(nameof(isNotHFS))]
+        public void CopyToMillisecondPresent()
         {
-            FileInfo testFile = new FileInfo(GetTestFilePath());
-            testFile.Create().Dispose();
+            FileInfo input = GetNonZeroMilliseconds();
+            FileInfo output = new FileInfo(Path.Combine(GetTestFilePath(), input.Name));
 
-            Assert.All(TimeFunctions(), (tuple) =>
-            {
-                DateTime dt = new DateTime(2014, 12, 1, 12, 0, 0, tuple.Item3);
-                tuple.Item1(testFile, dt);
-                var result = tuple.Item2(testFile);
-                Assert.Equal(dt, result);
-                Assert.Equal(dt.ToLocalTime(), result.ToLocalTime());
-                Assert.Equal(dt.ToUniversalTime(), result.ToUniversalTime());
-            });
+            Assert.Equal(0, output.LastWriteTime.Millisecond);
+            output.Directory.Create();
+            output = input.CopyTo(output.FullName, true);
+
+            Assert.Equal(input.LastWriteTime.Millisecond, output.LastWriteTime.Millisecond);
+            Assert.NotEqual(0, output.LastWriteTime.Millisecond);
+        }
+
+        [ConditionalFact(nameof(isNotHFS))]
+        public void CopyToNanosecondsPresent()
+        {
+            FileInfo input = GetNonZeroNanoseconds();
+            if (input == null)
+                return;
+
+            FileInfo output = new FileInfo(Path.Combine(GetTestFilePath(), input.Name));
+
+            output.Directory.Create();
+            output = input.CopyTo(output.FullName, true);
+
+            Assert.Equal(input.LastWriteTime.Ticks, output.LastWriteTime.Ticks);
+            Assert.True(HasNonZeroNanoseconds(output.LastWriteTime));
+        }
+
+        [ConditionalFact(nameof(isHFS))]
+        public void CopyToNanosecondsPresent_HFS()
+        {
+            FileInfo input = new FileInfo(GetTestFilePath());
+            input.Create().Dispose();
+            FileInfo output = new FileInfo(Path.Combine(GetTestFilePath(), input.Name));
+
+            output.Directory.Create();
+            output = input.CopyTo(output.FullName, true);
+
+            Assert.Equal(input.LastWriteTime.Ticks, output.LastWriteTime.Ticks);
+            Assert.False(HasNonZeroNanoseconds(output.LastWriteTime));
+        }
+
+        [ConditionalFact(nameof(isHFS))]
+        public void MoveToMillisecondPresent_HFS()
+        {
+            FileInfo input = new FileInfo(GetTestFilePath());
+            input.Create().Dispose();
+
+            string dest = Path.Combine(input.DirectoryName, GetTestFileName());
+            input.MoveTo(dest);
+            FileInfo output = new FileInfo(dest);
+            Assert.Equal(0, output.LastWriteTime.Millisecond);
+        }
+
+        [ConditionalFact(nameof(isNotHFS))]
+        public void MoveToMillisecondPresent()
+        {
+            FileInfo input = GetNonZeroMilliseconds();
+            string dest = Path.Combine(input.DirectoryName, GetTestFileName());
+
+            input.MoveTo(dest);
+            FileInfo output = new FileInfo(dest);
+            Assert.NotEqual(0, output.LastWriteTime.Millisecond);
+        }
+
+        [ConditionalFact(nameof(isHFS))]
+        public void CopyToMillisecondPresent_HFS()
+        {
+            FileInfo input = new FileInfo(GetTestFilePath());
+            input.Create().Dispose();
+            FileInfo output = new FileInfo(Path.Combine(GetTestFilePath(), input.Name));
+            output.Directory.Create();
+            output = input.CopyTo(output.FullName, true);
+            Assert.Equal(input.LastWriteTime.Millisecond, output.LastWriteTime.Millisecond);
+            Assert.Equal(0, output.LastWriteTime.Millisecond);
         }
 
         [Fact]
-        public void CreationSetsAllTimes()
+        public void DeleteAfterEnumerate_TimesStillSet()
         {
-            string path = GetTestFilePath();
-            long beforeTime = DateTime.UtcNow.AddSeconds(-3).Ticks;
+            // When enumerating we populate the state as we already have it.
+            DateTime beforeTime = DateTime.UtcNow.AddSeconds(-1);
+            string filePath = GetTestFilePath();
+            File.Create(filePath).Dispose();
+            FileInfo info = new DirectoryInfo(TestDirectory).EnumerateFiles().First();
 
-            FileInfo testFile = new FileInfo(GetTestFilePath());
-            testFile.Create().Dispose();
+            DateTime afterTime = DateTime.UtcNow.AddSeconds(1);
 
-            long afterTime = DateTime.UtcNow.AddSeconds(3).Ticks;
+            // Deleting doesn't change any info state
+            info.Delete();
+            ValidateSetTimes(info, beforeTime, afterTime);
+        }
 
-            Assert.All(TimeFunctions(), (tuple) =>
+
+        [Fact]
+        [PlatformSpecific(TestPlatforms.Linux)]
+        public void BirthTimeIsNotNewerThanLowestOfAccessModifiedTimes()
+        {
+            // On Linux (if no birth time), we synthesize CreationTime from the oldest of
+            // status changed time (ctime) and write time (mtime)
+            // Sanity check that it is in that range.
+
+            DateTime before = DateTime.UtcNow.AddMinutes(-1);
+
+            FileInfo fi = GetExistingItem(); // should set ctime
+            fi.LastWriteTimeUtc = DateTime.UtcNow.AddMinutes(1); // mtime
+            fi.LastAccessTimeUtc = DateTime.UtcNow.AddMinutes(2); // atime
+
+            // Assert.InRange is inclusive
+            Assert.InRange(fi.CreationTimeUtc, before, fi.LastWriteTimeUtc);
+        }
+
+        [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotInAppContainer))] // Can't read root in appcontainer
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public void PageFileHasTimes()
+        {
+            // Typically there is a page file on the C: drive, if not, don't bother trying to track it down.
+            string pageFilePath = Directory.EnumerateFiles(@"C:\", "pagefile.sys").FirstOrDefault();
+            if (pageFilePath != null)
             {
-                Assert.InRange(tuple.Item2(testFile).ToUniversalTime().Ticks, beforeTime, afterTime);
-            });
+                Assert.All(TimeFunctions(), (item) =>
+                {
+                    var time = item.Getter(new FileInfo(pageFilePath));
+                    Assert.NotEqual(DateTime.FromFileTime(0), time);
+                });
+            }
         }
     }
 }

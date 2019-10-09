@@ -1,8 +1,8 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-//------------------------------------------------------------
-//------------------------------------------------------------
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
+using System;
 using System.Runtime.Serialization;
 using System.Diagnostics;
 
@@ -17,14 +17,14 @@ namespace System.Xml
         Max,
     }
 
-    internal class PrefixHandle
+    internal class PrefixHandle : IEquatable<PrefixHandle>
     {
-        private XmlBufferReader _bufferReader;
+        private readonly XmlBufferReader _bufferReader;
         private PrefixHandleType _type;
         private int _offset;
         private int _length;
-        private static string[] s_prefixStrings = { "", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z" };
-        private static byte[] s_prefixBuffer = { (byte)'a', (byte)'b', (byte)'c', (byte)'d', (byte)'e', (byte)'f', (byte)'g', (byte)'h', (byte)'i', (byte)'j', (byte)'k', (byte)'l', (byte)'m', (byte)'n', (byte)'o', (byte)'p', (byte)'q', (byte)'r', (byte)'s', (byte)'t', (byte)'u', (byte)'v', (byte)'w', (byte)'x', (byte)'y', (byte)'z' };
+        private static readonly string[] s_prefixStrings = { "", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z" };
+        private static readonly byte[] s_prefixBuffer = { (byte)'a', (byte)'b', (byte)'c', (byte)'d', (byte)'e', (byte)'f', (byte)'g', (byte)'h', (byte)'i', (byte)'j', (byte)'k', (byte)'l', (byte)'m', (byte)'n', (byte)'o', (byte)'p', (byte)'q', (byte)'r', (byte)'s', (byte)'t', (byte)'u', (byte)'v', (byte)'w', (byte)'x', (byte)'y', (byte)'z' };
 
         public PrefixHandle(XmlBufferReader bufferReader)
         {
@@ -178,8 +178,10 @@ namespace System.Xml
             return GetString().CompareTo(that.GetString());
         }
 
-        private bool Equals2(PrefixHandle prefix2)
+        public bool Equals(PrefixHandle prefix2)
         {
+            if (ReferenceEquals(prefix2, null))
+                return false;
             PrefixHandleType type1 = _type;
             PrefixHandleType type2 = prefix2._type;
             if (type1 != type2)
@@ -204,41 +206,38 @@ namespace System.Xml
         {
             return Equals2(prefix2.Value);
         }
-        static public bool operator ==(PrefixHandle prefix1, string prefix2)
+        public static bool operator ==(PrefixHandle prefix1, string prefix2)
         {
             return prefix1.Equals2(prefix2);
         }
 
-        static public bool operator !=(PrefixHandle prefix1, string prefix2)
+        public static bool operator !=(PrefixHandle prefix1, string prefix2)
         {
             return !prefix1.Equals2(prefix2);
         }
 
-        static public bool operator ==(PrefixHandle prefix1, XmlDictionaryString prefix2)
+        public static bool operator ==(PrefixHandle prefix1, XmlDictionaryString prefix2)
         {
             return prefix1.Equals2(prefix2);
         }
 
-        static public bool operator !=(PrefixHandle prefix1, XmlDictionaryString prefix2)
+        public static bool operator !=(PrefixHandle prefix1, XmlDictionaryString prefix2)
         {
             return !prefix1.Equals2(prefix2);
         }
 
-        static public bool operator ==(PrefixHandle prefix1, PrefixHandle prefix2)
+        public static bool operator ==(PrefixHandle prefix1, PrefixHandle prefix2)
         {
-            return prefix1.Equals2(prefix2);
+            return prefix1.Equals(prefix2);
         }
 
-        static public bool operator !=(PrefixHandle prefix1, PrefixHandle prefix2)
+        public static bool operator !=(PrefixHandle prefix1, PrefixHandle prefix2)
         {
-            return !prefix1.Equals2(prefix2);
+            return !prefix1.Equals(prefix2);
         }
         public override bool Equals(object obj)
         {
-            PrefixHandle that = obj as PrefixHandle;
-            if (object.ReferenceEquals(that, null))
-                return false;
-            return this == that;
+            return Equals(obj as PrefixHandle);
         }
 
         public override string ToString()

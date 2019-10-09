@@ -1,45 +1,33 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Threading;
-using System.Runtime.CompilerServices;
 
 namespace System.Reflection.Internal
 {
     internal sealed class ByteArrayMemoryProvider : MemoryBlockProvider
     {
-        internal readonly ImmutableArray<byte> array;
-        private StrongBox<GCHandle> _pinned;
+        private readonly ImmutableArray<byte> _array;
+        private PinnedObject _pinned;
 
         public ByteArrayMemoryProvider(ImmutableArray<byte> array)
         {
-            this.array = array;
-        }
-
-        ~ByteArrayMemoryProvider()
-        {
-            Dispose(disposing: false);
+            Debug.Assert(!array.IsDefault);
+            _array = array;
         }
 
         protected override void Dispose(bool disposing)
         {
-            if (_pinned != null)
-            {
-                _pinned.Value.Free();
-                _pinned = null;
-            }
+            Debug.Assert(disposing);
+            Interlocked.Exchange(ref _pinned, null)?.Dispose();
         }
 
-        public override int Size
-        {
-            get
-            {
-                return array.Length;
-            }
-        }
+        public override int Size => _array.Length;
+        public ImmutableArray<byte> Array => _array;
 
         protected override AbstractMemoryBlock GetMemoryBlockImpl(int start, int size)
         {
@@ -49,7 +37,7 @@ namespace System.Reflection.Internal
         public override Stream GetStream(out StreamConstraints constraints)
         {
             constraints = new StreamConstraints(null, 0, Size);
-            return new ImmutableMemoryStream(array);
+            return new ImmutableMemoryStream(_array);
         }
 
         internal unsafe byte* Pointer
@@ -58,17 +46,16 @@ namespace System.Reflection.Internal
             {
                 if (_pinned == null)
                 {
-                    var newPinned = new StrongBox<GCHandle>(
-                        GCHandle.Alloc(ImmutableByteArrayInterop.DangerousGetUnderlyingArray(array), GCHandleType.Pinned));
+                    var newPinned = new PinnedObject(ImmutableByteArrayInterop.DangerousGetUnderlyingArray(_array));
 
                     if (Interlocked.CompareExchange(ref _pinned, newPinned, null) != null)
                     {
                         // another thread has already allocated the handle:
-                        newPinned.Value.Free();
+                        newPinned.Dispose();
                     }
                 }
 
-                return (byte*)_pinned.Value.AddrOfPinnedObject();
+                return _pinned.Pointer;
             }
         }
     }

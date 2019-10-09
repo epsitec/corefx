@@ -1,16 +1,16 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics.Hashing;
 using System.Reflection;
 using System.Linq.Expressions;
 using System.Diagnostics;
 using System.Composition.Debugging;
 using System.Composition.TypedParts.ActivationFeatures;
 using System.Composition.Hosting.Core;
-using System.Composition.Runtime;
 using System.Composition.Convention;
 using System.Composition.Hosting;
 
@@ -30,7 +30,7 @@ namespace System.Composition.TypedParts.Discovery
         // but in reality unlikely to be a problem.
         private readonly IList<Type[]> _appliedArguments = new List<Type[]>();
 
-        // Lazyily initialised among potentially many exports
+        // Lazily initialised among potentially many exports
         private ConstructorInfo _constructor;
         private CompositeActivator _partActivator;
 
@@ -91,7 +91,7 @@ namespace System.Composition.TypedParts.Discovery
                     {
                         if (_constructor != null)
                         {
-                            var message = string.Format(Properties.Resources.DiscoveredPart_MultipleImportingConstructorsFound, _partType);
+                            string message = SR.Format(SR.DiscoveredPart_MultipleImportingConstructorsFound, _partType);
                             throw new CompositionFailedException(message);
                         }
 
@@ -105,7 +105,7 @@ namespace System.Composition.TypedParts.Discovery
 
                 if (_constructor == null)
                 {
-                    var message = string.Format(Properties.Resources.DiscoveredPart_NoImportingConstructorsFound, _partType);
+                    string message = SR.Format(SR.DiscoveredPart_NoImportingConstructorsFound, _partType);
                     throw new CompositionFailedException(message);
                 }
             }
@@ -143,7 +143,7 @@ namespace System.Composition.TypedParts.Discovery
 
             var partActivatorDependencies = dependencies
                 .Where(dep => dep.Site is ParameterImportSite)
-                .ToDictionary(d => ((ParameterImportSite)d.Site).Parameter);
+                .ToDictionary(d => ((ParameterImportSite)d.Site).Parameter, ParameterInfoComparer.Instance);
 
             for (var i = 0; i < cps.Length; ++i)
             {
@@ -192,6 +192,18 @@ namespace System.Composition.TypedParts.Discovery
 
         public bool TryCloseGenericPart(Type[] typeArguments, out DiscoveredPart closed)
         {
+            for (int index = 0; index < _partType.GenericTypeParameters.Length; index++)
+            {
+                foreach (var genericParameterConstraints in _partType.GenericTypeParameters[index].GetTypeInfo().GetGenericParameterConstraints())
+                {
+                    if (!genericParameterConstraints.GetTypeInfo().IsAssignableFrom(typeArguments[index].GetTypeInfo()))
+                    {
+                        closed = null;
+                        return false;
+                    }
+                }
+            }
+
             if (_appliedArguments.Any(args => Enumerable.SequenceEqual(args, typeArguments)))
             {
                 closed = null;
@@ -215,5 +227,44 @@ namespace System.Composition.TypedParts.Discovery
         }
 
         public IEnumerable<DiscoveredExport> DiscoveredExports { get { return _exports; } }
+
+        // uses the fact that current usage only has comparisons
+        // between ParameterInfo objects from the same constructor reference,
+        // thus only the position needs to be compared.
+        // Equals checks the member reference equality in case usage changes.
+        private sealed class ParameterInfoComparer : IEqualityComparer<ParameterInfo>
+        {
+            public static readonly ParameterInfoComparer Instance = new ParameterInfoComparer();
+
+            public int GetHashCode(ParameterInfo obj)
+            {
+                return HashHelpers.Combine(obj.Position.GetHashCode(), obj.Member.GetHashCode());
+            }
+
+            public bool Equals(ParameterInfo x, ParameterInfo y)
+            {
+                if (ReferenceEquals(x, y))
+                {
+                    return true;
+                }
+
+                if (x == null || y == null)
+                {
+                    return false;
+                }
+
+                if (x.Position != y.Position)
+                {
+                    return false;
+                }
+
+                if (x.Member != y.Member)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        }
     }
 }

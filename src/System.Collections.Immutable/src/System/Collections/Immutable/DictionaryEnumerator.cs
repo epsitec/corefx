@@ -1,18 +1,18 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-using Validation;
 
 namespace System.Collections.Immutable
 {
-    internal class DictionaryEnumerator<TKey, TValue> : IDictionaryEnumerator
+    internal sealed class DictionaryEnumerator<TKey, TValue> : IDictionaryEnumerator
     {
         private readonly IEnumerator<KeyValuePair<TKey, TValue>> _inner;
 
         internal DictionaryEnumerator(IEnumerator<KeyValuePair<TKey, TValue>> inner)
         {
-            Requires.NotNull(inner, "inner");
+            Requires.NotNull(inner, nameof(inner));
 
             _inner = inner;
         }

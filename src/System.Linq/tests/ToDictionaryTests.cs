@@ -1,58 +1,22 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Tests.Helpers;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace System.Linq.Tests
 {
-    public class ToDictionaryTests
+    public class ToDictionaryTests : EnumerableTests
     {
         private class CustomComparer<T> : IEqualityComparer<T>
         {
             public bool Equals(T x, T y) { return EqualityComparer<T>.Default.Equals(x, y); }
             public int GetHashCode(T obj) { return EqualityComparer<T>.Default.GetHashCode(obj); }
-        }
-
-        private class AnagramEqualityComparer : IEqualityComparer<string>
-        {
-            public bool Equals(string x, string y)
-            {
-                if (ReferenceEquals(x, y)) return true;
-                if (x == null | y == null) return false;
-                int length = x.Length;
-                if (length != y.Length) return false;
-                using (var en = x.OrderBy(i => i).GetEnumerator())
-                {
-                    foreach (char c in y.OrderBy(i => i))
-                    {
-                        en.MoveNext();
-                        if (c != en.Current) return false;
-                    }
-                }
-                return true;
-            }
-
-            public int GetHashCode(string obj)
-            {
-                int hash = 0;
-                foreach (char c in obj)
-                    hash ^= (int)c;
-                return hash;
-            }
-        }
-
-        private struct Record
-        {
-#pragma warning disable 0649
-            public string Name;
-            public int Score;
-#pragma warning restore 0649
         }
 
         [Fact]
@@ -115,7 +79,13 @@ namespace System.Linq.Tests
                 });
         }
 
-
+        [Fact]
+        public void RunOnce()
+        {
+            Assert.Equal(
+                new Dictionary<int, string> {{1, "0"}, {2, "1"}, {3, "2"}, {4, "3"}},
+                Enumerable.Range(0, 4).RunOnce().ToDictionary(i => i + 1, i => i.ToString()));
+        }
 
         [Fact]
         public void ToDictionary_PassCustomComparer()
@@ -159,7 +129,7 @@ namespace System.Linq.Tests
         public void ToDictionary_ThrowArgumentNullExceptionWhenSourceIsNull()
         {
             int[] source = null;
-            Assert.Throws<ArgumentNullException>(() => source.ToDictionary(key => key));
+            AssertExtensions.Throws<ArgumentNullException>("source", () => source.ToDictionary(key => key));
         }
 
 
@@ -168,7 +138,7 @@ namespace System.Linq.Tests
         {
             int[] source = new int[0];
             Func<int, int> keySelector = null;
-            Assert.Throws<ArgumentNullException>(() => source.ToDictionary(keySelector));
+            AssertExtensions.Throws<ArgumentNullException>("keySelector", () => source.ToDictionary(keySelector));
         }
 
         [Fact]
@@ -177,9 +147,24 @@ namespace System.Linq.Tests
             int[] source = new int[0];
             Func<int, int> keySelector = key => key;
             Func<int, int> valueSelector = null;
-            Assert.Throws<ArgumentNullException>(() => source.ToDictionary(keySelector, valueSelector));
+            AssertExtensions.Throws<ArgumentNullException>("elementSelector", () => source.ToDictionary(keySelector, valueSelector));
         }
 
+        [Fact]
+        public void ToDictionary_ThrowArgumentNullExceptionWhenSourceIsNullElementSelector()
+        {
+            int[] source = null;
+            AssertExtensions.Throws<ArgumentNullException>("source", () => source.ToDictionary(key => key, e => e));
+        }
+
+
+        [Fact]
+        public void ToDictionary_ThrowArgumentNullExceptionWhenKeySelectorIsNullElementSelector()
+        {
+            int[] source = new int[0];
+            Func<int, int> keySelector = null;
+            AssertExtensions.Throws<ArgumentNullException>("keySelector", () => source.ToDictionary(keySelector, e => e));
+        }
 
         [Fact]
         public void ToDictionary_KeySelectorThrowException()
@@ -202,7 +187,7 @@ namespace System.Linq.Tests
             int[] source = new int[] { 1, 2, 3 };
             Func<int, string> keySelector = key => null;
 
-            Assert.Throws<ArgumentNullException>(() => source.ToDictionary(keySelector));
+            AssertExtensions.Throws<ArgumentNullException>("key", () => source.ToDictionary(keySelector));
         }
 
         [Fact]
@@ -211,7 +196,7 @@ namespace System.Linq.Tests
             int[] source = new int[] { 1, 2, 3 };
             Func<int, int> keySelector = key => 1;
 
-            Assert.Throws<ArgumentException>(() => source.ToDictionary(keySelector));
+            AssertExtensions.Throws<ArgumentException>(null, () => source.ToDictionary(keySelector));
         }
 
         [Fact]
@@ -228,83 +213,108 @@ namespace System.Linq.Tests
 
             Assert.Throws<InvalidOperationException>(() => source.ToDictionary(keySelector, valueSelector));
         }
-        
+
         [Fact]
         public void ThrowsOnNullKey()
         {
-            Record[] source = new Record[3];
-
-            source[0].Name = "Chris"; source[0].Score = 50;
-            source[1].Name = "Bob"; source[1].Score = 95;
-            source[2].Name = "null"; source[2].Score = 55;
+            var source = new[]
+            {
+                new { Name = "Chris", Score = 50 },
+                new { Name = "Bob", Score = 95 },
+                new { Name = "null", Score = 55 }
+            };
 
             source.ToDictionary(e => e.Name); // Doesn't throw;
-            
-            source[2].Name = null;
-            
-            Assert.Throws<ArgumentNullException>(() => source.ToDictionary(e => e.Name));
+
+            source = new[]
+            {
+                new { Name = "Chris", Score = 50 },
+                new { Name = "Bob", Score = 95 },
+                new { Name = default(string), Score = 55 }
+            };
+
+            AssertExtensions.Throws<ArgumentNullException>("key", () => source.ToDictionary(e => e.Name));
         }
 
         [Fact]
         public void ThrowsOnNullKeyCustomComparer()
         {
-            Record[] source = new Record[3];
-
-            source[0].Name = "Chris"; source[0].Score = 50;
-            source[1].Name = "Bob"; source[1].Score = 95;
-            source[2].Name = "null"; source[2].Score = 55;
+            var source = new[]
+            {
+                new { Name = "Chris", Score = 50 },
+                new { Name = "Bob", Score = 95 },
+                new { Name = "null", Score = 55 }
+            };
 
             source.ToDictionary(e => e.Name, new AnagramEqualityComparer()); // Doesn't throw;
-            
-            source[2].Name = null;
-            
-            Assert.Throws<ArgumentNullException>(() => source.ToDictionary(e => e.Name, new AnagramEqualityComparer()));
+
+            source = new[]
+            {
+                new { Name = "Chris", Score = 50 },
+                new { Name = "Bob", Score = 95 },
+                new { Name = default(string), Score = 55 }
+            };
+
+            AssertExtensions.Throws<ArgumentNullException>("key", () => source.ToDictionary(e => e.Name, new AnagramEqualityComparer()));
         }
 
         [Fact]
         public void ThrowsOnNullKeyValueSelector()
         {
-            Record[] source = new Record[3];
-
-            source[0].Name = "Chris"; source[0].Score = 50;
-            source[1].Name = "Bob"; source[1].Score = 95;
-            source[2].Name = "null"; source[2].Score = 55;
+            var source = new[]
+            {
+                new { Name = "Chris", Score = 50 },
+                new { Name = "Bob", Score = 95 },
+                new { Name = "null", Score = 55 }
+            };
 
             source.ToDictionary(e => e.Name, e => e); // Doesn't throw;
-            
-            source[2].Name = null;
-            
-            Assert.Throws<ArgumentNullException>(() => source.ToDictionary(e => e.Name, e => e));
+
+            source = new[]
+            {
+                new { Name = "Chris", Score = 50 },
+                new { Name = "Bob", Score = 95 },
+                new { Name = default(string), Score = 55 }
+            };
+
+            AssertExtensions.Throws<ArgumentNullException>("key", () => source.ToDictionary(e => e.Name, e => e));
         }
 
         [Fact]
         public void ThrowsOnNullKeyCustomComparerValueSelector()
         {
-            Record[] source = new Record[3];
-
-            source[0].Name = "Chris"; source[0].Score = 50;
-            source[1].Name = "Bob"; source[1].Score = 95;
-            source[2].Name = "null"; source[2].Score = 55;
+            var source = new[]
+            {
+                new { Name = "Chris", Score = 50 },
+                new { Name = "Bob", Score = 95 },
+                new { Name = "null", Score = 55 }
+            };
 
             source.ToDictionary(e => e.Name, e => e, new AnagramEqualityComparer()); // Doesn't throw;
-            
-            source[2].Name = null;
-            
-            Assert.Throws<ArgumentNullException>(() => source.ToDictionary(e => e.Name, e => e, new AnagramEqualityComparer()));
+
+            source = new[]
+            {
+                new { Name = "Chris", Score = 50 },
+                new { Name = "Bob", Score = 95 },
+                new { Name = default(string), Score = 55 }
+            };
+
+            AssertExtensions.Throws<ArgumentNullException>("key", () => source.ToDictionary(e => e.Name, e => e, new AnagramEqualityComparer()));
         }
-        
+
         [Fact]
         public void ThrowsOnDuplicateKeys()
         {
-            Record[] source = new Record[3];
+            var source = new[]
+            {
+                new { Name = "Chris", Score = 50 },
+                new { Name = "Bob", Score = 95 },
+                new { Name = "Bob", Score = 55 }
+            };
 
-            source[0].Name = "Chris"; source[0].Score = 50;
-            source[1].Name = "Bob"; source[1].Score = 95;
-            source[2].Name = "Bob"; source[2].Score = 55;
-
-            Assert.Throws<ArgumentException>(() => source.ToDictionary(e => e.Name, e => e, new AnagramEqualityComparer()));
+            AssertExtensions.Throws<ArgumentException>(null, () => source.ToDictionary(e => e.Name, e => e, new AnagramEqualityComparer()));
         }
-        
+
         private static void AssertMatches<K, E>(IEnumerable<K> keys, IEnumerable<E> values, Dictionary<K, E> dict)
         {
             Assert.NotNull(dict);
@@ -312,9 +322,9 @@ namespace System.Linq.Tests
             Assert.NotNull(values);
             using (var ke = keys.GetEnumerator())
             {
-                foreach(var value in values)
+                foreach (var value in values)
                 {
-                    Assert.True(ke.MoveNext()); 
+                    Assert.True(ke.MoveNext());
                     var key = ke.Current;
                     E dictValue;
                     Assert.True(dict.TryGetValue(key, out dictValue));
@@ -331,32 +341,37 @@ namespace System.Linq.Tests
         {
             int[] elements = new int[] { };
             string[] keys = new string[] { };
-            Record[] source = new Record[] { };
+            var source = keys.Zip(elements, (k, e) => new { Name = k, Score = e });
 
-            AssertMatches(keys, elements, source.ToDictionary((e) => e.Name, (e) => e.Score, new AnagramEqualityComparer()));
+            AssertMatches(keys, elements, source.ToDictionary(e => e.Name, e => e.Score, new AnagramEqualityComparer()));
         }
-        
+
         [Fact]
         public void OneElementNullComparer()
         {
             int[] elements = new int[] { 5 };
             string[] keys = new string[] { "Bob" };
-            Record[] source = new Record[] { new Record { Name = keys[0], Score = elements[0] } };
+            var source = new [] { new { Name = keys[0], Score = elements[0] } };
 
-            AssertMatches(keys, elements, source.ToDictionary((e) => e.Name, (e) => e.Score, null));
+            AssertMatches(keys, elements, source.ToDictionary(e => e.Name, e => e.Score, null));
         }
-        
+
         [Fact]
         public void SeveralElementsCustomComparerer()
         {
             string[] keys = new string[] { "Bob", "Zen", "Prakash", "Chris", "Sachin" };
-            Record[] source = new Record[]{new Record{Name="Bbo", Score=95}, new Record{Name=keys[1], Score=45},
-                            new Record{Name=keys[2], Score=100}, new Record{Name=keys[3], Score=90},
-                            new Record{Name=keys[4], Score=45}};
-            
-            AssertMatches(keys, source, source.ToDictionary((e) => e.Name, new AnagramEqualityComparer()));
+            var source = new []
+            {
+                new { Name = "Bbo", Score = 95 },
+                new { Name = keys[1], Score = 45 },
+                new { Name = keys[2], Score = 100 },
+                new { Name = keys[3], Score = 90 },
+                new { Name = keys[4], Score = 45 }
+            };
+
+            AssertMatches(keys, source, source.ToDictionary(e => e.Name, new AnagramEqualityComparer()));
         }
-        
+
         [Fact]
         public void NullCoalescedKeySelector()
         {
@@ -364,7 +379,7 @@ namespace System.Linq.Tests
             string[] keys = new string[] { string.Empty };
             string[] source = new string[] { null };
 
-            AssertMatches(keys, elements, source.ToDictionary((e) => e ?? string.Empty, (e) => e, EqualityComparer<string>.Default));
+            AssertMatches(keys, elements, source.ToDictionary(e => e ?? string.Empty, e => e, EqualityComparer<string>.Default));
 
         }
     }

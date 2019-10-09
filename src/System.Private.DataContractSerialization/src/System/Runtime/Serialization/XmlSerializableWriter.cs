@@ -1,7 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Xml;
@@ -67,9 +66,9 @@ namespace System.Runtime.Serialization
             _depth--;
         }
 
-        public void Close()
+        public override void Close()
         {
-            throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(XmlObjectSerializer.CreateSerializationException(SR.Format(SR.IXmlSerializableIllegalOperation)));
+            throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(XmlObjectSerializer.CreateSerializationException(SR.IXmlSerializableIllegalOperation));
         }
 
         public override void WriteStartAttribute(string prefix, string localName, string ns)
@@ -86,9 +85,9 @@ namespace System.Runtime.Serialization
         public override void WriteWhitespace(string ws) { _xmlWriter.WriteWhitespace(ws); }
         public override void WriteString(string text) { _xmlWriter.WriteString(text); }
         public override void WriteSurrogateCharEntity(char lowChar, char highChar) { _xmlWriter.WriteSurrogateCharEntity(lowChar, highChar); }
-        public override void WriteChars(Char[] buffer, int index, int count) { _xmlWriter.WriteChars(buffer, index, count); }
-        public override void WriteRaw(Char[] buffer, int index, int count) { _xmlWriter.WriteRaw(buffer, index, count); }
-        public override void WriteRaw(String data) { _xmlWriter.WriteRaw(data); }
+        public override void WriteChars(char[] buffer, int index, int count) { _xmlWriter.WriteChars(buffer, index, count); }
+        public override void WriteRaw(char[] buffer, int index, int count) { _xmlWriter.WriteRaw(buffer, index, count); }
+        public override void WriteRaw(string data) { _xmlWriter.WriteRaw(data); }
         public override void WriteBase64(byte[] buffer, int index, int count) { _xmlWriter.WriteBase64(buffer, index, count); }
         public override void WriteBinHex(byte[] buffer, int index, int count) { _xmlWriter.WriteBinHex(buffer, index, count); }
         public override WriteState WriteState { get { return _xmlWriter.WriteState; } }

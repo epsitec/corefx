@@ -1,8 +1,7 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System.Diagnostics;
-using Tools;
 using Xunit;
 
 namespace System.Numerics.Tests
@@ -69,7 +68,7 @@ namespace System.Numerics.Tests
         {
             byte[] tempByteArray1 = new byte[0];
             byte[] tempByteArray2 = new byte[0];
-            
+
             // Multiply Method - One large BigIntegers and zero
             for (int i = 0; i < s_samples; i++)
             {
@@ -102,12 +101,12 @@ namespace System.Numerics.Tests
             byte[] tempByteArray2 = new byte[0];
 
             // Axiom: X*1 = X
-            VerifyIdentityString(Int32.MaxValue + " " + BigInteger.One + " b*", Int32.MaxValue.ToString());
-            VerifyIdentityString(Int64.MaxValue + " " + BigInteger.One + " b*", Int64.MaxValue.ToString());
+            VerifyIdentityString(int.MaxValue + " " + BigInteger.One + " b*", Int32.MaxValue.ToString());
+            VerifyIdentityString(long.MaxValue + " " + BigInteger.One + " b*", Int64.MaxValue.ToString());
 
             for (int i = 0; i < s_samples; i++)
             {
-                String randBigInt = Print(GetRandomByteArray(s_random));
+                string randBigInt = Print(GetRandomByteArray(s_random));
                 VerifyIdentityString(randBigInt + BigInteger.One + " b*", randBigInt + "u+");
             }
         }
@@ -120,12 +119,12 @@ namespace System.Numerics.Tests
 
 
             // Axiom: X*0 = 0
-            VerifyIdentityString(Int32.MaxValue + " " + BigInteger.Zero + " b*", BigInteger.Zero.ToString());
-            VerifyIdentityString(Int64.MaxValue + " " + BigInteger.Zero + " b*", BigInteger.Zero.ToString());
+            VerifyIdentityString(int.MaxValue + " " + BigInteger.Zero + " b*", BigInteger.Zero.ToString());
+            VerifyIdentityString(long.MaxValue + " " + BigInteger.Zero + " b*", BigInteger.Zero.ToString());
 
             for (int i = 0; i < s_samples; i++)
             {
-                String randBigInt = Print(GetRandomByteArray(s_random));
+                string randBigInt = Print(GetRandomByteArray(s_random));
                 VerifyIdentityString(randBigInt + BigInteger.Zero + " b*", BigInteger.Zero.ToString());
             }
         }
@@ -236,35 +235,35 @@ namespace System.Numerics.Tests
             }
 
             // Axiom: X*1 = X
-            VerifyIdentityString(Int32.MaxValue + " " + BigInteger.One + " b*", Int32.MaxValue.ToString());
-            VerifyIdentityString(Int64.MaxValue + " " + BigInteger.One + " b*", Int64.MaxValue.ToString());
+            VerifyIdentityString(int.MaxValue + " " + BigInteger.One + " b*", Int32.MaxValue.ToString());
+            VerifyIdentityString(long.MaxValue + " " + BigInteger.One + " b*", Int64.MaxValue.ToString());
 
             for (int i = 0; i < s_samples; i++)
             {
-                String randBigInt = Print(GetRandomByteArray(s_random));
+                string randBigInt = Print(GetRandomByteArray(s_random));
                 VerifyIdentityString(randBigInt + BigInteger.One + " b*", randBigInt + "u+");
             }
 
             // Axiom: X*0 = 0
-            VerifyIdentityString(Int32.MaxValue + " " + BigInteger.Zero + " b*", BigInteger.Zero.ToString());
-            VerifyIdentityString(Int64.MaxValue + " " + BigInteger.Zero + " b*", BigInteger.Zero.ToString());
+            VerifyIdentityString(int.MaxValue + " " + BigInteger.Zero + " b*", BigInteger.Zero.ToString());
+            VerifyIdentityString(long.MaxValue + " " + BigInteger.Zero + " b*", BigInteger.Zero.ToString());
 
             for (int i = 0; i < s_samples; i++)
             {
-                String randBigInt = Print(GetRandomByteArray(s_random));
+                string randBigInt = Print(GetRandomByteArray(s_random));
                 VerifyIdentityString(randBigInt + BigInteger.Zero + " b*", BigInteger.Zero.ToString());
             }
 
             // Axiom: a*b = b*a
-            VerifyIdentityString(Int32.MaxValue + " " + Int64.MaxValue + " b*", Int64.MaxValue + " " + Int32.MaxValue + " b*");
+            VerifyIdentityString(int.MaxValue + " " + long.MaxValue + " b*", long.MaxValue + " " + int.MaxValue + " b*");
 
             for (int i = 0; i < s_samples; i++)
             {
-                String randBigInt1 = Print(GetRandomByteArray(s_random));
-                String randBigInt2 = Print(GetRandomByteArray(s_random));
+                string randBigInt1 = Print(GetRandomByteArray(s_random));
+                string randBigInt2 = Print(GetRandomByteArray(s_random));
                 VerifyIdentityString(randBigInt1 + randBigInt2 + "b*", randBigInt2 + randBigInt1 + "b*");
             }
-            
+
             // Check interesting cases for boundary conditions
             // You'll either be shifting a 0 or 1 across the boundary
             // 32 bit boundary  n2=0
@@ -312,7 +311,7 @@ namespace System.Numerics.Tests
             return MyBigIntImp.GetRandomByteArray(random, size);
         }
 
-        private static String Print(byte[] bytes)
+        private static string Print(byte[] bytes)
         {
             return MyBigIntImp.Print(bytes);
         }

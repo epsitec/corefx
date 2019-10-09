@@ -1,15 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-using System;
-using System.Diagnostics;
-using System.Diagnostics.Contracts;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Microsoft.Win32.SafeHandles;
 
 using Internal.Cryptography;
-
-using ErrorCode = Interop.NCrypt.ErrorCode;
 
 namespace System.Security.Cryptography
 {
@@ -24,9 +19,9 @@ namespace System.Security.Cryptography
         public static CngKey Open(SafeNCryptKeyHandle keyHandle, CngKeyHandleOpenOptions keyHandleOpenOptions)
         {
             if (keyHandle == null)
-                throw new ArgumentNullException("keyHandle");
+                throw new ArgumentNullException(nameof(keyHandle));
             if (keyHandle.IsClosed || keyHandle.IsInvalid)
-                throw new ArgumentException(SR.Cryptography_OpenInvalidHandle, "keyHandle");
+                throw new ArgumentException(SR.Cryptography_OpenInvalidHandle, nameof(keyHandle));
 
             SafeNCryptKeyHandle keyHandleCopy = keyHandle.Duplicate();
 
@@ -48,16 +43,16 @@ namespace System.Security.Cryptography
                 // by the CLR, then we don't have anything to do as the IsEphemeral CLR property will already
                 // be setup.  However, if the key was created outside of the CLR we will need to setup our
                 // ephemeral detection property.
-                // 
+                //
                 // This enables consumers of CngKey objects to always be able to rely on the result of
                 // calling IsEphemeral, and also allows them to safely access the Name property.
-                // 
+                //
                 // Finally, if we detect that this is an ephemeral key that the CLR created but we were not
                 // told that it was an ephemeral key we'll throw an exception.  This prevents us from having
                 // to decide who to believe -- the key property or the caller of the API.  Since other code
                 // relies on the ephemeral flag being set properly to avoid tripping over bugs in CNG, we
                 // need to reject the case that we suspect that the flag is incorrect.
-                // 
+                //
 
                 if (!key.IsEphemeral && openingEphemeralKey)
                 {
@@ -65,7 +60,7 @@ namespace System.Security.Cryptography
                 }
                 else if (key.IsEphemeral && !openingEphemeralKey)
                 {
-                    throw new ArgumentException(SR.Cryptography_OpenEphemeralKeyHandleWithoutEphemeralFlag, "keyHandleOpenOptions");
+                    throw new ArgumentException(SR.Cryptography_OpenEphemeralKeyHandleWithoutEphemeralFlag, nameof(keyHandleOpenOptions));
                 }
             }
             catch
@@ -81,4 +76,3 @@ namespace System.Security.Cryptography
         }
     }
 }
-

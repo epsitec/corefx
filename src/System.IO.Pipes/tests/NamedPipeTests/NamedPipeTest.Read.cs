@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using Xunit;
 
 namespace System.IO.Pipes.Tests
 {
+    [ActiveIssue(22271, TargetFrameworkMonikers.Uap)]
     public class NamedPipeTest_Read_ServerOut_ClientIn : PipeTest_Read
     {
         protected override ServerClientPair CreateServerClientPair()
@@ -26,6 +28,7 @@ namespace System.IO.Pipes.Tests
         }
     }
 
+    [ActiveIssue(22271, TargetFrameworkMonikers.Uap)]
     public class NamedPipeTest_Read_ServerIn_ClientOut : PipeTest_Read
     {
         protected override ServerClientPair CreateServerClientPair()
@@ -45,6 +48,7 @@ namespace System.IO.Pipes.Tests
         }
     }
 
+    [ActiveIssue(22271, TargetFrameworkMonikers.Uap)]
     public class NamedPipeTest_Read_ServerInOut_ClientInOut : PipeTest_Read
     {
         protected override ServerClientPair CreateServerClientPair()
@@ -63,14 +67,28 @@ namespace System.IO.Pipes.Tests
             return ret;
         }
 
-        // InOut pipes can be written/read from either direction
-        public override void WriteToReadOnlyPipe_Throws_NotSupportedException() { }
-        public override async Task ReadFromPipeWithClosedPartner_ReadNoBytes()
+        public override bool SupportsBidirectionalReadingWriting => true;
+    }
+
+    [ActiveIssue(22271, TargetFrameworkMonikers.Uap)]
+    public class NamedPipeTest_Read_ServerInOut_ClientInOut_APMWaitForConnection : PipeTest_Read
+    {
+        protected override ServerClientPair CreateServerClientPair()
         {
-            // On Unix a read from an InOut pipe with a closed partner will wait indefinitely
-            // for bytes to be sent.
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                await base.ReadFromPipeWithClosedPartner_ReadNoBytes();
+            ServerClientPair ret = new ServerClientPair();
+            string pipeName = GetUniquePipeName();
+            var readablePipe = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+            var writeablePipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+
+            Task serverConnect = Task.Factory.FromAsync(readablePipe.BeginWaitForConnection, readablePipe.EndWaitForConnection, null);
+            writeablePipe.Connect();
+            serverConnect.Wait();
+
+            ret.readablePipe = readablePipe;
+            ret.writeablePipe = writeablePipe;
+            return ret;
         }
+
+        public override bool SupportsBidirectionalReadingWriting => true;
     }
 }

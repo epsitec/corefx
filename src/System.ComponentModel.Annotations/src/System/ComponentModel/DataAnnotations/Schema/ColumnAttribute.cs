@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Globalization;
 
@@ -11,7 +12,6 @@ namespace System.ComponentModel.DataAnnotations.Schema
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class ColumnAttribute : Attribute
     {
-        private readonly string _name;
         private int _order = -1;
         private string _typeName;
 
@@ -30,32 +30,28 @@ namespace System.ComponentModel.DataAnnotations.Schema
         {
             if (string.IsNullOrWhiteSpace(name))
             {
-                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture,
-                    SR.ArgumentIsNullOrWhitespace, "name"));
+                throw new ArgumentException(SR.Format(SR.ArgumentIsNullOrWhitespace, nameof(name)), nameof(name));
             }
 
-            _name = name;
+            Name = name;
         }
 
         /// <summary>
         ///     The name of the column the property is mapped to.
         /// </summary>
-        public string Name
-        {
-            get { return _name; }
-        }
+        public string Name { get; }
 
         /// <summary>
         ///     The zero-based order of the column the property is mapped to.
         /// </summary>
         public int Order
         {
-            get { return _order; }
+            get => _order;
             set
             {
                 if (value < 0)
                 {
-                    throw new ArgumentOutOfRangeException("value");
+                    throw new ArgumentOutOfRangeException(nameof(value));
                 }
 
                 _order = value;
@@ -67,13 +63,12 @@ namespace System.ComponentModel.DataAnnotations.Schema
         /// </summary>
         public string TypeName
         {
-            get { return _typeName; }
+            get => _typeName;
             set
             {
                 if (string.IsNullOrWhiteSpace(value))
                 {
-                    throw new ArgumentException(string.Format(CultureInfo.CurrentCulture,
-                        SR.ArgumentIsNullOrWhitespace, "value"));
+                    throw new ArgumentException(SR.Format(SR.ArgumentIsNullOrWhitespace, nameof(value)), nameof(value));
                 }
 
                 _typeName = value;

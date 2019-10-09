@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Linq;
@@ -124,11 +125,11 @@ namespace System.Threading.Tasks.Dataflow.Tests
 
                 target = generator();
                 Assert.Equal(
-                    expected: DataflowMessageStatus.Accepted, 
+                    expected: DataflowMessageStatus.Accepted,
                     actual: ((ITargetBlock<int>)target).OfferMessage(new DataflowMessageHeader(1), 1, null, false));
                 Assert.Equal(
                     expected: DataflowMessageStatus.DecliningPermanently,
-                    actual: ((ITargetBlock<int>)target).OfferMessage(new DataflowMessageHeader(1), 1, null, false)); 
+                    actual: ((ITargetBlock<int>)target).OfferMessage(new DataflowMessageHeader(1), 1, null, false));
                 await target.Completion;
             }
         }
@@ -277,7 +278,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
 
                     IList<int> items;
                     Assert.True(((IReceivableSourceBlock<int>)wob).TryReceiveAll(out items));
-                    Assert.Equal(expected: items.Count, actual: 1);
+                    Assert.Equal(expected: 1, actual: items.Count);
                     Assert.Equal(expected: -data, actual: items[0]);
                 }
 

@@ -1,16 +1,15 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Security;
 using Xunit;
-using Assembly = System.Reflection.Extensions.Tests;
+using Assembly = System.Reflection.Tests;
 
 [assembly: Assembly.MyAttribute_Single("single"), Assembly.MyAttribute_AllowMultiple("multiple1"), Assembly.MyAttribute_AllowMultiple("multiple2")]
 
-namespace System.Reflection.Extensions.Tests
+namespace System.Reflection.Tests
 {
     public class GetCustomAttributes_Assembly
     {
@@ -21,9 +20,9 @@ namespace System.Reflection.Extensions.Tests
             IEnumerable<Attribute> attributes = CustomAttributeExtensions.GetCustomAttributes(thisAsm);
             //There are other attributes added as default:
 
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_Single single", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple multiple1", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple multiple2", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_Single single", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple multiple1", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple multiple2", StringComparison.Ordinal)));
         }
 
         [Fact]
@@ -45,7 +44,7 @@ namespace System.Reflection.Extensions.Tests
             Assert.Null(attribute);
 
             attribute = CustomAttributeExtensions.GetCustomAttribute(thisAsm, typeof(MyAttribute_Single));
-            Assert.Equal("System.Reflection.Extensions.Tests.MyAttribute_Single single", attribute.ToString());
+            Assert.Equal("System.Reflection.Tests.MyAttribute_Single single", attribute.ToString());
 
             Assert.Throws<AmbiguousMatchException>(() =>
             {
@@ -60,8 +59,8 @@ namespace System.Reflection.Extensions.Tests
             IEnumerable<Attribute> attributes;
             attributes = CustomAttributeExtensions.GetCustomAttributes(thisAsm, typeof(MyAttribute_AllowMultiple));
             Assert.Equal(2, attributes.Count());
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple multiple1", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple multiple1", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple multiple1", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple multiple1", StringComparison.Ordinal)));
 
             attributes = CustomAttributeExtensions.GetCustomAttributes(thisAsm, typeof(SecurityCriticalAttribute));
             Assert.Equal(0, attributes.Count());
@@ -76,13 +75,13 @@ namespace System.Reflection.Extensions.Tests
             attribute = CustomAttributeExtensions.GetCustomAttribute<SecurityCriticalAttribute>(thisAsm);
             Assert.Null(attribute);
 
-            Assert.Throws<ArgumentException>(() =>
+            AssertExtensions.Throws<ArgumentException>(null, () =>
             {
-                CustomAttributeExtensions.GetCustomAttributes(thisAsm, typeof(String));
+                CustomAttributeExtensions.GetCustomAttributes(thisAsm, typeof(string));
             });
 
             attribute = CustomAttributeExtensions.GetCustomAttribute<MyAttribute_Single>(thisAsm);
-            Assert.Equal("System.Reflection.Extensions.Tests.MyAttribute_Single single", attribute.ToString());
+            Assert.Equal("System.Reflection.Tests.MyAttribute_Single single", attribute.ToString());
 
             Assert.Throws<AmbiguousMatchException>(() =>
             {
@@ -98,8 +97,8 @@ namespace System.Reflection.Extensions.Tests
 
             attributes = CustomAttributeExtensions.GetCustomAttributes<MyAttribute_AllowMultiple>(thisAsm);
             Assert.Equal(2, attributes.Count());
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple multiple1", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple multiple2", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple multiple1", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple multiple2", StringComparison.Ordinal)));
 
             attributes = CustomAttributeExtensions.GetCustomAttributes<SecurityCriticalAttribute>(thisAsm);
             Assert.Equal(0, attributes.Count());
@@ -117,23 +116,23 @@ namespace System.Reflection.Extensions.Tests
 
     public class MyAttributeBase : Attribute
     {
-        private String _name;
-        public MyAttributeBase(String name)
+        private string _name;
+        public MyAttributeBase(string name)
         {
             _name = name;
         }
-        public override String ToString() { return this.GetType().ToString() + " " + _name; }
+        public override string ToString() { return this.GetType().ToString() + " " + _name; }
     }
 
     [AttributeUsage(AttributeTargets.All, AllowMultiple = false)]
     public class MyAttribute_Single : MyAttributeBase
     {
-        public MyAttribute_Single(String name) : base(name) { }
+        public MyAttribute_Single(string name) : base(name) { }
     }
 
     [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
     public class MyAttribute_AllowMultiple : MyAttributeBase
     {
-        public MyAttribute_AllowMultiple(String name) : base(name) { }
+        public MyAttribute_AllowMultiple(string name) : base(name) { }
     }
 }

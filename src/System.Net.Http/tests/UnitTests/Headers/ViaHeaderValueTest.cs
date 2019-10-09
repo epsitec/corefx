@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Net.Http.Headers;
 
@@ -22,13 +23,13 @@ namespace System.Net.Http.Tests
             Assert.Equal("x11", via.ProtocolVersion);
             Assert.Equal("[::1]:1818", via.ReceivedBy);
 
-            Assert.Throws<ArgumentException>(() => { new ViaHeaderValue(null, "host"); });
-            Assert.Throws<ArgumentException>(() => { new ViaHeaderValue("", "host"); });
+            AssertExtensions.Throws<ArgumentException>("protocolVersion", () => { new ViaHeaderValue(null, "host"); });
+            AssertExtensions.Throws<ArgumentException>("protocolVersion", () => { new ViaHeaderValue("", "host"); });
             Assert.Throws<FormatException>(() => { new ViaHeaderValue("x y", "h"); });
             Assert.Throws<FormatException>(() => { new ViaHeaderValue("x ", "h"); });
             Assert.Throws<FormatException>(() => { new ViaHeaderValue(" x", "h"); });
-            Assert.Throws<ArgumentException>(() => { new ViaHeaderValue("1.1", null); });
-            Assert.Throws<ArgumentException>(() => { new ViaHeaderValue("1.1", ""); });
+            AssertExtensions.Throws<ArgumentException>("receivedBy", () => { new ViaHeaderValue("1.1", null); });
+            AssertExtensions.Throws<ArgumentException>("receivedBy", () => { new ViaHeaderValue("1.1", ""); });
             Assert.Throws<FormatException>(() => { new ViaHeaderValue("v", "x y"); });
             Assert.Throws<FormatException>(() => { new ViaHeaderValue("v", "x "); });
             Assert.Throws<FormatException>(() => { new ViaHeaderValue("v", " x"); });
@@ -179,7 +180,7 @@ namespace System.Net.Http.Tests
                 new ViaHeaderValue("x11x", "[FE18:AB64::156]:80", null, "(comment,)"));
 
             // The parser reads until it reaches an invalid/unexpected character. If until then it was able to create
-            // a valid ViaHeaderValue, it will return the length of the parsed string. Therefore a string like 
+            // a valid ViaHeaderValue, it will return the length of the parsed string. Therefore a string like
             // "1.1 host," is considered valid (until ','), whereas "1.1 host (invalid" is considered invalid, since
             // the comment is in an invalid format.
             CheckGetViaLength("WS/version example.com,next", 0, 22, new ViaHeaderValue("version", "example.com", "WS"));
@@ -205,7 +206,7 @@ namespace System.Net.Http.Tests
         [Fact]
         public void GetViaLength_DifferentInvalidScenarios_AllReturnZero()
         {
-            CheckInvalidGetViaLength(" 1.1 host", 0); // no leading whitespaces allowed
+            CheckInvalidGetViaLength(" 1.1 host", 0); // no leading whitespace allowed
             CheckInvalidGetViaLength("1=host", 0);
             CheckInvalidGetViaLength("1.1 host (invalid_comment", 0);
             CheckInvalidGetViaLength("=", 0);
@@ -213,7 +214,7 @@ namespace System.Net.Http.Tests
             CheckInvalidGetViaLength("HTTP=/1.1 host", 0);
             CheckInvalidGetViaLength("HTTP/1.1[ host", 0);
             CheckInvalidGetViaLength("HTTP/ = host", 0);
-            CheckInvalidGetViaLength("HTTP/务 host", 0);
+            CheckInvalidGetViaLength("HTTP/\u52A1 host", 0);
             CheckInvalidGetViaLength("HTTP/  ", 0);
             CheckInvalidGetViaLength("HTTP  ", 0);
             CheckInvalidGetViaLength("HTTP/1.1 /  ", 0);
@@ -246,7 +247,7 @@ namespace System.Net.Http.Tests
             CheckInvalidParse("HTTP/1.1 host =");
             CheckInvalidParse("1.1 host invalid");
             CheckInvalidParse("1.1 host =");
-            CheckInvalidParse("会");
+            CheckInvalidParse("\u4F1A");
             CheckInvalidParse("HTTP/test [::1]:80\r(comment)");
             CheckInvalidParse("HTTP/test [::1]:80\n(comment)");
 
@@ -281,7 +282,7 @@ namespace System.Net.Http.Tests
             CheckInvalidTryParse("HTTP/1.1 host =");
             CheckInvalidTryParse("1.1 host invalid");
             CheckInvalidTryParse("1.1 host =");
-            CheckInvalidTryParse("会");
+            CheckInvalidTryParse("\u4F1A");
             CheckInvalidTryParse("HTTP/test [::1]:80\r(comment)");
             CheckInvalidTryParse("HTTP/test [::1]:80\n(comment)");
 

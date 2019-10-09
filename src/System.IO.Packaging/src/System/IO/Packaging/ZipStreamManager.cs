@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -11,9 +12,9 @@ namespace System.IO.Packaging
 {
     internal class ZipStreamManager : IDisposable
     {
-        private ZipArchive _zipArchive;
-        private FileAccess _packageFileAccess;
-        private FileMode _packageFileMode;
+        private readonly ZipArchive _zipArchive;
+        private readonly FileAccess _packageFileAccess;
+        private readonly FileMode _packageFileMode;
         private bool _disposed = false;
 
         public ZipStreamManager(ZipArchive zipArchive, FileMode packageFileMode, FileAccess packageFileAccess)
@@ -99,7 +100,7 @@ namespace System.IO.Packaging
             GC.SuppressFinalize(this);
         }
 
-        // Protected implementation of Dispose pattern. 
+        // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)
         {
             if (_disposed)

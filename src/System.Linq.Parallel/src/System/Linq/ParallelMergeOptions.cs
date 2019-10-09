@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -16,8 +17,8 @@ namespace System.Linq
     /// <remarks>
     /// <para>
     /// Use <b>NotBuffered</b> for queries that will be consumed and output as streams, this has the lowest latency
-    /// between beginning query execution and elements being yielded. For some queries, such as those involving a 
-    /// sort (OrderBy, OrderByDescending), buffering is essential and a hint of NotBuffered or AutoBuffered will 
+    /// between beginning query execution and elements being yielded. For some queries, such as those involving a
+    /// sort (OrderBy, OrderByDescending), buffering is essential and a hint of NotBuffered or AutoBuffered will
     /// be ignored.
     /// </para>
     /// <para>
@@ -25,7 +26,7 @@ namespace System.Linq
     /// overall performance.
     /// </para>
     /// <para>
-    /// Use <b>FullyBuffered</b> for queries when the entire output can be processed before the information is 
+    /// Use <b>FullyBuffered</b> for queries when the entire output can be processed before the information is
     /// needed. This option offers the best performance when all of the output can be accumulated before yielding
     /// any information, though it is not suitable for stream processing or showing partial results mid-query.
     /// </para>
@@ -38,7 +39,7 @@ namespace System.Linq
         Default = 0,
 
         /// <summary>
-        /// Use a merge without output buffers. As soon as result elements have been computed, 
+        /// Use a merge without output buffers. As soon as result elements have been computed,
         /// make that element available to the consumer of the query.
         /// </summary>
         NotBuffered = 1,

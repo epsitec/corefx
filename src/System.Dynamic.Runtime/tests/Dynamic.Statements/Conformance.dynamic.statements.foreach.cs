@@ -1,11 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach001.freach001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach001.freach001;
     // <Title> Dynamic in Foreach </Title>
     // <Description>
     //  Conversions between elements in foreach expressions to the type of the identifier in the foreach loop
@@ -13,7 +13,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -395,7 +394,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach002.freach002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach002.freach002;
     // <Title> Dynamic in Foreach </Title>
     // <Description>
     //  Conversions between elements in foreach expressions to the type of the identifier in the foreach loop
@@ -403,7 +401,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class A
     {
@@ -518,7 +515,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach003.freach003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach003.freach003;
     // <Title> Dynamic in Foreach </Title>
     // <Description>
     //  Conversions between elements in foreach expressions to the type of the identifier in the foreach loop
@@ -526,7 +522,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public struct S
     {
@@ -714,7 +709,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach004.freach004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach004.freach004;
     // <Title> Dynamic in Foreach </Title>
     // <Description>
     //  Conversions between elements in foreach expressions to the type of the identifier in the foreach loop
@@ -722,7 +716,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public enum color
     {
@@ -897,7 +890,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach005.freach005
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach005.freach005;
     // <Title> Dynamic in Foreach </Title>
     // <Description>
     //  Conversions between elements in foreach expressions to the type of the identifier in the foreach loop
@@ -905,7 +897,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -952,7 +943,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach006.freach006
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach006.freach006;
     // <Title> Dynamic in Foreach </Title>
     // <Description>
     //  Conversions between elements in foreach expressions to the type of the identifier in the foreach loop
@@ -960,7 +950,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1006,7 +995,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach007.freach007
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach007.freach007;
     // <Title> Dynamic in Foreach </Title>
     // <Description>
     //  Conversions between elements in foreach expressions to the type of the identifier in the foreach loop
@@ -1014,7 +1002,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1396,7 +1383,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach008.freach008
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach008.freach008;
     // <Title> Dynamic in Foreach </Title>
     // <Description>
     //  Conversions between elements in foreach expressions to the type of the identifier in the foreach loop
@@ -1404,7 +1390,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
     using System.Collections;
 
     public class MyCollection : IEnumerable
@@ -1490,7 +1475,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach009.freach009
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach009.freach009;
     // <Title> Dynamic in Foreach </Title>
     // <Description>
     //  Conversions between elements in foreach expressions to the type of the identifier in the foreach loop
@@ -1498,7 +1482,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
     using System.Collections;
 
     public class MyCollection : IEnumerable
@@ -1584,7 +1567,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach010.freach010
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach010.freach010;
     // <Title> Dynamic in Foreach </Title>
     // <Description>
     //  Conversions between elements in foreach expressions to the type of the identifier in the foreach loop
@@ -1592,8 +1574,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
-    using System.Collections.Generic;
     using System.Collections;
 
     public class MyCollection : IEnumerable
@@ -1691,7 +1671,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach011.freach011
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freach011.freach011;
     // <Title> Dynamic in Foreach </Title>
     // <Description>
     //  Conversions between elements in foreach expressions to the type of the identifier in the foreach loop
@@ -1699,7 +1678,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.statements.freach.freac
     // <RelatedBugs></RelatedBugs>
     // <Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class GenC<T>
     {

@@ -1,41 +1,44 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-// The code was copied from DateTimeConverter and adapted for DateTimeOffset.
-
+using System.ComponentModel.Design.Serialization;
 using System.Globalization;
 
 namespace System.ComponentModel
 {
-    /// <devdoc>
-    /// <para>Provides a type converter to convert <see cref='System.DateTimeOffset'/>
-    /// objects to and from various other representations.</para>
-    /// </devdoc>
+    /// <summary>
+    /// Provides a type converter to convert <see cref='System.DateTimeOffset'/>
+    /// objects to and from various other representations.
+    /// </summary>
     public class DateTimeOffsetConverter : TypeConverter
     {
-        /// <devdoc>
-        ///    <para>Gets a value indicating whether this converter can
-        ///       convert an object in the given source type to a <see cref='System.DateTimeOffset'/>
-        ///       object using the
-        ///       specified context.</para>
-        /// </devdoc>
+        /// <summary>
+        /// Gets a value indicating whether this converter can convert an
+        /// object in the given source type to a <see cref='System.DateTimeOffset'/>
+        /// object using the specified context.
+        /// </summary>
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
         {
-            if (sourceType == typeof(string))
-            {
-                return true;
-            }
-            return base.CanConvertFrom(context, sourceType);
+            return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
         }
 
-        /// <devdoc>
-        /// <para>Converts the given value object to a <see cref='System.DateTime'/>
-        /// object.</para>
-        /// </devdoc>
+        /// <summary>
+        /// Gets a value indicating whether this converter can convert an
+        /// object to the given destination type using the context.
+        /// </summary>
+        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+        {
+            return destinationType == typeof(InstanceDescriptor) || base.CanConvertTo(context, destinationType);
+        }
+
+        /// <summary>
+        /// Converts the given value object to a <see cref='System.DateTime'/>
+        /// object.
+        /// </summary>
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
-            string text = value as string;
-            if (text != null)
+            if (value is string text)
             {
                 text = text.Trim();
                 if (text.Length == 0)
@@ -45,8 +48,7 @@ namespace System.ComponentModel
 
                 try
                 {
-                    // See if we have a culture info to parse with.  If so, then use it.
-                    //
+                    // See if we have a culture info to parse with. If so, then use it.
                     DateTimeFormatInfo formatInfo = null;
 
                     if (culture != null)
@@ -65,18 +67,17 @@ namespace System.ComponentModel
                 }
                 catch (FormatException e)
                 {
-                    throw new FormatException(SR.Format(SR.ConvertInvalidPrimitive, (string)value, "DateTimeOffset"), e);
+                    throw new FormatException(SR.Format(SR.ConvertInvalidPrimitive, (string)value, nameof(DateTimeOffset)), e);
                 }
             }
 
             return base.ConvertFrom(context, culture, value);
         }
 
-        /// <devdoc>
-        /// <para>Converts the given value object to a <see cref='System.DateTimeOffset'/>
-        /// object
-        /// using the arguments.</para>
-        /// </devdoc>
+        /// <summary>
+        /// Converts the given value object to a <see cref='System.DateTimeOffset'/>
+        /// object using the arguments.
+        /// </summary>
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
             // logic is exactly as in DateTimeConverter, only the offset pattern ' zzz' is added to the default
@@ -129,6 +130,23 @@ namespace System.ComponentModel
                 }
 
                 return dto.ToString(format, CultureInfo.CurrentCulture);
+            }
+            if (destinationType == typeof(InstanceDescriptor) && value is DateTimeOffset)
+            {
+                DateTimeOffset dto = (DateTimeOffset)value;
+                if (dto.Ticks == 0)
+                {
+                    // Special case for empty DateTimeOffset
+                    return new InstanceDescriptor(
+                        typeof(DateTimeOffset).GetConstructor(new Type[] { typeof(long) }),
+                        new object[] { dto.Ticks }
+                    );
+                }
+
+                return new InstanceDescriptor(
+                    typeof(DateTimeOffset).GetConstructor(new Type[] { typeof(int), typeof(int), typeof(int), typeof(int), typeof(int), typeof(int), typeof(int), typeof(TimeSpan) }),
+                    new object[] { dto.Year, dto.Month, dto.Day, dto.Hour, dto.Minute, dto.Second, dto.Millisecond, dto.Offset }
+                );
             }
 
             return base.ConvertTo(context, culture, value, destinationType);

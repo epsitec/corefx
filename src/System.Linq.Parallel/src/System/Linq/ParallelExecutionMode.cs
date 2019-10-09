@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -21,8 +22,8 @@ namespace System.Linq
     {
         /// <summary>
         /// By default, the system will use algorithms for queries
-        /// that are ripe for parallelism and will avoid algorithms with high 
-        /// overheads that will likely result in slow downs for parallel execution. 
+        /// that are ripe for parallelism and will avoid algorithms with high
+        /// overheads that will likely result in slow downs for parallel execution.
         /// </summary>
         Default = 0,
 

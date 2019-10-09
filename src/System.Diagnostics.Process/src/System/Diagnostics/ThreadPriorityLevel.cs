@@ -1,11 +1,12 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.Diagnostics
 {
     /// <devdoc>
-    ///     Specifies the priority level of a thread.  The priority level is not an absolute 
-    ///     level, but instead contributes to the actual thread priority by considering the 
+    ///     Specifies the priority level of a thread.  The priority level is not an absolute
+    ///     level, but instead contributes to the actual thread priority by considering the
     ///     priority class of the process.
     /// </devdoc>
     public enum ThreadPriorityLevel

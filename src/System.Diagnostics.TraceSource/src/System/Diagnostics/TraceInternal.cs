@@ -1,26 +1,53 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Threading;
 using System.IO;
 using System.Collections;
+using System.Reflection;
 
 namespace System.Diagnostics
 {
     internal static class TraceInternal
     {
+        private class TraceProvider : DebugProvider
+        {
+            public override void Fail(string message, string detailMessage) { TraceInternal.Fail(message, detailMessage); }
+            public override void OnIndentLevelChanged(int indentLevel)
+            {
+                lock (TraceInternal.critSec)
+                {
+                    foreach (TraceListener listener in Listeners)
+                    {
+                        listener.IndentLevel = indentLevel;
+                    }
+                }
+            }
+
+            public override void OnIndentSizeChanged(int indentSize)
+            {
+                lock (TraceInternal.critSec)
+                {
+                    foreach (TraceListener listener in Listeners)
+                    {
+                        listener.IndentSize = indentSize;
+                    }
+                }
+            }
+            public override void Write(string message) { TraceInternal.Write(message); }
+            public override void WriteLine(string message) { TraceInternal.WriteLine(message); }
+        }
+
         private static volatile string s_appName = null;
         private static volatile TraceListenerCollection s_listeners;
         private static volatile bool s_autoFlush;
         private static volatile bool s_useGlobalLock;
-        [ThreadStatic]
-        private static int t_indentLevel;
-        private static volatile int s_indentSize;
         private static volatile bool s_settingsInitialized;
 
 
-        // this is internal so TraceSource can use it.  We want to lock on the same object because both TraceInternal and 
-        // TraceSource could be writing to the same listeners at the same time. 
+        // this is internal so TraceSource can use it.  We want to lock on the same object because both TraceInternal and
+        // TraceSource could be writing to the same listeners at the same time.
         internal static readonly object critSec = new object();
 
         public static TraceListenerCollection Listeners
@@ -34,12 +61,15 @@ namespace System.Diagnostics
                     {
                         if (s_listeners == null)
                         {
+                            // This is where we override default DebugProvider because we know
+                            // for sure that we have some Listeners to write to.
+                            Debug.SetProvider(new TraceProvider());
                             // In the absence of config support, the listeners by default add
                             // DefaultTraceListener to the listener collection.
                             s_listeners = new TraceListenerCollection();
                             TraceListener defaultListener = new DefaultTraceListener();
-                            defaultListener.IndentLevel = t_indentLevel;
-                            defaultListener.IndentSize = s_indentSize;
+                            defaultListener.IndentLevel = Debug.IndentLevel;
+                            defaultListener.IndentSize = Debug.IndentSize;
                             s_listeners.Add(defaultListener);
                         }
                     }
@@ -54,9 +84,7 @@ namespace System.Diagnostics
             {
                 if (s_appName == null)
                 {
-                    // This needs to be updated once we have the correct property implemented in the Environment class.
-                    // Bug:895000 is tracking this.
-                    s_appName = "DEFAULT_APPNAME";
+                    s_appName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
                 }
                 return s_appName;
             }
@@ -94,29 +122,11 @@ namespace System.Diagnostics
 
         public static int IndentLevel
         {
-            get { return t_indentLevel; }
+            get { return Debug.IndentLevel; }
 
             set
             {
-                // Use global lock
-                lock (critSec)
-                {
-                    // We don't want to throw here -- it is very bad form to have debug or trace
-                    // code throw exceptions!
-                    if (value < 0)
-                    {
-                        value = 0;
-                    }
-                    t_indentLevel = value;
-
-                    if (s_listeners != null)
-                    {
-                        foreach (TraceListener listener in Listeners)
-                        {
-                            listener.IndentLevel = t_indentLevel;
-                        }
-                    }
-                }
+                Debug.IndentLevel = value;
             }
         }
 
@@ -124,73 +134,23 @@ namespace System.Diagnostics
         {
             get
             {
-                InitializeSettings();
-                return s_indentSize;
+                return Debug.IndentSize;
             }
 
             set
             {
-                InitializeSettings();
-                SetIndentSize(value);
-            }
-        }
-
-        private static void SetIndentSize(int value)
-        {
-            // Use global lock
-            lock (critSec)
-            {
-                // We don't want to throw here -- it is very bad form to have debug or trace
-                // code throw exceptions!            
-                if (value < 0)
-                {
-                    value = 0;
-                }
-
-                s_indentSize = value;
-
-                if (s_listeners != null)
-                {
-                    foreach (TraceListener listener in Listeners)
-                    {
-                        listener.IndentSize = s_indentSize;
-                    }
-                }
+                Debug.IndentSize = value;
             }
         }
 
         public static void Indent()
         {
-            // Use global lock
-            lock (critSec)
-            {
-                InitializeSettings();
-                if (t_indentLevel < Int32.MaxValue)
-                {
-                    t_indentLevel++;
-                }
-                foreach (TraceListener listener in Listeners)
-                {
-                    listener.IndentLevel = t_indentLevel;
-                }
-            }
+            Debug.IndentLevel++;
         }
 
         public static void Unindent()
         {
-            // Use global lock
-            lock (critSec)
-            {
-                InitializeSettings();
-                if (t_indentLevel > 0)
-                {
-                    t_indentLevel--;
-                }
-                foreach (TraceListener listener in Listeners)
-                {
-                    listener.IndentLevel = t_indentLevel;
-                }
-            }
+            Debug.IndentLevel--;
         }
 
         public static void Flush()
@@ -236,7 +196,7 @@ namespace System.Diagnostics
                 {
                     foreach (TraceListener listener in Listeners)
                     {
-                        listener.Dispose();
+                        listener.Close();
                     }
                 }
             }
@@ -338,7 +298,6 @@ namespace System.Diagnostics
                 {
                     if (!s_settingsInitialized)
                     {
-                        SetIndentSize(DiagnosticsConfiguration.IndentSize);
                         s_autoFlush = DiagnosticsConfiguration.AutoFlush;
                         s_useGlobalLock = DiagnosticsConfiguration.UseGlobalLock;
                         s_settingsInitialized = true;
@@ -349,12 +308,13 @@ namespace System.Diagnostics
 
         // This method refreshes all the data from the configuration file, so that updated to the configuration file are mirrored
         // in the System.Diagnostics.Trace class
-        static internal void Refresh()
+        internal static void Refresh()
         {
             lock (critSec)
             {
                 s_settingsInitialized = false;
                 s_listeners = null;
+                Debug.IndentSize = DiagnosticsConfiguration.IndentSize;
             }
             InitializeSettings();
         }

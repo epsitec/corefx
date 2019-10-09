@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -19,7 +20,7 @@ namespace System.Linq.Parallel
     /// two vectors a = {0, 1, 2, 3} and b = {9, 8, 7, 6} is the vector of pairs,
     /// c = {(0,9), (1,8), (2,7), (3,6)}. Because the expectation is that each element
     /// is matched with the element in the other data source at the same ordinal
-    /// position, the zip operator requires order preservation. 
+    /// position, the zip operator requires order preservation.
     /// </summary>
     /// <typeparam name="TLeftInput"></typeparam>
     /// <typeparam name="TRightInput"></typeparam>
@@ -67,8 +68,8 @@ namespace System.Linq.Parallel
             OrdinalIndexState leftIndexState = _leftChild.OrdinalIndexState;
             OrdinalIndexState rightIndexState = _rightChild.OrdinalIndexState;
 
-            _prematureMergeLeft = leftIndexState != OrdinalIndexState.Indexible;
-            _prematureMergeRight = rightIndexState != OrdinalIndexState.Indexible;
+            _prematureMergeLeft = leftIndexState != OrdinalIndexState.Indexable;
+            _prematureMergeRight = rightIndexState != OrdinalIndexState.Indexable;
             _limitsParallelism =
                 (_prematureMergeLeft && leftIndexState != OrdinalIndexState.Shuffled)
                 || (_prematureMergeRight && rightIndexState != OrdinalIndexState.Shuffled);
@@ -133,7 +134,7 @@ namespace System.Linq.Parallel
         {
             get
             {
-                return OrdinalIndexState.Indexible;
+                return OrdinalIndexState.Indexable;
             }
         }
 
@@ -152,7 +153,7 @@ namespace System.Linq.Parallel
 
         //---------------------------------------------------------------------------------------
         // A special QueryResults class for the Zip operator. It requires that both of the child
-        // QueryResults are indexible.
+        // QueryResults are indexable.
         //
 
         internal class ZipQueryOperatorResults : QueryResults<TOutput>

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace Microsoft.CSharp.RuntimeBinder.Semantics
 {
@@ -14,7 +15,7 @@ namespace Microsoft.CSharp.RuntimeBinder.Semantics
     //     }
     //
     // The constructor takes an EXPR which can point to either an EXPRLIST
-    // or a non-list EXPR, or nothing. 
+    // or a non-list EXPR, or nothing.
     //
     // Upon construction, the iterator's current element is the first element
     // in the list, which is to say it's not necessary to call MoveNext
@@ -38,13 +39,13 @@ namespace Microsoft.CSharp.RuntimeBinder.Semantics
     //
     //     int n = ExpressionIterator::Count(list);
 
-    internal class ExpressionIterator
+    internal sealed class ExpressionIterator
     {
-        public ExpressionIterator(EXPR pExpr) { Init(pExpr); }
+        public ExpressionIterator(Expr pExpr) { Init(pExpr); }
 
         public bool AtEnd() { return _pCurrent == null && _pList == null; }
 
-        public EXPR Current() { return _pCurrent; }
+        public Expr Current() { return _pCurrent; }
 
         public void MoveNext()
         {
@@ -58,11 +59,11 @@ namespace Microsoft.CSharp.RuntimeBinder.Semantics
             }
             else
             {
-                Init(_pList.GetOptionalNextListNode());
+                Init(_pList.OptionalNextListNode);
             }
         }
 
-        public static int Count(EXPR pExpr)
+        public static int Count(Expr pExpr)
         {
             int c = 0;
             for (ExpressionIterator it = new ExpressionIterator(pExpr); !it.AtEnd(); it.MoveNext())
@@ -72,20 +73,20 @@ namespace Microsoft.CSharp.RuntimeBinder.Semantics
             return c;
         }
 
-        private EXPRLIST _pList;
-        private EXPR _pCurrent;
+        private ExprList _pList;
+        private Expr _pCurrent;
 
-        private void Init(EXPR pExpr)
+        private void Init(Expr pExpr)
         {
             if (pExpr == null)
             {
                 _pList = null;
                 _pCurrent = null;
             }
-            else if (pExpr.isLIST())
+            else if (pExpr is ExprList pList)
             {
-                _pList = pExpr.asLIST();
-                _pCurrent = _pList.GetOptionalElement();
+                _pList = pList;
+                _pCurrent = pList.OptionalElement;
             }
             else
             {

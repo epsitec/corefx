@@ -1,11 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Reflection;
 
 namespace System.Security.Principal
@@ -71,9 +71,8 @@ namespace System.Security.Principal
         {
             if (identity == null)
             {
-                throw new ArgumentNullException("identity");
+                throw new ArgumentNullException(nameof(identity));
             }
-            Contract.EndContractBlock();
 
             _Identities.Add(identity);
         }
@@ -82,9 +81,8 @@ namespace System.Security.Principal
         {
             if (identity == null)
             {
-                throw new ArgumentNullException("identity");
+                throw new ArgumentNullException(nameof(identity));
             }
-            Contract.EndContractBlock();
 
             if (Contains(identity))
             {
@@ -103,15 +101,14 @@ namespace System.Security.Principal
         {
             if (identity == null)
             {
-                throw new ArgumentNullException("identity");
+                throw new ArgumentNullException(nameof(identity));
             }
-            Contract.EndContractBlock();
 
             return _Identities.Contains(identity);
         }
 
         #endregion
-        
+
         #region IEnumerable<IdentityReference> implementation
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -139,9 +136,8 @@ namespace System.Security.Principal
             {
                 if (value == null)
                 {
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 }
-                Contract.EndContractBlock();
 
                 _Identities[index] = value;
             }
@@ -164,7 +160,7 @@ namespace System.Security.Principal
         {
             if (targetType == null)
             {
-                throw new ArgumentNullException("targetType");
+                throw new ArgumentNullException(nameof(targetType));
             }
 
             //
@@ -173,9 +169,8 @@ namespace System.Security.Principal
 
             if (!targetType.GetTypeInfo().IsSubclassOf(typeof(IdentityReference)))
             {
-                throw new ArgumentException(SR.IdentityReference_MustBeIdentityReference, "targetType");
+                throw new ArgumentException(SR.IdentityReference_MustBeIdentityReference, nameof(targetType));
             }
-            Contract.EndContractBlock();
 
             //
             // if the source collection is empty, just return an empty collection
@@ -212,10 +207,10 @@ namespace System.Security.Principal
                 else
                 {
                     //
-                    // Rare case that we have defined a type of identity reference and not included it in the code logic above.  
+                    // Rare case that we have defined a type of identity reference and not included it in the code logic above.
                     // To avoid this we do not allow IdentityReference to be subclassed outside of the BCL.
-                    // 
-                    Debug.Assert(false, "Source type is an IdentityReference type which has not been included in translation logic.");
+                    //
+                    Debug.Fail("Source type is an IdentityReference type which has not been included in translation logic.");
                     throw new NotSupportedException();
                 }
             }
@@ -274,10 +269,10 @@ namespace System.Security.Principal
                     else
                     {
                         //
-                        // Rare case that we have defined a type of identity reference and not included it in the code logic above.  
+                        // Rare case that we have defined a type of identity reference and not included it in the code logic above.
                         // To avoid this we do not allow IdentityReference to be subclassed outside of the BCL.
-                        // 
-                        Debug.Assert(false, "Source type is an IdentityReference type which has not been included in translation logic.");
+                        //
+                        Debug.Fail("Source type is an IdentityReference type which has not been included in translation logic.");
                         throw new NotSupportedException();
                     }
                 }
@@ -309,7 +304,7 @@ namespace System.Security.Principal
             if (forceSuccess && someFailed)
             {
                 //
-                // Need to throw an exception here and provide information regarding 
+                // Need to throw an exception here and provide information regarding
                 // which identity references could not be translated to the target type
                 //
 
@@ -367,10 +362,10 @@ namespace System.Security.Principal
                     else
                     {
                         //
-                        // Rare case that we have defined a type of identity reference and not included it in the code logic above.  
+                        // Rare case that we have defined a type of identity reference and not included it in the code logic above.
                         // To avoid this we do not allow IdentityReference to be subclassed outside of the BCL.
-                        // 
-                        Debug.Assert(false, "Source type is an IdentityReference type which has not been included in translation logic.");
+                        //
+                        Debug.Fail("Source type is an IdentityReference type which has not been included in translation logic.");
                         throw new NotSupportedException();
                     }
                 }
@@ -405,9 +400,8 @@ namespace System.Security.Principal
         {
             if (collection == null)
             {
-                throw new ArgumentNullException("collection");
+                throw new ArgumentNullException(nameof(collection));
             }
-            Contract.EndContractBlock();
 
             _collection = collection;
             _current = -1;
@@ -422,7 +416,7 @@ namespace System.Security.Principal
         {
             get
             {
-                return _collection.Identities[_current];
+                return Current;
             }
         }
 
@@ -430,7 +424,7 @@ namespace System.Security.Principal
         {
             get
             {
-                return ((IEnumerator)this).Current as IdentityReference;
+                return _collection.Identities[_current];
             }
         }
 

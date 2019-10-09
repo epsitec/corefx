@@ -1,72 +1,89 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System.Linq.Tests.Helpers;
+using System.Collections.Generic;
 using Xunit;
 
 namespace System.Linq.Tests
 {
-    public class ReverseTests
+    public class ReverseTests : EnumerableTests
     {
         [Fact]
         public void InvalidArguments()
         {
-            Assert.Throws<ArgumentNullException>(() => Enumerable.Reverse<string>(null));
+            AssertExtensions.Throws<ArgumentNullException>("source", () => Enumerable.Reverse<string>(null));
         }
 
         [Theory]
-        [InlineData(new int[] { })]
-        [InlineData(new int[] { 1 })]
-        [InlineData(new int[] { 5 })]
-        [InlineData(new int[] { 1, 3, 5 })]
-        [InlineData(new int[] { 2, 4, 6, 8 })]
-        public void ReverseMatches(int[] input)
+        [MemberData(nameof(ReverseData))]
+        public void Reverse<T>(IEnumerable<T> source)
         {
-            int[] expectedResults = new int[input.Length];
-            for (int i = 0; i < input.Length; i++)
+            T[] expected = source.ToArray();
+            Array.Reverse(expected);
+
+            IEnumerable<T> actual = source.Reverse();
+
+            Assert.Equal(expected, actual);
+            Assert.Equal(expected.Count(), actual.Count()); // Count may be optimized.
+            Assert.Equal(expected, actual.ToArray());
+            Assert.Equal(expected, actual.ToList());
+
+            Assert.Equal(expected.FirstOrDefault(), actual.FirstOrDefault());
+            Assert.Equal(expected.LastOrDefault(), actual.LastOrDefault());
+
+            for (int i = 0; i < expected.Length; i++)
             {
-                expectedResults[i] = input[input.Length - 1 - i];
+                Assert.Equal(expected[i], actual.ElementAt(i));
+
+                Assert.Equal(expected.Skip(i), actual.Skip(i));
+                Assert.Equal(expected.Take(i), actual.Take(i));
             }
 
-            Assert.NotSame(input, Enumerable.Reverse(input));
+            Assert.Equal(default(T), actual.ElementAtOrDefault(-1));
+            Assert.Equal(default(T), actual.ElementAtOrDefault(expected.Length));
 
-            Assert.Equal(expectedResults, input.Reverse());
-            Assert.Equal(expectedResults, new TestCollection<int>(input).Reverse());
-            Assert.Equal(expectedResults, new TestEnumerable<int>(input).Reverse());
-            Assert.Equal(expectedResults, new TestReadOnlyCollection<int>(input).Reverse());
+            Assert.Equal(expected, actual.Select(_ => _));
+            Assert.Equal(expected, actual.Where(_ => true));
 
-            Assert.Equal(expectedResults.Select(i => i * 2), input.Select(i => i * 2).Reverse());
-            Assert.Equal(expectedResults.Where(i => true).Select(i => i * 2), input.Where(i => true).Select(i => i * 2).Reverse());
-            Assert.Equal(expectedResults.Where(i => false).Select(i => i * 2), input.Where(i => false).Select(i => i * 2).Reverse());
+            Assert.Equal(actual, actual); // Repeat the enumeration against itself.
+        }
+
+        [Theory, MemberData(nameof(ReverseData))]
+        public void RunOnce<T>(IEnumerable<T> source)
+        {
+            T[] expected = source.ToArray();
+            Array.Reverse(expected);
+
+            IEnumerable<T> actual = source.RunOnce().Reverse();
+
+            Assert.Equal(expected, actual);
+        }
+
+        public static IEnumerable<object[]> ReverseData()
+        {
+            var integers = new[]
+            {
+                Array.Empty<int>(), // No elements.
+                new[] { 1 }, // One element.
+                new[] { 9999, 0, 888, -1, 66, -777, 1, 2, -12345 }, // Distinct elements.
+                new[] { -10, 0, 5, 0, 9, 100, 9 }, // Some repeating elements.
+            };
+
+            return integers
+                .Select(collection => new object[] { collection })
+                .Concat(
+                    integers.Select(c => new object[] { c.Select(i => i.ToString()) })
+                );
         }
 
         [Fact]
-        public void SameResultsRepeatCallsIntQuery()
+        public void ForcedToEnumeratorDoesntEnumerate()
         {
-            var q = from x in new[] { 9999, 0, 888, -1, 66, -777, 1, 2, -12345 }
-                    where x > Int32.MinValue
-                    select x;
-
-            Assert.Equal(q.Reverse(), q.Reverse());
-        }
-
-        [Fact]
-        public void SameResultsRepeatCallsStringQuery()
-        {
-            var q = from x in new[] { "!@#$%^", "C", "AAA", "", "Calling Twice", "SoS", String.Empty }
-                    where !String.IsNullOrEmpty(x)
-                    select x;
-
-            Assert.Equal(q.Reverse(), q.Reverse());
-        }
-        
-        [Fact]
-        public void SomeRepeatedElements()
-        {
-            int?[] source = new int?[] { -10, 0, 5, null, 0, 9, 100, null, 9 };
-            int?[] expected = new int?[] { 9, null, 100, 9, 0, null, 5, 0, -10 };
-            
-            Assert.Equal(expected, source.Reverse());
+            var iterator = NumberRangeGuaranteedNotCollectionType(0, 3).Reverse();
+            // Don't insist on this behaviour, but check it's correct if it happens
+            var en = iterator as IEnumerator<int>;
+            Assert.False(en != null && en.MoveNext());
         }
     }
 }

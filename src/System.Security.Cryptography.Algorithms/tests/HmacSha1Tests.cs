@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Test.Cryptography;
 using Xunit;
@@ -28,6 +29,35 @@ namespace System.Security.Cryptography.Hashing.Algorithms.Tests
         protected override HMAC Create()
         {
             return new HMACSHA1();
+        }
+
+        protected override HashAlgorithm CreateHashAlgorithm()
+        {
+            return SHA1.Create();
+        }
+
+        protected override int BlockSize { get { return 64; } }
+
+        [Fact]
+        public void HmacSha1_Byte_Constructors()
+        {
+            byte[] key = (byte[])s_testKeys2202[1].Clone();
+            string digest = "b617318655057264e28bc0b6fb378c8ef146be00";
+
+            using (HMACSHA1 h1 = new HMACSHA1(key))
+            {
+                VerifyHmac_KeyAlreadySet(h1, 1, digest);
+                using (HMACSHA1 h2 = new HMACSHA1(key, true))
+                {
+                    VerifyHmac_KeyAlreadySet(h2, 1, digest);
+                    Assert.Equal(h1.Key, h2.Key);
+                }
+                using (HMACSHA1 h2 = new HMACSHA1(key, false))
+                {
+                    VerifyHmac_KeyAlreadySet(h1, 1, digest);
+                    Assert.Equal(h1.Key, h2.Key);
+                }
+            }
         }
 
         [Fact]
@@ -70,6 +100,12 @@ namespace System.Security.Cryptography.Hashing.Algorithms.Tests
         public void HmacSha1_Rfc2202_7()
         {
             VerifyHmac(7, "e8e99d0f45237d786d6bbaa7965c7808bbff1a91");
+        }
+
+        [Fact]
+        public void HMacSha1_Rfc2104_2()
+        {
+            VerifyHmacRfc2104_2();
         }
     }
 }

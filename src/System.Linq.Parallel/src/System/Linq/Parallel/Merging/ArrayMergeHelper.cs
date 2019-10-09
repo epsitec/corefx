@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -14,11 +15,12 @@ using System.Text;
 using System.Linq.Parallel;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
 
 namespace System.Linq.Parallel
 {
     /// <summary>
-    /// A special merge helper for indexible queries. Given an indexible query, we know how many elements
+    /// A special merge helper for indexable queries. Given an indexable query, we know how many elements
     /// we'll have in the result set, so we can allocate the array ahead of time. Then, as each result element
     /// is produced, we can directly insert it into the appropriate position in the output array, paying
     /// no extra cost for ordering.
@@ -26,8 +28,8 @@ namespace System.Linq.Parallel
     /// <typeparam name="TInputOutput"></typeparam>
     internal class ArrayMergeHelper<TInputOutput> : IMergeHelper<TInputOutput>
     {
-        private QueryResults<TInputOutput> _queryResults; // Indexible query results
-        private TInputOutput[] _outputArray; // The output array.
+        private readonly QueryResults<TInputOutput> _queryResults; // Indexable query results
+        private readonly TInputOutput[] _outputArray; // The output array.
         private QuerySettings _settings; // Settings for the query.
 
         /// <summary>
@@ -65,10 +67,11 @@ namespace System.Linq.Parallel
 
         /// <summary>
         /// Gets the enumerator over the results.
-        /// 
+        ///
         /// We never expect this method to be called. ArrayMergeHelper is intended to be used when we want
         /// to consume the results using GetResultsAsArray().
         /// </summary>
+        [ExcludeFromCodeCoverage]
         public IEnumerator<TInputOutput> GetEnumerator()
         {
             Debug.Fail("ArrayMergeHelper<>.GetEnumerator() is not intended to be used. Call GetResultsAsArray() instead.");

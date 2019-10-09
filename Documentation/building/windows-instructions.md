@@ -1,143 +1,101 @@
 Building CoreFX on Windows
 ==========================
 
-You can build .NET Core either via the command line or by using Visual Studio.
-We currently only support building and running on Windows. Other platforms will
-come later.
-
 ## Required Software
 
-Visual Studio 2013 (Update 3 or later) or Visual Studio 2015 (Preview or later) is required.
+1. **[Visual Studio 2019](https://visualstudio.microsoft.com/vs/preview/)** (Community, Professional, Enterprise) with the latest update must be installed. The Community version is completely free.
+2. **[CMake](https://cmake.org/)** must be installed from [the CMake download page](https://cmake.org/download/#latest) and added to your path. CMake 3.14.3 or later is required to build with VS 2019.
 
-The following free downloads are compatible:
-* [Visual Studio Community 2013 (with Update 3)](http://www.visualstudio.com/en-us/visual-studio-community-vs.aspx)
-* [Visual Studio Community 2015](http://www.visualstudio.com/en-us/downloads/visual-studio-2015-downloads-vs)
+## Recommended Software
+**[.NET Core SDK](https://dotnet.microsoft.com/download/dotnet-core/3.0)** >= v3.0.100 should be installed, which will add the `dotnet` toolchain to your path.
 
-Note: In order to build our C++ projects be sure to select "Programming Languages | Visual C++ | Common Tools for Visual C++ 2015" while installing VS 2015 (or modify your install to include it).
+### Visual Studio 2019
+
+#### Visual Studio 2019 - 'Workloads' based install
+
+The following are the minimum requirements:
+  * .NET desktop development
+    * All Required Components
+    * .NET Framework 4.7.2 SDK
+    * Verify the required components include:
+      * .NET Framework 4.7.2 targeting pack
+  * Desktop development with C++
+    * All Required Components
+    * Windows Universal CRT SDK
+    * MSVC v142 - VS 2019 C++ x64/x86 build tools (latest - for example - v14.24)
+    * MSVC v141 - VS 2017 C++ x64/x86 build tools (latest - for example - v14.16)
+    * Verify the required components include:
+      * Windows 10 SDK (latest - for example - 10.0.18362.0)
+  * .NET Core cross-platform development
+    * All Required Components
+
+#### Visual Studio 2019 - 'Individual components' based install
+
+The following are the minimum requirements:
+  * C# and Visual Basic Roslyn Compilers
+  * .NET Portable Library Targeting Pack
+  * Windows 10 SDK
+  * C++ core features
+  * MSVC v142 - VS 2019 C++ x64/x86 build tools (latest - for example - v14.24)
+  * MSVC v141 - VS 2017 C++ x64/x86 build tools (latest - for example - v14.16)
+  * MSBuild
+  * .NET Framework 4.7.2 SDK
+  * .NET Framework 4.7.2 Targeting Pack
+  * Windows Universal CRT SDK
+
+To build binaries for ARM, you need the following additional indivdual components:
+* Visual C++ compilers and libraries for ARM
+* Visual C++ compilers and libraries for ARM64
 
 ## Building From the Command Line
 
-Open a [Visual Studio Command Prompt](http://msdn.microsoft.com/en-us/library/ms229859(v=vs.110).aspx). 
-From the root of the repository, type `build`. This will build everything and run
-the core tests for the project. Visual Studio Solution (.sln) files exist for
-related groups of libraries. These can be loaded to build, debug and test inside
-the Visual Studio IDE.
+From a (non-admin) Command Prompt window:
 
-[Building CoreFX on FreeBSD, Linux and OS X](unix-instructions.md)
-## Tests
+- `build.cmd` - Will cause basic tool initialization and build the default configuration for refs, libs, and packages.
 
-We use the OSS testing framework [xunit](http://xunit.github.io/)
+For information on different configurations see [project-guidelines](../coding-guidelines/project-guidelines.md).
 
-### Running tests on the command line
+**Note**: Before working on individual projects or test projects you **must** run `build.cmd` from the root once before beginning that work. It is also a good idea to run `build.cmd` whenever you pull a large set of unknown changes into your branch.
 
-By default, the core tests are run as part of the build. Running the tests from
-the command line is as simple as invoking `build.cmd` on windows, and `run-test.sh` on linux and osx. 
+Visual Studio Solution (.sln) files exist for related groups of libraries. These can be loaded to build, debug and test inside the Visual Studio IDE.
 
-You can also run the test for an individual project by building just one test
-project, e.g.:
+Note that when calling the script `build.cmd` attempts to build both the native and managed code.
 
-```
-cd src\System.Collections.Immutable\tests
-msbuild /t:BuildAndTest (or /t:Test to just run the tests if the binaries are already built)
-```
-It is possible to pass parameters to the underlying xunit runner via the `XunitOptions` parameter, e.g.:
-````
-msbuild /t:Test "/p:XunitOptions=-class Test.ClassUnderTests -notrait category=outerloop"
-````
+For more information about the different options when building, run `build.cmd -help` and look at examples in the [developer-guide](../project-docs/developer-guide.md).
 
-In some test directories there may be multiple test projects or directories so you may need to specify the specific test project to get it to build and run the tests.
+### Running tests from the command line
 
-Tests participate in the incremental build.  This means that if tests have already been run, and inputs to the incremental build have not changed, rerunning the tests target will not execute the test runner again.  To force re-executing tests in this situation, use msbuild /t:clean;build;test.
-
-The tests can also be filtered based on xunit trait attributes defined in XunitTraitDiscoverers project. These attributes are to be specified over the test method. The available xunit attributes are:
-
-_**OuterLoop:**_
-This attribute returns the 'outerloop' category, so to run outerloop tests use the following commandline,
-```
-xunit.console.netcore.exe *.dll -trait category=outerloop
-build.cmd *.csproj /p:RunTestsWithCategories=OuterLoop
-```
-_**PlatformSpecific(Xunit.PlatformID platforms):**_
-Use this attribute on test methods, to specifiy that this test may only be run on the specified platforms. This attribute returns the following categories based on platform 
-
-       - nonwindowstests: for tests that don't run on Windows
-       - nonlinuxtests: for tests that don't run on Linux
-       - nonosxtests: for tests that don't run on OSX
-
-To run Linux specific tests on a Linux box, use the following commandline,
-```
-xunit.console.netcore.exe *.dll -notrait category=nonlinuxtests
-```
-_**ActiveIssue(int issue, Xunit.PlatformID platforms):**_
-Use this attribute over tests methods, to skip failing tests only on the specific platforms, if no platforms is specified, then the test is skipped on all platforms. This attribute returns the 'failing' category, so to run all acceptable tests on Linux that are not failing, use the following commandline,
-```
-xunit.console.netcore.exe *.dll -notrait category=failing -notrait category=nonlinuxtests
-```
-And to run all acceptable tests on Linux that are failing,
-```
-xunit.console.netcore.exe *.dll -trait category=failing -notrait category=nonlinuxtests
-```
-
-_**A few common examples with the above attributes:**_
-
-- Run all tests acceptable on Windows
-```
-xunit.console.netcore.exe *.dll -notrait category=nonwindowstests
-```
-- Run all inner loop tests acceptable on Linux
-```
-xunit.console.netcore.exe *.dll -notrait category=nonlinuxtests -notrait category=OuterLoop
-```
-- Run all outer loop tests acceptable on OSX that are not currently associated with active issues
-```
-xunit.console.netcore.exe *.dll -notrait category=nonosxtests -trait category=OuterLoop -notrait category=failing
-```
-- Run all tests acceptable on Linux that are currently associated with active issues
-```
-xunit.console.netcore.exe *.dll -notrait category=nonlinuxtests -trait category=failing
-```
-
-All the required dlls to run a test project can be found in the bin\\tests\\{Flavor}\\{Project}.Tests\\aspnetcore50\\ which should be created on building the test project.
-
-To skip an entire test project from being run on a specific platform, for ex, skip running registry tests on linux and mac, use the <UnsupportedPlatforms> msbuild property on the csproj. Valid platform values are
-```
-<UnsupportedPlatforms>Windows_NT;Linux;OSX</UnsupportedPlatforms>
-```
+From the root, use `build.cmd -test`.
+For more details, or to test an individual project, see the [developer guide topic](https://github.com/dotnet/corefx/blob/master/Documentation/project-docs/developer-guide.md).
 
 ### Running tests from Visual Studio
 
 1. Open solution of interest
 2. Right click test project and select 'Set as startup project'
-3. Ctrl+F5 (Run)
+3. Select the corresponding launch profile (green arrow, i.e. `.NET Core xUnit Console`)
+4. Ctrl+F5 (Run)
 
 ### Debugging tests in Visual Studio
 
-1. Install VS 2015 Preview or later including Web Developer Tools
-2. Open solution of interest in VS 2015
-3. Right click test project and select 'Set as startup project'
-4. Set breakpoint appropriately
+1. Open solution of interest
+2. Right click test project and select 'Set as startup project'
+3. Set breakpoint appropriately
+4. Select the corresponding launch profile (green arrow, i.e. `.NET Core xUnit Console`)
 5. F5 (Debug)
 
-### Code Coverage
+### Using Test Explorer in Visual Studio
 
-Code coverage is built into the corefx build system.  It utilizes OpenCover for generating coverage data and ReportGenerator for generating reports about that data.  To run:
+1. Open solution from the build script: `.\build.cmd -vs Microsoft.CSharp`. Alternatively you can also pass in the relative or full path to the solution file.
+2. Navigate to the Test Explorer tab and run/debug tests.
 
-```
-// Run full coverage
-build.cmd /p:Coverage=true
+VS Test Explorer support is limited to the .NET Core. To switch between Configurations (Debug / Release), Visual Studio needs to be reopened with the command above together with the additional `--configuration/-c` option.
 
-// To run a single project with code coverage enabled pass the /p:Coverage=true property
-cd src\System.Collections.Immutable\tests
-msbuild /t:BuildAndTest /p:Coverage=true
-```
-If coverage succeeds, the code coverage report will be generated automatically and placed in the bin\tests\coverage directory.  You can view the full report by opening index.htm
+For advanced debugging using WinDBG see [Debugging CoreFX on Windows](https://github.com/dotnet/corefx/blob/master/Documentation/debugging/windows-instructions.md)
 
-Code coverage reports from the continuous integration system are available from the links on the front page of the corefx repo.
+### Notes
+* At any given time, the corefx repo might be configured to use a [more recent compiler](../../../DotnetCLIVersion.txt) than
+the one used by the installed .NET Core SDK. This means the corefx codebase might
+be using language features that are not understood by the IDE, which might result in errors that
+show up as red squiggles while writing code. Such errors should, however, not affect the actual compilation.
 
-### Notes 
-* Running tests from using the VS test explorer does not currently work after we switched to running on CoreCLR. [We will be working on enabling full VS test integration](https://github.com/dotnet/corefx/issues/1318) but we don't have an ETA yet. In the meantime, use the steps above to launch/debug the tests using the console runner.
-
-* VS 2015 is required to debug tests running on CoreCLR as the CoreCLR
-debug engine is a VS 2015 component.
-
-* If the Xamarin PCL profiles are installed, the build will fail due to [issue #449](https://github.com/dotnet/corefx/issues/449).  A possible workaround is listed [in the issue](https://github.com/dotnet/corefx/issues/449#issuecomment-95117040) itself.
+* If your build fails with "[...].dll - Access is denied" errors, it might be because Visual Studio/MSBuild is locking these files. Run `taskkill /im dotnet.exe /f` to shutdown all currently running dotnet instances.

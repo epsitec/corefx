@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -23,7 +24,7 @@ namespace System.Linq.Parallel
     internal sealed class IndexedWhereQueryOperator<TInputOutput> : UnaryQueryOperator<TInputOutput, TInputOutput>
     {
         // Predicate function. Used to filter out non-matching elements during execution.
-        private Func<TInputOutput, int, bool> _predicate;
+        private readonly Func<TInputOutput, int, bool> _predicate;
         private bool _prematureMerge = false; // Whether to prematurely merge the input of this operator.
         private bool _limitsParallelism = false; // Whether this operator limits parallelism
 
@@ -139,7 +140,7 @@ namespace System.Linq.Parallel
         {
             private readonly QueryOperatorEnumerator<TInputOutput, int> _source; // The data source to enumerate.
             private readonly Func<TInputOutput, int, bool> _predicate; // The predicate used for filtering.
-            private CancellationToken _cancellationToken;
+            private readonly CancellationToken _cancellationToken;
             private Shared<int> _outputLoopCount;
             //-----------------------------------------------------------------------------------
             // Instantiates a new enumerator.

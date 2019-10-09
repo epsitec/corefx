@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Globalization;
 using System.Reflection;
@@ -48,7 +49,7 @@ namespace System.ComponentModel.DataAnnotations
         /// </summary>
         public string Value
         {
-            get { return _propertyValue; }
+            get => _propertyValue;
             set
             {
                 if (_propertyValue != value)
@@ -64,7 +65,7 @@ namespace System.ComponentModel.DataAnnotations
         /// </summary>
         public Type ResourceType
         {
-            get { return _resourceType; }
+            get => _resourceType;
             set
             {
                 if (_resourceType != value)
@@ -121,15 +122,13 @@ namespace System.ComponentModel.DataAnnotations
                 else
                 {
                     // Get the property from the resource type for this resource key
-                    // TODO - check that GetRuntimeProperty() returns the same as old GetProperty()
-                    // in all situations regardless of property modifiers
                     var property = _resourceType.GetRuntimeProperty(_propertyValue);
 
                     // We need to detect bad configurations so that we can throw exceptions accordingly
                     var badlyConfigured = false;
 
                     // Make sure we found the property and it's the correct type, and that the type itself is public
-                    if (!_resourceType.GetTypeInfo().IsVisible || property == null ||
+                    if (!_resourceType.IsVisible || property == null ||
                         property.PropertyType != typeof(string))
                     {
                         badlyConfigured = true;
@@ -149,9 +148,7 @@ namespace System.ComponentModel.DataAnnotations
                     // If the property is not configured properly, then throw a missing member exception
                     if (badlyConfigured)
                     {
-                        string exceptionMessage = string.Format(CultureInfo.CurrentCulture,
-                            SR.LocalizableString_LocalizationFailed,
-                            _propertyName, _resourceType.FullName, _propertyValue);
+                        string exceptionMessage = SR.Format(SR.LocalizableString_LocalizationFailed, _propertyName, _resourceType.FullName, _propertyValue);
                         _cachedResult = () => { throw new InvalidOperationException(exceptionMessage); };
                     }
                     else

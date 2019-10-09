@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -15,7 +16,7 @@ namespace System.Linq.Parallel
 {
     /// <summary>
     /// ExchangeUtilities is a static class that contains helper functions to partition and merge
-    /// streams. 
+    /// streams.
     /// </summary>
     internal static class ExchangeUtilities
     {
@@ -79,15 +80,15 @@ namespace System.Linq.Parallel
         // partitioning, all elements with the same hash code are guaranteed to be in the same partition.
         //
         // Arguments:
-        //    source                      - the data to be hash-partitioned. If it is a partitioned stream, it 
-        //                                  must have partitionCount partitions 
+        //    source                      - the data to be hash-partitioned. If it is a partitioned stream, it
+        //                                  must have partitionCount partitions
         //    partitionCount              - the desired number of partitions
         //    useOrdinalOrderPreservation - whether ordinal order preservation is required
         //    keySelector                 - function to obtain the key given an element
         //    keyComparer                 - equality comparer for the keys
         //
 
-        internal static PartitionedStream<Pair, int> HashRepartition<TElement, THashKey, TIgnoreKey>(
+        internal static PartitionedStream<Pair<TElement, THashKey>, int> HashRepartition<TElement, THashKey, TIgnoreKey>(
             PartitionedStream<TElement, TIgnoreKey> source, Func<TElement, THashKey> keySelector, IEqualityComparer<THashKey> keyComparer,
             IEqualityComparer<TElement> elementComparer, CancellationToken cancellationToken)
         {
@@ -95,7 +96,7 @@ namespace System.Linq.Parallel
             return new UnorderedHashRepartitionStream<TElement, THashKey, TIgnoreKey>(source, keySelector, keyComparer, elementComparer, cancellationToken);
         }
 
-        internal static PartitionedStream<Pair, TOrderKey> HashRepartitionOrdered<TElement, THashKey, TOrderKey>(
+        internal static PartitionedStream<Pair<TElement, THashKey>, TOrderKey> HashRepartitionOrdered<TElement, THashKey, TOrderKey>(
             PartitionedStream<TElement, TOrderKey> source, Func<TElement, THashKey> keySelector, IEqualityComparer<THashKey> keyComparer,
             IEqualityComparer<TElement> elementComparer, CancellationToken cancellationToken)
         {

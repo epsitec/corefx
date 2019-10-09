@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -857,20 +858,20 @@ namespace System.Threading.Tasks.Tests
 
         /// <summary>
         /// Class that verifies that all the public constructors of Task, future, promise and futureT are working correctly
-        /// The test creates the test object (Task, Future, promise) using various ctor and ensures that they were 
-        /// created and can be started. All the negative cases (expectional cases are also covered in this test set).
+        /// The test creates the test object (Task, Future, promise) using various ctor and ensures that they were
+        /// created and can be started. All the negative cases (exceptional cases are also covered in this test set).
         /// </summary>
         internal sealed class TaskCreateTest
         {
             #region Member Variables
 
             //Bunch of constants that is used to simulate work done by TPL Task (does some funky maths
-            // (1 + 1/(2*2) + 1/(3*3) + ... +  1/(1000000*1000000) and verifies that the result is 
+            // (1 + 1/(2*2) + 1/(3*3) + ... +  1/(1000000*1000000) and verifies that the result is
             //equals to Math.Pow (Math.PI, 2) / 6) aka not important from TPL test perspective
             private const int ZETA_SEED = 1000000;
 
             /// <summary>
-            /// Used to save the results that is returned by the Task upon completion (used to verify that task ran successsfully)
+            /// Used to save the results that is returned by the Task upon completion (used to verify that task ran successfully)
             /// </summary>
             private double _result;
 
@@ -923,7 +924,7 @@ namespace System.Threading.Tasks.Tests
             /// <returns>indicates whether test passed or failed (invoking ctor was success or not)</returns>
             internal void CreateTask()
             {
-                //Using the parameters specified in the XML input file create a Task, Future or promise 
+                //Using the parameters specified in the XML input file create a Task, Future or promise
                 _task = CreateTaskHelper();
 
                 // Checks whether the task was created, initialized with specified action
@@ -962,7 +963,7 @@ namespace System.Threading.Tasks.Tests
             }
 
             /// <summary>
-            /// Tests to ensure that TaskTypes can be created using the StartNew static TaskFactory method 
+            /// Tests to ensure that TaskTypes can be created using the StartNew static TaskFactory method
             /// </summary>
             /// <returns></returns>
             internal void StartNewTask()
@@ -1133,7 +1134,7 @@ namespace System.Threading.Tasks.Tests
                         {
                             //
                             // For Constructor
-                            // 
+                            //
                             if (_taskType != TaskType.Future)
                             {
                                 try
@@ -1152,7 +1153,7 @@ namespace System.Threading.Tasks.Tests
                             }
                             //
                             // For StartNew
-                            // 
+                            //
                             try
                             {
                                 Action o = null;
@@ -1182,7 +1183,7 @@ namespace System.Threading.Tasks.Tests
                         {
                             //
                             // For Constructor
-                            // 
+                            //
                             if (_taskType != TaskType.Future)
                             {
                                 try
@@ -1201,7 +1202,7 @@ namespace System.Threading.Tasks.Tests
                             }
                             //
                             // For StartNew
-                            // 
+                            //
                             try
                             {
                                 if (_taskType == TaskType.Task)
@@ -1283,7 +1284,7 @@ namespace System.Threading.Tasks.Tests
                 {
                     //
                     // For Start()
-                    // 
+                    //
                     if (_taskType != TaskType.Future)
                     {
                         try
@@ -1311,7 +1312,7 @@ namespace System.Threading.Tasks.Tests
 
                     //
                     // For StartNew()
-                    // 
+                    //
                     try
                     {
                         CancellationToken token = new CancellationToken();
@@ -1585,7 +1586,7 @@ namespace System.Threading.Tasks.Tests
                 }
 
                 //Function point comparison cant be done by rounding off to nearest decimal points since
-                //1.64 could be represented as 1.63999999 or as 1.6499999999. To perform floating point comparisons, 
+                //1.64 could be represented as 1.63999999 or as 1.6499999999. To perform floating point comparisons,
                 //a range has to be defined and check to ensure that the result obtained is within the specified range
                 double minLimit = 1.63;
                 double maxLimit = 1.65;

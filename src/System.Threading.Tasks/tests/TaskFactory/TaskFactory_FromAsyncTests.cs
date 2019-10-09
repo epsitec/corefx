@@ -1,12 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
-using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Diagnostics;
 
 namespace System.Threading.Tasks.Tests
@@ -238,12 +236,14 @@ namespace System.Threading.Tasks.Tests
             Assert.Equal("4567", s);
 
             // Test Exception handling from beginMethod
-            Assert.ThrowsAsync<NullReferenceException>(() =>
-               t = Task.Factory.FromAsync(
-                   fac.StartWrite,
-                   fac.EndWrite,
-                   (string)null,  // will cause null.Length to be dereferenced
-                   null));
+            Assert.Throws<NullReferenceException>(() =>
+            {
+                t = Task.Factory.FromAsync(
+                    fac.StartWrite,
+                    fac.EndWrite,
+                    (string)null,  // will cause null.Length to be dereferenced
+                    null);
+            });
 
 
             // Test Exception handling from asynchronous logic
@@ -258,11 +258,11 @@ namespace System.Threading.Tasks.Tests
             Assert.Throws<AggregateException>(() =>
                check = f.Result);
 
-            Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
-               Task.Factory.FromAsync(fac.StartWrite, fac.EndWrite, null, TaskCreationOptions.LongRunning));
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                { Task.Factory.FromAsync(fac.StartWrite, fac.EndWrite, null, TaskCreationOptions.LongRunning); });
 
-            Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
-              Task.Factory.FromAsync(fac.StartWrite, fac.EndWrite, null, TaskCreationOptions.PreferFairness));
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                { Task.Factory.FromAsync(fac.StartWrite, fac.EndWrite, null, TaskCreationOptions.PreferFairness); });
 
             // Empty the buffer, then inject a few more characters into the buffer
             fac.ResetStateTo("0123456789");
@@ -388,7 +388,7 @@ namespace System.Threading.Tasks.Tests
 
                 // Allow for exception throwing to test our handling of that.
                 if (s == null)
-                    throw new ArgumentNullException("s");
+                    throw new ArgumentNullException(nameof(s));
 
                 Task t = Task.Factory.StartNew(delegate
                 {
@@ -438,7 +438,7 @@ namespace System.Threading.Tasks.Tests
 
                 // Allow for exception throwing to test our handling of that.
                 if (maxBytes == -1)
-                    throw new ArgumentException("maxBytes");
+                    throw new ArgumentException("Value was not valid", nameof(maxBytes));
 
                 Task t = Task.Factory.StartNew(delegate
                 {
@@ -557,6 +557,28 @@ namespace System.Threading.Tasks.Tests
             {
                 get { return _exception; }
             }
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void FromAsync_CompletedSynchronouslyIAsyncResult_CompletesSynchronously(bool invokesCallback)
+        {
+            Task t = Task.Factory.FromAsync((callback, state) =>
+            {
+                var ar = new SynchronouslyCompletedAsyncResult { AsyncState = state };
+                if (invokesCallback) callback(ar);
+                return ar;
+            }, iar => { }, null);
+            Assert.Equal(TaskStatus.RanToCompletion, t.Status);
+        }
+
+        private sealed class SynchronouslyCompletedAsyncResult : IAsyncResult
+        {
+            public object AsyncState { get; internal set; }
+            public bool CompletedSynchronously => true;
+            public bool IsCompleted => true;
+            public WaitHandle AsyncWaitHandle { get { throw new NotImplementedException(); } }
         }
     }
 }

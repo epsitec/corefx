@@ -1,37 +1,23 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), dir.props))\dir.props" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A28B0064-EFB2-4B77-B97C-DECF5DAB074E}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AssemblyName>System.Security.Cryptography.X509Certificates.Tests</AssemblyName>
-    <RootNamespace>System.Security.Cryptography.X509Certificates.Tests</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <HaveDSA Condition="'$(TargetsNetCoreApp)' == 'true' or '$(TargetsUap)' == 'true'">true</HaveDSA>
+    <HaveCertificateCreation Condition="'$(TargetsNetCoreApp)' == 'true' or '$(TargetsUap)' == 'true'">true</HaveCertificateCreation>
+    <DefineConstants Condition="'$(TargetsNetCoreApp)' != 'true' and '$(TargetsUap)' != 'true'">$(DefineConstants);NO_DSA_AVAILABLE</DefineConstants>
+    <DefineConstants Condition="'$(HaveCertificateCreation)' != 'true'">$(DefineConstants);NO_EPHEMERALKEYSET_AVAILABLE</DefineConstants>
+    <DefineConstants Condition="'$(TargetsNetCoreApp)' == 'true' or '$(TargetsUap)' == 'true'">$(DefineConstants);HAVE_THUMBPRINT_OVERLOADS</DefineConstants>
+    <DefineConstants Condition="'$(TargetsUnix)' == 'true'">$(DefineConstants);Unix</DefineConstants>
+    <IncludeRemoteExecutor>true</IncludeRemoteExecutor>
+    <Configurations>netcoreapp-OSX-Debug;netcoreapp-OSX-Release;netcoreapp-Unix-Debug;netcoreapp-Unix-Release;netcoreapp-Windows_NT-Debug;netcoreapp-Windows_NT-Release;uap-Windows_NT-Debug;uap-Windows_NT-Release</Configurations>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\System.Security.Cryptography.X509Certificates.csproj">
-      <Project>{6f8576c2-6cd0-4df3-8394-00b002d82e40}</Project>
-      <Name>System.Security.Cryptography.X509Certificates</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\System.Security.Cryptography.Primitives\src\System.Security.Cryptography.Primitives.csproj">
-      <Project>{D04A73AE-E418-4ACD-A132-7688435BE8B5}</Project>
-      <Name>System.Security.Cryptography.Primitives</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\System.Security.Cryptography.Encoding\src\System.Security.Cryptography.Encoding.csproj">
-      <Project>{AA81E343-5E54-40B0-9381-C459419BE780}</Project>
-      <Name>System.Security.Cryptography.Encoding</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\System.Security.Cryptography.Algorithms\src\System.Security.Cryptography.Algorithms.csproj">
-      <Project>{81A05E2E-E3AE-4246-B4E6-DD5F31FB71F9}</Project>
-      <Name>System.Security.Cryptography.Algorithms</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
+    <Compile Include="Cert.cs" />
     <Compile Include="CertTests.cs" />
+    <Compile Include="ChainHolder.cs" />
+    <Compile Include="ChainTests.cs" />
     <Compile Include="CollectionImportTests.cs" />
     <Compile Include="CollectionTests.cs" />
+    <Compile Include="ContentTypeTests.cs" />
     <Compile Include="CtorTests.cs" />
     <Compile Include="ExportTests.cs" />
     <Compile Include="ExtensionsTests.cs" />
@@ -43,28 +29,103 @@
     <Compile Include="PropsTests.cs" />
     <Compile Include="PublicKeyTests.cs" />
     <Compile Include="TestData.cs" />
+    <Compile Include="TestEnvironmentConfiguration.cs" />
+    <Compile Include="X500DistinguishedNameEncodingTests.cs" />
+    <Compile Include="X500DistinguishedNameTests.cs" />
     <Compile Include="X509StoreTests.cs" />
-    <Compile Include="$(CommonTestPath)\Cryptography\ByteUtils.cs">
-      <Link>CommonTest\Cryptography\ByteUtils.cs</Link>
+    <Compile Include="$(CommonTestPath)\System\Security\Cryptography\ByteUtils.cs">
+      <Link>CommonTest\System\Security\Cryptography\ByteUtils.cs</Link>
+    </Compile>
+    <Compile Include="ImportTests.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(HaveCertificateCreation)'=='true'">
+    <Compile Include="CertificateCreation\CertificateRequestApiTests.cs" />
+    <Compile Include="CertificateCreation\CertificateRequestChainTests.cs" />
+    <Compile Include="CertificateCreation\CertificateRequestUsageTests.cs" />
+    <Compile Include="CertificateCreation\DSAX509SignatureGenerator.cs" />
+    <Compile Include="CertificateCreation\EccTestData.cs" />
+    <Compile Include="CertificateCreation\ECDsaX509SignatureGeneratorTests.cs" />
+    <Compile Include="CertificateCreation\PrivateKeyAssociationTests.cs" />
+    <Compile Include="CertificateCreation\RSAPkcs1X509SignatureGeneratorTests.cs" />
+    <Compile Include="CertificateCreation\RSAPssX509SignatureGeneratorTests.cs" />
+    <Compile Include="CertificateCreation\SubjectAltNameBuilderTests.cs" />
+    <Compile Include="DSAOther.cs" />
+    <Compile Include="DynamicChainTests.cs" />
+    <Compile Include="ECDsaOther.cs" />
+    <Compile Include="RSAOther.cs" />
+    <Compile Include="TestDataGenerator.cs" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetsUnix)' == 'true' AND '$(TargetsOSX)' != 'true' ">
+    <Compile Include="X509FilesystemTests.Unix.cs" />
+    <Compile Include="$(CommonPath)\Interop\Unix\Interop.Libraries.cs">
+      <Link>Common\Interop\Unix\Interop.Libraries.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\CoreLib\Interop\Unix\Interop.Errors.cs">
+      <Link>Common\CoreLib\Interop\Unix\Interop.Errors.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\CoreLib\Interop\Unix\System.Native\Interop.GetEUid.cs">
+      <Link>Common\Interop\Unix\Interop.GetEUid.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\CoreLib\Interop\Unix\System.Native\Interop.GetPwUid.cs">
+      <Link>Common\Interop\Unix\Interop.GetPwUid.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Interop\Unix\System.Native\Interop.FChMod.cs">
+      <Link>Common\Interop\Unix\System.Native\Interop.FChMod.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\CoreLib\Interop\Unix\System.Native\Interop.Permissions.cs">
+      <Link>Common\CoreLib\Interop\Unix\System.Native\Interop.Permissions.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\CoreLib\Interop\Unix\System.Native\Interop.Stat.cs">
+      <Link>Common\CoreLib\Interop\Unix\System.Native\Interop.Stat.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\CoreLib\System\IO\PersistedFiles.Unix.cs">
+      <Link>Common\System\IO\PersistedFiles.Unix.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\CoreLib\System\IO\PersistedFiles.Names.Unix.cs">
+      <Link>Common\System\IO\PersistedFiles.Names.Unix.cs</Link>
+    </Compile>
+    <Compile Include="HostnameMatchTests.Unix.cs" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetsOSX)' == 'true'">
+    <Compile Include="X509StoreMutableTests.OSX.cs" />
+    <Compile Include="$(CommonPath)\Interop\OSX\Interop.CoreFoundation.cs">
+      <Link>Common\Interop\OSX\Interop.CoreFoundation.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Interop\OSX\Interop.CoreFoundation.CFArray.cs">
+      <Link>Common\Interop\OSX\Interop.CoreFoundation.CFArray.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Interop\OSX\Interop.CoreFoundation.CFData.cs">
+      <Link>Common\Interop\OSX\Interop.CoreFoundation.CFData.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Interop\OSX\Interop.CoreFoundation.CFError.cs">
+      <Link>Common\Interop\OSX\Interop.CoreFoundation.CFError.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Interop\OSX\Interop.CoreFoundation.CFString.cs">
+      <Link>Common\Interop\OSX\Interop.CoreFoundation.CFString.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Interop\OSX\Interop.Libraries.cs">
+      <Link>Common\Interop\OSX\Interop.Libraries.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Interop\OSX\System.Security.Cryptography.Native.Apple\Interop.Err.cs">
+      <Link>Common\Interop\OSX\System.Security.Cryptography.Native.Apple\Interop.Err.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Interop\OSX\System.Security.Cryptography.Native.Apple\Interop.SecErr.cs">
+      <Link>Common\Interop\OSX\System.Security.Cryptography.Native.Apple\Interop.SecErr.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Interop\OSX\System.Security.Cryptography.Native.Apple\Interop.SecErrMessage.cs">
+      <Link>Common\Interop\OSX\System.Security.Cryptography.Native.Apple\Interop.SecErrMessage.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Interop\OSX\System.Security.Cryptography.Native.Apple\Interop.Keychain.cs">
+      <Link>Common\Interop\OSX\System.Security.Cryptography.Native.Apple\Interop.Keychain.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Microsoft\Win32\SafeHandles\SafeCreateHandle.OSX.cs">
+      <Link>Common\Microsoft\Win32\SafeHandles\SafeCreateHandle.OSX.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Microsoft\Win32\SafeHandles\SafeHandleCache.cs">
+      <Link>Common\Microsoft\Win32\SafeHandles\SafeHandleCache.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="project.json" />
+    <PackageReference Include="System.Security.Cryptography.X509Certificates.TestData" Version="$(SystemSecurityCryptographyX509CertificatesTestDataPackageVersion)" />
   </ItemGroup>
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), dir.targets))\dir.targets" />
-  <!-- Temporary until we have new work in build tools to
-       deploy content from nuget packages -->
-  <Target Name="CopyX509TestDataToTestDirectory" AfterTargets="CopyTestToTestDirectory" Inputs="$(PackagesDir)$(X509TestPackage)\content" Outputs="$(TestPath)%(TestTargetFramework.Folder)\*.*">
-    <PropertyGroup>
-      <X509TestPackage>System.Security.Cryptography.X509Certificates.TestData\1.0.0-prerelease</X509TestPackage>
-      <TestTargetFrameworkFolder>%(TestTargetFramework.Folder)</TestTargetFrameworkFolder>
-    </PropertyGroup>
-    <ItemGroup>
-      <X509TestDataSrc Include="$(PackagesDir)$(X509TestPackage)\content\**\*.*" />
-      <X509TestDataDest Include="@(X509TestDataSrc->'$(TestPath)$(TestTargetFrameworkFolder)\%(RecursiveDir)%(Filename)%(Extension)')" />
-    </ItemGroup>
-    <Copy SourceFiles="@(X509TestDataSrc)" DestinationFiles="@(X509TestDataDest)" SkipUnchangedFiles="$(SkipCopyUnchangedFiles)" OverwriteReadOnlyFiles="$(OverwriteReadOnlyFiles)" Retries="$(CopyRetryCount)" RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)" UseHardlinksIfPossible="$(CreateHardLinksForCopyFilesToOutputDirectoryIfPossible)">
-      <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
-    </Copy>
-  </Target>
 </Project>

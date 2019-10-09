@@ -1,69 +1,22 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Globalization;
-using System.Text;
+using System.Collections.Generic;
 using Xunit;
 
 namespace System.Globalization.Tests
 {
     public class DateTimeFormatInfoMonthGenitiveNames
     {
-        // PosTest1: Call MonthGenitiveNames getter method should return correct value for InvariantInfo
-        [Fact]
-        public void TestGetter()
+        public static IEnumerable<object[]> MonthGenitiveNames_Get_TestData()
         {
-            VerificationHelper(DateTimeFormatInfo.InvariantInfo,
-                    new string[] {
-                    "January",
-                    "February",
-                    "March",
-                    "April",
-                    "May",
-                    "June",
-                    "July",
-                    "August",
-                    "September",
-                    "October",
-                    "November",
-                    "December",
-                    ""
-                    },
-                    false);
-        }
-
-        // PosTest2: Call MonthGenitiveNames setter method should return correct value
-        [Fact]
-        public void TestSetter()
-        {
-            VerificationHelper(new DateTimeFormatInfo(),
-                    new string[] {
-                    "1",
-                    "2",
-                    "3",
-                    "4",
-                    "5",
-                    "6",
-                    "7",
-                    "8",
-                    "9",
-                    "10",
-                    "11",
-                    "12",
-                    ""
-                    },
-                    true);
-        }
-
-        // PosTest3: Call MonthGenitiveNames getter method should return correct value for ru-ru culture
-        [Fact]
-        [ActiveIssue(846, PlatformID.AnyUnix)] 
-        public void TestRuCulture()
-        {
-            DateTimeFormatInfo info = new CultureInfo("ru-RU").DateTimeFormat;
-
-            string[] expected = new string[] {
+            yield return new object[] { DateTimeFormatInfo.InvariantInfo, new string[] { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", "" } };
+            yield return new object[]
+            {
+                new CultureInfo("ru-RU").DateTimeFormat,
+                new string[]
+                {
                     "\u044F\u043D\u0432\u0430\u0440\u044F",
                     "\u0444\u0435\u0432\u0440\u0430\u043B\u044F",
                     "\u043C\u0430\u0440\u0442\u0430",
@@ -77,78 +30,99 @@ namespace System.Globalization.Tests
                     "\u043D\u043E\u044F\u0431\u0440\u044F",
                     "\u0434\u0435\u043A\u0430\u0431\u0440\u044F",
                     ""
-                    };
-            VerificationHelper(info, expected, false);
+                }
+            };
         }
 
-        // NegTest1: ArgumentNullException should be thrown when The property is being set to a null reference
+        [Theory]
+        [MemberData(nameof(MonthGenitiveNames_Get_TestData))]
+        public void MonthGenitiveNames_Get_ReturnsExpected(DateTimeFormatInfo format, string[] expected)
+        {
+            Assert.Equal(expected, format.MonthGenitiveNames);
+        }
+
         [Fact]
-        public void TestNull()
+        public void MonthGenitiveNames_Get_ReturnsClone()
         {
-            Assert.Throws<ArgumentNullException>(() =>
-            {
-                new DateTimeFormatInfo().MonthGenitiveNames = null;
-            });
-            Assert.Throws<ArgumentNullException>(() =>
-            {
-                new DateTimeFormatInfo().MonthGenitiveNames = new string[] {
-                    "1",
-                    "2",
-                    "3",
-                    null,
-                    "5",
-                    "6",
-                    "7",
-                    "8",
-                    null,
-                    "10",
-                    "11",
-                    "12",
-                    ""
-                    };
-            });
+            var format = new DateTimeFormatInfo();
+            Assert.Equal(format.MonthGenitiveNames, format.MonthGenitiveNames);
+            Assert.NotSame(format.MonthGenitiveNames, format.MonthGenitiveNames);
         }
 
-        // NegTest2: ArgumentException should be thrown when The property is being set to an array that is multidimensional or whose length is not exactly 7
+        public static IEnumerable<object[]> MonthGenitiveNames_Set_TestData()
+        {
+            yield return new object[] { new string[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "" } };
+            yield return new object[] { new string[] { "", "", "", "", "", "", "", "", "", "", "", "", "" } };
+        }
+
+        [Theory]
+        [MemberData(nameof(MonthGenitiveNames_Set_TestData))]
+        public void MonthGenitiveNames_Set_GetReturnsExpected(string[] value)
+        {
+            var format = new DateTimeFormatInfo();
+            format.MonthGenitiveNames = value;
+            Assert.Equal(value, format.MonthGenitiveNames);
+
+            // Does not clone in setter, only in getter.
+            value[0] = null;
+            Assert.NotSame(value, format.MonthGenitiveNames);
+            Assert.Equal(value, format.MonthGenitiveNames);
+        }
+
         [Fact]
-        public void TestInvalidArray()
+        public void MonthGenitiveNames_SetNullValue_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentException>(() =>
-            {
-                new DateTimeFormatInfo().MonthGenitiveNames = new string[] { "sun" };
-            });
+            var format = new DateTimeFormatInfo();
+            AssertExtensions.Throws<ArgumentNullException>("value", () => format.MonthGenitiveNames = null);
         }
 
-        // NegTest3: InvalidOperationException should be thrown when The property is being set and the DateTimeFormatInfo is read-only
         [Fact]
-        public void TestReadOnly()
+        public void MonthGenitiveNames_SetNullValueInValues_ThrowsArgumentNullException()
         {
-            Assert.Throws<InvalidOperationException>(() =>
-            {
-                DateTimeFormatInfo.InvariantInfo.MonthGenitiveNames = new string[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "" };
-            });
+            var format = new DateTimeFormatInfo();
+            AssertExtensions.Throws<ArgumentNullException>("value", () => format.MonthGenitiveNames = new string[] { "1", "2", "3", null, "5", "6", "7", "8", "9", "10", "11", "12", "" });
         }
 
-        private void VerificationHelper(DateTimeFormatInfo info, string[] expected, bool setter)
+        public static IEnumerable<object[]> MonthGenitiveNames_SetInvalidLength_TestData()
         {
-            if (setter)
-            {
-                info.MonthGenitiveNames = expected;
-            }
-
-            string[] actual = info.MonthGenitiveNames;
-            Assert.Equal(expected.Length, actual.Length);
-            Assert.Equal(expected, actual);
+            yield return new object[] { new string[] { "Jan" } };
+            yield return new object[] { new string[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "", "Additional" } };
         }
 
-        private String Hex(String str)
+        [Theory]
+        [MemberData(nameof(MonthGenitiveNames_SetInvalidLength_TestData))]
+        public void MonthGenitiveNames_SetNullValueInValues_ThrowsArgumentNullException(string[] value)
         {
-            StringBuilder retValue = new StringBuilder();
-            foreach (Char ch in str)
+            var format = new DateTimeFormatInfo();
+            AssertExtensions.Throws<ArgumentException>("value", () => format.MonthGenitiveNames = value);
+        }
+
+        [Fact]
+        public void MonthGenitiveNames_SetReadOnly_ThrowsInvalidOperationException()
+        {
+            Assert.Throws<InvalidOperationException>(() => DateTimeFormatInfo.InvariantInfo.MonthGenitiveNames = new string[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "" });
+        }
+
+        [Fact]
+        public void MonthGenitiveNames_Format_ReturnsExpected()
+        {
+            var format = new DateTimeFormatInfo();
+            format.MonthGenitiveNames = new string[] { "Jan.", "Feb.", "Mar.", "Apr.", "May.", "Jun.", "Jul.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec.", "." };
+            Assert.Equal("19 Jun. 76", new DateTime(1976, 6, 19).ToString("dd MMMM yy", format));
+        }
+
+        [Fact]
+        public void MonthGenitiveNames_FormatWithNull_ThrowsNullReferenceException()
+        {
+            var value = new string[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13" };
+            var format = new DateTimeFormatInfo
             {
-                retValue.Append(String.Format("\\u{0:X4}", (int)ch));
-            }
-            return retValue.ToString();
+                MonthGenitiveNames = value
+            };
+            value[0] = null;
+
+            var dateTime = new DateTime(2014, 1, 28);
+            Assert.Throws<NullReferenceException>(() => dateTime.ToString("dd MMMM", format));
         }
     }
 }

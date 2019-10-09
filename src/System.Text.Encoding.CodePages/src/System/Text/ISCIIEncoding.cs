@@ -1,15 +1,14 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // ISCIIEncoding
 //
 //  Ported from windows c_iscii.  If you find bugs here, there are likely similar
 //  bugs in the windows version
 
-using System;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
-using System.Globalization;
+using System.Runtime.Serialization;
 
 namespace System.Text
 {
@@ -26,21 +25,10 @@ namespace System.Text
     //      Forms D & KD have things like 0934, which decomposes to 0933 + 093C, so not normal.
     //      Form IDNA has the above problems plus case mapping, so false (like most encodings)
     //
-
-    internal class ISCIIEncoding : EncodingNLS
+    internal class ISCIIEncoding : EncodingNLS, ISerializable
     {
         // Constants
-        private const int CodeDefault = 0;    // 0x40       Default
-        private const int CodeRoman = 1;    // 0x41       Roman Transliteration (not supported)
         private const int CodeDevanagari = 2;    // 0x42 57002
-        private const int CodeBengali = 3;    // 0x43 57003
-        private const int CodeTamil = 4;    // 0x44 57004
-        private const int CodeTelugu = 5;    // 0x45 57005
-        private const int CodeAssamese = 6;    // 0x46 57006 Assamese (Bengali)
-        private const int CodeOriya = 7;    // 0x47 57007
-        private const int CodeKannada = 8;    // 0x48 57008
-        private const int CodeMalayalam = 9;    // 0x49 57009
-        private const int CodeGujarati = 10;   // 0x4a 57010
         private const int CodePunjabi = 11;   // 0x4b 57011 Punjabi (Gurmukhi)
 
         // Ranges
@@ -62,7 +50,7 @@ namespace System.Text
         private const char ZWJ = (char)0x200d;
 
         // Code Page
-        private int _defaultCodePage;
+        private readonly int _defaultCodePage;
 
         public ISCIIEncoding(int codePage) : base(codePage)
         {
@@ -75,7 +63,12 @@ namespace System.Text
 
             // This shouldn't really be possible
             if (_defaultCodePage < CodeDevanagari || _defaultCodePage > CodePunjabi)
-                throw new ArgumentException(SR.Format(SR.Argument_CodepageNotSupported, codePage), "codePage");
+                throw new ArgumentException(SR.Format(SR.Argument_CodepageNotSupported, codePage), nameof(codePage));
+        }
+
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            throw new PlatformNotSupportedException();
         }
 
         // Our MaxByteCount is 4 times the input size.  That could be because
@@ -84,8 +77,7 @@ namespace System.Text
         public override int GetMaxByteCount(int charCount)
         {
             if (charCount < 0)
-                throw new ArgumentOutOfRangeException("charCount", SR.ArgumentOutOfRange_NeedNonNegNum);
-            Contract.EndContractBlock();
+                throw new ArgumentOutOfRangeException(nameof(charCount), SR.ArgumentOutOfRange_NeedNonNegNum);
 
             // Characters would be # of characters + 1 in case high surrogate is ? * max fallback
             long byteCount = (long)charCount + 1;
@@ -97,7 +89,7 @@ namespace System.Text
             byteCount *= 4;
 
             if (byteCount > 0x7fffffff)
-                throw new ArgumentOutOfRangeException("charCount", SR.ArgumentOutOfRange_GetByteCountOverflow);
+                throw new ArgumentOutOfRangeException(nameof(charCount), SR.ArgumentOutOfRange_GetByteCountOverflow);
 
             return (int)byteCount;
         }
@@ -107,8 +99,7 @@ namespace System.Text
         public override int GetMaxCharCount(int byteCount)
         {
             if (byteCount < 0)
-                throw new ArgumentOutOfRangeException("byteCount", SR.ArgumentOutOfRange_NeedNonNegNum);
-            Contract.EndContractBlock();
+                throw new ArgumentOutOfRangeException(nameof(byteCount), SR.ArgumentOutOfRange_NeedNonNegNum);
 
             // Our MaxCharCount is the same as the byteCount.  There are a few sequences
             // where 2 (or more) bytes could become 2 chars, but that's still 1 to 1.
@@ -120,13 +111,12 @@ namespace System.Text
                 charCount *= DecoderFallback.MaxCharCount;
 
             if (charCount > 0x7fffffff)
-                throw new ArgumentOutOfRangeException("byteCount", SR.ArgumentOutOfRange_GetCharCountOverflow);
+                throw new ArgumentOutOfRangeException(nameof(byteCount), SR.ArgumentOutOfRange_GetCharCountOverflow);
 
             return (int)charCount;
         }
 
         // Our workhorse version
-        [System.Security.SecurityCritical]  // auto-generated
         public override unsafe int GetByteCount(char* chars, int count, EncoderNLS baseEncoder)
         {
             // Use null pointer to ask GetBytes for count
@@ -134,7 +124,6 @@ namespace System.Text
         }
 
         // Workhorse
-        [System.Security.SecurityCritical]  // auto-generated
         public override unsafe int GetBytes(char* chars, int charCount, byte* bytes, int byteCount, EncoderNLS baseEncoder)
         {
             // Allow null bytes for counting
@@ -182,7 +171,7 @@ namespace System.Text
                     continue;
                 }
 
-                // See if its outside of the Indic script Range range
+                // See if its outside of the Indic script range
                 if ((ch < IndicBegin) || (ch > IndicEnd))
                 {
                     // See if its a ZWJ or ZWNJ and if we has bLastVirama;
@@ -310,7 +299,6 @@ namespace System.Text
         }
 
         // Workhorse
-        [System.Security.SecurityCritical]  // auto-generated
         public override unsafe int GetCharCount(byte* bytes, int count, DecoderNLS baseDecoder)
         {
             // Just call GetChars with null chars saying we want count
@@ -323,7 +311,6 @@ namespace System.Text
         // Devenagari F0, B8 -> \u0952
         // Devenagari F0, BF -> \u0970
         // Some characters followed by E9 become a different character instead.
-        [System.Security.SecurityCritical]  // auto-generated
         public override unsafe int GetChars(byte* bytes, int byteCount,
                                                 char* chars, int charCount, DecoderNLS baseDecoder)
         {
@@ -386,9 +373,7 @@ namespace System.Text
                     Debug.Assert(((bLastVirama ? 1 : 0) + (bLastATR ? 1 : 0) +
                                (bLastDevenagariStressAbbr ? 1 : 0) +
                                ((cLastCharForNextNukta > 0) ? 1 : 0)) == 1,
-                        String.Format(CultureInfo.InvariantCulture,
-                            "[ISCIIEncoding.GetChars]Special cases require 1 and only 1 special case flag: LastATR {0} Dev. {1} Nukta {2}",
-                            bLastATR, bLastDevenagariStressAbbr, cLastCharForNextNukta));
+                        $"[ISCIIEncoding.GetChars]Special cases require 1 and only 1 special case flag: LastATR {bLastATR} Dev. {bLastDevenagariStressAbbr} Nukta {cLastCharForNextNukta}");
                     // If the last one was an ATR, then we'll have to do ATR stuff
                     if (bLastATR)
                     {
@@ -614,9 +599,7 @@ namespace System.Text
 
                 // We must be the Devenagari special case for F0, B8 & F0, BF
                 Debug.Assert(currentCodePage == CodeDevanagari && b == DevenagariExt,
-                    String.Format(CultureInfo.InvariantCulture,
-                        "[ISCIIEncoding.GetChars] Devenagari special case must {0} not {1} or in Devanagari code page {2} not {3}.",
-                        DevenagariExt, b, CodeDevanagari, currentCodePage));
+                    $"[ISCIIEncoding.GetChars] Devenagari special case must {DevenagariExt} not {b} or in Devanagari code page {CodeDevanagari} not {currentCodePage}.");
                 bLastDevenagariStressAbbr = bLastSpecial = true;
             }
 
@@ -809,7 +792,7 @@ namespace System.Text
         //
         ////////////////////////////////////////////////////////////////////////////
 
-        private static int[] s_UnicodeToIndicChar =
+        private static readonly int[] s_UnicodeToIndicChar =
         {
             0x02a1,  // U+0901 : Devanagari Sign Candrabindu
             0x02a2,  // U+0902 : Devanagari Sign Anusvara
@@ -1954,7 +1937,7 @@ namespace System.Text
         // This is used if the UnicodeToIndic table 4 high bits are set, this is
         // the value of the second Indic byte when applicable.
         ////////////////////////////////////////////////////////////////////////////
-        private static byte[] s_SecondIndicByte =
+        private static readonly byte[] s_SecondIndicByte =
         {
             0x00,
             0xe9,
@@ -1969,7 +1952,7 @@ namespace System.Text
         // There are 0x60 characters in each table.  The tables are in pairs of 2
         // (1st char, 2nd char) and there are 10 tables (1 for each code page "font")
         ////////////////////////////////////////////////////////////////////////////
-        private static int[] s_IndicMappingIndex =
+        private static readonly int[] s_IndicMappingIndex =
         {
             -1,       //  0 DEF 0X40 Default        // Not a real code page
             -1,       //  1 RMN 0X41 Roman          // Transliteration not supported
@@ -2004,7 +1987,7 @@ namespace System.Text
         //
         ////////////////////////////////////////////////////////////////////////////
         // char[codePageMapIndex][byte][character]
-        private static char[,,] s_IndicMapping =
+        private static readonly char[,,] s_IndicMapping =
         {
             {
                 ////////////////////////////////////////////////////////////////////////////

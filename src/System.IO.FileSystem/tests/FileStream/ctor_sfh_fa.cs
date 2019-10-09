@@ -1,12 +1,11 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Microsoft.Win32.SafeHandles;
-using System;
-using System.IO;
 using Xunit;
 
-namespace System.IO.FileSystem.Tests
+namespace System.IO.Tests
 {
     public class FileStream_ctor_sfh_fa : FileSystemTest
     {
@@ -16,17 +15,34 @@ namespace System.IO.FileSystem.Tests
         }
 
         [Fact]
-        public void InvalidHandleThrows()
+        public void InvalidHandle_Throws()
         {
-            Assert.Throws<ArgumentException>("handle", () => CreateFileStream(new SafeFileHandle(new IntPtr(-1), true), FileAccess.Read));
+            using (var handle = new SafeFileHandle(new IntPtr(-1), ownsHandle: false))
+            {
+                AssertExtensions.Throws<ArgumentException>("handle", () => CreateFileStream(handle, FileAccess.Read));
+            }
         }
 
         [Fact]
-        public void InvalidAccessThrows()
+        [ActiveIssue(31909, TargetFrameworkMonikers.Uap)]
+        public void InvalidAccess_Throws()
         {
-            using (FileStream fs = new FileStream(GetTestFilePath(), FileMode.Create))
+            using (var handle = new SafeFileHandle(new IntPtr(1), ownsHandle: false))
             {
-                Assert.Throws<ArgumentOutOfRangeException>("access", () => CreateFileStream(fs.SafeFileHandle, ~FileAccess.Read));
+                AssertExtensions.Throws<ArgumentOutOfRangeException>("access", () => CreateFileStream(handle, ~FileAccess.Read));
+            }
+        }
+
+        [Fact]
+        [ActiveIssue(31909, TargetFrameworkMonikers.Uap)]
+        public void InvalidAccess_DoesNotCloseHandle()
+        {
+            using (var handle = new SafeFileHandle(new IntPtr(1), ownsHandle: false))
+            {
+                Assert.Throws<ArgumentOutOfRangeException>(() => CreateFileStream(handle, ~FileAccess.Read));
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                Assert.False(handle.IsClosed);
             }
         }
 
@@ -68,7 +84,6 @@ namespace System.IO.FileSystem.Tests
                 }
             }
         }
-
 
         [Fact]
         public void FileAccessReadWrite()
@@ -125,6 +140,57 @@ namespace System.IO.FileSystem.Tests
                     Assert.False(fsr.CanWrite);
                     Assert.Throws<NotSupportedException>(() => fsr.WriteByte(0));
                     Assert.True(fsr.CanSeek);
+                }
+            }
+        }
+    }
+
+    public class DerivedFileStream_ctor_sfh_fa : FileSystemTest
+    {
+        [Fact]
+        public void VirtualCanReadWrite_ShouldNotBeCalledDuringCtor()
+        {
+            using (var fs = File.Create(GetTestFilePath()))
+            using (var dfs = new DerivedFileStream(fs.SafeFileHandle, FileAccess.ReadWrite))
+            {
+                Assert.False(dfs.CanReadCalled);
+                Assert.False(dfs.CanWriteCalled);
+                Assert.False(dfs.CanSeekCalled);
+            }
+        }
+
+        private sealed class DerivedFileStream : FileStream
+        {
+            public DerivedFileStream(SafeFileHandle handle, FileAccess access) : base(handle, access) { }
+
+            public bool CanReadCalled { get; set; }
+            public bool CanWriteCalled { get; set; }
+            public bool CanSeekCalled { get; set; }
+
+            public override bool CanRead
+            {
+                get
+                {
+                    CanReadCalled = true;
+                    return base.CanRead;
+                }
+            }
+
+            public override bool CanWrite
+            {
+                get
+                {
+                    CanWriteCalled = true;
+                    return base.CanWrite;
+                }
+            }
+
+            public override bool CanSeek
+            {
+                get
+                {
+                    CanSeekCalled = true;
+                    return base.CanSeek;
                 }
             }
         }

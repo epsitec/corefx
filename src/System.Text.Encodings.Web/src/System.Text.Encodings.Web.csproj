@@ -1,41 +1,40 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), dir.props))\dir.props" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{1DD0FF15-6234-4BD6-850A-317F05479554}</ProjectGuid>
-    <OutputType>Library</OutputType>
     <RootNamespace>System.Text.Encodings.Web</RootNamespace>
-    <AssemblyName>System.Text.Encodings.Web</AssemblyName>
-    <AssemblyVersion>4.0.0.0</AssemblyVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <!-- Default configurations to help VS understand the configurations -->
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Configurations>netstandard-Debug;netstandard-Release;netstandard2.1-Debug;netstandard2.1-Release;uap-Windows_NT-Debug;uap-Windows_NT-Release</Configurations>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="System\Text\Encodings\Web\AllowedCharactersBitmap.cs" />
     <Compile Include="System\Text\Encodings\Web\HexUtil.cs" />
     <Compile Include="System\Text\Encodings\Web\HtmlEncoder.cs" />
-    <Compile Include="System\Text\Encodings\Web\JavaScriptStringEncoder.cs" />
+    <Compile Include="System\Text\Encodings\Web\JavaScriptEncoder.cs" />
     <Compile Include="System\Text\Encodings\Web\TextEncoder.cs" />
     <Compile Include="System\Text\Encodings\Web\TextEncoderSettings.cs" />
-    <Compile Include="System\Text\Encodings\Web\UnicodeHelpers.cs" />
-    <Compile Include="System\Text\Encodings\Web\UnicodeRange.cs" />
-    <Compile Include="System\Text\Encodings\Web\UnicodeRanges.cs" />
-    <Compile Include="System\Text\Encodings\Web\UnicodeRanges.generated.cs" />
+    <Compile Include="System\Text\Encodings\Web\UnsafeRelaxedJavaScriptEncoder.cs" />
     <Compile Include="System\Text\Encodings\Web\UrlEncoder.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Properties\GlobalSuppressions.cs" />
+    <Compile Include="System\Text\Internal\AllowedCharactersBitmap.cs" />
+    <Compile Include="System\Text\Unicode\UnicodeHelpers.cs" />
+    <Compile Include="System\Text\Unicode\UnicodeHelpers.generated.cs" />
+    <Compile Include="System\Text\Unicode\UnicodeRange.cs" />
+    <Compile Include="System\Text\Unicode\UnicodeRanges.cs" />
+    <Compile Include="System\Text\Unicode\UnicodeRanges.generated.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\unicode-7.0.0-defined-characters.bin" />
+    <Compile Include="$(CommonPath)\CoreLib\System\Text\UnicodeDebug.cs">
+      <Link>System\Text\UnicodeDebug.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\CoreLib\System\Text\UnicodeUtility.cs">
+      <Link>System\Text\UnicodeUtility.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="project.json" />
+    <Reference Include="System.Memory" />
+    <Reference Include="System.Resources.ResourceManager" />
   </ItemGroup>
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), dir.targets))\dir.targets" />
+  <ItemGroup Condition="'$(TargetsNetCoreApp)' == 'true' OR '$(TargetsUap)' == 'true'">
+    <Reference Include="System.Diagnostics.Debug" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Runtime.Extensions" />
+    <Reference Include="System.Threading" />
+  </ItemGroup>
 </Project>

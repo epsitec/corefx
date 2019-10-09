@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Linq;
 using Xunit;
@@ -93,7 +94,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
             };
             foreach (var block in blocks)
             {
-                Assert.Equal(block.InputCount, 0);
+                Assert.Equal(0, block.InputCount);
                 Assert.NotNull(block.Completion);
             }
         }
@@ -103,7 +104,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
         {
             var options = new[]
             {
-                // Actual values used here aren't important; just want to make sure the block works 
+                // Actual values used here aren't important; just want to make sure the block works
                 // with these properties set to non-default values
                 new ExecutionDataflowBlockOptions { },
                 new ExecutionDataflowBlockOptions { BoundedCapacity = 1 },
@@ -127,10 +128,10 @@ namespace System.Threading.Tasks.Dataflow.Tests
                 foreach (var option in options)
                 {
                     string result = null;
-                    foreach (var target in new[] 
-                        { 
+                    foreach (var target in new[]
+                        {
                             new ActionBlock<char>(c => result += c, option), // sync
-                            new ActionBlock<char>(c => Task.Run(() => result += c), option) // async 
+                            new ActionBlock<char>(c => Task.Run(() => result += c), option) // async
                         })
                     {
                         result = "";
@@ -172,17 +173,17 @@ namespace System.Threading.Tasks.Dataflow.Tests
             {
                 var scheduler = new ConcurrentExclusiveSchedulerPair().ExclusiveScheduler;
 
-                var sync = new ActionBlock<int>(_ => Assert.Equal(scheduler.Id, TaskScheduler.Current.Id),
-                    new ExecutionDataflowBlockOptions 
-                    { 
+                var actionBlockSync = new ActionBlock<int>(_ => Assert.Equal(scheduler.Id, TaskScheduler.Current.Id),
+                    new ExecutionDataflowBlockOptions
+                    {
                         TaskScheduler = scheduler,
                         SingleProducerConstrained = singleProducerConstrained
                     });
-                sync.PostRange(0, 10);
-                sync.Complete();
-                await sync.Completion;
+                actionBlockSync.PostRange(0, 10);
+                actionBlockSync.Complete();
+                await actionBlockSync.Completion;
 
-                var async = new ActionBlock<int>(_ => {
+                var actionBlockAsync = new ActionBlock<int>(_ => {
                     Assert.Equal(scheduler.Id, TaskScheduler.Current.Id);
                     return Task.FromResult(0);
                 }, new ExecutionDataflowBlockOptions
@@ -190,9 +191,9 @@ namespace System.Threading.Tasks.Dataflow.Tests
                         TaskScheduler = scheduler,
                         SingleProducerConstrained = singleProducerConstrained
                     });
-                async.PostRange(0, 10);
-                async.Complete();
-                await async.Completion;
+                actionBlockAsync.PostRange(0, 10);
+                actionBlockAsync.Complete();
+                await actionBlockAsync.Completion;
             }
         }
 
@@ -238,7 +239,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
             {
                 var options = new ExecutionDataflowBlockOptions { SingleProducerConstrained = singleProducerConstrained };
                 int prev = -1;
-                Action<int> body = i => 
+                Action<int> body = i =>
                 {
                     Assert.Equal(expected: prev + 1, actual: i);
                     prev = i;
@@ -386,14 +387,12 @@ namespace System.Threading.Tasks.Dataflow.Tests
                     ab.Post(i); // Post may return false, depending on race with ActionBlock faulting
                 }
 
-                try
-                {
-                    await ab.Completion;
-                    Assert.True(false, "Should always throw IOE");
-                }
-                catch (InvalidOperationException) { }
+                await Assert.ThrowsAsync<InvalidOperationException>(async () => await ab.Completion);
 
-                Assert.Equal(expected: 0, actual: ab.InputCount);
+                if (!singleProducerConstrained)
+                {
+                    Assert.Equal(expected: 0, actual: ab.InputCount); // not 100% guaranteed in the SPSC case
+                }
                 Assert.False(ab.Post(5));
             }
         }
@@ -478,7 +477,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
             AggregateException e = ab1.Completion.Exception;
             Assert.Equal(expected: 1, actual: e.InnerExceptions.Count);
             Assert.Equal(expected: "42", actual: (string)e.InnerException.Data[DataKey]);
-        
+
             // Test case where message's ToString throws
             var ab2 = new ActionBlock<ObjectWithFaultyToString>((Action<ObjectWithFaultyToString>)(i => { throw new FormatException(); }));
             ab2.Post(new ObjectWithFaultyToString());

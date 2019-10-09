@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -64,31 +65,35 @@ namespace System.Composition.UnitTests
         private class ExportsBase<T> : SomeGenericType<T> { }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void CanExportBasicOpenGeneric()
         {
             var cc = CreateContainer(typeof(BasicRepository<>));
             var r = cc.GetExport<IRepository<string>>();
-            Assert.IsAssignableFrom(typeof(BasicRepository<string>), r);
+            Assert.IsAssignableFrom<BasicRepository<string>>(r);
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void OpenGenericProvidesMultipleInstantiations()
         {
             var cc = CreateContainer(typeof(BasicRepository<>));
             var r = cc.GetExport<IRepository<string>>();
             var r2 = cc.GetExport<IRepository<int>>();
-            Assert.IsAssignableFrom(typeof(BasicRepository<int>), r2);
+            Assert.IsAssignableFrom<BasicRepository<int>>(r2);
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void CanExportOpenGenericProperty()
         {
             var cc = CreateContainer(typeof(RepositoryProperty<>));
             var r = cc.GetExport<IRepository<string>>();
-            Assert.IsAssignableFrom(typeof(BasicRepository<string>), r);
+            Assert.IsAssignableFrom<BasicRepository<string>>(r);
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void ASharedOpenGenericWithTwoExportsIsProvidedByASingleInstance()
         {
             var cc = CreateContainer(typeof(TwoGenericExports<>));
@@ -100,6 +105,7 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void APartWithMultipleGenericExportsIsOnlyDiscoveredOnce()
         {
             var cc = CreateContainer(typeof(BasicRepository<>), typeof(TwoGenericExports<>));
@@ -113,43 +119,48 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void MultipleGenericExportsCanBeSpecifiedAtTheClassLevel()
         {
             var cc = CreateContainer(typeof(FirstAndSecond<>));
             var first = cc.GetExport<IFirst<string>>();
-            Assert.IsAssignableFrom(typeof(FirstAndSecond<string>), first);
+            Assert.IsAssignableFrom<FirstAndSecond<string>>(first);
         }
 
         // In future, the set of allowable generic type mappings will be expanded (see
         // ignored tests above).
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void TypesWithMismatchedGenericParameterListsAreDetectedDuringDiscovery()
         {
-            var x = AssertX.Throws<CompositionFailedException>(() => CreateContainer(typeof(RepositoryWithKey<,>)));
+            var x = Assert.Throws<CompositionFailedException>(() => CreateContainer(typeof(RepositoryWithKey<,>)));
             Assert.Equal("Exported contract 'IRepository`1' of open generic part 'RepositoryWithKey`2' does not match the generic arguments of the class.", x.Message);
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void TypesWithNonGenericExportsAreDetectedDuringDiscovery()
         {
-            var x = AssertX.Throws<CompositionFailedException>(() => CreateContainer(typeof(RepositoryWithNonGenericExport<>)));
+            var x = Assert.Throws<CompositionFailedException>(() => CreateContainer(typeof(RepositoryWithNonGenericExport<>)));
             Assert.Equal("Open generic part 'RepositoryWithNonGenericExport`1' cannot export non-generic contract 'IRepository'.", x.Message);
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void OpenGenericsCanExportSelf()
         {
             var cc = CreateContainer(typeof(ExportSelf<>));
             var es = cc.GetExport<ExportSelf<string>>();
-            Assert.IsAssignableFrom(typeof(ExportSelf<string>), es);
+            Assert.IsAssignableFrom<ExportSelf<string>>(es);
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void OpenGenericsCanExportBase()
         {
             var cc = CreateContainer(typeof(ExportsBase<>));
             var es = cc.GetExport<SomeGenericType<string>>();
-            Assert.IsAssignableFrom(typeof(ExportsBase<string>), es);
+            Assert.IsAssignableFrom<ExportsBase<string>>(es);
         }
     }
 }

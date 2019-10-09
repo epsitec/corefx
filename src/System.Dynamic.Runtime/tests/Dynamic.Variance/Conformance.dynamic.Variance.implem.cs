@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.Variance.implem.cnstraintegereger01.cnstraintegereger01
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.Variance.implem.cnstraintegereger01.cnstraintegereger01;
-
     // <Area>variance</Area>
     // <Title> Constraint checking</Title>
     // <Description> Constraint checking</Description>
@@ -67,13 +66,11 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.Variance.implem.cnstrai
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.Variance.implem.cnstraintegereger05.cnstraintegereger05
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.Variance.implem.cnstraintegereger05.cnstraintegereger05;
     // <Title>Generic constraints</Title>
     // <Description></Description>
     // <RelatedBugs></RelatedBugs>
     // <Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class P
     {

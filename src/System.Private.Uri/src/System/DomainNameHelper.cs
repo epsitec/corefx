@@ -1,26 +1,25 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace System
 {
     // The class designed as to keep working set of Uri class as minimal.
     // The idea is to stay with static helper methods and strings
-    internal class DomainNameHelper
+    internal static class DomainNameHelper
     {
-        private const char c_DummyChar = (char)0xFFFF;     //An Invalid Unicode character used as a dummy char passed into the parameter
-
-        private DomainNameHelper()
-        {
-        }
+        private static readonly IdnMapping s_idnMapping = new IdnMapping();
 
         internal const string Localhost = "localhost";
         internal const string Loopback = "loopback";
 
         internal static string ParseCanonicalName(string str, int start, int end, ref bool loopback)
         {
-            string res = null;
+            string? res = null;
 
             for (int i = end - 1; i >= start; --i)
             {
@@ -64,11 +63,11 @@ namespace System
         // Returns:
         //  bool
         //
-        //  Remarks: Optimized for speed as a most comon case,
-        //           MUST NOT be used unless all input indexes are are verified and trusted.
+        //  Remarks: Optimized for speed as a most common case,
+        //           MUST NOT be used unless all input indexes are verified and trusted.
         //
 
-        internal unsafe static bool IsValid(char* name, ushort pos, ref int returnedEnd, ref bool notCanonical, bool notImplicitFile)
+        internal static unsafe bool IsValid(char* name, ushort pos, ref int returnedEnd, ref bool notCanonical, bool notImplicitFile)
         {
             char* curPos = name + pos;
             char* newPos = curPos;
@@ -77,10 +76,13 @@ namespace System
             {
                 char ch = *newPos;
                 if (ch > 0x7f) return false;    // not ascii
-                if (ch == '/' || ch == '\\' || (notImplicitFile && (ch == ':' || ch == '?' || ch == '#')))
+                if (ch < 'a') // Optimize for lower-case letters, which make up the majority of most Uris, and which are all greater than symbols checked for below
                 {
-                    end = newPos;
-                    break;
+                    if (ch == '/' || ch == '\\' || (notImplicitFile && (ch == ':' || ch == '?' || ch == '#')))
+                    {
+                        end = newPos;
+                        break;
+                    }
                 }
             }
 
@@ -131,7 +133,7 @@ namespace System
         // There are pretty much no restrictions and we effectively return the end of the
         // domain name.
         //
-        internal unsafe static bool IsValidByIri(char* name, ushort pos, ref int returnedEnd, ref bool notCanonical, bool notImplicitFile)
+        internal static unsafe bool IsValidByIri(char* name, ushort pos, ref int returnedEnd, ref bool notCanonical, bool notImplicitFile)
         {
             char* curPos = name + pos;
             char* newPos = curPos;
@@ -169,7 +171,7 @@ namespace System
                 while (newPos < end)
                 {
                     if ((*newPos == '.') ||
-                        (*newPos == '\u3002') ||    //IDEOGRAPHIC FULL STOP 
+                        (*newPos == '\u3002') ||    //IDEOGRAPHIC FULL STOP
                         (*newPos == '\uFF0E') ||    //FULLWIDTH FULL STOP
                         (*newPos == '\uFF61'))      //HALFWIDTH IDEOGRAPHIC FULL STOP
                         break;
@@ -210,7 +212,7 @@ namespace System
             {
                 fixed (char* host = hostname)
                 {
-                    return IdnEquivalent(host, 0, hostname.Length, ref allAscii, ref atLeastOneValidIdn);
+                    return IdnEquivalent(host, 0, hostname.Length, ref allAscii, ref atLeastOneValidIdn)!;
                 }
             }
         }
@@ -218,14 +220,14 @@ namespace System
         //
         // Will convert a host name into its idn equivalent + tell you if it had a valid idn label
         //
-        internal unsafe static string IdnEquivalent(char* hostname, int start, int end, ref bool allAscii, ref bool atLeastOneValidIdn)
+        internal static unsafe string? IdnEquivalent(char* hostname, int start, int end, ref bool allAscii, ref bool atLeastOneValidIdn)
         {
-            string bidiStrippedHost = null;
-            string idnEquivalent = IdnEquivalent(hostname, start, end, ref allAscii, ref bidiStrippedHost);
+            string? bidiStrippedHost = null;
+            string? idnEquivalent = IdnEquivalent(hostname, start, end, ref allAscii, ref bidiStrippedHost);
 
             if (idnEquivalent != null)
             {
-                string strippedHost = (allAscii ? idnEquivalent : bidiStrippedHost);
+                string strippedHost = (allAscii ? idnEquivalent : bidiStrippedHost!);
 
                 fixed (char* strippedHostPtr = strippedHost)
                 {
@@ -258,7 +260,7 @@ namespace System
                                 }
                             }
 
-                            if ((c == '.') || (c == '\u3002') ||    //IDEOGRAPHIC FULL STOP 
+                            if ((c == '.') || (c == '\u3002') ||    //IDEOGRAPHIC FULL STOP
                                 (c == '\uFF0E') ||                  //FULLWIDTH FULL STOP
                                 (c == '\uFF61'))                    //HALFWIDTH IDEOGRAPHIC FULL STOP
                             {
@@ -273,8 +275,7 @@ namespace System
                             // check ace validity
                             try
                             {
-                                IdnMapping map = new IdnMapping();
-                                map.GetUnicode(new string(strippedHostPtr, curPos, newPos - curPos));
+                                s_idnMapping.GetUnicode(strippedHost, curPos, newPos - curPos);
                                 atLeastOneValidIdn = true;
                                 break;
                             }
@@ -298,9 +299,9 @@ namespace System
         //
         // Will convert a host name into its idn equivalent
         //
-        internal unsafe static string IdnEquivalent(char* hostname, int start, int end, ref bool allAscii, ref string bidiStrippedHost)
+        internal static unsafe string? IdnEquivalent(char* hostname, int start, int end, ref bool allAscii, ref string? bidiStrippedHost)
         {
-            string idn = null;
+            string? idn = null;
             if (end <= start)
                 return idn;
 
@@ -325,26 +326,28 @@ namespace System
             {
                 // just lowercase for ascii
                 string unescapedHostname = new string(hostname, start, end - start);
-                return ((unescapedHostname != null) ? unescapedHostname.ToLowerInvariant() : null);
+                return unescapedHostname.ToLowerInvariant();
             }
             else
             {
-                IdnMapping map = new IdnMapping();
-                string asciiForm;
-                bidiStrippedHost = Uri.StripBidiControlCharacter(hostname, start, end - start);
+                bidiStrippedHost = UriHelper.StripBidiControlCharacter(hostname, start, end - start);
                 try
                 {
-                    asciiForm = map.GetAscii(bidiStrippedHost);
+                    string asciiForm = s_idnMapping.GetAscii(bidiStrippedHost);
+                    if (ContainsCharactersUnsafeForNormalizedHost(asciiForm))
+                    {
+                        throw new UriFormatException(SR.net_uri_BadUnicodeHostForIdn);
+                    }
+                    return asciiForm;
                 }
                 catch (ArgumentException)
                 {
                     throw new UriFormatException(SR.net_uri_BadUnicodeHostForIdn);
                 }
-                return asciiForm;
             }
         }
 
-        private unsafe static bool IsIdnAce(string input, int index)
+        private static unsafe bool IsIdnAce(string input, int index)
         {
             if ((input[index] == 'x') &&
                 (input[index + 1] == 'n') &&
@@ -355,7 +358,7 @@ namespace System
                 return false;
         }
 
-        private unsafe static bool IsIdnAce(char* input, int index)
+        private static unsafe bool IsIdnAce(char* input, int index)
         {
             if ((input[index] == 'x') &&
                 (input[index + 1] == 'n') &&
@@ -369,15 +372,13 @@ namespace System
         //
         // Will convert a host name into its unicode equivalent expanding any existing idn names present
         //
-        internal unsafe static string UnicodeEquivalent(string idnHost, char* hostname, int start, int end)
+        internal static unsafe string? UnicodeEquivalent(string idnHost, char* hostname, int start, int end)
         {
-            IdnMapping map = new IdnMapping();
-
-            // Test comon scenario first for perf
-            // try to get unicode equivalent 
+            // Test common scenario first for perf
+            // try to get unicode equivalent
             try
             {
-                return map.GetUnicode(idnHost);
+                return s_idnMapping.GetUnicode(idnHost);
             }
             catch (ArgumentException)
             {
@@ -389,20 +390,18 @@ namespace System
             return UnicodeEquivalent(hostname, start, end, ref dummy, ref dummy);
         }
 
-        internal unsafe static string UnicodeEquivalent(char* hostname, int start, int end, ref bool allAscii, ref bool atLeastOneValidIdn)
+        internal static unsafe string? UnicodeEquivalent(char* hostname, int start, int end, ref bool allAscii, ref bool atLeastOneValidIdn)
         {
-            IdnMapping map = new IdnMapping();
-
             // hostname already validated
             allAscii = true;
             atLeastOneValidIdn = false;
-            string idn = null;
+            string? idn = null;
             if (end <= start)
                 return idn;
 
-            string unescapedHostname = Uri.StripBidiControlCharacter(hostname, start, (end - start));
+            string unescapedHostname = UriHelper.StripBidiControlCharacter(hostname, start, (end - start));
 
-            string unicodeEqvlHost = null;
+            string? unicodeEqvlHost = null;
             int curPos = 0;
             int newPos = 0;
             int length = unescapedHostname.Length;
@@ -440,7 +439,7 @@ namespace System
                         asciiLabel = false;
                         allAscii = false;
                     }
-                    if ((c == '.') || (c == '\u3002') ||    //IDEOGRAPHIC FULL STOP 
+                    if ((c == '.') || (c == '\u3002') ||    //IDEOGRAPHIC FULL STOP
                         (c == '\uFF0E') ||                  //FULLWIDTH FULL STOP
                         (c == '\uFF61'))                    //HALFWIDTH IDEOGRAPHIC FULL STOP
                     {
@@ -455,14 +454,14 @@ namespace System
                     string asciiForm = unescapedHostname.Substring(curPos, newPos - curPos);
                     try
                     {
-                        asciiForm = map.GetAscii(asciiForm);
+                        asciiForm = s_idnMapping.GetAscii(asciiForm);
                     }
                     catch (ArgumentException)
                     {
                         throw new UriFormatException(SR.net_uri_BadUnicodeHostForIdn);
                     }
 
-                    unicodeEqvlHost += map.GetUnicode(asciiForm);
+                    unicodeEqvlHost += s_idnMapping.GetUnicode(asciiForm);
                     if (foundDot)
                         unicodeEqvlHost += ".";
                 }
@@ -474,7 +473,7 @@ namespace System
                         // check ace validity
                         try
                         {
-                            unicodeEqvlHost += map.GetUnicode(unescapedHostname.Substring(curPos, newPos - curPos));
+                            unicodeEqvlHost += s_idnMapping.GetUnicode(unescapedHostname, curPos, newPos - curPos);
                             if (foundDot)
                                 unicodeEqvlHost += ".";
                             aceValid = true;
@@ -506,16 +505,20 @@ namespace System
         //  DNS specification [RFC 1035]. We use our own variant of IsLetterOrDigit
         //  because the base version returns false positives for non-ANSI characters
         //
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsASCIILetterOrDigit(char character, ref bool notCanonical)
         {
-            if ((character >= 'a' && character <= 'z') || (character >= '0' && character <= '9'))
+            if ((uint)(character - 'a') <= 'z' - 'a' || (uint)(character - '0') <= '9' - '0')
+            {
                 return true;
+            }
 
-            if (character >= 'A' && character <= 'Z')
+            if ((uint)(character - 'A') <= 'Z' - 'A')
             {
                 notCanonical = true;
                 return true;
             }
+
             return false;
         }
 
@@ -523,17 +526,36 @@ namespace System
         //  Takes into account the additional legal domain name characters '-' and '_'
         //  Note that '_' char is formally invalid but is historically in use, especially on corpnets
         //
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsValidDomainLabelCharacter(char character, ref bool notCanonical)
         {
-            if ((character >= 'a' && character <= 'z') || (character >= '0' && character <= '9') || (character == '-') || (character == '_'))
+            if ((uint)(character - 'a') <= 'z' - 'a' || (uint)(character - '0') <= '9' - '0' || character == '-' || character == '_')
+            {
                 return true;
+            }
 
-            if (character >= 'A' && character <= 'Z')
+            if ((uint)(character - 'A') <= 'Z' - 'A')
             {
                 notCanonical = true;
                 return true;
             }
+
             return false;
+        }
+
+        // The Unicode specification allows certain code points to be normalized not to
+        // punycode, but to ASCII representations that retain the same meaning. For example,
+        // the codepoint U+00BC "Vulgar Fraction One Quarter" is normalized to '1/4' rather
+        // than being punycoded.
+        //
+        // This means that a host containing Unicode characters can be normalized to contain
+        // URI reserved characters, changing the meaning of a URI only when certain properties
+        // such as IdnHost are accessed. To be safe, disallow control characters in normalized hosts.
+        private static readonly char[] s_UnsafeForNormalizedHost = { '\\', '/', '?', '@', '#', ':', '[', ']' };
+
+        internal static bool ContainsCharactersUnsafeForNormalizedHost(string host)
+        {
+            return host.IndexOfAny(s_UnsafeForNormalizedHost) != -1;
         }
     }
 }

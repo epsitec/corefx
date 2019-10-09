@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections;
 using Xunit;
@@ -38,17 +39,17 @@ namespace System.Numerics.Tests
 
             // Just basic tests
             // Large Power Of Two
-            VerifyIsPowerOfTwo((BigInteger)Int32.MaxValue + 1, true);
+            VerifyIsPowerOfTwo((BigInteger)int.MaxValue + 1, true);
 
             // Large Non Power Of Two
-            VerifyIsPowerOfTwo((BigInteger)Int32.MaxValue + 2, false);
+            VerifyIsPowerOfTwo((BigInteger)int.MaxValue + 2, false);
 
 
             // Small Power Of Two
-            VerifyIsPowerOfTwo((BigInteger)Int16.MaxValue + 1, true);
+            VerifyIsPowerOfTwo((BigInteger)short.MaxValue + 1, true);
 
             // Small Non Power Of Two
-            VerifyIsPowerOfTwo((BigInteger)Int32.MaxValue - 2, false);
+            VerifyIsPowerOfTwo((BigInteger)int.MaxValue - 2, false);
 
             // Zero Case, 1, -1
             // Zero
@@ -85,7 +86,7 @@ namespace System.Numerics.Tests
                 }
             }
 
-            // If only one 1 and value is positive. 
+            // If only one 1 and value is positive.
             if ((1 == valueOne) && (!value2[value2.Length - 1]))
             {
                 expected = true;
@@ -140,7 +141,7 @@ namespace System.Numerics.Tests
 
             return value;
         }
-        
+
         private static void VerifyIsPowerOfTwo(BigInteger bigInt, bool expectedAnswer)
         {
             Assert.Equal(expectedAnswer, bigInt.IsPowerOfTwo);

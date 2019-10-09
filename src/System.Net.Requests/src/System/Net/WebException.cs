@@ -1,18 +1,23 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
 using System.Diagnostics;
 using System.Net.Http;
+using System.Net.Sockets;
+using System.Runtime.Serialization;
+using System.Threading.Tasks;
 
 namespace System.Net
 {
-    public class WebException : InvalidOperationException
+    [Serializable]
+    [System.Runtime.CompilerServices.TypeForwardedFrom("System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
+    public partial class WebException : InvalidOperationException, ISerializable
     {
         private const WebExceptionStatus DefaultStatus = WebExceptionStatus.UnknownError;
 
-        private WebExceptionStatus _status = DefaultStatus;
-        private WebResponse _response = null;
+        private readonly WebExceptionStatus _status = DefaultStatus;
+        private readonly WebResponse _response = null;
 
         public WebException()
         {
@@ -23,8 +28,8 @@ namespace System.Net
         {
         }
 
-        public WebException(string message, Exception inner) :
-            this(message, inner, DefaultStatus, null)
+        public WebException(string message, Exception innerException) :
+            this(message, innerException, DefaultStatus, null)
         {
         }
 
@@ -34,18 +39,23 @@ namespace System.Net
         }
 
         public WebException(string message,
-                            Exception inner,
+                            Exception innerException,
                             WebExceptionStatus status,
                             WebResponse response) :
-            base(message, inner)
+            base(message, innerException)
         {
             _status = status;
             _response = response;
 
-            if (inner != null)
+            if (innerException != null)
             {
-                HResult = inner.HResult;
+                HResult = innerException.HResult;
             }
+        }
+
+        protected WebException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+            : base(serializationInfo, streamingContext)
+        {
         }
 
         public WebExceptionStatus Status
@@ -64,28 +74,14 @@ namespace System.Net
             }
         }
 
-        internal static WebExceptionStatus GetStatusFromException(HttpRequestException ex)
+        void ISerializable.GetObjectData(SerializationInfo serializationInfo, StreamingContext streamingContext)
         {
-            WebExceptionStatus status;
+            base.GetObjectData(serializationInfo, streamingContext);
+        }
 
-            // Issue 2384: update WebException.GetStatusFromException after System.Net.Http API changes
-            //
-            // For now, we use the .HResult of the exception to help us map to a suitable
-            // WebExceptionStatus enum value.  The .HResult is set into this exception by
-            // the underlying .NET Core and .NET Native versions of the System.Net.Http stack.
-            // In the future, the HttpRequestException will have its own .Status property that is
-            // an enum type that is more compatible directly with the WebExceptionStatus enum.
-            switch (ex.HResult)
-            {
-                case Interop.WININET_E_NAME_NOT_RESOLVED:
-                    status = WebExceptionStatus.NameResolutionFailure;
-                    break;
-                default:
-                    status = WebExceptionStatus.UnknownError;
-                    break;
-            }
-
-            return status;
+        public override void GetObjectData(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        {
+            base.GetObjectData(serializationInfo, streamingContext);
         }
 
         internal static Exception CreateCompatibleException(Exception exception)
@@ -94,16 +90,9 @@ namespace System.Net
             if (exception is HttpRequestException)
             {
                 Exception inner = exception.InnerException;
-                string message;
-
-                if (inner != null)
-                {
-                    message = string.Format("{0} {1}", exception.Message, inner.Message);
-                }
-                else
-                {
-                    message = string.Format("{0}", exception.Message);
-                }
+                string message = inner != null ?
+                    exception.Message + " " + inner.Message :
+                    exception.Message;
 
                 return new WebException(
                     message,
@@ -111,8 +100,40 @@ namespace System.Net
                     GetStatusFromException(exception as HttpRequestException),
                     null);
             }
+            else if (exception is TaskCanceledException)
+            {
+                return new WebException(
+                    SR.net_webstatus_Timeout,
+                    null,
+                    WebExceptionStatus.Timeout,
+                    null);
+            }
 
             return exception;
+        }
+
+        private static WebExceptionStatus GetStatusFromExceptionHelper(HttpRequestException ex)
+        {
+            SocketException socketEx = ex.InnerException as SocketException;
+
+            if (socketEx is null)
+            {
+                return WebExceptionStatus.UnknownError;
+            }
+
+            WebExceptionStatus status;
+            switch (socketEx.SocketErrorCode)
+            {
+                case SocketError.NoData:
+                case SocketError.HostNotFound:
+                    status = WebExceptionStatus.NameResolutionFailure;
+                    break;
+                default:
+                    status = WebExceptionStatus.UnknownError;
+                    break;
+            }
+
+            return status;
         }
     }
 }

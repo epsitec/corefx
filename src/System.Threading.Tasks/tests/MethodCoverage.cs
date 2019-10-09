@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Threading.Tasks;
@@ -14,10 +15,9 @@ namespace TaskCoverage
     {
         // Regression test: Validates that tasks can wait on int.MaxValue without assertion.
         [Fact]
-        [OuterLoop]
         public static void TaskWait_MaxInt32()
         {
-            Task t = Task.Delay(10000);
+            Task t = Task.Delay(1);
             Debug.WriteLine("Wait with int.Maxvalue");
             Task.WaitAll(new Task[] { t }, int.MaxValue);
         }
@@ -28,7 +28,7 @@ namespace TaskCoverage
         public static void TaskContinuation()
         {
             int taskCount = Environment.ProcessorCount;
-            int maxDOP = Int32.MaxValue;
+            int maxDOP = int.MaxValue;
             int maxNumberExecutionsPerTask = 1;
             int data = 0;
 
@@ -68,7 +68,7 @@ namespace TaskCoverage
                         {
                             int d = (int)o;
                             Interlocked.Add(ref data, d);
-                        }, j, CancellationToken.None, TaskContinuationOptions.OnlyOnCanceled, TaskScheduler.Default).Wait(Int32.MaxValue - 1, cts2.Token);
+                        }, j, CancellationToken.None, TaskContinuationOptions.OnlyOnCanceled, TaskScheduler.Default).Wait(int.MaxValue - 1, cts2.Token);
                 });
 
                 allTasks[i].Start(scheduler.ConcurrentScheduler);

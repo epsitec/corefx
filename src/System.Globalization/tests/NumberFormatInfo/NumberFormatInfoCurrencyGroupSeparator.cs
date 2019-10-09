@@ -1,55 +1,41 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Globalization;
 using Xunit;
 
 namespace System.Globalization.Tests
 {
     public class NumberFormatInfoCurrencyGroupSeparator
     {
-        // PosTest1: Verify default value of property CurrencyGroupSeparator
         [Fact]
-        public void TestDefaultValue()
+        public void CurrencyGroupSeparator_GetInvariantInfo_ReturnsExpected()
         {
-            NumberFormatInfo nfi = new NumberFormatInfo();
-            Assert.Equal(",", nfi.CurrencyGroupSeparator);
+            Assert.Equal(",", NumberFormatInfo.InvariantInfo.CurrencyGroupSeparator);
         }
 
-        // PosTest2: Verify set value of property CurrencyGroupSeparator
-        [Fact]
-        public void TestSetValue()
+        [Theory]
+        [InlineData("string")]
+        [InlineData("    ")]
+        [InlineData("")]
+        public void CurrencyGroupSeparator_Set_GetReturnsExpected(string newCurrencyGroupSeparator)
         {
-            string testStr = "testStr";
-            NumberFormatInfo nfi = new NumberFormatInfo();
-            nfi.CurrencyGroupSeparator = testStr;
-            Assert.Equal(testStr, nfi.CurrencyGroupSeparator);
+            NumberFormatInfo format = new NumberFormatInfo();
+            format.CurrencyGroupSeparator = newCurrencyGroupSeparator;
+            Assert.Equal(newCurrencyGroupSeparator, format.CurrencyGroupSeparator);
         }
 
-        // NegTest1: ArgumentNullException is not thrown
         [Fact]
-        public void TestNull()
+        public void CurrencyGroupSeparator_SetNull_ThrowsArgumentNullException()
         {
-            string testStr = null;
-            NumberFormatInfo nfi = new NumberFormatInfo();
-            Assert.Throws<ArgumentNullException>(() =>
-            {
-                nfi.CurrencyGroupSeparator = testStr;
-            });
+            var format = new NumberFormatInfo();
+            AssertExtensions.Throws<ArgumentNullException>("value", "CurrencyGroupSeparator", () => format.CurrencyGroupSeparator = null);
         }
 
-        // NegTest2: InvalidOperationException is not thrown
         [Fact]
-        public void TestInvalidOperation()
+        public void CurrencyGroupSeparator_SetReadOnly_ThrowsInvalidOperationException()
         {
-            string testStr = "testStr";
-            NumberFormatInfo nfi = new NumberFormatInfo();
-            NumberFormatInfo nfiReadOnly = NumberFormatInfo.ReadOnly(nfi);
-            Assert.Throws<InvalidOperationException>(() =>
-            {
-                nfiReadOnly.CurrencyGroupSeparator = testStr;
-            });
+            Assert.Throws<InvalidOperationException>(() => NumberFormatInfo.InvariantInfo.CurrencyGroupSeparator = "string");
         }
     }
 }

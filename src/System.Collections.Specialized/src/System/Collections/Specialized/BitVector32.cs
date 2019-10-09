@@ -1,9 +1,9 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
 using System.Text;
-using System;
 
 namespace System.Collections.Specialized
 {
@@ -20,7 +20,7 @@ namespace System.Collections.Specialized
         /// </devdoc>
         public BitVector32(int data)
         {
-            _data = (uint)data;
+            _data = unchecked((uint)data);
         }
 
         /// <devdoc>
@@ -39,17 +39,20 @@ namespace System.Collections.Specialized
         {
             get
             {
-                return (_data & bit) == (uint)bit;
+                return (_data & bit) == unchecked((uint)bit);
             }
             set
             {
-                if (value)
+                unchecked
                 {
-                    _data |= (uint)bit;
-                }
-                else
-                {
-                    _data &= ~(uint)bit;
+                    if (value)
+                    {
+                        _data |= (uint)bit;
+                    }
+                    else
+                    {
+                        _data &= ~(uint)bit;
+                    }
                 }
             }
         }
@@ -61,19 +64,21 @@ namespace System.Collections.Specialized
         {
             get
             {
-                return (int)((_data & (uint)(section.Mask << section.Offset)) >> section.Offset);
+                unchecked
+                {
+                    return (int)((_data & (uint)(section.Mask << section.Offset)) >> section.Offset);
+                }
             }
             set
             {
-#if DEBUG
-                if ((value & section.Mask) != value)
-                {
-                    Debug.Fail("Value out of bounds on BitVector32 Section Set!");
-                }
-#endif
+                // The code should really have originally validated "(value & section.Mask) == value" with
+                // an exception (it instead validated it with a Debug.Assert, which does little good in a
+                // public method when in a Release build).  We don't include such a check now as it would
+                // likely break things and for little benefit.
+
                 value <<= section.Offset;
                 int offsetMask = (0xFFFF & (int)section.Mask) << section.Offset;
-                _data = (_data & ~(uint)offsetMask) | ((uint)value & (uint)offsetMask);
+                _data = unchecked((_data & ~(uint)offsetMask) | ((uint)value & (uint)offsetMask));
             }
         }
 
@@ -84,7 +89,7 @@ namespace System.Collections.Specialized
         {
             get
             {
-                return (int)_data;
+                return unchecked((int)_data);
             }
         }
 
@@ -169,13 +174,9 @@ namespace System.Collections.Specialized
         {
             if (maxValue < 1)
             {
-                throw new ArgumentException(SR.Format(SR.Argument_InvalidValue, "maxValue", 0), "maxValue");
+                throw new ArgumentException(SR.Format(SR.Argument_InvalidValue_TooSmall, nameof(maxValue), 1), nameof(maxValue));
             }
-#if DEBUG
-            int maskCheck = CreateMaskFromHighValue(maxValue);
-            int offsetCheck = priorOffset + CountBitsSet(priorMask);
-            Debug.Assert(maskCheck <= short.MaxValue && offsetCheck < 32, "Overflow on BitVector32");
-#endif
+
             short offset = (short)(priorOffset + CountBitsSet(priorMask));
             if (offset >= 32)
             {
@@ -184,7 +185,7 @@ namespace System.Collections.Specialized
             return new Section(CreateMaskFromHighValue(maxValue), offset);
         }
 
-        public override bool Equals(object o)
+        public override bool Equals(object? o)
         {
             if (!(o is BitVector32))
             {
@@ -201,35 +202,32 @@ namespace System.Collections.Specialized
 
         public static string ToString(BitVector32 value)
         {
-            StringBuilder sb = new StringBuilder(/*"BitVector32{".Length*/12 + /*32 bits*/32 + /*"}".Length"*/1);
-            sb.Append("BitVector32{");
-            int locdata = (int)value._data;
-            for (int i = 0; i < 32; i++)
+            return string.Create(/*"BitVector32{".Length*/12 + /*32 bits*/32 + /*"}".Length"*/1, value, (dst, v) =>
             {
-                if ((locdata & 0x80000000) != 0)
+                ReadOnlySpan<char> prefix = "BitVector32{";
+                prefix.CopyTo(dst);
+                dst[dst.Length - 1] = '}';
+
+                int locdata = unchecked((int)v._data);
+                dst = dst.Slice(prefix.Length, 32);
+                for (int i = 0; i < dst.Length; i++)
                 {
-                    sb.Append('1');
+                    dst[i] = (locdata & 0x80000000) != 0 ? '1' : '0';
+                    locdata <<= 1;
                 }
-                else
-                {
-                    sb.Append('0');
-                }
-                locdata <<= 1;
-            }
-            sb.Append('}');
-            return sb.ToString();
+            });
         }
 
         public override string ToString()
         {
-            return BitVector32.ToString(this);
+            return ToString(this);
         }
 
         /// <devdoc>
         ///    <para>
         ///       Represents an section of the vector that can contain a integer number.</para>
         /// </devdoc>
-        public struct Section
+        public readonly struct Section
         {
             private readonly short _mask;
             private readonly short _offset;
@@ -256,7 +254,7 @@ namespace System.Collections.Specialized
                 }
             }
 
-            public override bool Equals(object o)
+            public override bool Equals(object? o)
             {
                 if (o is Section)
                     return Equals((Section)o);
@@ -291,7 +289,7 @@ namespace System.Collections.Specialized
 
             public override string ToString()
             {
-                return Section.ToString(this);
+                return ToString(this);
             }
         }
     }

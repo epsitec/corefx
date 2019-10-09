@@ -1,21 +1,18 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 
 namespace System.Net.Http.Headers
 {
-#if DEBUG
-    [ContractClass(typeof(HttpHeaderParserContract))]
-#endif
     internal abstract class HttpHeaderParser
     {
         internal const string DefaultSeparator = ", ";
 
-        private bool _supportsMultipleValues;
-        private string _separator;
+        private readonly bool _supportsMultipleValues;
+        private readonly string _separator;
 
         public bool SupportsMultipleValues
         {
@@ -50,7 +47,7 @@ namespace System.Net.Http.Headers
 
         protected HttpHeaderParser(bool supportsMultipleValues, string separator)
         {
-            Contract.Requires(!string.IsNullOrEmpty(separator));
+            Debug.Assert(!string.IsNullOrEmpty(separator));
 
             _supportsMultipleValues = supportsMultipleValues;
             _separator = separator;
@@ -66,49 +63,28 @@ namespace System.Net.Http.Headers
         {
             // Index may be value.Length (e.g. both 0). This may be allowed for some headers (e.g. Accept but not
             // allowed by others (e.g. Content-Length). The parser has to decide if this is valid or not.
-            Contract.Requires((value == null) || ((index >= 0) && (index <= value.Length)));
+            Debug.Assert((value == null) || ((index >= 0) && (index <= value.Length)));
 
             // If a parser returns 'null', it means there was no value, but that's valid (e.g. "Accept: "). The caller
             // can ignore the value.
             object result = null;
             if (!TryParseValue(value, storeValue, ref index, out result))
             {
-                throw new FormatException(string.Format(System.Globalization.CultureInfo.InvariantCulture, SR.net_http_headers_invalid_value,
+                throw new FormatException(SR.Format(System.Globalization.CultureInfo.InvariantCulture, SR.net_http_headers_invalid_value,
                     value == null ? "<null>" : value.Substring(index)));
             }
             return result;
         }
 
         // If ValueType is a custom header value type (e.g. NameValueHeaderValue) it already implements ToString() correctly.
-        // However for existing types like int, byte[], DateTimeOffset we can't override ToString(). Therefore the 
-        // parser provides a ToString() virtual method that can be overridden by derived types to correctly serialize 
+        // However for existing types like int, byte[], DateTimeOffset we can't override ToString(). Therefore the
+        // parser provides a ToString() virtual method that can be overridden by derived types to correctly serialize
         // values (e.g. byte[] to Base64 encoded string).
         public virtual string ToString(object value)
         {
-            Contract.Requires(value != null);
+            Debug.Assert(value != null);
 
             return value.ToString();
         }
     }
-
-#if DEBUG
-    [ContractClassFor(typeof(HttpHeaderParser))]
-    internal abstract class HttpHeaderParserContract : HttpHeaderParser
-    {
-        public HttpHeaderParserContract()
-            : base(false)
-        {
-        }
-
-        public override bool TryParseValue(string value, object storeValue, ref int index, out object parsedValue)
-        {
-            // Index may be value.Length (e.g. both 0). This may be allowed for some headers (e.g. Accept but not
-            // allowed by others (e.g. Content-Length). The parser has to decide if this is valid or not.
-            Contract.Requires((value == null) || ((index >= 0) && (index <= value.Length)));
-
-            parsedValue = null;
-            return false;
-        }
-    }
-#endif
 }

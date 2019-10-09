@@ -1,10 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Microsoft.Win32.SafeHandles;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Runtime.InteropServices;
+using System.ComponentModel;
 using System.Security.Claims;
 
 namespace System.Security.Principal
@@ -24,7 +24,7 @@ namespace System.Security.Principal
 
     public class WindowsPrincipal : ClaimsPrincipal
     {
-        private WindowsIdentity _identity = null;
+        private readonly WindowsIdentity _identity = null;
 
         //
         // Constructors.
@@ -36,8 +36,7 @@ namespace System.Security.Principal
             : base(ntIdentity)
         {
             if (ntIdentity == null)
-                throw new ArgumentNullException("ntIdentity");
-            Contract.EndContractBlock();
+                throw new ArgumentNullException(nameof(ntIdentity));
 
             _identity = ntIdentity;
         }
@@ -129,8 +128,7 @@ namespace System.Security.Principal
         public virtual bool IsInRole(WindowsBuiltInRole role)
         {
             if (role < WindowsBuiltInRole.Administrator || role > WindowsBuiltInRole.Replicator)
-                throw new ArgumentException(SR.Format(SR.Arg_EnumIllegalVal, (int)role), "role");
-            Contract.EndContractBlock();
+                throw new ArgumentException(SR.Format(SR.Arg_EnumIllegalVal, (int)role), nameof(role));
 
             return IsInRole((int)role);
         }
@@ -145,14 +143,13 @@ namespace System.Security.Principal
 
         // This method (with a SID parameter) is more general than the 2 overloads that accept a WindowsBuiltInRole or
         // a rid (as an int). It is also better from a performance standpoint than the overload that accepts a string.
-        // The aformentioned overloads remain in this class since we do not want to introduce a
+        // The aforementioned overloads remain in this class since we do not want to introduce a
         // breaking change. However, this method should be used in all new applications.
-        
+
         public virtual bool IsInRole(SecurityIdentifier sid)
         {
             if (sid == null)
-                throw new ArgumentNullException("sid");
-            Contract.EndContractBlock();
+                throw new ArgumentNullException(nameof(sid));
 
             // special case the anonymous identity.
             if (_identity.AccessToken.IsInvalid)
@@ -162,24 +159,36 @@ namespace System.Security.Principal
             SafeAccessTokenHandle token = SafeAccessTokenHandle.InvalidHandle;
             if (_identity.ImpersonationLevel == TokenImpersonationLevel.None)
             {
-                if (!Interop.mincore.DuplicateTokenEx(_identity.AccessToken,
+                if (!Interop.Advapi32.DuplicateTokenEx(_identity.AccessToken,
                                                   (uint)TokenAccessLevels.Query,
                                                   IntPtr.Zero,
                                                   (uint)TokenImpersonationLevel.Identification,
                                                   (uint)TokenType.TokenImpersonation,
                                                   ref token))
-                    throw new SecurityException(Interop.mincore.GetMessage(Marshal.GetLastWin32Error()));
+                    throw new SecurityException(new Win32Exception().Message);
             }
 
             bool isMember = false;
+
             // CheckTokenMembership will check if the SID is both present and enabled in the access token.
-            if (!Interop.mincore.CheckTokenMembership((_identity.ImpersonationLevel != TokenImpersonationLevel.None ? _identity.AccessToken : token),
+#if uap
+            if (!Interop.Kernel32.CheckTokenMembershipEx((_identity.ImpersonationLevel != TokenImpersonationLevel.None ? _identity.AccessToken : token),
+                                                  sid.BinaryForm,
+                                                  Interop.Kernel32.CTMF_INCLUDE_APPCONTAINER,
+                                                  ref isMember))
+                throw new SecurityException(new Win32Exception().Message);
+#else
+            if (!Interop.Advapi32.CheckTokenMembership((_identity.ImpersonationLevel != TokenImpersonationLevel.None ? _identity.AccessToken : token),
                                                   sid.BinaryForm,
                                                   ref isMember))
-                throw new SecurityException(Interop.mincore.GetMessage(Marshal.GetLastWin32Error()));
+                throw new SecurityException(new Win32Exception().Message);
+#endif
 
             token.Dispose();
             return isMember;
         }
+
+        // This is called by AppDomain.GetThreadPrincipal() via reflection.
+        private static IPrincipal GetDefaultInstance() => new WindowsPrincipal(WindowsIdentity.GetCurrent());
     }
 }

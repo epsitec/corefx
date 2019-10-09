@@ -1,13 +1,12 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Security;
 using Xunit;
 
-namespace System.Reflection.Extensions.Tests
+namespace System.Reflection.Tests
 {
     public class GetCustomAttributes_MemberInfo
     {
@@ -26,9 +25,9 @@ namespace System.Reflection.Extensions.Tests
         {
             Assert.True(CustomAttributeExtensions.IsDefined(s_typeTestClass.GetTypeInfo(), typeof(MyAttribute_Single_M)));
 
-            Assert.Throws<ArgumentException>(() =>
+            AssertExtensions.Throws<ArgumentException>(null, () =>
             {
-                CustomAttributeExtensions.IsDefined(s_typeTestClass.GetTypeInfo(), typeof(String));
+                CustomAttributeExtensions.IsDefined(s_typeTestClass.GetTypeInfo(), typeof(string));
             });
 
             Assert.Throws<ArgumentNullException>(() =>
@@ -94,9 +93,9 @@ namespace System.Reflection.Extensions.Tests
                 attribute = CustomAttributeExtensions.GetCustomAttribute(s_typeTestClass.GetTypeInfo(), typeof(MyAttribute_AllowMultiple_Inherited));
             });
 
-            Assert.Throws<ArgumentException>(() =>
+            AssertExtensions.Throws<ArgumentException>(null, () =>
             {
-                attribute = CustomAttributeExtensions.GetCustomAttribute(s_typeTestClass.GetTypeInfo(), typeof(String));
+                attribute = CustomAttributeExtensions.GetCustomAttribute(s_typeTestClass.GetTypeInfo(), typeof(string));
             });
 
             Assert.Throws<ArgumentNullException>(() =>
@@ -114,9 +113,9 @@ namespace System.Reflection.Extensions.Tests
             attributes = CustomAttributeExtensions.GetCustomAttributes(s_typeTestClass.GetTypeInfo(), typeof(SecurityCriticalAttribute));
             Assert.Equal(0, attributes.Count());
 
-            Assert.Throws<ArgumentException>(() =>
+            AssertExtensions.Throws<ArgumentException>(null, () =>
             {
-                attributes = CustomAttributeExtensions.GetCustomAttributes(s_typeTestClass.GetTypeInfo(), typeof(String));
+                attributes = CustomAttributeExtensions.GetCustomAttributes(s_typeTestClass.GetTypeInfo(), typeof(string));
             });
 
             Assert.Throws<ArgumentNullException>(() =>
@@ -130,10 +129,10 @@ namespace System.Reflection.Extensions.Tests
         {
             IEnumerable<Attribute> attributes = CustomAttributeExtensions.GetCustomAttributes(s_typeTestClass.GetTypeInfo(), false);
             Assert.Equal(4, attributes.Count());
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_Single_M single", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple_M multiple1", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple_M multiple2", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple_Inherited multiple", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_Single_M single", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple_M multiple1", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple_M multiple2", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple_Inherited multiple", StringComparison.Ordinal)));
         }
 
         [Fact]
@@ -147,13 +146,12 @@ namespace System.Reflection.Extensions.Tests
             IEnumerator<Attribute> customAttrs = attributes.GetEnumerator();
 
             Assert.Equal(6, attributes.Count());
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_Single_M single", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple_M multiple1", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple_M multiple2", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_Single_Inherited singleBase", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple_Inherited multiple", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple_Inherited multipleBase", StringComparison.Ordinal)));
-
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_Single_M single", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple_M multiple1", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple_M multiple2", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_Single_Inherited singleBase", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple_Inherited multiple", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple_Inherited multipleBase", StringComparison.Ordinal)));
 
             IEnumerable<CustomAttributeData> attributeData = s_typeTestClass.GetTypeInfo().CustomAttributes;
 
@@ -167,36 +165,36 @@ namespace System.Reflection.Extensions.Tests
 
     public class MyAttributeBase_M : Attribute
     {
-        private String _name;
-        public MyAttributeBase_M(String name)
+        private string _name;
+        public MyAttributeBase_M(string name)
         {
             _name = name;
         }
-        public override String ToString() { return this.GetType() + " " + _name; }
+        public override string ToString() { return this.GetType() + " " + _name; }
     }
 
     [AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = false)]
     public class MyAttribute_Single_M : MyAttributeBase_M
     {
-        public MyAttribute_Single_M(String name) : base(name) { }
+        public MyAttribute_Single_M(string name) : base(name) { }
     }
 
     [AttributeUsage(AttributeTargets.All, AllowMultiple = true, Inherited = false)]
     public class MyAttribute_AllowMultiple_M : MyAttributeBase_M
     {
-        public MyAttribute_AllowMultiple_M(String name) : base(name) { }
+        public MyAttribute_AllowMultiple_M(string name) : base(name) { }
     }
 
     [AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
     public class MyAttribute_Single_Inherited : MyAttributeBase_M
     {
-        public MyAttribute_Single_Inherited(String name) : base(name) { }
+        public MyAttribute_Single_Inherited(string name) : base(name) { }
     }
 
     [AttributeUsage(AttributeTargets.All, AllowMultiple = true, Inherited = true)]
     public class MyAttribute_AllowMultiple_Inherited : MyAttributeBase_M
     {
-        public MyAttribute_AllowMultiple_Inherited(String name) : base(name) { }
+        public MyAttribute_AllowMultiple_Inherited(string name) : base(name) { }
     }
 
     public class TestClassWithoutAttribute

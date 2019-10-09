@@ -1,12 +1,7 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System.Runtime.InteropServices;
-using System.Diagnostics;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Globalization;
 
 namespace System.Collections.Specialized
 {
@@ -16,13 +11,15 @@ namespace System.Collections.Specialized
     ///    <para>Consider this class obsolete - use Dictionary&lt;String, String&gt; instead
     ///       with a proper StringComparer instance.</para>
     /// </devdoc>
+    [Serializable]
+    [System.Runtime.CompilerServices.TypeForwardedFrom("System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
     public class StringDictionary : IEnumerable
     {
         // For compatibility, we want the Keys property to return values in lower-case.
         // That means using ToLower in each property on this type.  Also for backwards
         // compatibility, we will be converting strings to lower-case, which has a
         // problem for some Georgian alphabets.
-        private readonly Hashtable _contents = new Hashtable();
+        private readonly Hashtable contents = new Hashtable(); // Do not rename (binary serialization)
 
 
         /// <devdoc>
@@ -42,7 +39,7 @@ namespace System.Collections.Specialized
         {
             get
             {
-                return _contents.Count;
+                return contents.Count;
             }
         }
 
@@ -55,32 +52,32 @@ namespace System.Collections.Specialized
         {
             get
             {
-                return _contents.IsSynchronized;
+                return contents.IsSynchronized;
             }
         }
 
         /// <devdoc>
         ///    <para>Gets or sets the value associated with the specified key.</para>
         /// </devdoc>
-        public virtual string this[string key]
+        public virtual string? this[string key]
         {
             get
             {
                 if (key == null)
                 {
-                    throw new ArgumentNullException("key");
+                    throw new ArgumentNullException(nameof(key));
                 }
 
-                return (string)_contents[key.ToLowerInvariant()];
+                return (string?)contents[key.ToLowerInvariant()];
             }
             set
             {
                 if (key == null)
                 {
-                    throw new ArgumentNullException("key");
+                    throw new ArgumentNullException(nameof(key));
                 }
 
-                _contents[key.ToLowerInvariant()] = value;
+                contents[key.ToLowerInvariant()] = value;
             }
         }
 
@@ -91,7 +88,7 @@ namespace System.Collections.Specialized
         {
             get
             {
-                return _contents.Keys;
+                return contents.Keys;
             }
         }
 
@@ -103,7 +100,7 @@ namespace System.Collections.Specialized
         {
             get
             {
-                return _contents.SyncRoot;
+                return contents.SyncRoot;
             }
         }
 
@@ -114,21 +111,21 @@ namespace System.Collections.Specialized
         {
             get
             {
-                return _contents.Values;
+                return contents.Values;
             }
         }
 
         /// <devdoc>
         /// <para>Adds an entry with the specified key and value into the StringDictionary.</para>
         /// </devdoc>
-        public virtual void Add(string key, string value)
+        public virtual void Add(string key, string? value)
         {
             if (key == null)
             {
-                throw new ArgumentNullException("key");
+                throw new ArgumentNullException(nameof(key));
             }
 
-            _contents.Add(key.ToLowerInvariant(), value);
+            contents.Add(key.ToLowerInvariant(), value);
         }
 
         /// <devdoc>
@@ -136,7 +133,7 @@ namespace System.Collections.Specialized
         /// </devdoc>
         public virtual void Clear()
         {
-            _contents.Clear();
+            contents.Clear();
         }
 
         /// <devdoc>
@@ -146,18 +143,18 @@ namespace System.Collections.Specialized
         {
             if (key == null)
             {
-                throw new ArgumentNullException("key");
+                throw new ArgumentNullException(nameof(key));
             }
 
-            return _contents.ContainsKey(key.ToLowerInvariant());
+            return contents.ContainsKey(key.ToLowerInvariant());
         }
 
         /// <devdoc>
         /// <para>Determines if the StringDictionary contains a specific value.</para>
         /// </devdoc>
-        public virtual bool ContainsValue(string value)
+        public virtual bool ContainsValue(string? value)
         {
-            return _contents.ContainsValue(value);
+            return contents.ContainsValue(value);
         }
 
         /// <devdoc>
@@ -166,7 +163,7 @@ namespace System.Collections.Specialized
         /// </devdoc>
         public virtual void CopyTo(Array array, int index)
         {
-            _contents.CopyTo(array, index);
+            contents.CopyTo(array, index);
         }
 
         /// <devdoc>
@@ -174,7 +171,7 @@ namespace System.Collections.Specialized
         /// </devdoc>
         public virtual IEnumerator GetEnumerator()
         {
-            return _contents.GetEnumerator();
+            return contents.GetEnumerator();
         }
 
         /// <devdoc>
@@ -184,10 +181,10 @@ namespace System.Collections.Specialized
         {
             if (key == null)
             {
-                throw new ArgumentNullException("key");
+                throw new ArgumentNullException(nameof(key));
             }
 
-            _contents.Remove(key.ToLowerInvariant());
+            contents.Remove(key.ToLowerInvariant());
         }
     }
 }

@@ -1,19 +1,16 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Threading;
 using System.Dynamic.Utils;
-using AstUtils = System.Linq.Expressions.Interpreter.Utils;
-using System.Runtime.CompilerServices;
+using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace System.Linq.Expressions.Interpreter
 {
+#if FEATURE_MAKE_RUN_METHODS
     internal static partial class DelegateHelpers
     {
         private const int MaximumArity = 17;
@@ -28,7 +25,7 @@ namespace System.Linq.Expressions.Interpreter
             // the arity is small enough to fit in Func<...> or Action<...>
             if (types.Length > MaximumArity || types.Any(t => t.IsByRef))
             {
-                throw Assert.Unreachable;
+                throw ContractUtils.Unreachable;
             }
 
             Type returnType = types[types.Length - 1];
@@ -80,134 +77,93 @@ namespace System.Linq.Expressions.Interpreter
                     case 17: return typeof(Func<,,,,,,,,,,,,,,,,>).MakeGenericType(types);
                 }
             }
-            throw Assert.Unreachable;
+            throw ContractUtils.Unreachable;
         }
     }
+#endif
 
-    internal class ScriptingRuntimeHelpers
+    internal static class ScriptingRuntimeHelpers
     {
-        public static object Int32ToObject(int i)
-        {
-            return i;
-        }
-        public static object BooleanToObject(bool b)
-        {
-            return b ? True : False;
-        }
+        public static object Int32ToObject(int i) =>
+            i switch
+            {
+                -1 => Utils.BoxedIntM1,
+                0 => Utils.BoxedInt0,
+                1 => Utils.BoxedInt1,
+                2 => Utils.BoxedInt2,
+                3 => Utils.BoxedInt3,
 
-        internal static object True = true;
-        internal static object False = false;
+                _ => i,
+            };
 
         internal static object GetPrimitiveDefaultValue(Type type)
         {
-            switch (System.Dynamic.Utils.TypeExtensions.GetTypeCode(type))
+            object result;
+
+            switch (type.GetTypeCode())
             {
-                case TypeCode.Boolean: return ScriptingRuntimeHelpers.False;
-                case TypeCode.SByte: return default(SByte);
-                case TypeCode.Byte: return default(Byte);
-                case TypeCode.Char: return default(Char);
-                case TypeCode.Int16: return default(Int16);
-                case TypeCode.Int32: return ScriptingRuntimeHelpers.Int32ToObject(0);
-                case TypeCode.Int64: return default(Int64);
-                case TypeCode.UInt16: return default(UInt16);
-                case TypeCode.UInt32: return default(UInt32);
-                case TypeCode.UInt64: return default(UInt64);
-                case TypeCode.Single: return default(Single);
-                case TypeCode.Double: return default(Double);
-                //            case TypeCode.DBNull: return default(DBNull);
-                case TypeCode.DateTime: return default(DateTime);
-                case TypeCode.Decimal: return default(Decimal);
-                default: return null;
+                case TypeCode.Boolean:
+                    result = Utils.BoxedFalse;
+                    break;
+                case TypeCode.SByte:
+                    result = Utils.BoxedDefaultSByte;
+                    break;
+                case TypeCode.Byte:
+                    result = Utils.BoxedDefaultByte;
+                    break;
+                case TypeCode.Char:
+                    result = Utils.BoxedDefaultChar;
+                    break;
+                case TypeCode.Int16:
+                    result = Utils.BoxedDefaultInt16;
+                    break;
+                case TypeCode.Int32:
+                    result = Utils.BoxedInt0;
+                    break;
+                case TypeCode.Int64:
+                    result = Utils.BoxedDefaultInt64;
+                    break;
+                case TypeCode.UInt16:
+                    result = Utils.BoxedDefaultUInt16;
+                    break;
+                case TypeCode.UInt32:
+                    result = Utils.BoxedDefaultUInt32;
+                    break;
+                case TypeCode.UInt64:
+                    result = Utils.BoxedDefaultUInt64;
+                    break;
+                case TypeCode.Single:
+                    return Utils.BoxedDefaultSingle;
+                case TypeCode.Double:
+                    return Utils.BoxedDefaultDouble;
+                case TypeCode.DateTime:
+                    return Utils.BoxedDefaultDateTime;
+                case TypeCode.Decimal:
+                    return Utils.BoxedDefaultDecimal;
+                default:
+                    // Also covers DBNull which is a class.
+                    return null;
             }
-        }
-    }
 
-    /// <summary>
-    /// Wraps all arguments passed to a dynamic site with more arguments than can be accepted by a Func/Action delegate.
-    /// The binder generating a rule for such a site should unwrap the arguments first and then perform a binding to them.
-    /// </summary>
-    internal sealed class ArgumentArray
-    {
-        private readonly object[] _arguments;
+            if (type.IsEnum)
+            {
+                result = Enum.ToObject(type, result);
+            }
 
-        // the index of the first item _arguments that represents an argument:
-        private readonly int _first;
-
-        // the number of items in _arguments that represent the arguments:
-        private readonly int _count;
-
-        internal ArgumentArray(object[] arguments, int first, int count)
-        {
-            _arguments = arguments;
-            _first = first;
-            _count = count;
-        }
-
-        public int Count
-        {
-            get { return _count; }
-        }
-
-        public object GetArgument(int index)
-        {
-            return _arguments[_first + index];
-        }
-
-        public static object GetArg(ArgumentArray array, int index)
-        {
-            return array._arguments[array._first + index];
+            return result;
         }
     }
 
     internal static class ExceptionHelpers
     {
-        private const string prevStackTraces = "PreviousStackTraces";
-
         /// <summary>
         /// Updates an exception before it's getting re-thrown so
         /// we can present a reasonable stack trace to the user.
         /// </summary>
-        public static Exception UpdateForRethrow(Exception rethrow)
+        public static void UnwrapAndRethrow(TargetInvocationException exception)
         {
-#if FEATURE_STACK_TRACES
-            List<StackTrace> prev;
-
-            // we don't have any dynamic stack trace data, capture the data we can
-            // from the raw exception object.
-            StackTrace st = new StackTrace(rethrow, true);
-
-            if (!TryGetAssociatedStackTraces(rethrow, out prev))
-            {
-                prev = new List<StackTrace>();
-                AssociateStackTraces(rethrow, prev);
-            }
-
-            prev.Add(st);
-
-#endif // FEATURE_STACK_TRACES
-            return rethrow;
+            ExceptionDispatchInfo.Throw(exception.InnerException);
         }
-#if FEATURE_STACK_TRACES
-        /// <summary>
-        /// Returns all the stack traces associates with an exception
-        /// </summary>
-        public static IList<StackTrace> GetExceptionStackTraces(Exception rethrow)
-        {
-            List<StackTrace> result;
-            return TryGetAssociatedStackTraces(rethrow, out result) ? result : null;
-        }
-
-        private static void AssociateStackTraces(Exception e, List<StackTrace> traces)
-        {
-            e.Data[prevStackTraces] = traces;
-        }
-
-        private static bool TryGetAssociatedStackTraces(Exception e, out List<StackTrace> traces)
-        {
-            traces = e.Data[prevStackTraces] as List<StackTrace>;
-            return traces != null;
-        }
-#endif // FEATURE_STACK_TRACES
     }
 
     /// <summary>
@@ -217,24 +173,7 @@ namespace System.Linq.Expressions.Interpreter
     {
         private KeyValuePair<TKey, TValue>[] _keysAndValues;
         private Dictionary<TKey, TValue> _dict;
-        private int _count;
-        private const int _arraySize = 10;
-
-        public HybridReferenceDictionary()
-        {
-        }
-
-        public HybridReferenceDictionary(int initialCapicity)
-        {
-            if (initialCapicity > _arraySize)
-            {
-                _dict = new Dictionary<TKey, TValue>(initialCapicity);
-            }
-            else
-            {
-                _keysAndValues = new KeyValuePair<TKey, TValue>[initialCapicity];
-            }
-        }
+        private const int ArraySize = 10;
 
         public bool TryGetValue(TKey key, out TValue value)
         {
@@ -259,13 +198,13 @@ namespace System.Linq.Expressions.Interpreter
             return false;
         }
 
-        public bool Remove(TKey key)
+        public void Remove(TKey key)
         {
             Debug.Assert(key != null);
 
             if (_dict != null)
             {
-                return _dict.Remove(key);
+                _dict.Remove(key);
             }
             else if (_keysAndValues != null)
             {
@@ -274,13 +213,10 @@ namespace System.Linq.Expressions.Interpreter
                     if (_keysAndValues[i].Key == key)
                     {
                         _keysAndValues[i] = new KeyValuePair<TKey, TValue>();
-                        _count--;
-                        return true;
+                        return;
                     }
                 }
             }
-
-            return false;
         }
 
         public bool ContainsKey(TKey key)
@@ -291,11 +227,13 @@ namespace System.Linq.Expressions.Interpreter
             {
                 return _dict.ContainsKey(key);
             }
-            else if (_keysAndValues != null)
+
+            KeyValuePair<TKey, TValue>[] keysAndValues = _keysAndValues;
+            if (keysAndValues != null)
             {
-                for (int i = 0; i < _keysAndValues.Length; i++)
+                for (int i = 0; i < keysAndValues.Length; i++)
                 {
-                    if (_keysAndValues[i].Key == key)
+                    if (keysAndValues[i].Key == key)
                     {
                         return true;
                     }
@@ -303,18 +241,6 @@ namespace System.Linq.Expressions.Interpreter
             }
 
             return false;
-        }
-
-        public int Count
-        {
-            get
-            {
-                if (_dict != null)
-                {
-                    return _dict.Count;
-                }
-                return _count;
-            }
         }
 
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
@@ -353,7 +279,7 @@ namespace System.Linq.Expressions.Interpreter
                     return res;
                 }
 
-                throw new KeyNotFoundException();
+                throw new KeyNotFoundException(SR.Format(SR.Arg_KeyNotFoundWithKey, key.ToString()));
             }
             set
             {
@@ -384,13 +310,12 @@ namespace System.Linq.Expressions.Interpreter
                     }
                     else
                     {
-                        _keysAndValues = new KeyValuePair<TKey, TValue>[_arraySize];
+                        _keysAndValues = new KeyValuePair<TKey, TValue>[ArraySize];
                         index = 0;
                     }
 
                     if (index != -1)
                     {
-                        _count++;
                         _keysAndValues[index] = new KeyValuePair<TKey, TValue>(key, value);
                     }
                     else
@@ -411,84 +336,10 @@ namespace System.Linq.Expressions.Interpreter
 
     internal static class Assert
     {
-        internal static Exception Unreachable
-        {
-            get
-            {
-                Debug.Assert(false, "Unreachable");
-                return new InvalidOperationException("Code supposed to be unreachable");
-            }
-        }
-
         [Conditional("DEBUG")]
         public static void NotNull(object var)
         {
             Debug.Assert(var != null);
-        }
-
-        [Conditional("DEBUG")]
-        public static void NotNull(object var1, object var2)
-        {
-            Debug.Assert(var1 != null && var2 != null);
-        }
-
-        [Conditional("DEBUG")]
-        public static void NotNull(object var1, object var2, object var3)
-        {
-            Debug.Assert(var1 != null && var2 != null && var3 != null);
-        }
-
-        [Conditional("DEBUG")]
-        public static void NotNullItems<T>(IEnumerable<T> items) where T : class
-        {
-            Debug.Assert(items != null);
-            foreach (object item in items)
-            {
-                Debug.Assert(item != null);
-            }
-        }
-
-        [Conditional("DEBUG")]
-        public static void NotEmpty(string str)
-        {
-            Debug.Assert(!String.IsNullOrEmpty(str));
-        }
-    }
-
-    [Flags]
-    internal enum ExpressionAccess
-    {
-        None = 0,
-        Read = 1,
-        Write = 2,
-        ReadWrite = Read | Write,
-    }
-
-    internal static class Utils
-    {
-        private static readonly DefaultExpression s_voidInstance = Expression.Empty();
-
-        public static DefaultExpression Empty()
-        {
-            return s_voidInstance;
-        }
-    }
-
-    internal sealed class ListEqualityComparer<T> : EqualityComparer<ICollection<T>>
-    {
-        internal static readonly ListEqualityComparer<T> Instance = new ListEqualityComparer<T>();
-
-        private ListEqualityComparer() { }
-
-        // EqualityComparer<T> handles null and object identity for us
-        public override bool Equals(ICollection<T> x, ICollection<T> y)
-        {
-            return x.ListEquals(y);
-        }
-
-        public override int GetHashCode(ICollection<T> obj)
-        {
-            return obj.ListHashCode();
         }
     }
 }

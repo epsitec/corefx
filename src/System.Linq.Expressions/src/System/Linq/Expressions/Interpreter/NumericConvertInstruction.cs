@@ -1,11 +1,7 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Dynamic.Utils;
 
 namespace System.Linq.Expressions.Interpreter
@@ -14,6 +10,7 @@ namespace System.Linq.Expressions.Interpreter
     {
         internal readonly TypeCode _from, _to;
         private readonly bool _isLiftedToNull;
+
         protected NumericConvertInstruction(TypeCode from, TypeCode to, bool isLiftedToNull)
         {
             _from = from;
@@ -35,8 +32,7 @@ namespace System.Linq.Expressions.Interpreter
                 {
                     // We cannot have null in a non-lifted numeric context. Throw the exception
                     // about not Nullable object requiring a value.
-                    converted = (int)(int?)obj;
-                    throw Assert.Unreachable;
+                    return (int)(int?)obj;
                 }
             }
             else
@@ -45,27 +41,21 @@ namespace System.Linq.Expressions.Interpreter
             }
 
             frame.Push(converted);
-            return +1;
+            return 1;
         }
 
         protected abstract object Convert(object obj);
 
-        public override string InstructionName
-        {
-            get { return "NumericConvert"; }
-        }
-        public override int ConsumedStack { get { return 1; } }
-        public override int ProducedStack { get { return 1; } }
+        public override string InstructionName => "NumericConvert";
+        public override int ConsumedStack => 1;
+        public override int ProducedStack => 1;
 
-        public override string ToString()
-        {
-            return InstructionName + "(" + _from + "->" + _to + ")";
-        }
+        public override string ToString() => InstructionName + "(" + _from + "->" + _to + ")";
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1034:NestedTypesShouldNotBeVisible")]
         internal sealed class Unchecked : NumericConvertInstruction
         {
-            public override string InstructionName { get { return "UncheckedConvert"; } }
+            public override string InstructionName => "UncheckedConvert";
 
             public Unchecked(TypeCode from, TypeCode to, bool isLiftedToNull)
                 : base(from, to, isLiftedToNull)
@@ -74,108 +64,114 @@ namespace System.Linq.Expressions.Interpreter
 
             protected override object Convert(object obj)
             {
-                switch (_from)
+                return _from switch
                 {
-                    case TypeCode.Byte: return ConvertInt32((Byte)obj);
-                    case TypeCode.SByte: return ConvertInt32((SByte)obj);
-                    case TypeCode.Int16: return ConvertInt32((Int16)obj);
-                    case TypeCode.Char: return ConvertInt32((Char)obj);
-                    case TypeCode.Int32: return ConvertInt32((Int32)obj);
-                    case TypeCode.Int64: return ConvertInt64((Int64)obj);
-                    case TypeCode.UInt16: return ConvertInt32((UInt16)obj);
-                    case TypeCode.UInt32: return ConvertInt64((UInt32)obj);
-                    case TypeCode.UInt64: return ConvertUInt64((UInt64)obj);
-                    case TypeCode.Single: return ConvertDouble((Single)obj);
-                    case TypeCode.Double: return ConvertDouble((Double)obj);
-                    default: throw Assert.Unreachable;
-                }
+                    TypeCode.Boolean => ConvertInt32((bool)obj ? 1 : 0),
+                    TypeCode.Byte => ConvertInt32((byte)obj),
+                    TypeCode.SByte => ConvertInt32((sbyte)obj),
+                    TypeCode.Int16 => ConvertInt32((short)obj),
+                    TypeCode.Char => ConvertInt32((char)obj),
+                    TypeCode.Int32 => ConvertInt32((int)obj),
+                    TypeCode.Int64 => ConvertInt64((long)obj),
+                    TypeCode.UInt16 => ConvertInt32((ushort)obj),
+                    TypeCode.UInt32 => ConvertInt64((uint)obj),
+                    TypeCode.UInt64 => ConvertUInt64((ulong)obj),
+                    TypeCode.Single => ConvertDouble((float)obj),
+                    TypeCode.Double => ConvertDouble((double)obj),
+                    _ => throw ContractUtils.Unreachable,
+                };
             }
 
             private object ConvertInt32(int obj)
             {
                 unchecked
                 {
-                    switch (_to)
+                    return _to switch
                     {
-                        case TypeCode.Byte: return (Byte)obj;
-                        case TypeCode.SByte: return (SByte)obj;
-                        case TypeCode.Int16: return (Int16)obj;
-                        case TypeCode.Char: return (Char)obj;
-                        case TypeCode.Int32: return (Int32)obj;
-                        case TypeCode.Int64: return (Int64)obj;
-                        case TypeCode.UInt16: return (UInt16)obj;
-                        case TypeCode.UInt32: return (UInt32)obj;
-                        case TypeCode.UInt64: return (UInt64)obj;
-                        case TypeCode.Single: return (Single)obj;
-                        case TypeCode.Double: return (Double)obj;
-                        default: throw Assert.Unreachable;
-                    }
+                        TypeCode.Byte => (byte)obj,
+                        TypeCode.SByte => (sbyte)obj,
+                        TypeCode.Int16 => (short)obj,
+                        TypeCode.Char => (char)obj,
+                        TypeCode.Int32 => (int)obj,
+                        TypeCode.Int64 => (long)obj,
+                        TypeCode.UInt16 => (ushort)obj,
+                        TypeCode.UInt32 => (uint)obj,
+                        TypeCode.UInt64 => (ulong)obj,
+                        TypeCode.Single => (float)obj,
+                        TypeCode.Double => (double)obj,
+                        TypeCode.Decimal => (decimal)obj,
+                        TypeCode.Boolean => obj != 0,
+                        _ => throw ContractUtils.Unreachable,
+                    };
                 }
             }
 
-            private object ConvertInt64(Int64 obj)
+            private object ConvertInt64(long obj)
             {
                 unchecked
                 {
-                    switch (_to)
+                    return _to switch
                     {
-                        case TypeCode.Byte: return (Byte)obj;
-                        case TypeCode.SByte: return (SByte)obj;
-                        case TypeCode.Int16: return (Int16)obj;
-                        case TypeCode.Char: return (Char)obj;
-                        case TypeCode.Int32: return (Int32)obj;
-                        case TypeCode.Int64: return (Int64)obj;
-                        case TypeCode.UInt16: return (UInt16)obj;
-                        case TypeCode.UInt32: return (UInt32)obj;
-                        case TypeCode.UInt64: return (UInt64)obj;
-                        case TypeCode.Single: return (Single)obj;
-                        case TypeCode.Double: return (Double)obj;
-                        default: throw Assert.Unreachable;
-                    }
+                        TypeCode.Byte => (byte)obj,
+                        TypeCode.SByte => (sbyte)obj,
+                        TypeCode.Int16 => (short)obj,
+                        TypeCode.Char => (char)obj,
+                        TypeCode.Int32 => (int)obj,
+                        TypeCode.Int64 => (long)obj,
+                        TypeCode.UInt16 => (ushort)obj,
+                        TypeCode.UInt32 => (uint)obj,
+                        TypeCode.UInt64 => (ulong)obj,
+                        TypeCode.Single => (float)obj,
+                        TypeCode.Double => (double)obj,
+                        TypeCode.Decimal => (decimal)obj,
+                        _ => throw ContractUtils.Unreachable,
+                    };
                 }
             }
 
-            private object ConvertUInt64(UInt64 obj)
+            private object ConvertUInt64(ulong obj)
             {
                 unchecked
                 {
-                    switch (_to)
+                    return _to switch
                     {
-                        case TypeCode.Byte: return (Byte)obj;
-                        case TypeCode.SByte: return (SByte)obj;
-                        case TypeCode.Int16: return (Int16)obj;
-                        case TypeCode.Char: return (Char)obj;
-                        case TypeCode.Int32: return (Int32)obj;
-                        case TypeCode.Int64: return (Int64)obj;
-                        case TypeCode.UInt16: return (UInt16)obj;
-                        case TypeCode.UInt32: return (UInt32)obj;
-                        case TypeCode.UInt64: return (UInt64)obj;
-                        case TypeCode.Single: return (Single)obj;
-                        case TypeCode.Double: return (Double)obj;
-                        default: throw Assert.Unreachable;
-                    }
+                        TypeCode.Byte => (byte)obj,
+                        TypeCode.SByte => (sbyte)obj,
+                        TypeCode.Int16 => (short)obj,
+                        TypeCode.Char => (char)obj,
+                        TypeCode.Int32 => (int)obj,
+                        TypeCode.Int64 => (long)obj,
+                        TypeCode.UInt16 => (ushort)obj,
+                        TypeCode.UInt32 => (uint)obj,
+                        TypeCode.UInt64 => (ulong)obj,
+                        TypeCode.Single => (float)obj,
+                        TypeCode.Double => (double)obj,
+                        TypeCode.Decimal => (decimal)obj,
+                        _ => throw ContractUtils.Unreachable,
+                    };
                 }
             }
 
-            private object ConvertDouble(Double obj)
+            private object ConvertDouble(double obj)
             {
                 unchecked
                 {
-                    switch (_to)
+                    return _to switch
                     {
-                        case TypeCode.Byte: return (Byte)obj;
-                        case TypeCode.SByte: return (SByte)obj;
-                        case TypeCode.Int16: return (Int16)obj;
-                        case TypeCode.Char: return (Char)obj;
-                        case TypeCode.Int32: return (Int32)obj;
-                        case TypeCode.Int64: return (Int64)obj;
-                        case TypeCode.UInt16: return (UInt16)obj;
-                        case TypeCode.UInt32: return (UInt32)obj;
-                        case TypeCode.UInt64: return (UInt64)obj;
-                        case TypeCode.Single: return (Single)obj;
-                        case TypeCode.Double: return (Double)obj;
-                        default: throw Assert.Unreachable;
-                    }
+                        TypeCode.Byte => (byte)obj,
+                        TypeCode.SByte => (sbyte)obj,
+                        TypeCode.Int16 => (short)obj,
+                        TypeCode.Char => (char)obj,
+                        TypeCode.Int32 => (int)obj,
+                        TypeCode.Int64 => (long)obj,
+                        TypeCode.UInt16 => (ushort)obj,
+                        TypeCode.UInt32 => (uint)obj,
+                        TypeCode.UInt64 => (ulong)obj,
+                        TypeCode.Single => (float)obj,
+                        TypeCode.Double => (double)obj,
+                        TypeCode.Decimal => (decimal)obj,
+                        _ => throw ContractUtils.Unreachable,
+                    };
                 }
             }
         }
@@ -183,7 +179,7 @@ namespace System.Linq.Expressions.Interpreter
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1034:NestedTypesShouldNotBeVisible")]
         internal sealed class Checked : NumericConvertInstruction
         {
-            public override string InstructionName { get { return "CheckedConvert"; } }
+            public override string InstructionName => "CheckedConvert";
 
             public Checked(TypeCode from, TypeCode to, bool isLiftedToNull)
                 : base(from, to, isLiftedToNull)
@@ -192,108 +188,145 @@ namespace System.Linq.Expressions.Interpreter
 
             protected override object Convert(object obj)
             {
-                switch (_from)
+                return _from switch
                 {
-                    case TypeCode.Byte: return ConvertInt32((Byte)obj);
-                    case TypeCode.SByte: return ConvertInt32((SByte)obj);
-                    case TypeCode.Int16: return ConvertInt32((Int16)obj);
-                    case TypeCode.Char: return ConvertInt32((Char)obj);
-                    case TypeCode.Int32: return ConvertInt32((Int32)obj);
-                    case TypeCode.Int64: return ConvertInt64((Int64)obj);
-                    case TypeCode.UInt16: return ConvertInt32((UInt16)obj);
-                    case TypeCode.UInt32: return ConvertInt64((UInt32)obj);
-                    case TypeCode.UInt64: return ConvertUInt64((UInt64)obj);
-                    case TypeCode.Single: return ConvertDouble((Single)obj);
-                    case TypeCode.Double: return ConvertDouble((Double)obj);
-                    default: throw Assert.Unreachable;
-                }
+                    TypeCode.Boolean => ConvertInt32((bool)obj ? 1 : 0),
+                    TypeCode.Byte => ConvertInt32((byte)obj),
+                    TypeCode.SByte => ConvertInt32((sbyte)obj),
+                    TypeCode.Int16 => ConvertInt32((short)obj),
+                    TypeCode.Char => ConvertInt32((char)obj),
+                    TypeCode.Int32 => ConvertInt32((int)obj),
+                    TypeCode.Int64 => ConvertInt64((long)obj),
+                    TypeCode.UInt16 => ConvertInt32((ushort)obj),
+                    TypeCode.UInt32 => ConvertInt64((uint)obj),
+                    TypeCode.UInt64 => ConvertUInt64((ulong)obj),
+                    TypeCode.Single => ConvertDouble((float)obj),
+                    TypeCode.Double => ConvertDouble((double)obj),
+                    _ => throw ContractUtils.Unreachable,
+                };
             }
 
             private object ConvertInt32(int obj)
             {
                 checked
                 {
-                    switch (_to)
+                    return _to switch
                     {
-                        case TypeCode.Byte: return (Byte)obj;
-                        case TypeCode.SByte: return (SByte)obj;
-                        case TypeCode.Int16: return (Int16)obj;
-                        case TypeCode.Char: return (Char)obj;
-                        case TypeCode.Int32: return (Int32)obj;
-                        case TypeCode.Int64: return (Int64)obj;
-                        case TypeCode.UInt16: return (UInt16)obj;
-                        case TypeCode.UInt32: return (UInt32)obj;
-                        case TypeCode.UInt64: return (UInt64)obj;
-                        case TypeCode.Single: return (Single)obj;
-                        case TypeCode.Double: return (Double)obj;
-                        default: throw Assert.Unreachable;
-                    }
+                        TypeCode.Byte => (byte)obj,
+                        TypeCode.SByte => (sbyte)obj,
+                        TypeCode.Int16 => (short)obj,
+                        TypeCode.Char => (char)obj,
+                        TypeCode.Int32 => (int)obj,
+                        TypeCode.Int64 => (long)obj,
+                        TypeCode.UInt16 => (ushort)obj,
+                        TypeCode.UInt32 => (uint)obj,
+                        TypeCode.UInt64 => (ulong)obj,
+                        TypeCode.Single => (float)obj,
+                        TypeCode.Double => (double)obj,
+                        TypeCode.Decimal => (decimal)obj,
+                        TypeCode.Boolean => obj != 0,
+                        _ => throw ContractUtils.Unreachable,
+                    };
                 }
             }
 
-            private object ConvertInt64(Int64 obj)
+            private object ConvertInt64(long obj)
             {
                 checked
                 {
-                    switch (_to)
+                    return _to switch
                     {
-                        case TypeCode.Byte: return (Byte)obj;
-                        case TypeCode.SByte: return (SByte)obj;
-                        case TypeCode.Int16: return (Int16)obj;
-                        case TypeCode.Char: return (Char)obj;
-                        case TypeCode.Int32: return (Int32)obj;
-                        case TypeCode.Int64: return (Int64)obj;
-                        case TypeCode.UInt16: return (UInt16)obj;
-                        case TypeCode.UInt32: return (UInt32)obj;
-                        case TypeCode.UInt64: return (UInt64)obj;
-                        case TypeCode.Single: return (Single)obj;
-                        case TypeCode.Double: return (Double)obj;
-                        default: throw Assert.Unreachable;
-                    }
+                        TypeCode.Byte => (byte)obj,
+                        TypeCode.SByte => (sbyte)obj,
+                        TypeCode.Int16 => (short)obj,
+                        TypeCode.Char => (char)obj,
+                        TypeCode.Int32 => (int)obj,
+                        TypeCode.Int64 => (long)obj,
+                        TypeCode.UInt16 => (ushort)obj,
+                        TypeCode.UInt32 => (uint)obj,
+                        TypeCode.UInt64 => (ulong)obj,
+                        TypeCode.Single => (float)obj,
+                        TypeCode.Double => (double)obj,
+                        TypeCode.Decimal => (decimal)obj,
+                        _ => throw ContractUtils.Unreachable,
+                    };
                 }
             }
 
-            private object ConvertUInt64(UInt64 obj)
+            private object ConvertUInt64(ulong obj)
             {
                 checked
                 {
-                    switch (_to)
+                    return _to switch
                     {
-                        case TypeCode.Byte: return (Byte)obj;
-                        case TypeCode.SByte: return (SByte)obj;
-                        case TypeCode.Int16: return (Int16)obj;
-                        case TypeCode.Char: return (Char)obj;
-                        case TypeCode.Int32: return (Int32)obj;
-                        case TypeCode.Int64: return (Int64)obj;
-                        case TypeCode.UInt16: return (UInt16)obj;
-                        case TypeCode.UInt32: return (UInt32)obj;
-                        case TypeCode.UInt64: return (UInt64)obj;
-                        case TypeCode.Single: return (Single)obj;
-                        case TypeCode.Double: return (Double)obj;
-                        default: throw Assert.Unreachable;
-                    }
+                        TypeCode.Byte => (byte)obj,
+                        TypeCode.SByte => (sbyte)obj,
+                        TypeCode.Int16 => (short)obj,
+                        TypeCode.Char => (char)obj,
+                        TypeCode.Int32 => (int)obj,
+                        TypeCode.Int64 => (long)obj,
+                        TypeCode.UInt16 => (ushort)obj,
+                        TypeCode.UInt32 => (uint)obj,
+                        TypeCode.UInt64 => (ulong)obj,
+                        TypeCode.Single => (float)obj,
+                        TypeCode.Double => (double)obj,
+                        TypeCode.Decimal => (decimal)obj,
+                        _ => throw ContractUtils.Unreachable,
+                    };
                 }
             }
 
-            private object ConvertDouble(Double obj)
+            private object ConvertDouble(double obj)
             {
                 checked
                 {
-                    switch (_to)
+                    return _to switch
                     {
-                        case TypeCode.Byte: return (Byte)obj;
-                        case TypeCode.SByte: return (SByte)obj;
-                        case TypeCode.Int16: return (Int16)obj;
-                        case TypeCode.Char: return (Char)obj;
-                        case TypeCode.Int32: return (Int32)obj;
-                        case TypeCode.Int64: return (Int64)obj;
-                        case TypeCode.UInt16: return (UInt16)obj;
-                        case TypeCode.UInt32: return (UInt32)obj;
-                        case TypeCode.UInt64: return (UInt64)obj;
-                        case TypeCode.Single: return (Single)obj;
-                        case TypeCode.Double: return (Double)obj;
-                        default: throw Assert.Unreachable;
-                    }
+                        TypeCode.Byte => (byte)obj,
+                        TypeCode.SByte => (sbyte)obj,
+                        TypeCode.Int16 => (short)obj,
+                        TypeCode.Char => (char)obj,
+                        TypeCode.Int32 => (int)obj,
+                        TypeCode.Int64 => (long)obj,
+                        TypeCode.UInt16 => (ushort)obj,
+                        TypeCode.UInt32 => (uint)obj,
+                        TypeCode.UInt64 => (ulong)obj,
+                        TypeCode.Single => (float)obj,
+                        TypeCode.Double => (double)obj,
+                        TypeCode.Decimal => (decimal)obj,
+                        _ => throw ContractUtils.Unreachable,
+                    };
+                }
+            }
+        }
+
+        internal sealed class ToUnderlying : NumericConvertInstruction
+        {
+            public override string InstructionName => "ConvertToUnderlying";
+
+            public ToUnderlying(TypeCode to, bool isLiftedToNull)
+                : base(to, to, isLiftedToNull)
+            {
+            }
+
+            protected override object Convert(object obj)
+            {
+                unchecked
+                {
+                    return _to switch
+                    {
+                        TypeCode.Boolean => (bool)obj,
+                        TypeCode.Byte => (byte)obj,
+                        TypeCode.SByte => (sbyte)obj,
+                        TypeCode.Int16 => (short)obj,
+                        TypeCode.Char => (char)obj,
+                        TypeCode.Int32 => (int)obj,
+                        TypeCode.Int64 => (long)obj,
+                        TypeCode.UInt16 => (ushort)obj,
+                        TypeCode.UInt32 => (uint)obj,
+                        TypeCode.UInt64 => (ulong)obj,
+                        _ => throw ContractUtils.Unreachable,
+                    };
                 }
             }
         }

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Reflection;
@@ -23,13 +24,40 @@ namespace System.Threading.Tasks.Tests
         /// </summary>
         /// <param name="inner">Will be run with a RanToCompletion, Faulted, and Canceled task.</param>
         [Theory]
-        [MemberData("CompletedNonGenericTasks")]
-        public void NonGeneric_Completed_Completed(Task inner) 
+        [MemberData(nameof(CompletedNonGenericTasks))]
+        public void NonGeneric_Completed_Completed(Task inner)
+        {
+            Task<Task> outer = Task.FromResult(inner);
+            Task unwrappedInner = outer.Unwrap();
+            Assert.True(unwrappedInner.IsCompleted);
+            AssertTasksAreEqual(inner, unwrappedInner);
+        }
+
+        /// <summary>
+        /// Tests Unwrap when both the outer task and non-generic inner task have completed by the time Unwrap is called.
+        /// </summary>
+        /// <param name="inner">Will be run with a RanToCompletion, Faulted, and Canceled task.</param>
+        [Theory]
+        [MemberData(nameof(CompletedNonGenericTasks))]
+        public void NonGeneric_Completed_Completed_OptimizeToUseSameInner(Task inner)
         {
             Task<Task> outer = Task.FromResult(inner);
             Task unwrappedInner = outer.Unwrap();
             Assert.True(unwrappedInner.IsCompleted);
             Assert.Same(inner, unwrappedInner);
+        }
+
+        /// <summary>
+        /// Tests Unwrap when both the outer task and generic inner task have completed by the time Unwrap is called.
+        /// </summary>
+        /// <param name="inner">The inner task.</param>
+        [Theory]
+        [MemberData(nameof(CompletedStringTasks))]
+        public void Generic_Completed_Completed(Task<string> inner)
+        {
+            Task<Task<string>> outer = Task.FromResult(inner);
+            Task<string> unwrappedInner = outer.Unwrap();
+            Assert.True(unwrappedInner.IsCompleted);
             AssertTasksAreEqual(inner, unwrappedInner);
         }
 
@@ -38,14 +66,13 @@ namespace System.Threading.Tasks.Tests
         /// </summary>
         /// <param name="inner">The inner task.</param>
         [Theory]
-        [MemberData("CompletedStringTasks")]
-        public void Generic_Completed_Completed(Task<string> inner)
+        [MemberData(nameof(CompletedStringTasks))]
+        public void Generic_Completed_Completed_OptimizeToUseSameInner(Task<string> inner)
         {
             Task<Task<string>> outer = Task.FromResult(inner);
             Task<string> unwrappedInner = outer.Unwrap();
             Assert.True(unwrappedInner.IsCompleted);
             Assert.Same(inner, unwrappedInner);
-            AssertTasksAreEqual(inner, unwrappedInner);
         }
 
         /// <summary>
@@ -53,8 +80,8 @@ namespace System.Threading.Tasks.Tests
         /// </summary>
         /// <param name="inner">The inner task.</param>
         [Theory]
-        [MemberData("CompletedNonGenericTasks")]
-        public void NonGeneric_NotCompleted_Completed(Task inner) 
+        [MemberData(nameof(CompletedNonGenericTasks))]
+        public void NonGeneric_NotCompleted_Completed(Task inner)
         {
             var outerTcs = new TaskCompletionSource<Task>();
             Task<Task> outer = outerTcs.Task;
@@ -71,7 +98,7 @@ namespace System.Threading.Tasks.Tests
         /// </summary>
         /// <param name="inner">The inner task.</param>
         [Theory]
-        [MemberData("CompletedStringTasks")]
+        [MemberData(nameof(CompletedStringTasks))]
         public void Generic_NotCompleted_Completed(Task<string> inner)
         {
             var outerTcs = new TaskCompletionSource<Task<string>>();
@@ -92,7 +119,7 @@ namespace System.Threading.Tasks.Tests
         [InlineData(TaskStatus.RanToCompletion)]
         [InlineData(TaskStatus.Faulted)]
         [InlineData(TaskStatus.Canceled)]
-        public void NonGeneric_Completed_NotCompleted(TaskStatus innerStatus) 
+        public void NonGeneric_Completed_NotCompleted(TaskStatus innerStatus)
         {
             var innerTcs = new TaskCompletionSource<bool>();
             Task inner = innerTcs.Task;
@@ -162,7 +189,7 @@ namespace System.Threading.Tasks.Tests
         [InlineData(false, TaskStatus.RanToCompletion)]
         [InlineData(false, TaskStatus.Canceled)]
         [InlineData(false, TaskStatus.Faulted)]
-        public void NonGeneric_NotCompleted_NotCompleted(bool outerCompletesFirst, TaskStatus innerStatus) 
+        public void NonGeneric_NotCompleted_NotCompleted(bool outerCompletesFirst, TaskStatus innerStatus)
         {
             var innerTcs = new TaskCompletionSource<bool>();
             Task inner = innerTcs.Task;
@@ -191,7 +218,7 @@ namespace System.Threading.Tasks.Tests
                     innerTcs.TrySetCanceled(CreateCanceledToken());
                     break;
             }
-            
+
             if (!outerCompletesFirst)
             {
                 Assert.False(unwrappedInner.IsCompleted);
@@ -519,7 +546,7 @@ namespace System.Threading.Tasks.Tests
                 if (typeof(T).GetTypeInfo().IsValueType)
                     Assert.Equal(expected.Result, actual.Result);
                 else
-                    Assert.Same(expected.Result, actual.Result);
+                    Assert.Same((object)expected.Result, (object)actual.Result);
             }
         }
 

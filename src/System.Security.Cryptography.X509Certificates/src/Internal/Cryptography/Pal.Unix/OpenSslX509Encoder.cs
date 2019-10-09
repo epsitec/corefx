@@ -1,94 +1,165 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Diagnostics;
 using System.Security.Cryptography;
+using System.Security.Cryptography.Asn1;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
-
 using Microsoft.Win32.SafeHandles;
 
 namespace Internal.Cryptography.Pal
 {
-    internal class OpenSslX509Encoder : IX509Pal
+    internal sealed class OpenSslX509Encoder : ManagedX509ExtensionProcessor, IX509Pal
     {
-        public AsymmetricAlgorithm DecodePublicKey(Oid oid, byte[] encodedKeyValue, byte[] encodedParameters)
+        public AsymmetricAlgorithm DecodePublicKey(Oid oid, byte[] encodedKeyValue, byte[] encodedParameters, ICertificatePal certificatePal)
         {
+            if (oid.Value == Oids.EcPublicKey && certificatePal != null)
+            {
+                return ((OpenSslX509CertificateReader)certificatePal).GetECDsaPublicKey();
+            }
+
             switch (oid.Value)
             {
-                case Oids.RsaRsa:
+                case Oids.Rsa:
                     return BuildRsaPublicKey(encodedKeyValue);
+                case Oids.Dsa:
+                    return BuildDsaPublicKey(encodedKeyValue, encodedParameters);
             }
 
             // NotSupportedException is what desktop and CoreFx-Windows throw in this situation.
             throw new NotSupportedException(SR.NotSupported_KeyAlgorithm);
         }
 
-        public unsafe string X500DistinguishedNameDecode(byte[] encodedDistinguishedName, X500DistinguishedNameFlags flag)
+        public string X500DistinguishedNameDecode(byte[] encodedDistinguishedName, X500DistinguishedNameFlags flags)
         {
-            using (SafeX509NameHandle x509Name = Interop.libcrypto.OpenSslD2I(Interop.libcrypto.d2i_X509_NAME, encodedDistinguishedName))
-            {
-                Interop.libcrypto.CheckValidOpenSslHandle(x509Name);
-
-                using (SafeBioHandle bioHandle = Interop.libcrypto.BIO_new(Interop.libcrypto.BIO_s_mem()))
-                {
-                    Interop.libcrypto.CheckValidOpenSslHandle(bioHandle);
-                    
-                    OpenSslX09NameFormatFlags nativeFlags = ConvertFormatFlags(flag);
-
-                    int written = Interop.libcrypto.X509_NAME_print_ex(
-                        bioHandle,
-                        x509Name,
-                        0,
-                        new UIntPtr((uint)nativeFlags));
-
-                    // X509_NAME_print_ex returns how many bytes were written into the buffer.
-                    // BIO_gets wants to ensure that the response is NULL-terminated.
-                    // So add one to leave space for the NULL.
-                    StringBuilder builder = new StringBuilder(written + 1);
-                    int read = Interop.libcrypto.BIO_gets(bioHandle, builder, builder.Capacity);
-
-                    if (read < 0)
-                    {
-                        throw Interop.libcrypto.CreateOpenSslCryptographicException();
-                    }
-
-                    return builder.ToString();
-                }
-            }
+            return X500NameEncoder.X500DistinguishedNameDecode(encodedDistinguishedName, true, flags);
         }
 
         public byte[] X500DistinguishedNameEncode(string distinguishedName, X500DistinguishedNameFlags flag)
         {
-            throw new NotImplementedException();
+            return X500NameEncoder.X500DistinguishedNameEncode(distinguishedName, flag);
         }
 
         public string X500DistinguishedNameFormat(byte[] encodedDistinguishedName, bool multiLine)
         {
-            throw new NotImplementedException();
+            return X500NameEncoder.X500DistinguishedNameDecode(
+                encodedDistinguishedName,
+                true,
+                multiLine ? X500DistinguishedNameFlags.UseNewLines : X500DistinguishedNameFlags.None,
+                multiLine);
         }
 
         public X509ContentType GetCertContentType(byte[] rawData)
         {
-            throw new NotImplementedException();
+            {
+                ICertificatePal certPal;
+
+                if (OpenSslX509CertificateReader.TryReadX509Der(rawData, out certPal) ||
+                    OpenSslX509CertificateReader.TryReadX509Pem(rawData, out certPal))
+                {
+                    certPal.Dispose();
+
+                    return X509ContentType.Cert;
+                }
+            }
+
+            if (PkcsFormatReader.IsPkcs7(rawData))
+            {
+                return X509ContentType.Pkcs7;
+            }
+
+            {
+                OpenSslPkcs12Reader pfx;
+
+                if (OpenSslPkcs12Reader.TryRead(rawData, out pfx))
+                {
+                    pfx.Dispose();
+                    return X509ContentType.Pkcs12;
+                }
+            }
+
+            // Unsupported format.
+            // Windows throws new CryptographicException(CRYPT_E_NO_MATCH)
+            throw new CryptographicException();
         }
 
         public X509ContentType GetCertContentType(string fileName)
         {
-            throw new NotImplementedException();
-        }
-
-        public byte[] EncodeX509KeyUsageExtension(X509KeyUsageFlags keyUsages)
-        {
-            throw new NotImplementedException();
-        }
-
-        public unsafe void DecodeX509KeyUsageExtension(byte[] encoded, out X509KeyUsageFlags keyUsages)
-        {
-            using (SafeAsn1BitStringHandle bitString = Interop.libcrypto.OpenSslD2I(Interop.libcrypto.d2i_ASN1_BIT_STRING, encoded))
+            // If we can't open the file, fail right away.
+            using (SafeBioHandle fileBio = Interop.Crypto.BioNewFile(fileName, "rb"))
             {
-                Interop.libcrypto.CheckValidOpenSslHandle(bitString);
+                Interop.Crypto.CheckValidOpenSslHandle(fileBio);
+
+                int bioPosition = Interop.Crypto.BioTell(fileBio);
+                Debug.Assert(bioPosition >= 0);
+
+                // X509ContentType.Cert
+                {
+                    ICertificatePal certPal;
+
+                    if (OpenSslX509CertificateReader.TryReadX509Der(fileBio, out certPal))
+                    {
+                        certPal.Dispose();
+
+                        return X509ContentType.Cert;
+                    }
+
+                    OpenSslX509CertificateReader.RewindBio(fileBio, bioPosition);
+
+                    if (OpenSslX509CertificateReader.TryReadX509Pem(fileBio, out certPal))
+                    {
+                        certPal.Dispose();
+
+                        return X509ContentType.Cert;
+                    }
+
+                    OpenSslX509CertificateReader.RewindBio(fileBio, bioPosition);
+                }
+
+                // X509ContentType.Pkcs7
+                {
+                    if (PkcsFormatReader.IsPkcs7Der(fileBio))
+                    {
+                        return X509ContentType.Pkcs7;
+                    }
+
+                    OpenSslX509CertificateReader.RewindBio(fileBio, bioPosition);
+
+                    if (PkcsFormatReader.IsPkcs7Pem(fileBio))
+                    {
+                        return X509ContentType.Pkcs7;
+                    }
+
+                    OpenSslX509CertificateReader.RewindBio(fileBio, bioPosition);
+                }
+
+                // X509ContentType.Pkcs12 (aka PFX)
+                {
+                    OpenSslPkcs12Reader pkcs12Reader;
+
+                    if (OpenSslPkcs12Reader.TryRead(fileBio, out pkcs12Reader))
+                    {
+                        pkcs12Reader.Dispose();
+
+                        return X509ContentType.Pkcs12;
+                    }
+
+                    OpenSslX509CertificateReader.RewindBio(fileBio, bioPosition);
+                }
+            }
+
+            // Unsupported format.
+            // Windows throws new CryptographicException(CRYPT_E_NO_MATCH)
+            throw new CryptographicException();
+        }
+
+        public override void DecodeX509KeyUsageExtension(byte[] encoded, out X509KeyUsageFlags keyUsages)
+        {
+            using (SafeAsn1BitStringHandle bitString = Interop.Crypto.DecodeAsn1BitString(encoded, encoded.Length))
+            {
+                Interop.Crypto.CheckValidOpenSslHandle(bitString);
 
                 byte[] decoded = Interop.Crypto.GetAsn1StringBytes(bitString.DangerousGetHandle());
 
@@ -137,61 +208,30 @@ namespace Internal.Cryptography.Pal
             }
         }
 
-        public byte[] EncodeX509BasicConstraints2Extension(
-            bool certificateAuthority,
-            bool hasPathLengthConstraint,
-            int pathLengthConstraint)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void DecodeX509BasicConstraintsExtension(
+        public override void DecodeX509BasicConstraints2Extension(
             byte[] encoded,
             out bool certificateAuthority,
             out bool hasPathLengthConstraint,
             out int pathLengthConstraint)
         {
-            throw new NotImplementedException();
-        }
-
-        public unsafe void DecodeX509BasicConstraints2Extension(
-            byte[] encoded,
-            out bool certificateAuthority,
-            out bool hasPathLengthConstraint,
-            out int pathLengthConstraint)
-        {
-            using (SafeBasicConstraintsHandle constraints = Interop.libcrypto.OpenSslD2I(Interop.libcrypto.d2i_BASIC_CONSTRAINTS, encoded))
+            if (!Interop.Crypto.DecodeX509BasicConstraints2Extension(
+                encoded,
+                encoded.Length,
+                out certificateAuthority,
+                out hasPathLengthConstraint,
+                out pathLengthConstraint))
             {
-                Interop.libcrypto.CheckValidOpenSslHandle(constraints);
-
-                Interop.libcrypto.BASIC_CONSTRAINTS* data = (Interop.libcrypto.BASIC_CONSTRAINTS*)constraints.DangerousGetHandle();
-                certificateAuthority = data->CA != 0;
-
-                if (data->pathlen != IntPtr.Zero)
-                {
-                    hasPathLengthConstraint = true;
-                    pathLengthConstraint = Interop.libcrypto.ASN1_INTEGER_get(data->pathlen).ToInt32();
-                }
-                else
-                {
-                    hasPathLengthConstraint = false;
-                    pathLengthConstraint = 0;
-                }
+                throw Interop.Crypto.CreateOpenSslCryptographicException();
             }
         }
 
-        public byte[] EncodeX509EnhancedKeyUsageExtension(OidCollection usages)
-        {
-            throw new NotImplementedException();
-        }
-
-        public unsafe void DecodeX509EnhancedKeyUsageExtension(byte[] encoded, out OidCollection usages)
+        public override void DecodeX509EnhancedKeyUsageExtension(byte[] encoded, out OidCollection usages)
         {
             OidCollection oids = new OidCollection();
 
-            using (SafeEkuExtensionHandle eku = Interop.libcrypto.OpenSslD2I(Interop.libcrypto.d2i_EXTENDED_KEY_USAGE, encoded))
+            using (SafeEkuExtensionHandle eku = Interop.Crypto.DecodeExtendedKeyUsage(encoded, encoded.Length))
             {
-                Interop.libcrypto.CheckValidOpenSslHandle(eku);
+                Interop.Crypto.CheckValidOpenSslHandle(eku);
 
                 int count = Interop.Crypto.GetX509EkuFieldCount(eku);
 
@@ -201,10 +241,10 @@ namespace Internal.Cryptography.Pal
 
                     if (oidPtr == IntPtr.Zero)
                     {
-                        throw Interop.libcrypto.CreateOpenSslCryptographicException();
+                        throw Interop.Crypto.CreateOpenSslCryptographicException();
                     }
 
-                    string oidValue = Interop.libcrypto.OBJ_obj2txt_helper(oidPtr);
+                    string oidValue = Interop.Crypto.GetOidValue(oidPtr);
 
                     oids.Add(new Oid(oidValue));
                 }
@@ -213,128 +253,44 @@ namespace Internal.Cryptography.Pal
             usages = oids;
         }
 
-        public byte[] EncodeX509SubjectKeyIdentifierExtension(byte[] subjectKeyIdentifier)
+        private static RSA BuildRsaPublicKey(byte[] encodedData)
         {
-            throw new NotImplementedException();
+            RSA rsa = new RSAOpenSsl();
+            try
+            {
+                rsa.ImportRSAPublicKey(new ReadOnlySpan<byte>(encodedData), out _);
+            }
+            catch (Exception)
+            {
+                rsa.Dispose();
+                throw;
+            }
+            return rsa;
         }
 
-        public unsafe void DecodeX509SubjectKeyIdentifierExtension(byte[] encoded, out byte[] subjectKeyIdentifier)
+        private static DSA BuildDsaPublicKey(byte[] encodedKeyValue, byte[] encodedParameters)
         {
-            using (SafeAsn1OctetStringHandle octetString = Interop.libcrypto.OpenSslD2I(Interop.libcrypto.d2i_ASN1_OCTET_STRING, encoded))
+            SubjectPublicKeyInfoAsn spki = new SubjectPublicKeyInfoAsn
             {
-                Interop.libcrypto.CheckValidOpenSslHandle(octetString);
+                Algorithm = new AlgorithmIdentifierAsn { Algorithm = new Oid(Oids.Dsa, null), Parameters = encodedParameters },
+                SubjectPublicKey = encodedKeyValue,
+            };
 
-                subjectKeyIdentifier = Interop.Crypto.GetAsn1StringBytes(octetString.DangerousGetHandle());
-            }
-        }
-
-        public byte[] ComputeCapiSha1OfPublicKey(PublicKey key)
-        {
-            throw new NotImplementedException();
-        }
-
-        private static OpenSslX09NameFormatFlags ConvertFormatFlags(X500DistinguishedNameFlags inFlags)
-        {
-            OpenSslX09NameFormatFlags outFlags = 0;
-
-            if (inFlags.HasFlag(X500DistinguishedNameFlags.Reversed))
+            using (AsnWriter writer = new AsnWriter(AsnEncodingRules.DER))
             {
-                outFlags |= OpenSslX09NameFormatFlags.XN_FLAG_DN_REV;
+                spki.Encode(writer);
+                DSA dsa = new DSAOpenSsl();
+                try
+                {
+                    dsa.ImportSubjectPublicKeyInfo(writer.EncodeAsSpan(), out _);
+                    return dsa;
+                }
+                catch (Exception)
+                {
+                    dsa.Dispose();
+                    throw;
+                }
             }
-
-            if (inFlags.HasFlag(X500DistinguishedNameFlags.UseSemicolons))
-            {
-                outFlags |= OpenSslX09NameFormatFlags.XN_FLAG_SEP_SPLUS_SPC;
-            }
-            else if (inFlags.HasFlag(X500DistinguishedNameFlags.UseNewLines))
-            {
-                outFlags |= OpenSslX09NameFormatFlags.XN_FLAG_SEP_MULTILINE;
-            }
-            else
-            {
-                outFlags |= OpenSslX09NameFormatFlags.XN_FLAG_SEP_CPLUS_SPC;
-            }
-
-            if (inFlags.HasFlag(X500DistinguishedNameFlags.DoNotUseQuotes))
-            {
-                // TODO: Handle this.
-            }
-
-            if (inFlags.HasFlag(X500DistinguishedNameFlags.ForceUTF8Encoding))
-            {
-                // TODO: Handle this.
-            }
-
-            if (inFlags.HasFlag(X500DistinguishedNameFlags.UseUTF8Encoding))
-            {
-                // TODO: Handle this.
-            }
-            else if (inFlags.HasFlag(X500DistinguishedNameFlags.UseT61Encoding))
-            {
-                // TODO: Handle this.
-            }
-
-            return outFlags;
-        }
-
-        private static unsafe RSA BuildRsaPublicKey(byte[] encodedData)
-        {
-            using (SafeRsaHandle rsaHandle = Interop.libcrypto.OpenSslD2I(Interop.libcrypto.d2i_RSAPublicKey, encodedData))
-            {
-                Interop.libcrypto.CheckValidOpenSslHandle(rsaHandle);
-
-                RSAParameters rsaParameters = Interop.libcrypto.ExportRsaParameters(rsaHandle, false);
-                RSA rsa = new RSAOpenSsl();
-                rsa.ImportParameters(rsaParameters);
-                return rsa;
-            }
-        }
-
-        [Flags]
-        private enum OpenSslX09NameFormatFlags : uint
-        {
-            XN_FLAG_SEP_MASK = (0xf << 16),
-
-            // O=Apache HTTP Server, OU=Test Certificate, CN=localhost
-            // Note that this is the only not-reversed value, since XN_FLAG_COMPAT | XN_FLAG_DN_REV produces nothing.
-            XN_FLAG_COMPAT = 0,
-
-            // CN=localhost,OU=Test Certificate,O=Apache HTTP Server
-            XN_FLAG_SEP_COMMA_PLUS = (1 << 16),
-
-            // CN=localhost, OU=Test Certificate, O=Apache HTTP Server
-            XN_FLAG_SEP_CPLUS_SPC = (2 << 16),
-
-            // CN=localhost; OU=Test Certificate; O=Apache HTTP Server
-            XN_FLAG_SEP_SPLUS_SPC = (3 << 16),
-
-            // CN=localhost
-            // OU=Test Certificate
-            // O=Apache HTTP Server
-            XN_FLAG_SEP_MULTILINE = (4 << 16),
-
-            XN_FLAG_DN_REV = (1 << 20),
-
-            XN_FLAG_FN_MASK = (0x3 << 21),
-
-            // CN=localhost, OU=Test Certificate, O=Apache HTTP Server
-            XN_FLAG_FN_SN = 0,
-
-            // commonName=localhost, organizationalUnitName=Test Certificate, organizationName=Apache HTTP Server
-            XN_FLAG_FN_LN = (1 << 21),
-
-            // 2.5.4.3=localhost, 2.5.4.11=Test Certificate, 2.5.4.10=Apache HTTP Server
-            XN_FLAG_FN_OID = (2 << 21),
-
-            // localhost, Test Certificate, Apache HTTP Server
-            XN_FLAG_FN_NONE = (3 << 21),
-
-            // CN = localhost, OU = Test Certificate, O = Apache HTTP Server
-            XN_FLAG_SPC_EQ = (1 << 23),
-
-            XN_FLAG_DUMP_UNKNOWN_FIELDS = (1 << 24),
-
-            XN_FLAG_FN_ALIGN = (1 << 25),
         }
     }
 }

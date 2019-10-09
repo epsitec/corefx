@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.hide003.hide003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.hide003.hide003;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -60,8 +59,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload001.overload001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload001.overload001;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -111,8 +108,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload002.overload002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload002.overload002;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -162,8 +157,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload003.overload003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload003.overload003;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // Call methods with different accessibility level and selecting the right one.:)
@@ -214,8 +207,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload004.overload004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload004.overload004;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // Call methods with different accessibility level and selecting the right one.:)
@@ -266,8 +257,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload005.overload005
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload005.overload005;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // Call methods with different accessibility level and selecting the right one.:)
@@ -318,8 +307,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload006.overload006
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload006.overload006;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // Call methods with different accessibility level and selecting the right one.:)
@@ -370,8 +357,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload007.overload007
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload007.overload007;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // Call methods with different accessibility level and selecting the right one.:)
@@ -422,8 +407,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload008.overload008
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload008.overload008;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // Select the best method to call.
@@ -480,17 +463,15 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload009.overload009
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload009.overload009;
     // <Title> Tests overload resolution</Title>
     // <Description></Description>
     // <RelatedBugs></RelatedBugs>
     // <Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class B
     {
-        static public int status = -1;
+        public static int status = -1;
         public void Foo(out int x)
         {
             status = 1;
@@ -505,7 +486,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
             status = 2;
         }
 
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -527,17 +508,15 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload010.overload010
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload010.overload010;
     // <Title> Tests overload resolution</Title>
     // <Description>regression test </Description>
     // <RelatedBugs></RelatedBugs>
     // <Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class B
     {
-        static public int status = -1;
+        public static int status = -1;
         public void Foo(out int x)
         {
             status = 1;
@@ -552,7 +531,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
             status = 2;
         }
 
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -574,8 +553,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload011.overload011
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload011.overload011;
-
     //<Area></Area>
     //<Title></Title>
     //<Description>regression test</Description>
@@ -618,8 +595,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload012.overload012
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload012.overload012;
-
     //<Area></Area>
     //<Title></Title>
     //<Description>regression test</Description>
@@ -667,7 +642,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload013.overload013
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.overload013.overload013;
     // <Area>dynamic</Area>
     // <Title>ref parameter overloading</Title>
     // <Description>
@@ -676,7 +650,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
     // <Related Bugs></Related Bugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class A
     {
@@ -693,7 +666,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
         {
         }
 
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -714,8 +687,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr001.ovr001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr001.ovr001;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -770,8 +741,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr002.ovr002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr002.ovr002;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -826,8 +795,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr003.ovr003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr003.ovr003;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -882,8 +849,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr004.ovr004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr004.ovr004;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -946,8 +911,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr005.ovr005
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr005.ovr005;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -1010,8 +973,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr006.ovr006
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr006.ovr006;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -1074,8 +1035,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr007.ovr007
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr007.ovr007;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -1138,8 +1097,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr008.ovr008
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr008.ovr008;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -1198,8 +1155,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr009.ovr009
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr009.ovr009;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -1260,8 +1215,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr010.ovr010
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr010.ovr010;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -1324,8 +1277,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr011.ovr011
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr011.ovr011;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -1388,8 +1339,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr012.ovr012
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovr012.ovr012;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -1452,8 +1401,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovrdynamic001.ovrdynamic001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovrdynamic001.ovrdynamic001;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -1507,8 +1454,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Meth
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovrdynamic002.ovrdynamic002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Methods.Twoclass2methods.ovrdynamic002.ovrdynamic002;
-
     // <Title> Tests overload resolution for 2 class and 2 methods</Title>
     // <Description>
     // </Description>

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 using System;
@@ -676,11 +677,8 @@ namespace System.Threading.Tasks.Tests
 
                 smallTaskArray[0] = null;
 
-                Assert.Throws<ArgumentException>(
-                   () => { Task.Factory.ContinueWhenAll(smallTaskArray, delegate (Task[] finishedArray) { }); });
-
-                Assert.Throws<ArgumentException>(
-                   () => { Task.Factory.ContinueWhenAll(new Task[] { }, delegate (Task[] finishedArray) { }); });
+                AssertExtensions.Throws<ArgumentException>("tasks", () => Task.Factory.ContinueWhenAll(smallTaskArray, delegate (Task[] finishedArray) { }));
+                AssertExtensions.Throws<ArgumentException>("tasks", () => Task.Factory.ContinueWhenAll(new Task[0], delegate (Task[] finishedArray) { }));
             }
 
             //
@@ -712,11 +710,8 @@ namespace System.Threading.Tasks.Tests
 
                 smallTaskArray[0] = null;
 
-                Assert.Throws<ArgumentException>(
-                   () => { Task.Factory.ContinueWhenAll<int>(smallTaskArray, finishedArray => 10); });
-
-                Assert.Throws<ArgumentException>(
-                   () => { Task.Factory.ContinueWhenAll<int>(new Task[] { }, finishedArray => 10); });
+                AssertExtensions.Throws<ArgumentException>("tasks", () => Task.Factory.ContinueWhenAll(smallTaskArray, finishedArray => 10));
+                AssertExtensions.Throws<ArgumentException>("tasks", () => Task.Factory.ContinueWhenAll<int>(new Task[] { }, finishedArray => 10));
             }
 
 
@@ -749,11 +744,8 @@ namespace System.Threading.Tasks.Tests
 
                 smallTaskArray[0] = null;
 
-                Assert.Throws<ArgumentException>(
-                   () => { Task<int>.Factory.ContinueWhenAll(smallTaskArray, finishedArray => 10); });
-
-                Assert.Throws<ArgumentException>(
-                   () => { Task<int>.Factory.ContinueWhenAll(new Task[] { }, finishedArray => 10); });
+                AssertExtensions.Throws<ArgumentException>("tasks", () => Task<int>.Factory.ContinueWhenAll(smallTaskArray, finishedArray => 10));
+                AssertExtensions.Throws<ArgumentException>("tasks", () => Task<int>.Factory.ContinueWhenAll(new Task[0], finishedArray => 10));
             }
 
             //
@@ -785,11 +777,8 @@ namespace System.Threading.Tasks.Tests
 
                 smallFutureArray[0] = null;
 
-                Assert.Throws<ArgumentException>(
-                   () => { Task.Factory.ContinueWhenAll<int>(smallFutureArray, finishedArray => { }); });
-
-                Assert.Throws<ArgumentException>(
-                   () => { Task.Factory.ContinueWhenAll<int>(new Task<int>[] { }, finishedArray => { }); });
+                AssertExtensions.Throws<ArgumentException>("tasks", () => Task.Factory.ContinueWhenAll(smallFutureArray, finishedArray => { }));
+                AssertExtensions.Throws<ArgumentException>("tasks", () => Task.Factory.ContinueWhenAll(new Task<int>[0], finishedArray => { }));
             }
 
             //
@@ -821,11 +810,8 @@ namespace System.Threading.Tasks.Tests
 
                 smallFutureArray[0] = null;
 
-                Assert.Throws<ArgumentException>(
-                   () => { Task.Factory.ContinueWhenAll<int, int>(smallFutureArray, finishedArray => 10); });
-
-                Assert.Throws<ArgumentException>(
-                   () => { Task.Factory.ContinueWhenAll<int, int>(new Task<int>[] { }, finishedArray => 10); });
+                AssertExtensions.Throws<ArgumentException>("tasks", () => Task.Factory.ContinueWhenAll(smallFutureArray, finishedArray => 10));
+                AssertExtensions.Throws<ArgumentException>("tasks", () => Task.Factory.ContinueWhenAll(new Task<int>[0], finishedArray => 10));
             }
 
             //
@@ -858,11 +844,8 @@ namespace System.Threading.Tasks.Tests
 
                 smallFutureArray[0] = null;
 
-                Assert.Throws<ArgumentException>(
-                   () => { Task<int>.Factory.ContinueWhenAll<int>(smallFutureArray, finishedArray => 10); });
-
-                Assert.Throws<ArgumentException>(
-                   () => { Task<int>.Factory.ContinueWhenAll<int>(new Task<int>[] { }, finishedArray => 10); });
+                AssertExtensions.Throws<ArgumentException>("tasks", () => Task<int>.Factory.ContinueWhenAll(smallFutureArray, finishedArray => 10));
+                AssertExtensions.Throws<ArgumentException>("tasks", () => Task<int>.Factory.ContinueWhenAll(new Task<int>[0], finishedArray => 10));
             }
         }
 

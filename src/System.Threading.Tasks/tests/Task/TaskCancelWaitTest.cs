@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // Summary:
 // Implements the exhaustive task cancel and wait scenarios.
@@ -7,7 +8,7 @@
 using Xunit;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;   // for StopWatch
+using System.Diagnostics;   // for Stopwatch
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
@@ -22,16 +23,16 @@ namespace System.Threading.Tasks.Tests.CancelWait
         #region Private Fields
 
         private API _api;                               // the API_CancelWait to be tested
-        private WaitBy _waitBy;                         // the format of Wait 
+        private WaitBy _waitBy;                         // the format of Wait
         private int _waitTimeout;                       // the timeout in ms to be waited
 
         private TaskInfo _taskTree;                     // the _taskTree to track child task cancellation option
 
-        private static readonly int s_delatTimeOut = 100;
+        private static readonly int s_deltaTimeOut = 10;
 
         private bool _taskCompleted;                    // result to record the Wait(timeout) return value
         private AggregateException _caughtException;    // exception thrown during wait
-        private CountdownEvent _countdownEvent;         // event to signal the main thread that the whole task tree has been created     
+        private CountdownEvent _countdownEvent;         // event to signal the main thread that the whole task tree has been created
 
         #endregion
 
@@ -58,7 +59,7 @@ namespace System.Threading.Tasks.Tests.CancelWait
             TaskScheduler tm = TaskScheduler.Default;
 
             CreateTask(tm, _taskTree);
-            // wait the whole task tree to be created 
+            // wait the whole task tree to be created
             _countdownEvent.Wait();
 
             Stopwatch sw = Stopwatch.StartNew();
@@ -69,6 +70,7 @@ namespace System.Threading.Tasks.Tests.CancelWait
                 {
                     case API.Cancel:
                         _taskTree.CancellationTokenSource.Cancel();
+                        _taskTree.Task.Wait();
                         break;
 
                     case API.Wait:
@@ -99,12 +101,12 @@ namespace System.Threading.Tasks.Tests.CancelWait
 
             if (_waitTimeout != -1)
             {
-                long delta = sw.ElapsedMilliseconds - ((long)_waitTimeout + s_delatTimeOut);
+                long delta = sw.ElapsedMilliseconds - ((long)_waitTimeout + s_deltaTimeOut);
 
                 if (delta > 0)
                 {
                     Debug.WriteLine("ElapsedMilliseconds way more than requested Timeout.");
-                    Debug.WriteLine("WaitTime= {0} ms, ElapsedTime= {1} ms, Allowed Descrepancy = {2} ms", _waitTimeout, sw.ElapsedMilliseconds, s_delatTimeOut);
+                    Debug.WriteLine("WaitTime= {0} ms, ElapsedTime= {1} ms, Allowed Discrepancy = {2} ms", _waitTimeout, sw.ElapsedMilliseconds, s_deltaTimeOut);
                     Debug.WriteLine("Delta= {0} ms", delta);
                 }
                 else
@@ -130,8 +132,11 @@ namespace System.Threading.Tasks.Tests.CancelWait
 
                     if (current.IsLeaf)
                     {
-                        if (!_countdownEvent.IsSet)
-                            _countdownEvent.Signal();
+                        lock (_countdownEvent)
+                        {
+                            if (!_countdownEvent.IsSet)
+                                _countdownEvent.Signal();
+                        }
                     }
                     else
                     {
@@ -161,10 +166,13 @@ namespace System.Threading.Tasks.Tests.CancelWait
                         }
                         finally
                         {
-                            // stop the tree creation and let the main thread proceed
-                            if (!_countdownEvent.IsSet)
+                            lock (_countdownEvent)
                             {
-                                _countdownEvent.Signal(_countdownEvent.CurrentCount);
+                                // stop the tree creation and let the main thread proceed
+                                if (!_countdownEvent.IsSet)
+                                {
+                                    _countdownEvent.Signal(_countdownEvent.CurrentCount);
+                                }
                             }
                         }
                     }
@@ -207,6 +215,7 @@ namespace System.Threading.Tasks.Tests.CancelWait
                         VerifyCancel(current);
                         VerifyResult(current);
                     });
+                    Assert.Null(_caughtException);
                     break;
 
                 //root task was calling wait
@@ -236,7 +245,7 @@ namespace System.Threading.Tasks.Tests.CancelWait
                     break;
 
                 default:
-                    throw new ArgumentOutOfRangeException(string.Format("unknown API_CancelWait of", _api));
+                    throw new ArgumentOutOfRangeException(string.Format("unknown API_CancelWait of {0}", _api));
             }
         }
 
@@ -258,7 +267,7 @@ namespace System.Threading.Tasks.Tests.CancelWait
             {
                 // need to make sure the parent task at least called .Cancel() on the child
                 if (!ti.CancellationToken.IsCancellationRequested)
-                    Assert.True(false, string.Format("Task which has been explictly cancel-requested either by parent must have CancellationRequested set as true"));
+                    Assert.True(false, string.Format("Task which has been explicitly cancel-requested either by parent must have CancellationRequested set as true"));
             }
             else if (ti.IsRespectParentCancellation)
             {
@@ -362,7 +371,7 @@ namespace System.Threading.Tasks.Tests.CancelWait
                 else if (ti.Task.IsCompleted)
                 {
                     //Function point comparison cant be done by rounding off to nearest decimal points since
-                    //1.64 could be represented as 1.63999999 or as 1.6499999999. To perform floating point comparisons, 
+                    //1.64 could be represented as 1.63999999 or as 1.6499999999. To perform floating point comparisons,
                     //a range has to be defined and check to ensure that the result obtained is within the specified range
                     double minLimit = 1.63;
                     double maxLimit = 1.65;
@@ -381,7 +390,7 @@ namespace System.Threading.Tasks.Tests.CancelWait
         }
 
         /// <summary>
-        /// Verify the _caughtException against a custom predicate 
+        /// Verify the _caughtException against a custom predicate
         /// </summary>
         private bool FindException(Predicate<Exception> exceptionPred)
         {
@@ -423,8 +432,8 @@ namespace System.Threading.Tasks.Tests.CancelWait
 
     /// <summary>
     /// The Tree node Data type
-    /// 
-    /// While the tree is not restricted to this data type 
+    ///
+    /// While the tree is not restricted to this data type
     /// the implemented tests are using the TaskInfo_CancelWait data type for their scenarios
     /// </summary>
     public class TaskInfo
@@ -458,7 +467,7 @@ namespace System.Threading.Tasks.Tests.CancelWait
             int index = -1;
             for (int i = 0; i < options.Length; i++)
             {
-                string o = options[i].Trim(); // remove any white spaces.
+                string o = options[i].Trim(); // remove any whitespace.
                 options[i] = o;
                 if (o.Equals("RespectParentCancellation", StringComparison.OrdinalIgnoreCase))
                 {
@@ -527,7 +536,7 @@ namespace System.Threading.Tasks.Tests.CancelWait
         public string Name { get; set; }
 
         /// <summary>
-        /// TaskCreation option of task associated with the current node 
+        /// TaskCreation option of task associated with the current node
         /// </summary>
         public TaskCreationOptions Option { get; private set; }
 
@@ -537,12 +546,12 @@ namespace System.Threading.Tasks.Tests.CancelWait
         public WorkloadType WorkType { get; private set; }
 
         /// <summary>
-        /// bool for indicating if the current tasks should initiate its children cancellation 
+        /// bool for indicating if the current tasks should initiate its children cancellation
         /// </summary>
         public bool CancelChildren { get; private set; }
 
         /// <summary>
-        /// While a tasks is correct execute a result is produced 
+        /// While a tasks is correct execute a result is produced
         /// this is the result
         /// </summary>
         public double Result { get; private set; }
@@ -569,7 +578,7 @@ namespace System.Threading.Tasks.Tests.CancelWait
         #region Helper Methods
 
         /// <summary>
-        /// Recursively traverse the tree and compare the current node usign the predicate  
+        /// Recursively traverse the tree and compare the current node using the predicate
         /// </summary>
         /// <param name="predicate">the predicate</param>
         /// <param name="report"></param>
@@ -670,17 +679,17 @@ namespace System.Threading.Tasks.Tests.CancelWait
     /// <summary>
     /// Every task has an workload associated
     /// These are the workload types used in the task tree
-    /// The workload is not common for the whole tree - Every node can have its own workload 
+    /// The workload is not common for the whole tree - Every node can have its own workload
     /// </summary>
     public enum WorkloadType
     {
         Exceptional = -2,
         Cancelled = -1,
-        VeryLight = 1000,     // the number is the N input to the ZetaSequence workload
-        Light = 5000,
-        Medium = 100000,
-        Heavy = 500000,
-        VeryHeavy = 1000000,
+        VeryLight = 100,     // the number is the N input to the ZetaSequence workload
+        Light = 200,
+        Medium = 400,
+        Heavy = 800,
+        VeryHeavy = 1600,
     }
 
     #endregion

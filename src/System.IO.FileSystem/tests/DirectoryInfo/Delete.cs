@@ -1,13 +1,14 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
-namespace System.IO.FileSystem.Tests
+namespace System.IO.Tests
 {
     public class DirectoryInfo_Delete : Directory_Delete_str
     {
-        public override void Delete(string path)
+        protected override void Delete(string path)
         {
             new DirectoryInfo(path).Delete();
         }
@@ -29,12 +30,12 @@ namespace System.IO.FileSystem.Tests
 
     public class DirectoryInfo_Delete_bool : Directory_Delete_str_bool
     {
-        public override void Delete(string path)
+        protected override void Delete(string path)
         {
             new DirectoryInfo(path).Delete(false);
         }
 
-        public override void Delete(string path, bool recursive)
+        protected override void Delete(string path, bool recursive)
         {
             new DirectoryInfo(path).Delete(recursive);
         }

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.Runtime.Serialization
 {
@@ -11,7 +12,7 @@ namespace System.Runtime.Serialization
     using System.Xml;
     using DataContractDictionary = System.Collections.Generic.Dictionary<System.Xml.XmlQualifiedName, DataContract>;
 
-#if USE_REFEMIT || NET_NATIVE
+#if USE_REFEMIT
     public class XmlObjectSerializerContext
 #else
     internal class XmlObjectSerializerContext
@@ -24,10 +25,10 @@ namespace System.Runtime.Serialization
         private bool _isSerializerKnownDataContractsSetExplicit;
         protected IList<Type> serializerKnownTypeList;
         private int _itemCount;
-        private int _maxItemsInObjectGraph;
-        private StreamingContext _streamingContext;
-        private bool _ignoreExtensionDataObject;
-        private DataContractResolver _dataContractResolver;
+        private readonly int _maxItemsInObjectGraph;
+        private readonly StreamingContext _streamingContext;
+        private readonly bool _ignoreExtensionDataObject;
+        private readonly DataContractResolver _dataContractResolver;
         private KnownTypeDataContractResolver _knownTypeResolver;
 
         internal XmlObjectSerializerContext(XmlObjectSerializer serializer, int maxItemsInObjectGraph, StreamingContext streamingContext, bool ignoreExtensionDataObject,
@@ -46,9 +47,7 @@ namespace System.Runtime.Serialization
         {
         }
 
-        internal XmlObjectSerializerContext(DataContractSerializer serializer, DataContract rootTypeDataContract
-                                                                                                                , DataContractResolver dataContractResolver
-                                                                                                                                                           )
+        internal XmlObjectSerializerContext(DataContractSerializer serializer, DataContract rootTypeDataContract, DataContractResolver dataContractResolver)
             : this(serializer,
             serializer.MaxItemsInObjectGraph,
             new StreamingContext(),
@@ -232,7 +231,7 @@ namespace System.Runtime.Serialization
 
         internal bool IsKnownType(DataContract dataContract, Type declaredType)
         {
-            DataContract knownContract = ResolveDataContractFromKnownTypes(dataContract.StableName.Name, dataContract.StableName.Namespace, null /*memberTypeContract*/ /*, declaredType */);
+            DataContract knownContract = ResolveDataContractFromKnownTypes(dataContract.StableName.Name, dataContract.StableName.Namespace, null /*memberTypeContract*/, declaredType);
             return knownContract != null && knownContract.UnderlyingType == dataContract.UnderlyingType;
         }
 
@@ -247,12 +246,6 @@ namespace System.Runtime.Serialization
             DataContract dataContract = PrimitiveDataContract.GetPrimitiveDataContract(typeName.Name, typeName.Namespace);
             if (dataContract == null)
             {
-#if NET_NATIVE
-                if (typeName.Name == Globals.SafeSerializationManagerName && typeName.Namespace == Globals.SafeSerializationManagerNamespace && Globals.TypeOfSafeSerializationManager != null)
-                {
-                    return GetDataContract(Globals.TypeOfSafeSerializationManager);
-                }
-#endif
                 dataContract = scopedKnownTypes.GetDataContract(typeName);
                 if (dataContract == null)
                 {
@@ -262,7 +255,7 @@ namespace System.Runtime.Serialization
             return dataContract;
         }
 
-        protected DataContract ResolveDataContractFromKnownTypes(string typeName, string typeNs, DataContract memberTypeContract)
+        protected DataContract ResolveDataContractFromKnownTypes(string typeName, string typeNs, DataContract memberTypeContract, Type declaredType)
         {
             XmlQualifiedName qname = new XmlQualifiedName(typeName, typeNs);
             DataContract dataContract;
@@ -272,13 +265,13 @@ namespace System.Runtime.Serialization
             }
             else
             {
-                Type dataContractType = _dataContractResolver.ResolveName(typeName, typeNs, null, KnownTypeResolver);
+                Type dataContractType = _dataContractResolver.ResolveName(typeName, typeNs, declaredType, KnownTypeResolver);
                 dataContract = dataContractType == null ? null : GetDataContract(dataContractType);
             }
             if (dataContract == null)
             {
                 if (memberTypeContract != null
-                    && !memberTypeContract.UnderlyingType.GetTypeInfo().IsInterface
+                    && !memberTypeContract.UnderlyingType.IsInterface
                     && memberTypeContract.StableName == qname)
                 {
                     dataContract = memberTypeContract;

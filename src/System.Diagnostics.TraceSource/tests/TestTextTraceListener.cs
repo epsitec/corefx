@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.IO;
 
@@ -25,7 +26,7 @@ namespace System.Diagnostics.TraceSourceTests
         /// </summary>
         public int WriteCount { get { return _writeCount; } }
 
-        public String Output
+        public string Output
         {
             get { return _output.ToString(); }
         }

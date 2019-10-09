@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.IO;
@@ -37,7 +38,30 @@ public class UmsSecurityTests
         }
     }
 
-    static void VerifyNothingCanBeReadOrWritten(UnmanagedMemoryStream stream, Byte[] data)
+    [Fact]
+    public static void OverflowPositionPointer()
+    {
+        unsafe
+        {
+            using (var ums = new UnmanagedMemoryStream((byte*)0x40000000, 0xB8000000))
+            {
+                ums.PositionPointer = (byte*)0xF0000000;
+                Assert.Equal(0xB0000000, ums.Position);
+
+                if (IntPtr.Size == 4)
+                {
+                    ums.PositionPointer = (byte*)ulong.MaxValue;
+                    Assert.Equal(uint.MaxValue - 0x40000000, ums.Position);
+                }
+                else
+                {
+                    Assert.Throws<ArgumentOutOfRangeException>(() => ums.PositionPointer = (byte*)ulong.MaxValue);
+                }
+            }
+        }
+    }
+
+    static void VerifyNothingCanBeReadOrWritten(UnmanagedMemoryStream stream, byte[] data)
     {
         // No Read
         int count = stream.Read(data, 0, data.Length);
@@ -46,13 +70,13 @@ public class UmsSecurityTests
 
         // No write
         Assert.Throws<NotSupportedException>(() => stream.Write(data, 0, data.Length)); // Stream does not support writing.
-        Assert.Throws<NotSupportedException>(() => stream.WriteByte(Byte.MaxValue)); // Stream does not support writing.
+        Assert.Throws<NotSupportedException>(() => stream.WriteByte(byte.MaxValue)); // Stream does not support writing.
     }
 
-    public static void CheckStreamIntegrity(UnmanagedMemoryStream stream, Byte[] originalData)
+    private static void CheckStreamIntegrity(UnmanagedMemoryStream stream, byte[] originalData)
     {
         stream.Position = 0;
-        Byte[] streamData = new Byte[originalData.Length];
+        byte[] streamData = new byte[originalData.Length];
         int value = stream.Read(streamData, 0, streamData.Length);
 
         Assert.Equal(originalData.Length, value);

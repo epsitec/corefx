@@ -1,9 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace Microsoft.CSharp.RuntimeBinder.Semantics
 {
-    internal class EXPRPROP : EXPR
+    internal sealed class ExprProperty : ExprWithArgs
     {
         // If we have this.prop = 123, but the implementation of the property is in the
         // base class, then the object is of the base class type. Note that to get
@@ -13,18 +14,31 @@ namespace Microsoft.CSharp.RuntimeBinder.Semantics
         // of the type we are actually calling through.  (We need to know the
         // "through" type to ensure that protected semantics are correctly enforced.)
 
-        public EXPR OptionalArguments;
-        public EXPR GetOptionalArguments() { return OptionalArguments; }
-        public void SetOptionalArguments(EXPR value) { OptionalArguments = value; }
-        public EXPRMEMGRP MemberGroup;
-        public EXPRMEMGRP GetMemberGroup() { return MemberGroup; }
-        public void SetMemberGroup(EXPRMEMGRP value) { MemberGroup = value; }
-        public EXPR OptionalObjectThrough;
-        public EXPR GetOptionalObjectThrough() { return OptionalObjectThrough; }
-        public void SetOptionalObjectThrough(EXPR value) { OptionalObjectThrough = value; }
+        public ExprProperty(CType type, Expr pOptionalObjectThrough, Expr pOptionalArguments, ExprMemberGroup pMemberGroup, PropWithType pwtSlot, MethWithType mwtSet)
+            : base(ExpressionKind.Property, type)
+        {
+            OptionalObjectThrough = pOptionalObjectThrough;
+            OptionalArguments = pOptionalArguments;
+            MemberGroup = pMemberGroup;
 
-        public PropWithType pwtSlot;
-        public MethWithType mwtSet;
-        public bool isBaseCall() { return 0 != (flags & EXPRFLAG.EXF_BASECALL); }
+            if (pwtSlot != null)
+            {
+                PropWithTypeSlot = pwtSlot;
+            }
+
+            if (mwtSet != null)
+            {
+                MethWithTypeSet = mwtSet;
+                Flags = EXPRFLAG.EXF_LVALUE;
+            }
+        }
+
+        public Expr OptionalObjectThrough { get; }
+
+        public PropWithType PropWithTypeSlot { get; }
+
+        public MethWithType MethWithTypeSet { get; }
+
+        public override SymWithType GetSymWithType() => PropWithTypeSlot;
     }
 }

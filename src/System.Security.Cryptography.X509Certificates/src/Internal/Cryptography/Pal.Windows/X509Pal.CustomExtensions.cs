@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Text;
@@ -8,7 +9,6 @@ using System.Globalization;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-using Internal.NativeCrypto;
 using Internal.Cryptography;
 using Internal.Cryptography.Pal.Native;
 
@@ -45,18 +45,36 @@ namespace Internal.Cryptography.Pal
                 uint keyUsagesAsUint = 0;
                 encoded.DecodeObject(
                     CryptDecodeObjectStructType.X509_KEY_USAGE,
-                    delegate (void* pvDecoded)
+                    delegate (void* pvDecoded, int cbDecoded)
                     {
+                        Debug.Assert(cbDecoded >= sizeof(CRYPT_BIT_BLOB));
                         CRYPT_BIT_BLOB* pBlob = (CRYPT_BIT_BLOB*)pvDecoded;
                         keyUsagesAsUint = 0;
-                        if (pBlob->pbData != null)
+                        byte* pbData = pBlob->pbData;
+
+                        if (pbData != null)
                         {
-                            keyUsagesAsUint = *(uint*)(pBlob->pbData);
+                            Debug.Assert((uint)pBlob->cbData < 3, "Unexpected length for X509_KEY_USAGE data");
+
+                            switch (pBlob->cbData)
+                            {
+                                case 1:
+                                    keyUsagesAsUint = *pbData;
+                                    break;
+                                case 2:
+                                    keyUsagesAsUint = *(ushort*)(pbData);
+                                    break;
+                            }
                         }
                     }
                 );
                 keyUsages = (X509KeyUsageFlags)keyUsagesAsUint;
             }
+        }
+
+        public bool SupportsLegacyBasicConstraintsExtension
+        {
+            get { return true; }
         }
 
         public byte[] EncodeX509BasicConstraints2Extension(bool certificateAuthority, bool hasPathLengthConstraint, int pathLengthConstraint)
@@ -84,8 +102,9 @@ namespace Internal.Cryptography.Pal
 
                 encoded.DecodeObject(
                     CryptDecodeObjectStructType.X509_BASIC_CONSTRAINTS,
-                    delegate (void* pvDecoded)
+                    delegate (void* pvDecoded, int cbDecoded)
                     {
+                        Debug.Assert(cbDecoded >= sizeof(CERT_BASIC_CONSTRAINTS_INFO));
                         CERT_BASIC_CONSTRAINTS_INFO* pBasicConstraints = (CERT_BASIC_CONSTRAINTS_INFO*)pvDecoded;
                         localCertificateAuthority = (pBasicConstraints->SubjectType.pbData[0] & CERT_BASIC_CONSTRAINTS_INFO.CERT_CA_SUBJECT_FLAG) != 0;
                         localHasPathLengthConstraint = pBasicConstraints->fPathLenConstraint != 0;
@@ -109,8 +128,9 @@ namespace Internal.Cryptography.Pal
 
                 encoded.DecodeObject(
                     CryptDecodeObjectStructType.X509_BASIC_CONSTRAINTS2,
-                    delegate (void* pvDecoded)
+                    delegate (void* pvDecoded, int cbDecoded)
                     {
+                        Debug.Assert(cbDecoded >= sizeof(CERT_BASIC_CONSTRAINTS2_INFO));
                         CERT_BASIC_CONSTRAINTS2_INFO* pBasicConstraints2 = (CERT_BASIC_CONSTRAINTS2_INFO*)pvDecoded;
                         localCertificateAuthority = pBasicConstraints2->fCA != 0;
                         localHasPathLengthConstraint = pBasicConstraints2->fPathLenConstraint != 0;
@@ -150,14 +170,15 @@ namespace Internal.Cryptography.Pal
             {
                 encoded.DecodeObject(
                     CryptDecodeObjectStructType.X509_ENHANCED_KEY_USAGE,
-                    delegate (void* pvDecoded)
+                    delegate (void* pvDecoded, int cbDecoded)
                     {
+                        Debug.Assert(cbDecoded >= sizeof(CERT_ENHKEY_USAGE));
                         CERT_ENHKEY_USAGE* pEnhKeyUsage = (CERT_ENHKEY_USAGE*)pvDecoded;
                         int count = pEnhKeyUsage->cUsageIdentifier;
                         for (int i = 0; i < count; i++)
                         {
                             IntPtr oidValuePointer = pEnhKeyUsage->rgpszUsageIdentifier[i];
-                            String oidValue = Marshal.PtrToStringAnsi(oidValuePointer);
+                            string oidValue = Marshal.PtrToStringAnsi(oidValuePointer);
                             Oid oid = new Oid(oidValue);
                             localUsages.Add(oid);
                         }
@@ -166,7 +187,6 @@ namespace Internal.Cryptography.Pal
             }
 
             usages = localUsages;
-            return;
         }
 
         public byte[] EncodeX509SubjectKeyIdentifierExtension(byte[] subjectKeyIdentifier)
@@ -188,8 +208,9 @@ namespace Internal.Cryptography.Pal
                 byte[] localSubjectKeyIdentifier = null;
                 encoded.DecodeObject(
                     Oids.SubjectKeyIdentifier,
-                    delegate (void* pvDecoded)
+                    delegate (void* pvDecoded, int cbDecoded)
                     {
+                        Debug.Assert(cbDecoded >= sizeof(CRYPTOAPI_BLOB));
                         CRYPTOAPI_BLOB* pBlob = (CRYPTOAPI_BLOB*)pvDecoded;
                         localSubjectKeyIdentifier = pBlob->ToByteArray();
                     }
@@ -229,11 +250,11 @@ namespace Internal.Cryptography.Pal
                             int cb = 20;
                             byte[] buffer = new byte[cb];
                             if (!Interop.crypt32.CryptHashPublicKeyInfo(IntPtr.Zero, AlgId.CALG_SHA1, 0, CertEncodingType.All, ref publicKeyInfo, buffer, ref cb))
-                                throw new CryptographicException(Marshal.GetHRForLastWin32Error());
+                                throw Marshal.GetHRForLastWin32Error().ToCryptographicException();
                             if (cb < buffer.Length)
                             {
                                 byte[] newBuffer = new byte[cb];
-                                Array.Copy(buffer, newBuffer, cb);
+                                Buffer.BlockCopy(buffer, 0, newBuffer, 0, cb);
                                 buffer = newBuffer;
                             }
                             return buffer;
@@ -244,4 +265,3 @@ namespace Internal.Cryptography.Pal
         }
     }
 }
-

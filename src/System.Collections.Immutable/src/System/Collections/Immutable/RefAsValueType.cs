@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,7 +13,7 @@ namespace System.Collections.Immutable
     /// </summary>
     /// <remarks>
     /// We use <see cref="RefAsValueType{T}"/> as a wrapper to avoid paying the cost of covariant checks whenever
-    /// the underlying array that the <see cref="Stack{T}"/> class uses is written to. 
+    /// the underlying array that the <see cref="Stack{T}"/> class uses is written to.
     /// We've recognized this as a perf win in ETL traces for these stack frames:
     /// clr!JIT_Stelem_Ref
     ///   clr!ArrayStoreCheck

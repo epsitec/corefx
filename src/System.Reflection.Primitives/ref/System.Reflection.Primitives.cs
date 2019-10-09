@@ -1,163 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 // ------------------------------------------------------------------------------
 // Changes to this file must follow the http://aka.ms/api-review process.
 // ------------------------------------------------------------------------------
 
-
-namespace System.Reflection
-{
-    [System.FlagsAttribute]
-    public enum CallingConventions
-    {
-        Any = 3,
-        ExplicitThis = 64,
-        HasThis = 32,
-        Standard = 1,
-        VarArgs = 2,
-    }
-    [System.FlagsAttribute]
-    public enum EventAttributes
-    {
-        None = 0,
-        RTSpecialName = 1024,
-        SpecialName = 512,
-    }
-    [System.FlagsAttribute]
-    public enum FieldAttributes
-    {
-        Assembly = 3,
-        FamANDAssem = 2,
-        Family = 4,
-        FamORAssem = 5,
-        FieldAccessMask = 7,
-        HasDefault = 32768,
-        HasFieldMarshal = 4096,
-        HasFieldRVA = 256,
-        InitOnly = 32,
-        Literal = 64,
-        NotSerialized = 128,
-        PinvokeImpl = 8192,
-        Private = 1,
-        PrivateScope = 0,
-        Public = 6,
-        RTSpecialName = 1024,
-        SpecialName = 512,
-        Static = 16,
-    }
-    [System.FlagsAttribute]
-    public enum GenericParameterAttributes
-    {
-        Contravariant = 2,
-        Covariant = 1,
-        DefaultConstructorConstraint = 16,
-        None = 0,
-        NotNullableValueTypeConstraint = 8,
-        ReferenceTypeConstraint = 4,
-        SpecialConstraintMask = 28,
-        VarianceMask = 3,
-    }
-    [System.FlagsAttribute]
-    public enum MethodAttributes
-    {
-        Abstract = 1024,
-        Assembly = 3,
-        CheckAccessOnOverride = 512,
-        FamANDAssem = 2,
-        Family = 4,
-        FamORAssem = 5,
-        Final = 32,
-        HasSecurity = 16384,
-        HideBySig = 128,
-        MemberAccessMask = 7,
-        NewSlot = 256,
-        PinvokeImpl = 8192,
-        Private = 1,
-        PrivateScope = 0,
-        Public = 6,
-        RequireSecObject = 32768,
-        ReuseSlot = 0,
-        RTSpecialName = 4096,
-        SpecialName = 2048,
-        Static = 16,
-        UnmanagedExport = 8,
-        Virtual = 64,
-        VtableLayoutMask = 256,
-    }
-    public enum MethodImplAttributes
-    {
-        AggressiveInlining = 256,
-        CodeTypeMask = 3,
-        ForwardRef = 16,
-        IL = 0,
-        InternalCall = 4096,
-        Managed = 0,
-        ManagedMask = 4,
-        Native = 1,
-        NoInlining = 8,
-        NoOptimization = 64,
-        OPTIL = 2,
-        PreserveSig = 128,
-        Runtime = 3,
-        Synchronized = 32,
-        Unmanaged = 4,
-    }
-    [System.FlagsAttribute]
-    public enum ParameterAttributes
-    {
-        HasDefault = 4096,
-        HasFieldMarshal = 8192,
-        In = 1,
-        Lcid = 4,
-        None = 0,
-        Optional = 16,
-        Out = 2,
-        Retval = 8,
-    }
-    [System.FlagsAttribute]
-    public enum PropertyAttributes
-    {
-        HasDefault = 4096,
-        None = 0,
-        RTSpecialName = 1024,
-        SpecialName = 512,
-    }
-    [System.FlagsAttribute]
-    public enum TypeAttributes
-    {
-        Abstract = 128,
-        AnsiClass = 0,
-        AutoClass = 131072,
-        AutoLayout = 0,
-        BeforeFieldInit = 1048576,
-        Class = 0,
-        ClassSemanticsMask = 32,
-        CustomFormatClass = 196608,
-        CustomFormatMask = 12582912,
-        ExplicitLayout = 16,
-        HasSecurity = 262144,
-        Import = 4096,
-        Interface = 32,
-        LayoutMask = 24,
-        NestedAssembly = 5,
-        NestedFamANDAssem = 6,
-        NestedFamily = 4,
-        NestedFamORAssem = 7,
-        NestedPrivate = 3,
-        NestedPublic = 2,
-        NotPublic = 0,
-        Public = 1,
-        RTSpecialName = 2048,
-        Sealed = 256,
-        SequentialLayout = 8,
-        Serializable = 8192,
-        SpecialName = 1024,
-        StringFormatMask = 196608,
-        UnicodeClass = 65536,
-        VisibilityMask = 7,
-        WindowsRuntime = 16384,
-    }
-}
 namespace System.Reflection.Emit
 {
     public enum FlowControl
@@ -168,26 +15,28 @@ namespace System.Reflection.Emit
         Cond_Branch = 3,
         Meta = 4,
         Next = 5,
+        [System.ObsoleteAttribute("This API has been deprecated. https://go.microsoft.com/fwlink/?linkid=14202")]
+        Phi = 6,
         Return = 7,
         Throw = 8,
     }
-    [System.Runtime.InteropServices.StructLayoutAttribute(System.Runtime.InteropServices.LayoutKind.Sequential)]
-    public partial struct OpCode
+    public readonly partial struct OpCode : System.IEquatable<System.Reflection.Emit.OpCode>
     {
-        public System.Reflection.Emit.FlowControl FlowControl { get { return default(System.Reflection.Emit.FlowControl); } }
-        public string Name { get { return default(string); } }
-        public System.Reflection.Emit.OpCodeType OpCodeType { get { return default(System.Reflection.Emit.OpCodeType); } }
-        public System.Reflection.Emit.OperandType OperandType { get { return default(System.Reflection.Emit.OperandType); } }
-        public int Size { get { return default(int); } }
-        public System.Reflection.Emit.StackBehaviour StackBehaviourPop { get { return default(System.Reflection.Emit.StackBehaviour); } }
-        public System.Reflection.Emit.StackBehaviour StackBehaviourPush { get { return default(System.Reflection.Emit.StackBehaviour); } }
-        public short Value { get { return default(short); } }
-        public override bool Equals(object obj) { return default(bool); }
-        public bool Equals(System.Reflection.Emit.OpCode obj) { return default(bool); }
-        public override int GetHashCode() { return default(int); }
-        public static bool operator ==(System.Reflection.Emit.OpCode a, System.Reflection.Emit.OpCode b) { return default(bool); }
-        public static bool operator !=(System.Reflection.Emit.OpCode a, System.Reflection.Emit.OpCode b) { return default(bool); }
-        public override string ToString() { return default(string); }
+        private readonly int _dummyPrimitive;
+        public System.Reflection.Emit.FlowControl FlowControl { get { throw null; } }
+        public string? Name { get { throw null; } }
+        public System.Reflection.Emit.OpCodeType OpCodeType { get { throw null; } }
+        public System.Reflection.Emit.OperandType OperandType { get { throw null; } }
+        public int Size { get { throw null; } }
+        public System.Reflection.Emit.StackBehaviour StackBehaviourPop { get { throw null; } }
+        public System.Reflection.Emit.StackBehaviour StackBehaviourPush { get { throw null; } }
+        public short Value { get { throw null; } }
+        public override bool Equals(object? obj) { throw null; }
+        public bool Equals(System.Reflection.Emit.OpCode obj) { throw null; }
+        public override int GetHashCode() { throw null; }
+        public static bool operator ==(System.Reflection.Emit.OpCode a, System.Reflection.Emit.OpCode b) { throw null; }
+        public static bool operator !=(System.Reflection.Emit.OpCode a, System.Reflection.Emit.OpCode b) { throw null; }
+        public override string? ToString() { throw null; }
     }
     public partial class OpCodes
     {
@@ -219,12 +68,12 @@ namespace System.Reflection.Emit
         public static readonly System.Reflection.Emit.OpCode Bne_Un_S;
         public static readonly System.Reflection.Emit.OpCode Box;
         public static readonly System.Reflection.Emit.OpCode Br;
-        public static readonly System.Reflection.Emit.OpCode Br_S;
         public static readonly System.Reflection.Emit.OpCode Break;
         public static readonly System.Reflection.Emit.OpCode Brfalse;
         public static readonly System.Reflection.Emit.OpCode Brfalse_S;
         public static readonly System.Reflection.Emit.OpCode Brtrue;
         public static readonly System.Reflection.Emit.OpCode Brtrue_S;
+        public static readonly System.Reflection.Emit.OpCode Br_S;
         public static readonly System.Reflection.Emit.OpCode Call;
         public static readonly System.Reflection.Emit.OpCode Calli;
         public static readonly System.Reflection.Emit.OpCode Callvirt;
@@ -242,7 +91,6 @@ namespace System.Reflection.Emit
         public static readonly System.Reflection.Emit.OpCode Conv_I4;
         public static readonly System.Reflection.Emit.OpCode Conv_I8;
         public static readonly System.Reflection.Emit.OpCode Conv_Ovf_I;
-        public static readonly System.Reflection.Emit.OpCode Conv_Ovf_I_Un;
         public static readonly System.Reflection.Emit.OpCode Conv_Ovf_I1;
         public static readonly System.Reflection.Emit.OpCode Conv_Ovf_I1_Un;
         public static readonly System.Reflection.Emit.OpCode Conv_Ovf_I2;
@@ -251,8 +99,8 @@ namespace System.Reflection.Emit
         public static readonly System.Reflection.Emit.OpCode Conv_Ovf_I4_Un;
         public static readonly System.Reflection.Emit.OpCode Conv_Ovf_I8;
         public static readonly System.Reflection.Emit.OpCode Conv_Ovf_I8_Un;
+        public static readonly System.Reflection.Emit.OpCode Conv_Ovf_I_Un;
         public static readonly System.Reflection.Emit.OpCode Conv_Ovf_U;
-        public static readonly System.Reflection.Emit.OpCode Conv_Ovf_U_Un;
         public static readonly System.Reflection.Emit.OpCode Conv_Ovf_U1;
         public static readonly System.Reflection.Emit.OpCode Conv_Ovf_U1_Un;
         public static readonly System.Reflection.Emit.OpCode Conv_Ovf_U2;
@@ -261,9 +109,10 @@ namespace System.Reflection.Emit
         public static readonly System.Reflection.Emit.OpCode Conv_Ovf_U4_Un;
         public static readonly System.Reflection.Emit.OpCode Conv_Ovf_U8;
         public static readonly System.Reflection.Emit.OpCode Conv_Ovf_U8_Un;
-        public static readonly System.Reflection.Emit.OpCode Conv_R_Un;
+        public static readonly System.Reflection.Emit.OpCode Conv_Ovf_U_Un;
         public static readonly System.Reflection.Emit.OpCode Conv_R4;
         public static readonly System.Reflection.Emit.OpCode Conv_R8;
+        public static readonly System.Reflection.Emit.OpCode Conv_R_Un;
         public static readonly System.Reflection.Emit.OpCode Conv_U;
         public static readonly System.Reflection.Emit.OpCode Conv_U1;
         public static readonly System.Reflection.Emit.OpCode Conv_U2;
@@ -281,13 +130,13 @@ namespace System.Reflection.Emit
         public static readonly System.Reflection.Emit.OpCode Isinst;
         public static readonly System.Reflection.Emit.OpCode Jmp;
         public static readonly System.Reflection.Emit.OpCode Ldarg;
+        public static readonly System.Reflection.Emit.OpCode Ldarga;
+        public static readonly System.Reflection.Emit.OpCode Ldarga_S;
         public static readonly System.Reflection.Emit.OpCode Ldarg_0;
         public static readonly System.Reflection.Emit.OpCode Ldarg_1;
         public static readonly System.Reflection.Emit.OpCode Ldarg_2;
         public static readonly System.Reflection.Emit.OpCode Ldarg_3;
         public static readonly System.Reflection.Emit.OpCode Ldarg_S;
-        public static readonly System.Reflection.Emit.OpCode Ldarga;
-        public static readonly System.Reflection.Emit.OpCode Ldarga_S;
         public static readonly System.Reflection.Emit.OpCode Ldc_I4;
         public static readonly System.Reflection.Emit.OpCode Ldc_I4_0;
         public static readonly System.Reflection.Emit.OpCode Ldc_I4_1;
@@ -304,6 +153,7 @@ namespace System.Reflection.Emit
         public static readonly System.Reflection.Emit.OpCode Ldc_R4;
         public static readonly System.Reflection.Emit.OpCode Ldc_R8;
         public static readonly System.Reflection.Emit.OpCode Ldelem;
+        public static readonly System.Reflection.Emit.OpCode Ldelema;
         public static readonly System.Reflection.Emit.OpCode Ldelem_I;
         public static readonly System.Reflection.Emit.OpCode Ldelem_I1;
         public static readonly System.Reflection.Emit.OpCode Ldelem_I2;
@@ -315,7 +165,6 @@ namespace System.Reflection.Emit
         public static readonly System.Reflection.Emit.OpCode Ldelem_U1;
         public static readonly System.Reflection.Emit.OpCode Ldelem_U2;
         public static readonly System.Reflection.Emit.OpCode Ldelem_U4;
-        public static readonly System.Reflection.Emit.OpCode Ldelema;
         public static readonly System.Reflection.Emit.OpCode Ldfld;
         public static readonly System.Reflection.Emit.OpCode Ldflda;
         public static readonly System.Reflection.Emit.OpCode Ldftn;
@@ -332,13 +181,13 @@ namespace System.Reflection.Emit
         public static readonly System.Reflection.Emit.OpCode Ldind_U4;
         public static readonly System.Reflection.Emit.OpCode Ldlen;
         public static readonly System.Reflection.Emit.OpCode Ldloc;
+        public static readonly System.Reflection.Emit.OpCode Ldloca;
+        public static readonly System.Reflection.Emit.OpCode Ldloca_S;
         public static readonly System.Reflection.Emit.OpCode Ldloc_0;
         public static readonly System.Reflection.Emit.OpCode Ldloc_1;
         public static readonly System.Reflection.Emit.OpCode Ldloc_2;
         public static readonly System.Reflection.Emit.OpCode Ldloc_3;
         public static readonly System.Reflection.Emit.OpCode Ldloc_S;
-        public static readonly System.Reflection.Emit.OpCode Ldloca;
-        public static readonly System.Reflection.Emit.OpCode Ldloca_S;
         public static readonly System.Reflection.Emit.OpCode Ldnull;
         public static readonly System.Reflection.Emit.OpCode Ldobj;
         public static readonly System.Reflection.Emit.OpCode Ldsfld;
@@ -418,10 +267,12 @@ namespace System.Reflection.Emit
         public static readonly System.Reflection.Emit.OpCode Unbox_Any;
         public static readonly System.Reflection.Emit.OpCode Volatile;
         public static readonly System.Reflection.Emit.OpCode Xor;
-        public static bool TakesSingleByteArgument(System.Reflection.Emit.OpCode inst) { return default(bool); }
+        public static bool TakesSingleByteArgument(System.Reflection.Emit.OpCode inst) { throw null; }
     }
     public enum OpCodeType
     {
+        [System.ObsoleteAttribute("This API has been deprecated. https://go.microsoft.com/fwlink/?linkid=14202")]
+        Annotation = 0,
         Macro = 1,
         Nternal = 2,
         Objmodel = 3,
@@ -436,6 +287,8 @@ namespace System.Reflection.Emit
         InlineI8 = 3,
         InlineMethod = 4,
         InlineNone = 5,
+        [System.ObsoleteAttribute("This API has been deprecated. https://go.microsoft.com/fwlink/?linkid=14202")]
+        InlinePhi = 6,
         InlineR = 7,
         InlineSig = 9,
         InlineString = 10,
@@ -450,15 +303,15 @@ namespace System.Reflection.Emit
     }
     public enum PackingSize
     {
-        Size1 = 1,
-        Size128 = 128,
-        Size16 = 16,
-        Size2 = 2,
-        Size32 = 32,
-        Size4 = 4,
-        Size64 = 64,
-        Size8 = 8,
         Unspecified = 0,
+        Size1 = 1,
+        Size2 = 2,
+        Size4 = 4,
+        Size8 = 8,
+        Size16 = 16,
+        Size32 = 32,
+        Size64 = 64,
+        Size128 = 128,
     }
     public enum StackBehaviour
     {
@@ -468,14 +321,13 @@ namespace System.Reflection.Emit
         Popi = 3,
         Popi_pop1 = 4,
         Popi_popi = 5,
-        Popi_popi_popi = 7,
         Popi_popi8 = 6,
+        Popi_popi_popi = 7,
         Popi_popr4 = 8,
         Popi_popr8 = 9,
         Popref = 10,
         Popref_pop1 = 11,
         Popref_popi = 12,
-        Popref_popi_pop1 = 28,
         Popref_popi_popi = 13,
         Popref_popi_popi8 = 14,
         Popref_popi_popr4 = 15,
@@ -491,5 +343,6 @@ namespace System.Reflection.Emit
         Pushref = 25,
         Varpop = 26,
         Varpush = 27,
+        Popref_popi_pop1 = 28,
     }
 }

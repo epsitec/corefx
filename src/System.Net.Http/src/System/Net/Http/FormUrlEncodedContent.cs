@@ -1,12 +1,13 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using System.Net.Http.Headers;
-using System.Diagnostics.Contracts;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace System.Net.Http
 {
@@ -22,9 +23,8 @@ namespace System.Net.Http
         {
             if (nameValueCollection == null)
             {
-                throw new ArgumentNullException("nameValueCollection");
+                throw new ArgumentNullException(nameof(nameValueCollection));
             }
-            Contract.EndContractBlock();
 
             // Encode and concatenate data
             StringBuilder builder = new StringBuilder();
@@ -45,12 +45,22 @@ namespace System.Net.Http
 
         private static string Encode(string data)
         {
-            if (String.IsNullOrEmpty(data))
+            if (string.IsNullOrEmpty(data))
             {
-                return String.Empty;
+                return string.Empty;
             }
             // Escape spaces as '+'.
             return Uri.EscapeDataString(data).Replace("%20", "+");
         }
+
+        internal override Task SerializeToStreamAsync(Stream stream, TransportContext context, CancellationToken cancellationToken) =>
+            // Only skip the original protected virtual SerializeToStreamAsync if this
+            // isn't a derived type that may have overridden the behavior.
+            GetType() == typeof(FormUrlEncodedContent) ? SerializeToStreamAsyncCore(stream, cancellationToken) :
+            base.SerializeToStreamAsync(stream, context, cancellationToken);
+
+        internal override Stream TryCreateContentReadStream() =>
+            GetType() == typeof(FormUrlEncodedContent) ? CreateMemoryStreamForByteArray() : // type check ensures we use possible derived type's CreateContentReadStreamAsync override
+            null;
     }
 }

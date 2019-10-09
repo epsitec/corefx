@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Indexers.indexer001.indexer001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Indexers.indexer001.indexer001;
-
     public class Test
     {
         private class MyClass
@@ -54,8 +53,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Indexers.indexer002.indexer002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Indexers.indexer002.indexer002;
-
     public class Test
     {
         private class MyClass
@@ -104,8 +101,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Indexers.indexer003.indexer003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Indexers.indexer003.indexer003;
-
     public class Test
     {
         private class C
@@ -163,8 +158,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalPara
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Indexers.indexer004.indexer004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.formalParameter.Indexers.indexer004.indexer004;
-
     public class Test
     {
         private class MyClass

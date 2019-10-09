@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
 using System.Security;
@@ -14,7 +15,7 @@ namespace System.Numerics
 
         // see https://en.wikipedia.org/wiki/Barrett_reduction
 
-        internal struct FastReducer
+        internal readonly struct FastReducer
         {
             private readonly uint[] _modulus;
             private readonly uint[] _mu;
@@ -48,7 +49,7 @@ namespace System.Numerics
                 Debug.Assert(length <= value.Length);
                 Debug.Assert(value.Length <= _modulus.Length * 2);
 
-                // trivial: value is shorter
+                // Trivial: value is shorter
                 if (length < _modulus.Length)
                     return length;
 
@@ -65,8 +66,7 @@ namespace System.Numerics
                               _modulus, _modulus.Length + 1);
             }
 
-            [SecuritySafeCritical]
-            private unsafe static int DivMul(uint[] left, int leftLength,
+            private static unsafe int DivMul(uint[] left, int leftLength,
                                              uint[] right, int rightLength,
                                              uint[] bits, int k)
             {
@@ -110,8 +110,7 @@ namespace System.Numerics
                 return 0;
             }
 
-            [SecuritySafeCritical]
-            private unsafe static int SubMod(uint[] left, int leftLength,
+            private static unsafe int SubMod(uint[] left, int leftLength,
                                              uint[] right, int rightLength,
                                              uint[] modulus, int k)
             {

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Diagnostics;
@@ -59,8 +60,8 @@ namespace Internal.Cryptography.Pal.Native
         //CERT_QUERY_CONTENT_FLAG_ALL)
          CERT_QUERY_CONTENT_FLAG_PFX_AND_LOAD = 1 << ContentType.CERT_QUERY_CONTENT_PFX_AND_LOAD,
 
-         CERT_QUERY_CONTENT_FLAG_ALL = 
-             CERT_QUERY_CONTENT_FLAG_CERT | 
+         CERT_QUERY_CONTENT_FLAG_ALL =
+             CERT_QUERY_CONTENT_FLAG_CERT |
              CERT_QUERY_CONTENT_FLAG_CTL |
              CERT_QUERY_CONTENT_FLAG_CRL |
              CERT_QUERY_CONTENT_FLAG_SERIALIZED_STORE |
@@ -68,7 +69,7 @@ namespace Internal.Cryptography.Pal.Native
              CERT_QUERY_CONTENT_FLAG_SERIALIZED_CTL |
              CERT_QUERY_CONTENT_FLAG_SERIALIZED_CRL |
              CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED |
-             CERT_QUERY_CONTENT_FLAG_PKCS7_UNSIGNED | 
+             CERT_QUERY_CONTENT_FLAG_PKCS7_UNSIGNED |
              CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED_EMBED |
              CERT_QUERY_CONTENT_FLAG_PKCS10 |
              CERT_QUERY_CONTENT_FLAG_PFX |
@@ -97,7 +98,7 @@ namespace Internal.Cryptography.Pal.Native
     {
         //encoded single certificate
         CERT_QUERY_CONTENT_CERT                = 1,
-        //encoded single CTL                   
+        //encoded single CTL
         CERT_QUERY_CONTENT_CTL                 = 2,
         //encoded single CRL
         CERT_QUERY_CONTENT_CRL                 = 3,
@@ -140,7 +141,6 @@ namespace Internal.Cryptography.Pal.Native
         {
             this.cbData = cbData;
             this.pbData = pbData;
-            return;
         }
 
         public int cbData;
@@ -148,6 +148,11 @@ namespace Internal.Cryptography.Pal.Native
 
         public byte[] ToByteArray()
         {
+            if (cbData == 0)
+            {
+                return Array.Empty<byte>();
+            }
+
             byte[] array = new byte[cbData];
             Marshal.Copy((IntPtr)pbData, array, 0, cbData);
             return array;
@@ -158,11 +163,13 @@ namespace Internal.Cryptography.Pal.Native
     {
         CERT_KEY_PROV_INFO_PROP_ID   = 2,
         CERT_SHA1_HASH_PROP_ID       = 3,
+        CERT_KEY_CONTEXT_PROP_ID     = 5,
         CERT_FRIENDLY_NAME_PROP_ID   = 11,
         CERT_ARCHIVED_PROP_ID        = 19,
         CERT_KEY_IDENTIFIER_PROP_ID  = 20,
         CERT_PUBKEY_ALG_PARA_PROP_ID = 22,
-        CERT_DELETE_KEYSET_PROP_ID   = 101,
+        CERT_NCRYPT_KEY_HANDLE_PROP_ID = 78,
+        CERT_CLR_DELETE_KEY_PROP_ID = 125,
     }
 
     [Flags]
@@ -248,6 +255,11 @@ namespace Internal.Cryptography.Pal.Native
 
         public byte[] ToByteArray()
         {
+            if (cbData == 0)
+            {
+                return Array.Empty<byte>();
+            }
+
             byte[] array = new byte[cbData];
             Marshal.Copy((IntPtr)pbData, array, 0, cbData);
             return array;
@@ -277,11 +289,15 @@ namespace Internal.Cryptography.Pal.Native
         public static FILETIME FromDateTime(DateTime dt)
         {
             long fileTime = dt.ToFileTime();
-            return new FILETIME()
+
+            unchecked
             {
-                ftTimeLow = (uint)fileTime,
-                ftTimeHigh = (uint)(fileTime >> 32),
-            };
+                return new FILETIME()
+                {
+                    ftTimeLow = (uint)fileTime,
+                    ftTimeHigh = (uint)(fileTime >> 32),
+                };
+            }
         }
     }
 
@@ -308,8 +324,8 @@ namespace Internal.Cryptography.Pal.Native
         CERT_STORE_READONLY_FLAG                        = 0x00008000,
         CERT_STORE_OPEN_EXISTING_FLAG                   = 0x00004000,
         CERT_STORE_CREATE_NEW_FLAG                      = 0x00002000,
-        CERT_STORE_MAXIMUM_ALLOWED_FLAG                 = 0x00001000,   
- 
+        CERT_STORE_MAXIMUM_ALLOWED_FLAG                 = 0x00001000,
+
         CERT_SYSTEM_STORE_CURRENT_USER                  = 0x00010000,
         CERT_SYSTEM_STORE_LOCAL_MACHINE                 = 0x00020000,
 
@@ -427,14 +443,6 @@ namespace Internal.Cryptography.Pal.Native
         None = 0,
     }
 
-    [Flags]
-    internal enum FormatObjectStringType : int
-    {
-        CRYPT_FORMAT_STR_MULTI_LINE = 0x00000001,
-        CRYPT_FORMAT_STR_NO_HEX     = 0x00000010,
-        None                        = 0x00000000,
-    }
-
     internal enum FormatObjectStructType : int
     {
         X509_NAME = 7,
@@ -530,15 +538,6 @@ namespace Internal.Cryptography.Pal.Native
     {
         DSS_MAGIC = 0x31535344,
     }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct BLOBHEADER
-    {
-        public byte bType;
-        public byte bVersion;
-        public short reserved;
-        public uint aiKeyAlg;
-    };
 
     [StructLayout(LayoutKind.Sequential)]
     internal unsafe struct CERT_BASIC_CONSTRAINTS_INFO
@@ -645,6 +644,9 @@ namespace Internal.Cryptography.Pal.Native
 
         CERT_TRUST_IS_OFFLINE_REVOCATION               = 0x01000000,
         CERT_TRUST_NO_ISSUANCE_CHAIN_POLICY            = 0x02000000,
+        CERT_TRUST_IS_EXPLICIT_DISTRUST                = 0x04000000,
+        CERT_TRUST_HAS_NOT_SUPPORTED_CRITICAL_EXT      = 0x08000000,
+        CERT_TRUST_HAS_WEAK_SIGNATURE                  = 0x00100000,
 
         // These can be applied to chains only
         CERT_TRUST_IS_PARTIAL_CHAIN                    = 0x00010000,
@@ -738,13 +740,6 @@ namespace Internal.Cryptography.Pal.Native
         public Guid ChainId;
     }
 
-    [Flags]
-    internal enum FormatMessageFlags : int
-    {
-        FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000,
-        FORMAT_MESSAGE_IGNORE_INSERTS = 0x00000200,
-    }
-
     [StructLayout(LayoutKind.Sequential)]
     internal struct CERT_CHAIN_POLICY_PARA
     {
@@ -768,6 +763,38 @@ namespace Internal.Cryptography.Pal.Native
         // Predefined verify chain policies
         CERT_CHAIN_POLICY_BASE = 1,
     }
-}
 
- 
+    internal enum CryptAcquireFlags : int
+    {
+        CRYPT_ACQUIRE_ONLY_NCRYPT_KEY_FLAG = 0x00040000,
+    }
+
+    [Flags]
+    internal enum ChainEngineConfigFlags : int
+    {
+        CERT_CHAIN_CACHE_END_CERT = 0x00000001,
+        CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL = 0x00000004,
+        CERT_CHAIN_USE_LOCAL_MACHINE_STORE = 0x00000008,
+        CERT_CHAIN_ENABLE_CACHE_AUTO_UPDATE = 0x00000010,
+        CERT_CHAIN_ENABLE_SHARE_STORE = 0x00000020,
+        CERT_CHAIN_DISABLE_AIA = 0x00002000,
+    }
+
+    // Windows 7 definition of the struct
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct CERT_CHAIN_ENGINE_CONFIG
+    {
+        public int cbSize;
+        public IntPtr hRestrictedRoot;
+        public IntPtr hRestrictedTrust;
+        public IntPtr hRestrictedOther;
+        public int cAdditionalStore;
+        public IntPtr rghAdditionalStore;
+        public ChainEngineConfigFlags dwFlags;
+        public int dwUrlRetrievalTimeout;
+        public int MaximumCachedCertificates;
+        public int CycleDetectionModulus;
+        public IntPtr hExclusiveRoot;
+        public IntPtr hExclusiveTrustedPeople;
+    }
+}

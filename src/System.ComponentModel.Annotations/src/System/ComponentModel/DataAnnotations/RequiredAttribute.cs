@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.ComponentModel.DataAnnotations
 {
@@ -34,7 +35,7 @@ namespace System.ComponentModel.DataAnnotations
         /// <returns>
         ///     <c>false</c> if the <paramref name="value" /> is null or an empty string. If
         ///     <see cref="RequiredAttribute.AllowEmptyStrings" />
-        ///     then <c>false</c> is returned only if <paramref name="vale" /> is null.
+        ///     then <c>false</c> is returned only if <paramref name="value" /> is null.
         /// </returns>
         public override bool IsValid(object value)
         {
@@ -44,13 +45,7 @@ namespace System.ComponentModel.DataAnnotations
             }
 
             // only check string length if empty strings are not allowed
-            var stringValue = value as string;
-            if (stringValue != null && !AllowEmptyStrings)
-            {
-                return stringValue.Trim().Length != 0;
-            }
-
-            return true;
+            return AllowEmptyStrings || !(value is string stringValue) || stringValue.Trim().Length != 0;
         }
     }
 }

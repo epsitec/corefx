@@ -1,8 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Text;
 
 namespace System.Net.Http.Headers
@@ -19,7 +21,7 @@ namespace System.Net.Http.Headers
             get { return _unit; }
             set
             {
-                HeaderUtilities.CheckValidToken(value, "value");
+                HeaderUtilities.CheckValidToken(value, nameof(value));
                 _unit = value;
             }
         }
@@ -55,15 +57,15 @@ namespace System.Net.Http.Headers
 
             if (length < 0)
             {
-                throw new ArgumentOutOfRangeException("length");
+                throw new ArgumentOutOfRangeException(nameof(length));
             }
             if ((to < 0) || (to > length))
             {
-                throw new ArgumentOutOfRangeException("to");
+                throw new ArgumentOutOfRangeException(nameof(to));
             }
             if ((from < 0) || (from > to))
             {
-                throw new ArgumentOutOfRangeException("from");
+                throw new ArgumentOutOfRangeException(nameof(from));
             }
 
             _from = from;
@@ -78,7 +80,7 @@ namespace System.Net.Http.Headers
 
             if (length < 0)
             {
-                throw new ArgumentOutOfRangeException("length");
+                throw new ArgumentOutOfRangeException(nameof(length));
             }
 
             _length = length;
@@ -91,11 +93,11 @@ namespace System.Net.Http.Headers
 
             if (to < 0)
             {
-                throw new ArgumentOutOfRangeException("to");
+                throw new ArgumentOutOfRangeException(nameof(to));
             }
             if ((from < 0) || (from > to))
             {
-                throw new ArgumentOutOfRangeException("from");
+                throw new ArgumentOutOfRangeException(nameof(from));
             }
 
             _from = from;
@@ -109,7 +111,7 @@ namespace System.Net.Http.Headers
 
         private ContentRangeHeaderValue(ContentRangeHeaderValue source)
         {
-            Contract.Requires(source != null);
+            Debug.Assert(source != null);
 
             _from = source._from;
             _to = source._to;
@@ -149,14 +151,15 @@ namespace System.Net.Http.Headers
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder(_unit);
+            StringBuilder sb = StringBuilderCache.Acquire();
+            sb.Append(_unit);
             sb.Append(' ');
 
             if (HasRange)
             {
-                sb.Append(_from.Value.ToString(NumberFormatInfo.InvariantInfo));
+                sb.Append(_from.Value);
                 sb.Append('-');
-                sb.Append(_to.Value.ToString(NumberFormatInfo.InvariantInfo));
+                sb.Append(_to.Value);
             }
             else
             {
@@ -166,14 +169,14 @@ namespace System.Net.Http.Headers
             sb.Append('/');
             if (HasLength)
             {
-                sb.Append(_length.Value.ToString(NumberFormatInfo.InvariantInfo));
+                sb.Append(_length.Value);
             }
             else
             {
                 sb.Append('*');
             }
 
-            return sb.ToString();
+            return StringBuilderCache.GetStringAndRelease(sb);
         }
 
         public static ContentRangeHeaderValue Parse(string input)
@@ -198,7 +201,7 @@ namespace System.Net.Http.Headers
 
         internal static int GetContentRangeLength(string input, int startIndex, out object parsedValue)
         {
-            Contract.Requires(startIndex >= 0);
+            Debug.Assert(startIndex >= 0);
 
             parsedValue = null;
 
@@ -304,7 +307,7 @@ namespace System.Net.Http.Headers
             toStartIndex = 0;
             toLength = 0;
 
-            // Check if we have a value like 'bytes */133'. If yes, skip the range part and continue parsing the 
+            // Check if we have a value like 'bytes */133'. If yes, skip the range part and continue parsing the
             // length separator '/'.
             if (input[current] == '*')
             {
@@ -323,7 +326,7 @@ namespace System.Net.Http.Headers
                 current = current + fromLength;
                 current = current + HttpRuleParser.GetWhitespaceLength(input, current);
 
-                // Afer the first value, the '-' character must follow.
+                // After the first value, the '-' character must follow.
                 if ((current == input.Length) || (input[current] != '-'))
                 {
                     // We need a '-' character otherwise this can't be a valid range.
@@ -360,13 +363,13 @@ namespace System.Net.Http.Headers
             parsedValue = null;
 
             long from = 0;
-            if ((fromLength > 0) && !HeaderUtilities.TryParseInt64(input.Substring(fromStartIndex, fromLength), out from))
+            if ((fromLength > 0) && !HeaderUtilities.TryParseInt64(input, fromStartIndex, fromLength, out from))
             {
                 return false;
             }
 
             long to = 0;
-            if ((toLength > 0) && !HeaderUtilities.TryParseInt64(input.Substring(toStartIndex, toLength), out to))
+            if ((toLength > 0) && !HeaderUtilities.TryParseInt64(input, toStartIndex, toLength, out to))
             {
                 return false;
             }
@@ -378,8 +381,7 @@ namespace System.Net.Http.Headers
             }
 
             long length = 0;
-            if ((lengthLength > 0) && !HeaderUtilities.TryParseInt64(input.Substring(lengthStartIndex, lengthLength),
-                out length))
+            if ((lengthLength > 0) && !HeaderUtilities.TryParseInt64(input, lengthStartIndex, lengthLength, out length))
             {
                 return false;
             }

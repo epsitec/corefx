@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -68,19 +69,21 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void DictionaryImportsKeyedByMetadata()
         {
             var container = CreateContainer(new[] { typeof(ValueA), typeof(ValueB), typeof(Consumer) });
 
             var consumer = container.GetExport<Consumer>();
 
-            Assert.IsAssignableFrom(typeof(ValueA), consumer.Values["A"]);
-            Assert.IsAssignableFrom(typeof(ValueB), consumer.Values["B"]);
+            Assert.IsAssignableFrom<ValueA>(consumer.Values["A"]);
+            Assert.IsAssignableFrom<ValueB>(consumer.Values["B"]);
             Assert.Equal(2, consumer.Values.Count());
         }
 
         [Fact]
-        public void DictionaryImportsRecieveMetadataFromNestedAdapters()
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
+        public void DictionaryImportsReceiveMetadataFromNestedAdapters()
         {
             var container = CreateContainer(new[] { typeof(ValueA), typeof(ValueB), typeof(LazyConsumer) });
 
@@ -91,30 +94,34 @@ namespace System.Composition.UnitTests
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void WhenAMetadataKeyIsDuplicatedAnInformativeExceptionIsThrown()
         {
             var container = CreateContainer(typeof(ValueA), typeof(ValueA), typeof(Consumer));
-            var x = AssertX.Throws<CompositionFailedException>(() => container.GetExport<Consumer>());
+            var x = Assert.Throws<CompositionFailedException>(() => container.GetExport<Consumer>());
             Assert.Equal("The metadata 'Value' cannot be used as a dictionary import key because the value 'A' is associated with exports from parts 'ValueA' and 'ValueA'.", x.Message);
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void WhenAMetadataKeyIsMissingAnInformativeExceptionIsThrown()
         {
             var container = CreateContainer(typeof(ValueA), typeof(ValueMissing), typeof(Consumer));
-            var x = AssertX.Throws<CompositionFailedException>(() => container.GetExport<Consumer>());
+            var x = Assert.Throws<CompositionFailedException>(() => container.GetExport<Consumer>());
             Assert.Equal("The metadata 'Value' cannot be used as a dictionary import key because it is missing from exports on part(s) 'ValueMissing'.", x.Message);
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void WhenAMetadataValueIsOfTheWrongTypeAnInformativeExceptionIsThrown()
         {
             var container = CreateContainer(typeof(ValueA), typeof(NonStringValue), typeof(Consumer));
-            var x = AssertX.Throws<CompositionFailedException>(() => container.GetExport<Consumer>());
+            var x = Assert.Throws<CompositionFailedException>(() => container.GetExport<Consumer>());
             Assert.Equal("The metadata 'Value' cannot be used as a dictionary import key of type 'String' because the value(s) supplied by 'NonStringValue' are of the wrong type.", x.Message);
         }
 
         [Fact]
+        [ActiveIssue(24903, TargetFrameworkMonikers.NetFramework)]
         public void DictionaryImportsCompatibleWithConventionBuilder()
         {
             var rb = new ConventionBuilder();

@@ -1,76 +1,117 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Xunit;
 
-public class ConvertBoxedObjectCheckTests
+namespace System.Tests
 {
-    [Fact]
-    public static void ChangeTypeIdentity()
+    public class ConvertBoxedObjectCheckTests
     {
-        object[] testValues =
+        public static IEnumerable<object[]> DefaultToTypeValues()
         {
-            true, false,
-            Byte.MinValue, Byte.MaxValue,
-            SByte.MinValue,SByte.MaxValue, (SByte)0,
-            Int16.MinValue, Int16.MaxValue, (Int16)0,
-            UInt16.MinValue, UInt16.MaxValue,
-            Int32.MinValue, Int32.MaxValue, (Int32)0,
-            UInt32.MinValue, UInt32.MaxValue,
-            Int64.MinValue, Int64.MaxValue, (Int64)0,
-            UInt64.MinValue, UInt64.MaxValue,
-            Char.MinValue, Char.MaxValue, (Char)0,
-            Double.MinValue, Double.MaxValue, (Double)0,
-            Single.MinValue, Single.MaxValue, (Single)0,
-            Decimal.MinValue, Decimal.MaxValue, (Decimal)0,
-            DateTime.MinValue, DateTime.Now, DateTime.MaxValue
-        };
-
-        foreach (object obj in testValues)
-        {
-            object copy = GetBoxedCopy(obj);
-            Assert.NotSame(obj, copy);
-            Assert.Equal(obj, copy);
+            yield return new object[] { true };
+            yield return new object[] { false };
+            yield return new object[] { byte.MinValue };
+            yield return new object[] { byte.MaxValue };
+            yield return new object[] { sbyte.MinValue };
+            yield return new object[] { sbyte.MaxValue };
+            yield return new object[] { (sbyte)0 };
+            yield return new object[] { short.MinValue };
+            yield return new object[] { short.MaxValue };
+            yield return new object[] { (short)0 };
+            yield return new object[] { ushort.MinValue };
+            yield return new object[] { ushort.MaxValue };
+            yield return new object[] { int.MinValue };
+            yield return new object[] { int.MaxValue };
+            yield return new object[] { (int)0 };
+            yield return new object[] { uint.MinValue };
+            yield return new object[] { uint.MaxValue };
+            yield return new object[] { long.MinValue };
+            yield return new object[] { long.MaxValue };
+            yield return new object[] { (long)0 };
+            yield return new object[] { ulong.MinValue };
+            yield return new object[] { ulong.MaxValue };
+            yield return new object[] { char.MinValue };
+            yield return new object[] { char.MaxValue };
+            yield return new object[] { (char)0 };
+            yield return new object[] { double.MinValue };
+            yield return new object[] { double.MaxValue };
+            yield return new object[] { (double)0 };
+            yield return new object[] { float.MinValue };
+            yield return new object[] { float.MaxValue };
+            yield return new object[] { (float)0 };
+            yield return new object[] { decimal.MinValue };
+            yield return new object[] { decimal.MaxValue };
+            yield return new object[] { (decimal)0 };
+            yield return new object[] { DateTime.MinValue };
+            yield return new object[] { DateTime.Now };
+            yield return new object[] { DateTime.MaxValue };
         }
-    }
 
-    public static object GetBoxedCopy(object obj)
-    {
-        Type type = obj.GetType();
-        if (type == typeof(Boolean))
-            return Convert.ChangeType(obj, typeof(Boolean));
-        else if (type == typeof(Byte))
-            return Convert.ChangeType(obj, typeof(Byte));
-        else if (type == typeof(SByte))
-            return Convert.ChangeType(obj, typeof(SByte));
-        else if (type == typeof(Int16))
-            return Convert.ChangeType(obj, typeof(Int16));
-        else if (type == typeof(Int32))
-            return Convert.ChangeType(obj, typeof(Int32));
-        else if (type == typeof(Int64))
-            return Convert.ChangeType(obj, typeof(Int64));
-        else if (type == typeof(UInt16))
-            return Convert.ChangeType(obj, typeof(UInt16));
-        else if (type == typeof(UInt32))
-            return Convert.ChangeType(obj, typeof(UInt32));
-        else if (type == typeof(UInt64))
-            return Convert.ChangeType(obj, typeof(UInt64));
-        else if (type == typeof(IntPtr))
-            return Convert.ChangeType(obj, typeof(IntPtr));
-        else if (type == typeof(UIntPtr))
-            return Convert.ChangeType(obj, typeof(UIntPtr));
-        else if (type == typeof(Char))
-            return Convert.ChangeType(obj, typeof(Char));
-        else if (type == typeof(Double))
-            return Convert.ChangeType(obj, typeof(Double));
-        else if (type == typeof(Single))
-            return Convert.ChangeType(obj, typeof(Single));
-        else if (type == typeof(Decimal))
-            return Convert.ChangeType(obj, typeof(Decimal));
-        else
-            // Not a primitive type
-            return RuntimeHelpers.GetObjectValue(obj);
+        [Theory]
+        [MemberData(nameof(DefaultToTypeValues))]
+        public static void TestConvertedCopies(object testValue)
+        {
+            Assert.All(DefaultToTypeValues(), input =>
+            {
+                try
+                {
+                    object converted = ((IConvertible)testValue).ToType(input[0].GetType(), null);
+                    Assert.NotSame(testValue, converted);
+                }
+                catch (InvalidCastException) { }
+                catch (OverflowException) { }
+            });
+        }
+
+        [Theory]
+        [MemberData(nameof(DefaultToTypeValues))]
+        public static void ChangeTypeIdentity(object testValue)
+        {
+            object copy = GetBoxedCopy(testValue);
+            Assert.NotSame(testValue, copy);
+            Assert.Equal(testValue, copy);
+        }
+
+        public static object GetBoxedCopy(object obj)
+        {
+            Type type = obj.GetType();
+            if (type == typeof(bool))
+                return Convert.ChangeType(obj, typeof(bool));
+            else if (type == typeof(byte))
+                return Convert.ChangeType(obj, typeof(byte));
+            else if (type == typeof(sbyte))
+                return Convert.ChangeType(obj, typeof(sbyte));
+            else if (type == typeof(short))
+                return Convert.ChangeType(obj, typeof(short));
+            else if (type == typeof(int))
+                return Convert.ChangeType(obj, typeof(int));
+            else if (type == typeof(long))
+                return Convert.ChangeType(obj, typeof(long));
+            else if (type == typeof(ushort))
+                return Convert.ChangeType(obj, typeof(ushort));
+            else if (type == typeof(uint))
+                return Convert.ChangeType(obj, typeof(uint));
+            else if (type == typeof(ulong))
+                return Convert.ChangeType(obj, typeof(ulong));
+            else if (type == typeof(IntPtr))
+                return Convert.ChangeType(obj, typeof(IntPtr));
+            else if (type == typeof(UIntPtr))
+                return Convert.ChangeType(obj, typeof(UIntPtr));
+            else if (type == typeof(char))
+                return Convert.ChangeType(obj, typeof(char));
+            else if (type == typeof(double))
+                return Convert.ChangeType(obj, typeof(double));
+            else if (type == typeof(float))
+                return Convert.ChangeType(obj, typeof(float));
+            else if (type == typeof(decimal))
+                return Convert.ChangeType(obj, typeof(decimal));
+            else
+                // Not a primitive type
+                return RuntimeHelpers.GetObjectValue(obj);
+        }
     }
 }

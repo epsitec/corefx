@@ -1,59 +1,41 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Globalization;
 
 namespace System.ComponentModel
 {
-    /// <devdoc>
-    ///    <para>Provides a type converter to convert 64-bit unsigned integer objects to and
-    ///       from various other representations.</para>
-    /// </devdoc>
+    /// <summary>
+    /// Provides a type converter to convert 64-bit unsigned integer objects to and
+    /// from various other representations.
+    /// </summary>
     public class UInt64Converter : BaseNumberConverter
     {
-        /// <devdoc>
+        /// <summary>
         /// The Type this converter is targeting (e.g. Int16, UInt64, etc.)
-        /// </devdoc>
-        internal override Type TargetType
-        {
-            get
-            {
-                return typeof(UInt64);
-            }
-        }
+        /// </summary>
+        internal override Type TargetType => typeof(ulong);
 
-        /// <devdoc>
+        /// <summary>
         /// Convert the given value to a string using the given radix
-        /// </devdoc>
-        internal override object FromString(string value, int radix)
-        {
-            return Convert.ToUInt64(value, radix);
-        }
+        /// </summary>
+        internal override object FromString(string value, int radix) => Convert.ToUInt64(value, radix);
 
-        /// <devdoc>
+        /// <summary>
         /// Convert the given value to a string using the given formatInfo
-        /// </devdoc>
+        /// </summary>
         internal override object FromString(string value, NumberFormatInfo formatInfo)
         {
-            return UInt64.Parse(value, NumberStyles.Integer, formatInfo);
+            return ulong.Parse(value, NumberStyles.Integer, formatInfo);
         }
 
-
-        /// <devdoc>
-        /// Convert the given value to a string using the given CultureInfo
-        /// </devdoc>
-        internal override object FromString(string value, CultureInfo culture)
-        {
-            return UInt64.Parse(value, culture);
-        }
-
-        /// <devdoc>
+        /// <summary>
         /// Convert the given value from a string using the given formatInfo
-        /// </devdoc>
+        /// </summary>
         internal override string ToString(object value, NumberFormatInfo formatInfo)
         {
-            return ((UInt64)value).ToString("G", formatInfo);
+            return ((ulong)value).ToString("G", formatInfo);
         }
     }
 }
-

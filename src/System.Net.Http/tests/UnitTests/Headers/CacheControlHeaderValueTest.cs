@@ -1,12 +1,12 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http.Headers;
-using System.Text;
-
+using Microsoft.DotNet.RemoteExecutor;
 using Xunit;
 
 namespace System.Net.Http.Tests
@@ -51,14 +51,14 @@ namespace System.Net.Http.Tests
 
             // String collection properties
             Assert.NotNull(cacheControl.NoCacheHeaders);
-            Assert.Throws<ArgumentException>(() => { cacheControl.NoCacheHeaders.Add(null); });
+            AssertExtensions.Throws<ArgumentException>("item", () => { cacheControl.NoCacheHeaders.Add(null); });
             Assert.Throws<FormatException>(() => { cacheControl.NoCacheHeaders.Add("invalid token"); });
             cacheControl.NoCacheHeaders.Add("token");
             Assert.Equal(1, cacheControl.NoCacheHeaders.Count);
             Assert.Equal("token", cacheControl.NoCacheHeaders.First());
 
             Assert.NotNull(cacheControl.PrivateHeaders);
-            Assert.Throws<ArgumentException>(() => { cacheControl.PrivateHeaders.Add(null); });
+            AssertExtensions.Throws<ArgumentException>("item", () => { cacheControl.PrivateHeaders.Add(null); });
             Assert.Throws<FormatException>(() => { cacheControl.PrivateHeaders.Add("invalid token"); });
             cacheControl.PrivateHeaders.Add("token");
             Assert.Equal(1, cacheControl.PrivateHeaders.Count);
@@ -134,6 +134,28 @@ namespace System.Net.Http.Tests
             Assert.Equal("must-revalidate, private=\"token2, token3\"", cacheControl.ToString());
             cacheControl.ProxyRevalidate = true;
             Assert.Equal("must-revalidate, proxy-revalidate, private=\"token2, token3\"", cacheControl.ToString());
+        }
+
+        [Fact]
+        public void ToString_NegativeValues_UsesMinusSignRegardlessOfCurrentCulture()
+        {
+            RemoteExecutor.Invoke(() =>
+            {
+                var cacheControl = new CacheControlHeaderValue()
+                {
+                    MaxAge = new TimeSpan(0, 0, -1),
+                    MaxStale = true,
+                    MaxStaleLimit = new TimeSpan(0, 0, -2),
+                    MinFresh = new TimeSpan(0, 0, -3),
+                    SharedMaxAge = new TimeSpan(0, 0, -4)
+                };
+
+                var ci = (CultureInfo)CultureInfo.CurrentCulture.Clone();
+                ci.NumberFormat.NegativeSign = "n";
+                CultureInfo.CurrentCulture = ci;
+
+                Assert.Equal("max-age=-1, s-maxage=-4, max-stale=-2, min-fresh=-3", cacheControl.ToString());
+            }).Dispose();
         }
 
         [Fact]
@@ -233,7 +255,7 @@ namespace System.Net.Http.Tests
             cacheControl1.NoCacheHeaders.Add("token1");
             CompareHashCodes(cacheControl1, cacheControl2, true);
 
-            // Since NoCache and Private generate different hash codes, even if NoCacheHeaders and PrivateHeaders 
+            // Since NoCache and Private generate different hash codes, even if NoCacheHeaders and PrivateHeaders
             // have the same values, the hash code will be different.
             cacheControl3.Private = true;
             cacheControl3.PrivateHeaders.Add("token2");
@@ -360,7 +382,7 @@ namespace System.Net.Http.Tests
             cacheControl1.NoCacheHeaders.Add("token1");
             CompareValues(cacheControl1, cacheControl2, true);
 
-            // Since NoCache and Private generate different hash codes, even if NoCacheHeaders and PrivateHeaders 
+            // Since NoCache and Private generate different hash codes, even if NoCacheHeaders and PrivateHeaders
             // have the same values, the hash code will be different.
             cacheControl3.Private = true;
             cacheControl3.PrivateHeaders.Add("token2");

@@ -1,78 +1,80 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Globalization;
+using System.Collections.Generic;
 using Xunit;
 
 namespace System.Globalization.Tests
 {
     public class DateTimeFormatInfoAbbreviatedDayNames
     {
-        // PosTest1: Call AbbreviatedDayNames getter method should return correct value for InvariantInfo
         [Fact]
-        public void TestGetter()
+        public void AbbreviatedDayNames_GetInvariantInfo_ReturnsExpected()
         {
-            VerificationHelper(DateTimeFormatInfo.InvariantInfo, new string[] {
-                    "Sun","Mon","Tue","Wed","Thu","Fri","Sat"}, false);
+            Assert.Equal(new string[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" }, DateTimeFormatInfo.InvariantInfo.AbbreviatedDayNames);
         }
 
-        // PosTest2: Call AbbreviatedDayNames setter method should return correct value
         [Fact]
-        public void TestSetter()
+        public void AbbreviatedDayNames_Get_ReturnsClone()
         {
-            VerificationHelper(new DateTimeFormatInfo(), new string[] {
-                    "1","2","3","4","5","6","7"}, true);
+            var format = new DateTimeFormatInfo();
+            Assert.Equal(format.AbbreviatedDayNames, format.AbbreviatedDayNames);
+            Assert.NotSame(format.AbbreviatedDayNames, format.AbbreviatedDayNames);
         }
 
-        // NegTest1: ArgumentNullException should be thrown when The property is being set to a null reference
-        [Fact]
-        public void TestNullProperty()
+        public static IEnumerable<object[]> AbbreviatedDayNames_Set_TestData()
         {
-            Assert.Throws<ArgumentNullException>(() =>
-            {
-                new DateTimeFormatInfo().AbbreviatedDayNames = null;
-            });
-
-            Assert.Throws<ArgumentNullException>(() =>
-            {
-                new DateTimeFormatInfo().AbbreviatedDayNames = new string[] {
-                    "1","2","3",null,"5","6","7"};
-            });
+            yield return new object[] { new string[] { "1", "2", "3", "4", "5", "6", "7" } };
+            yield return new object[] { new string[] { "", "", "", "", "", "", "" } };
         }
 
-        // NegTest2: ArgumentException should be thrown when The property is being set to an array that is 
-        // multidimensional or whose length is not exactly 7
-        [Fact]
-        public void TestInvalidArray()
+        [Theory]
+        [MemberData(nameof(AbbreviatedDayNames_Set_TestData))]
+        public void AbbreviatedDayNames_Set_GetReturnsExpected(string[] value)
         {
-            Assert.Throws<ArgumentException>(() =>
-            {
-                new DateTimeFormatInfo().AbbreviatedDayNames = new string[] { "sun" };
-            });
+            var format = new DateTimeFormatInfo();
+            format.AbbreviatedDayNames = value;
+            Assert.Equal(value, format.AbbreviatedDayNames);
+
+            // Does not clone in setter, only in getter.
+            value[0] = null;
+            Assert.NotSame(value, format.AbbreviatedDayNames);
+            Assert.Equal(value, format.AbbreviatedDayNames);
         }
 
-        // NegTest3: InvalidOperationException should be thrown when The property is being set and the 
-        // DateTimeFormatInfo is read-only
         [Fact]
-        public void TestReadOnly()
+        public void AbbreviatedDayNames_SetNulValue_ThrowsArgumentNullException()
         {
-            Assert.Throws<InvalidOperationException>(() =>
-            {
-                DateTimeFormatInfo.InvariantInfo.AbbreviatedDayNames = new string[] { "1", "2", "3", "4", "5", "6", "7" };
-            });
+            var format = new DateTimeFormatInfo();
+            AssertExtensions.Throws<ArgumentNullException>("value", () => format.AbbreviatedDayNames = null);
         }
 
-        private void VerificationHelper(DateTimeFormatInfo info, string[] expected, bool setter)
+        [Fact]
+        public void AbbreviatedDayNames_SetNulValueInValue_ThrowsArgumentNullException()
         {
-            if (setter)
-            {
-                info.AbbreviatedDayNames = expected;
-            }
+            var format = new DateTimeFormatInfo();
+            AssertExtensions.Throws<ArgumentNullException>("value", () => format.AbbreviatedDayNames = new string[] { "1", "2", "3", null, "5", "6", "7" });
+        }
 
-            string[] actual = info.AbbreviatedDayNames;
-            Assert.Equal(expected.Length, actual.Length);
-            Assert.Equal(expected, actual);
+        public static IEnumerable<object[]> AbbreviatedDayNames_SetInvalidLength_TestData()
+        {
+            yield return new object[] { new string[] { "Sun" } };
+            yield return new object[] { new string[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Additional" } };
+        }
+
+        [Theory]
+        [MemberData(nameof(AbbreviatedDayNames_SetInvalidLength_TestData))]
+        public void AbbreviatedDayNames_SetInvalidLength_ThrowsArgumentException(string[] value)
+        {
+            var format = new DateTimeFormatInfo();
+            AssertExtensions.Throws<ArgumentException>("value", (() => format.AbbreviatedDayNames = value));
+        }
+
+        [Fact]
+        public void AbbreviatedDayNames_SetReadOnly_ThrowsInvalidOperationException()
+        {
+            Assert.Throws<InvalidOperationException>(() => DateTimeFormatInfo.InvariantInfo.AbbreviatedDayNames = new string[] { "1", "2", "3", "4", "5", "6", "7" });
         }
     }
 }

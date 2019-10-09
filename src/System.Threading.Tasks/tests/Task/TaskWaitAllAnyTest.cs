@@ -1,9 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // Summary: Test suite for the below scenario:
 // An array of tasks that can have different workloads
-// WaitAny and WaitAll 
+// WaitAny and WaitAll
 //      - with/without timeout is performed on them
 //      - the allowed delta for cases with timeout:10 ms
 // Scheduler used : current ( ThreadPool)
@@ -46,17 +47,17 @@ namespace System.Threading.Tasks.Tests.WaitAllAny
     /// <summary>
     /// Every task has an workload associated
     /// These are the workload types used in the task tree
-    /// The workload is not common for the whole tree - Every node can have its own workload 
+    /// The workload is not common for the whole tree - Every node can have its own workload
     /// </summary>
     public enum WorkloadType
     {
         Exceptional = -2,
         Cancelled = -1,
-        VeryLight = 1000,     // the number is the N input to the ZetaSequence workload
-        Light = 10000,
-        Medium = 1000000,
-        Heavy = 100000000,
-        VeryHeavy = 1000000000,
+        VeryLight = 100,     // the number is the N input to the ZetaSequence workload
+        Light = 200,
+        Medium = 400,
+        Heavy = 800,
+        VeryHeavy = 1600,
     }
 
     public class TestParameters_WaitAllAny
@@ -80,8 +81,8 @@ namespace System.Threading.Tasks.Tests.WaitAllAny
 
     /// <summary>
     /// The Tree node Data type
-    /// 
-    /// While the tree is not restricted to this data type 
+    ///
+    /// While the tree is not restricted to this data type
     /// the implemented tests are using the TaskInfo_WaitAllAny data type for their scenarios
     /// </summary>
     public class TaskInfo
@@ -115,7 +116,7 @@ namespace System.Threading.Tasks.Tests.WaitAllAny
         public CancellationTokenSource CancellationTokenSource { get; set; }
 
         /// <summary>
-        /// While a tasks is correct execute a result is produced 
+        /// While a tasks is correct execute a result is produced
         /// this is the result
         /// </summary>
         public double Result { get; private set; }
@@ -195,7 +196,7 @@ namespace System.Threading.Tasks.Tests.WaitAllAny
         private const int MAX_DELAY_TIMEOUT = 10;
 
         private readonly API _api;                  // the API_WaitAllAny to be tested
-        private readonly WaitBy _waitBy;            // the format of Wait 
+        private readonly WaitBy _waitBy;            // the format of Wait
         private readonly int _waitTimeout;          // the timeout in ms to be waited
         private readonly TaskInfo[] _taskInfos;     // task info for each task
         private readonly Task[] _tasks;             // _tasks to be waited
@@ -320,8 +321,8 @@ namespace System.Threading.Tasks.Tests.WaitAllAny
 
         /// <summary>
         /// the scenario verification
-        /// 
-        /// - all the tasks should be coplted in case of waitAll with -1 timeout
+        ///
+        /// - all the tasks should be completed in case of waitAll with -1 timeout
         /// - the returned index form WaitAny should correspond to a completed task
         /// - in case of Cancelled  and Exception tests the right exceptions should be got for WaitAll
         /// </summary>
@@ -367,7 +368,7 @@ namespace System.Threading.Tasks.Tests.WaitAllAny
                     {
                         //waitAny will not fail if a number of tasks were exceptional
                         if (expCaught)
-                            Assert.True(false, string.Format("Unexcepted TPLTestException in Task at Index = {0} caught", i));
+                            Assert.True(false, string.Format("Unexpected TPLTestException in Task at Index = {0} caught", i));
 
                         //need to check it eventually to prevent it from crashing the finalizer
                         faultyTasks.Add(i, ti.Task);
@@ -386,19 +387,17 @@ namespace System.Threading.Tasks.Tests.WaitAllAny
                     else // must be API_WaitAllAny.WaitAny
                     {
                         if (expCaught) //waitAny will not fail if a number of tasks were cancelled
-                            Assert.False(expCaught, "Unexcepted TaskCanceledException in Task at Index = " + i + " caught");
+                            Assert.False(expCaught, "Unexpected TaskCanceledException in Task at Index = " + i + " caught");
                     }
                 }
                 else if (ti.Task.IsCompleted && !CheckResult(ti.Result))
                     Assert.True(false, string.Format("Failed result verification in Task at Index = {0}", i));
-                else if (ti.Task.Status == TaskStatus.WaitingToRun && ti.Result != -1)
-                    Assert.True(false, string.Format("Result must remain uninitialized for unstarted task"));
             }
 
             if (!expCaught && _caughtException != null)
                 Assert.True(false, string.Format("Caught unexpected exception of {0}", _caughtException));
 
-            // second pass on the faulty tasks 
+            // second pass on the faulty tasks
             if (faultyTasks.Count > 0)
             {
                 List<WaitHandle> faultyTaskHandles = new List<WaitHandle>();
@@ -410,7 +409,7 @@ namespace System.Threading.Tasks.Tests.WaitAllAny
                 foreach (var tasks in faultyTasks)
                 {
                     if (!(tasks.Value.Exception.InnerException is TPLTestException))
-                        Assert.True(false, string.Format("Unexcepted Exception in Task at Index = {0} caught", tasks.Key));
+                        Assert.True(false, string.Format("Unexpected Exception in Task at Index = {0} caught", tasks.Key));
                 }
             }
         }
@@ -440,7 +439,7 @@ namespace System.Threading.Tasks.Tests.WaitAllAny
         private bool CheckResult(double result)
         {
             //Function point comparison cant be done by rounding off to nearest decimal points since
-            //1.64 could be represented as 1.63999999 or as 1.6499999999. To perform floating point comparisons, 
+            //1.64 could be represented as 1.63999999 or as 1.6499999999. To perform floating point comparisons,
             //a range has to be defined and check to ensure that the result obtained is within the specified range
             double minLimit = 1.63;
             double maxLimit = 1.65;

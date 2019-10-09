@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
@@ -14,10 +15,10 @@ namespace System.Runtime.InteropServices
         [InlineData(5.0f)]
         [InlineData("ExpectedValue")]
         [InlineData(null)]
-        public static void Constructor(object expected)
+        public static void Ctor_Value(object value)
         {
-            DefaultParameterValueAttribute attribute = new DefaultParameterValueAttribute(expected);
-            Assert.Equal(expected, attribute.Value);
+            var attribute = new DefaultParameterValueAttribute(value);
+            Assert.Equal(value, attribute.Value);
         }
     }
 }

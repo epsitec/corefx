@@ -1,16 +1,13 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
-using System.Composition.Convention.UnitTests;
 using System.Linq;
-using System.Text;
 using System.Reflection;
 using Xunit;
-using System.Composition.UnitTests.Util;
 
-namespace System.Composition.Convention
+namespace System.Composition.Convention.Tests
 {
     public interface IContract1 { }
 
@@ -41,9 +38,9 @@ namespace System.Composition.Convention
             var builder = new ConventionBuilder();
             builder.ForType<ClassWithLifetimeConcerns>().ExportInterfaces();
 
-            var attributes = GetExportAttributes(builder, typeof(ClassWithLifetimeConcerns));
-            var exportedContracts = attributes.Select(e => e.ContractType).ToArray();
-            AssertX.Equivalent(s_contractInterfaces, exportedContracts);
+            IEnumerable<ExportAttribute> attributes = GetExportAttributes(builder, typeof(ClassWithLifetimeConcerns));
+            Type[] exportedContracts = attributes.Select(e => e.ContractType).ToArray();
+            Equivalent(s_contractInterfaces, exportedContracts);
         }
 
         [Fact]
@@ -54,14 +51,22 @@ namespace System.Composition.Convention
             var builder = new ConventionBuilder();
             builder.ForType<ClassWithLifetimeConcerns>().ExportInterfaces(i => { seenInterfaces.Add(i); return true; });
 
-            var attributes = GetExportAttributes(builder, typeof(ClassWithLifetimeConcerns));
-            AssertX.Equivalent(s_contractInterfaces, seenInterfaces);
+            IEnumerable<ExportAttribute> attributes = GetExportAttributes(builder, typeof(ClassWithLifetimeConcerns));
+            Equivalent(s_contractInterfaces, seenInterfaces);
         }
 
         private static IEnumerable<ExportAttribute> GetExportAttributes(ConventionBuilder builder, Type type)
         {
-            var list = builder.GetDeclaredAttributes(type, type.GetTypeInfo());
+            Attribute[] list = builder.GetDeclaredAttributes(type, type.GetTypeInfo());
             return list.Cast<ExportAttribute>();
+        }
+
+        private static void Equivalent<T>(IEnumerable<T> expected, IEnumerable<T> actual)
+        {
+            IDictionary<T, int> expectedCounts = expected.GroupBy(x => x).ToDictionary(x => x.Key, x => x.Count());
+            IDictionary<T, int> actualCounts = actual.GroupBy(x => x).ToDictionary(x => x.Key, x => x.Count());
+
+            Assert.Equal(expectedCounts, actualCounts);
         }
     }
 }

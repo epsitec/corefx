@@ -1,9 +1,14 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System.Runtime.Serialization;
 
 namespace System.Security.Principal
 {
-    public sealed class IdentityNotMappedException : Exception
+    [Serializable]
+    [System.Runtime.CompilerServices.TypeForwardedFrom("mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
+    public sealed class IdentityNotMappedException : SystemException
     {
         private IdentityReferenceCollection _unmappedIdentities;
 
@@ -17,7 +22,7 @@ namespace System.Security.Principal
         {
         }
 
-        public IdentityNotMappedException(String message, Exception inner)
+        public IdentityNotMappedException(string message, Exception inner)
             : base(message, inner)
         {
         }
@@ -26,6 +31,15 @@ namespace System.Security.Principal
             : this(message)
         {
             _unmappedIdentities = unmappedIdentities;
+        }
+
+        private IdentityNotMappedException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+
+        public override void GetObjectData(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        {
+            base.GetObjectData(serializationInfo, streamingContext);
         }
 
         public IdentityReferenceCollection UnmappedIdentities

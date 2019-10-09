@@ -1,16 +1,15 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
-using Validation;
 using Xunit;
 using SetTriad = System.Tuple<System.Collections.Generic.IEnumerable<int>, System.Collections.Generic.IEnumerable<int>, bool>;
 
-namespace System.Collections.Immutable.Test
+namespace System.Collections.Immutable.Tests
 {
-    public abstract class ImmutableSetTest : ImmutablesTestBase
+    public abstract partial class ImmutableSetTest : ImmutablesTestBase
     {
         [Fact]
         public void AddTest()
@@ -52,12 +51,6 @@ namespace System.Collections.Immutable.Test
             Assert.Same(set, empty2.Union(set)); // "Filling an empty immutable set with the contents of another immutable set with the exact same comparer should return the other set."
         }
 
-        [Fact]
-        public void ExceptTest()
-        {
-            this.ExceptTestHelper(Empty<int>().Add(1).Add(3).Add(5).Add(7), 3, 7);
-        }
-
         /// <summary>
         /// Verifies that Except *does* enumerate its argument if the collection is empty.
         /// </summary>
@@ -75,44 +68,6 @@ namespace System.Collections.Immutable.Test
             bool enumerated = false;
             Empty<int>().Except(Enumerable.Range(1, 1).Select(n => { enumerated = true; return n; }));
             Assert.True(enumerated);
-        }
-
-        [Fact]
-        public void SymmetricExceptTest()
-        {
-            this.SymmetricExceptTestHelper(Empty<int>().Add(1).Add(3).Add(5).Add(7), Enumerable.Range(0, 9).ToArray());
-            this.SymmetricExceptTestHelper(Empty<int>().Add(1).Add(3).Add(5).Add(7), Enumerable.Range(0, 5).ToArray());
-        }
-
-        [Fact]
-        public void EnumeratorTest()
-        {
-            IComparer<double> comparer = null;
-            var set = this.Empty<double>();
-            var sortedSet = set as ISortKeyCollection<double>;
-            if (sortedSet != null)
-            {
-                comparer = sortedSet.KeyComparer;
-            }
-
-            this.EnumeratorTestHelper(set, comparer, 3, 5, 1);
-            double[] data = this.GenerateDummyFillData();
-            this.EnumeratorTestHelper(set, comparer, data);
-        }
-
-        [Fact]
-        public void IntersectTest()
-        {
-            this.IntersectTestHelper(Empty<int>().Union(Enumerable.Range(1, 10)), 8, 3, 5);
-        }
-
-        [Fact]
-        public void UnionTest()
-        {
-            this.UnionTestHelper(this.Empty<int>(), new[] { 1, 3, 5, 7 });
-            this.UnionTestHelper(this.Empty<int>().Union(new[] { 2, 4, 6 }), new[] { 1, 3, 5, 7 });
-            this.UnionTestHelper(this.Empty<int>().Union(new[] { 1, 2, 3 }), new int[0] { });
-            this.UnionTestHelper(this.Empty<int>().Union(new[] { 2 }), Enumerable.Range(0, 1000).ToArray());
         }
 
         [Fact]
@@ -222,11 +177,37 @@ namespace System.Collections.Immutable.Test
             Assert.Same(builder.SyncRoot, builder.SyncRoot);
         }
 
+        [Fact]
+        public void NullHandling()
+        {
+            var empty = this.Empty<string>();
+            var set = empty.Add(null);
+            Assert.True(set.Contains(null));
+            Assert.True(set.TryGetValue(null, out var @null));
+            Assert.Null(@null);
+            Assert.Equal(empty, set.Remove(null));
+
+            set = empty.Union(new[] { null, "a" });
+            Assert.True(set.IsSupersetOf(new[] { null, "a" }));
+            Assert.True(set.IsSubsetOf(new[] { null, "a" }));
+            Assert.True(set.IsProperSupersetOf(new[] { default(string) }));
+            Assert.True(set.IsProperSubsetOf(new[] { null, "a", "b" }));
+            Assert.True(set.Overlaps(new[] { null, "b" }));
+            Assert.True(set.SetEquals(new[] { null, null, "a", "a" }));
+
+            set = set.Intersect(new[] { default(string) });
+            Assert.Equal(1, set.Count);
+
+            set = set.Except(new[] { default(string) });
+            Assert.False(set.Contains(null));
+        }
+
         protected abstract bool IncludesGetHashCodeDerivative { get; }
 
         internal static List<T> ToListNonGeneric<T>(System.Collections.IEnumerable sequence)
         {
-            Contract.Requires(sequence != null);
+            Assert.NotNull(sequence);
+
             var list = new List<T>();
             var enumerator = sequence.GetEnumerator();
             while (enumerator.MoveNext())
@@ -241,26 +222,6 @@ namespace System.Collections.Immutable.Test
 
         protected abstract ISet<T> EmptyMutable<T>();
 
-        internal abstract IBinaryTree GetRootNode<T>(IImmutableSet<T> set);
-
-        protected void TryGetValueTestHelper(IImmutableSet<string> set)
-        {
-            Requires.NotNull(set, "set");
-
-            string expected = "egg";
-            set = set.Add(expected);
-            string actual;
-            string lookupValue = expected.ToUpperInvariant();
-            Assert.True(set.TryGetValue(lookupValue, out actual));
-            Assert.Same(expected, actual);
-
-            Assert.False(set.TryGetValue("foo", out actual));
-            Assert.Equal("foo", actual);
-
-            Assert.False(set.Clear().TryGetValue("nonexistent", out actual));
-            Assert.Equal("nonexistent", actual);
-        }
-
         protected IImmutableSet<T> SetWith<T>(params T[] items)
         {
             return this.Empty<T>().Union(items);
@@ -268,9 +229,9 @@ namespace System.Collections.Immutable.Test
 
         protected void CustomSortTestHelper<T>(IImmutableSet<T> emptySet, bool matchOrder, T[] injectedValues, T[] expectedValues)
         {
-            Contract.Requires(emptySet != null);
-            Contract.Requires(injectedValues != null);
-            Contract.Requires(expectedValues != null);
+            Assert.NotNull(emptySet);
+            Assert.NotNull(injectedValues);
+            Assert.NotNull(expectedValues);
 
             var set = emptySet;
             foreach (T value in injectedValues)
@@ -296,7 +257,7 @@ namespace System.Collections.Immutable.Test
         /// <param name="emptySet">The empty set.</param>
         protected void EmptyTestHelper<T>(IImmutableSet<T> emptySet)
         {
-            Contract.Requires(emptySet != null);
+            Assert.NotNull(emptySet);
 
             Assert.Equal(0, emptySet.Count); //, "Empty set should have a Count of 0");
             Assert.Equal(0, emptySet.Count()); //, "Enumeration of an empty set yielded elements.");
@@ -398,8 +359,8 @@ namespace System.Collections.Immutable.Test
 
         private void RemoveTestHelper<T>(IImmutableSet<T> set, params T[] values)
         {
-            Contract.Requires(set != null);
-            Contract.Requires(values != null);
+            Assert.NotNull(set);
+            Assert.NotNull(values);
 
             Assert.Same(set, set.Except(Enumerable.Empty<T>()));
 
@@ -442,8 +403,8 @@ namespace System.Collections.Immutable.Test
 
         private void AddRemoveLoadTestHelper<T>(IImmutableSet<T> set, T[] data)
         {
-            Contract.Requires(set != null);
-            Contract.Requires(data != null);
+            Assert.NotNull(set);
+            Assert.NotNull(data);
 
             foreach (T value in data)
             {
@@ -512,68 +473,10 @@ namespace System.Collections.Immutable.Test
             Assert.Throws<ObjectDisposedException>(() => enumerator.Current);
         }
 
-        private void ExceptTestHelper<T>(IImmutableSet<T> set, params T[] valuesToRemove)
-        {
-            Contract.Requires(set != null);
-            Contract.Requires(valuesToRemove != null);
-
-            var expectedSet = new HashSet<T>(set);
-            expectedSet.ExceptWith(valuesToRemove);
-
-            var actualSet = set.Except(valuesToRemove);
-            CollectionAssertAreEquivalent(expectedSet.ToList(), actualSet.ToList());
-
-            this.VerifyAvlTreeState(actualSet);
-        }
-
-        private void SymmetricExceptTestHelper<T>(IImmutableSet<T> set, params T[] otherCollection)
-        {
-            Contract.Requires(set != null);
-            Contract.Requires(otherCollection != null);
-
-            var expectedSet = new HashSet<T>(set);
-            expectedSet.SymmetricExceptWith(otherCollection);
-
-            var actualSet = set.SymmetricExcept(otherCollection);
-            CollectionAssertAreEquivalent(expectedSet.ToList(), actualSet.ToList());
-
-            this.VerifyAvlTreeState(actualSet);
-        }
-
-        private void IntersectTestHelper<T>(IImmutableSet<T> set, params T[] values)
-        {
-            Contract.Requires(set != null);
-            Contract.Requires(values != null);
-
-            Assert.True(set.Intersect(Enumerable.Empty<T>()).Count == 0);
-
-            var expected = new HashSet<T>(set);
-            expected.IntersectWith(values);
-
-            var actual = set.Intersect(values);
-            CollectionAssertAreEquivalent(expected.ToList(), actual.ToList());
-
-            this.VerifyAvlTreeState(actual);
-        }
-
-        private void UnionTestHelper<T>(IImmutableSet<T> set, params T[] values)
-        {
-            Contract.Requires(set != null);
-            Contract.Requires(values != null);
-
-            var expected = new HashSet<T>(set);
-            expected.UnionWith(values);
-
-            var actual = set.Union(values);
-            CollectionAssertAreEquivalent(expected.ToList(), actual.ToList());
-
-            this.VerifyAvlTreeState(actual);
-        }
-
         private void AddTestHelper<T>(IImmutableSet<T> set, params T[] values)
         {
-            Contract.Requires(set != null);
-            Contract.Requires(values != null);
+            Assert.NotNull(set);
+            Assert.NotNull(values);
 
             Assert.Same(set, set.Union(Enumerable.Empty<T>()));
 
@@ -611,13 +514,6 @@ namespace System.Collections.Immutable.Test
                 Assert.Same(nextSet, nextSet.Add(value)); //, "Adding duplicate value {0} should keep the original reference.", value);
                 set = nextSet;
             }
-        }
-
-        private void VerifyAvlTreeState<T>(IImmutableSet<T> set)
-        {
-            var rootNode = this.GetRootNode(set);
-            rootNode.VerifyBalanced();
-            rootNode.VerifyHeightIsWithinTolerance(set.Count);
         }
     }
 }

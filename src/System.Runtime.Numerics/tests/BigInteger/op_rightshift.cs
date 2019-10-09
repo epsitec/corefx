@@ -1,7 +1,7 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using Tools;
 using Xunit;
 
 namespace System.Numerics.Tests
@@ -67,7 +67,7 @@ namespace System.Numerics.Tests
             for (int i = 0; i < s_samples; i++)
             {
                 tempByteArray1 = GetRandomByteArray(s_random);
-                tempByteArray2 = new byte[] { (byte)s_random.Next(-31, 0) };
+                tempByteArray2 = new byte[] { unchecked((byte)s_random.Next(-31, 0)) };
                 VerifyRightShiftString(Print(tempByteArray2) + Print(tempByteArray1) + "b>>");
             }
 
@@ -122,7 +122,7 @@ namespace System.Numerics.Tests
             for (int i = 0; i < s_samples; i++)
             {
                 tempByteArray1 = GetRandomByteArray(s_random, 2);
-                tempByteArray2 = new byte[] { (byte)s_random.Next(-31, 0) };
+                tempByteArray2 = new byte[] { unchecked((byte)s_random.Next(-31, 0)) };
                 VerifyRightShiftString(Print(tempByteArray2) + Print(tempByteArray1) + "b>>");
             }
 
@@ -178,7 +178,7 @@ namespace System.Numerics.Tests
             return MyBigIntImp.GetRandomByteArray(random, size);
         }
 
-        private static Byte[] GetRandomPosByteArray(Random random, int size)
+        private static byte[] GetRandomPosByteArray(Random random, int size)
         {
             byte[] value = new byte[size];
 
@@ -191,7 +191,7 @@ namespace System.Numerics.Tests
             return value;
         }
 
-        private static Byte[] GetRandomNegByteArray(Random random, int size)
+        private static byte[] GetRandomNegByteArray(Random random, int size)
         {
             byte[] value = new byte[size];
 
@@ -204,7 +204,7 @@ namespace System.Numerics.Tests
             return value;
         }
 
-        private static String Print(byte[] bytes)
+        private static string Print(byte[] bytes)
         {
             return MyBigIntImp.Print(bytes);
         }

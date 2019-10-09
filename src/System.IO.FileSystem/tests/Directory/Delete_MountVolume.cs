@@ -1,12 +1,13 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 /**
 This testcase attempts to delete some directories in a mounted volume
  - Different drive is mounted on the current drive
  - Current drive is mounted on a different drive
  - Current drive is mounted on current directory
- 	 - refer to the directory in a recursive manner in addition to the normal one
+   - refer to the directory in a recursive manner in addition to the normal one
 **/
 using System;
 using System.IO;
@@ -22,30 +23,30 @@ public class Directory_Delete_MountVolume
 
     [Fact]
     [ActiveIssue(1221)]
-    [PlatformSpecific(PlatformID.Windows)] // testing volumes / mounts / drive letters
+    [PlatformSpecific(TestPlatforms.Windows)] // testing volumes / mounts / drive letters
     public static void RunTest()
     {
         try
         {
-            const String MountPrefixName = "LaksMount";
+            const string MountPrefixName = "LaksMount";
 
-            String mountedDirName;
-            String dirName;
-            String dirNameWithoutRoot;
-            String dirNameReferedFromMountedDrive;
+            string mountedDirName;
+            string dirName;
+            string dirNameWithoutRoot;
+            string dirNameReferedFromMountedDrive;
 
             //Adding debug info since this test hangs sometime in RTS runs
-            String debugFileName = "Co7604Delete_MountVolume_Debug.txt";
+            string debugFileName = "Co7604Delete_MountVolume_Debug.txt";
             DeleteFile(debugFileName);
-            String scenarioDescription;
+            string scenarioDescription;
 
             scenarioDescription = "Scenario 1: Vanilla - Different drive is mounted on the current drive";
             try
             {
-                File.AppendAllText(debugFileName, String.Format("{0}{1}", scenarioDescription, Environment.NewLine));
+                File.AppendAllText(debugFileName, string.Format("{0}{1}", scenarioDescription, Environment.NewLine));
 
                 string otherDriveInMachine = IOServices.GetNtfsDriveOtherThanCurrent();
-                //out labs use UIP tools in one drive and dont expect this drive to be used by others. We avoid this problem by not testing if the other drive is not NTFS
+                //out labs use UIP tools in one drive and don't expect this drive to be used by others. We avoid this problem by not testing if the other drive is not NTFS
                 if (FileSystemDebugInfo.IsCurrentDriveNTFS() && otherDriveInMachine != null)
                 {
                     Console.WriteLine(scenarioDescription);
@@ -55,11 +56,11 @@ public class Directory_Delete_MountVolume
                     {
                         Directory.CreateDirectory(mountedDirName);
 
-                        File.AppendAllText(debugFileName, String.Format("Mounting on {0}{1}{2}", otherDriveInMachine.Substring(0, 2), mountedDirName, Environment.NewLine));
+                        File.AppendAllText(debugFileName, string.Format("Mounting on {0}{1}{2}", otherDriveInMachine.Substring(0, 2), mountedDirName, Environment.NewLine));
                         MountHelper.Mount(otherDriveInMachine.Substring(0, 2), mountedDirName);
 
                         dirName = ManageFileSystem.GetNonExistingDir(otherDriveInMachine, ManageFileSystem.DirPrefixName);
-                        File.AppendAllText(debugFileName, String.Format("Creating a sub tree at: {0}{1}", dirName, Environment.NewLine));
+                        File.AppendAllText(debugFileName, string.Format("Creating a sub tree at: {0}{1}", dirName, Environment.NewLine));
                         using (ManageFileSystem fileManager = new ManageFileSystem(dirName, 3, 100))
                         {
                             Eval(Directory.Exists(dirName), "Err_3974g! Directory {0} doesn't exist: {1}", dirName, Directory.Exists(dirName));
@@ -76,10 +77,10 @@ public class Directory_Delete_MountVolume
                         MountHelper.Unmount(mountedDirName);
                         DeleteDir(mountedDirName, true);
                     }
-                    File.AppendAllText(debugFileName, String.Format("Completed scenario {0}", Environment.NewLine));
+                    File.AppendAllText(debugFileName, string.Format("Completed scenario {0}", Environment.NewLine));
                 }
                 else
-                    File.AppendAllText(debugFileName, String.Format("Scenario 1 - Vanilla - NOT RUN: Different drive is mounted on the current drive {0}", Environment.NewLine));
+                    File.AppendAllText(debugFileName, string.Format("Scenario 1 - Vanilla - NOT RUN: Different drive is mounted on the current drive {0}", Environment.NewLine));
             }
             catch (Exception ex)
             {
@@ -89,7 +90,7 @@ public class Directory_Delete_MountVolume
 
             scenarioDescription = "Scenario 2: Current drive is mounted on a different drive";
             Console.WriteLine(scenarioDescription);
-            File.AppendAllText(debugFileName, String.Format("{0}{1}", scenarioDescription, Environment.NewLine));
+            File.AppendAllText(debugFileName, string.Format("{0}{1}", scenarioDescription, Environment.NewLine));
             try
             {
                 string otherDriveInMachine = IOServices.GetNtfsDriveOtherThanCurrent();
@@ -100,11 +101,11 @@ public class Directory_Delete_MountVolume
                     {
                         Directory.CreateDirectory(mountedDirName);
 
-                        File.AppendAllText(debugFileName, String.Format("Mounting on {0}{1}{2}", Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName, Environment.NewLine));
+                        File.AppendAllText(debugFileName, string.Format("Mounting on {0}{1}{2}", Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName, Environment.NewLine));
                         MountHelper.Mount(Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName);
 
                         dirName = ManageFileSystem.GetNonExistingDir(Directory.GetCurrentDirectory(), ManageFileSystem.DirPrefixName);
-                        File.AppendAllText(debugFileName, String.Format("Creating a sub tree at: {0}{1}", dirName, Environment.NewLine));
+                        File.AppendAllText(debugFileName, string.Format("Creating a sub tree at: {0}{1}", dirName, Environment.NewLine));
                         using (ManageFileSystem fileManager = new ManageFileSystem(dirName, 3, 100))
                         {
                             Eval(Directory.Exists(dirName), "Err_239ufz! Directory {0} doesn't exist: {1}", dirName, Directory.Exists(dirName));
@@ -121,7 +122,7 @@ public class Directory_Delete_MountVolume
                         MountHelper.Unmount(mountedDirName);
                         DeleteDir(mountedDirName, true);
                     }
-                    File.AppendAllText(debugFileName, String.Format("Completed scenario {0}", Environment.NewLine));
+                    File.AppendAllText(debugFileName, string.Format("Completed scenario {0}", Environment.NewLine));
                 }
             }
             catch (Exception ex)
@@ -136,17 +137,17 @@ public class Directory_Delete_MountVolume
             {
                 if (FileSystemDebugInfo.IsCurrentDriveNTFS())
                 {
-                    File.AppendAllText(debugFileName, String.Format("{0}{1}", scenarioDescription, Environment.NewLine));
+                    File.AppendAllText(debugFileName, string.Format("{0}{1}", scenarioDescription, Environment.NewLine));
                     mountedDirName = Path.GetFullPath(ManageFileSystem.GetNonExistingDir(Path.DirectorySeparatorChar.ToString(), MountPrefixName));
                     try
                     {
                         Directory.CreateDirectory(mountedDirName);
 
-                        File.AppendAllText(debugFileName, String.Format("Mounting on {0}{1}{2}", Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName, Environment.NewLine));
+                        File.AppendAllText(debugFileName, string.Format("Mounting on {0}{1}{2}", Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName, Environment.NewLine));
                         MountHelper.Mount(Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName);
 
                         dirName = ManageFileSystem.GetNonExistingDir(Directory.GetCurrentDirectory(), ManageFileSystem.DirPrefixName);
-                        File.AppendAllText(debugFileName, String.Format("Creating a sub tree at: {0}{1}", dirName, Environment.NewLine));
+                        File.AppendAllText(debugFileName, string.Format("Creating a sub tree at: {0}{1}", dirName, Environment.NewLine));
                         using (ManageFileSystem fileManager = new ManageFileSystem(dirName, 3, 100))
                         {
                             Eval(Directory.Exists(dirName), "Err_324eez! Directory {0} doesn't exist: {1}", dirName, Directory.Exists(dirName));
@@ -163,7 +164,7 @@ public class Directory_Delete_MountVolume
                         MountHelper.Unmount(mountedDirName);
                         DeleteDir(mountedDirName, true);
                     }
-                    File.AppendAllText(debugFileName, String.Format("Completed scenario {0}", Environment.NewLine));
+                    File.AppendAllText(debugFileName, string.Format("Completed scenario {0}", Environment.NewLine));
                 }
             }
             catch (Exception ex)
@@ -178,17 +179,17 @@ public class Directory_Delete_MountVolume
             {
                 if (FileSystemDebugInfo.IsCurrentDriveNTFS())
                 {
-                    File.AppendAllText(debugFileName, String.Format("{0}{1}", scenarioDescription, Environment.NewLine));
+                    File.AppendAllText(debugFileName, string.Format("{0}{1}", scenarioDescription, Environment.NewLine));
                     mountedDirName = Path.GetFullPath(ManageFileSystem.GetNonExistingDir(Directory.GetCurrentDirectory(), MountPrefixName));
                     try
                     {
                         Directory.CreateDirectory(mountedDirName);
 
-                        File.AppendAllText(debugFileName, String.Format("Mounting on {0}{1}{2}", Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName, Environment.NewLine));
+                        File.AppendAllText(debugFileName, string.Format("Mounting on {0}{1}{2}", Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName, Environment.NewLine));
                         MountHelper.Mount(Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName);
 
                         dirName = ManageFileSystem.GetNonExistingDir(Directory.GetCurrentDirectory(), ManageFileSystem.DirPrefixName);
-                        File.AppendAllText(debugFileName, String.Format("Creating a sub tree at: {0}{1}", dirName, Environment.NewLine));
+                        File.AppendAllText(debugFileName, string.Format("Creating a sub tree at: {0}{1}", dirName, Environment.NewLine));
                         using (ManageFileSystem fileManager = new ManageFileSystem(dirName, 3, 100))
                         {
                             Eval(Directory.Exists(dirName), "Err_951ipb! Directory {0} doesn't exist: {1}", dirName, Directory.Exists(dirName));
@@ -205,7 +206,7 @@ public class Directory_Delete_MountVolume
                         MountHelper.Unmount(mountedDirName);
                         DeleteDir(mountedDirName, true);
                     }
-                    File.AppendAllText(debugFileName, String.Format("Completed scenario {0}", Environment.NewLine));
+                    File.AppendAllText(debugFileName, string.Format("Completed scenario {0}", Environment.NewLine));
                 }
             }
             catch (Exception ex)
@@ -222,13 +223,13 @@ public class Directory_Delete_MountVolume
             {
                 if (FileSystemDebugInfo.IsCurrentDriveNTFS())
                 {
-                    File.AppendAllText(debugFileName, String.Format("{0}{1}", scenarioDescription, Environment.NewLine));
+                    File.AppendAllText(debugFileName, string.Format("{0}{1}", scenarioDescription, Environment.NewLine));
                     mountedDirName = Path.GetFullPath(ManageFileSystem.GetNonExistingDir(Directory.GetCurrentDirectory(), MountPrefixName));
                     try
                     {
                         Directory.CreateDirectory(mountedDirName);
 
-                        File.AppendAllText(debugFileName, String.Format("Mounting on {0}{1}{2}", Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName, Environment.NewLine));
+                        File.AppendAllText(debugFileName, string.Format("Mounting on {0}{1}{2}", Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName, Environment.NewLine));
                         MountHelper.Mount(Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName);
 
                         Directory.Delete(mountedDirName, true);
@@ -242,7 +243,7 @@ public class Directory_Delete_MountVolume
                             DeleteDir(mountedDirName, true);
                         }
                     }
-                    File.AppendAllText(debugFileName, String.Format("Completed scenario {0}", Environment.NewLine));
+                    File.AppendAllText(debugFileName, string.Format("Completed scenario {0}", Environment.NewLine));
                 }
             }
             catch (Exception ex)
@@ -252,31 +253,31 @@ public class Directory_Delete_MountVolume
             }
 
             //@WATCH - potentially dangerous code - can delete the whole drive!!
-            //scenario 3.4: we call delete on parent directory of the mounted volume, the parent directoriy will have some other directories and files
+            //scenario 3.4: we call delete on parent directory of the mounted volume, the parent directory will have some other directories and files
             //Current drive is mounted on current directory
-            scenarioDescription = "Scenario 3.4 - we call delete on parent directory of the mounted volume, the parent directoriy will have some other directories and files";
+            scenarioDescription = "Scenario 3.4 - we call delete on parent directory of the mounted volume, the parent directory will have some other directories and files";
             try
             {
                 if (FileSystemDebugInfo.IsCurrentDriveNTFS())
                 {
-                    File.AppendAllText(debugFileName, String.Format("{0}{1}", scenarioDescription, Environment.NewLine));
+                    File.AppendAllText(debugFileName, string.Format("{0}{1}", scenarioDescription, Environment.NewLine));
                     mountedDirName = null;
                     try
                     {
                         dirName = ManageFileSystem.GetNonExistingDir(Directory.GetCurrentDirectory(), ManageFileSystem.DirPrefixName);
-                        File.AppendAllText(debugFileName, String.Format("Creating a sub tree at: {0}{1}", dirName, Environment.NewLine));
+                        File.AppendAllText(debugFileName, string.Format("Creating a sub tree at: {0}{1}", dirName, Environment.NewLine));
                         using (ManageFileSystem fileManager = new ManageFileSystem(dirName, 2, 20))
                         {
                             Eval(Directory.Exists(dirName), "Err_469yvh! Directory {0} doesn't exist: {1}", dirName, Directory.Exists(dirName));
-                            String[] dirs = fileManager.GetDirectories(1);
+                            string[] dirs = fileManager.GetDirectories(1);
                             mountedDirName = Path.GetFullPath(dirs[0]);
                             if (Eval(Directory.GetDirectories(mountedDirName).Length == 0, "Err_974tsg! the sub directory has directories: {0}", mountedDirName))
                             {
-                                foreach (String file in Directory.GetFiles(mountedDirName))
+                                foreach (string file in Directory.GetFiles(mountedDirName))
                                     File.Delete(file);
                                 if (Eval(Directory.GetFiles(mountedDirName).Length == 0, "Err_13ref! the mounted directory has files: {0}", mountedDirName))
                                 {
-                                    File.AppendAllText(debugFileName, String.Format("Mounting on {0}{1}{2}", Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName, Environment.NewLine));
+                                    File.AppendAllText(debugFileName, string.Format("Mounting on {0}{1}{2}", Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName, Environment.NewLine));
                                     MountHelper.Mount(Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName);
                                     //now lets call delete on the parent directory
                                     Directory.Delete(dirName, true);
@@ -295,7 +296,7 @@ public class Directory_Delete_MountVolume
                             DeleteDir(mountedDirName, true);
                         }
                     }
-                    File.AppendAllText(debugFileName, String.Format("Completed scenario {0}", Environment.NewLine));
+                    File.AppendAllText(debugFileName, string.Format("Completed scenario {0}", Environment.NewLine));
                 }
             }
             catch (Exception ex)
@@ -305,34 +306,34 @@ public class Directory_Delete_MountVolume
             }
 
             //@WATCH - potentially dangerous code - can delete the whole drive!!
-            //scenario 3.5: we call delete on parent directory of the mounted volume, the parent directoriy will have some other directories and files
+            //scenario 3.5: we call delete on parent directory of the mounted volume, the parent directory will have some other directories and files
             //we call a different directory than the first
             //Current drive is mounted on current directory
-            scenarioDescription = "Scenario 3.5 - we call delete on parent directory of the mounted volume, the parent directoriy will have some other directories and files";
+            scenarioDescription = "Scenario 3.5 - we call delete on parent directory of the mounted volume, the parent directory will have some other directories and files";
             try
             {
                 if (FileSystemDebugInfo.IsCurrentDriveNTFS())
                 {
-                    File.AppendAllText(debugFileName, String.Format("{0}{1}", scenarioDescription, Environment.NewLine));
+                    File.AppendAllText(debugFileName, string.Format("{0}{1}", scenarioDescription, Environment.NewLine));
                     mountedDirName = null;
                     try
                     {
                         dirName = ManageFileSystem.GetNonExistingDir(Directory.GetCurrentDirectory(), ManageFileSystem.DirPrefixName);
-                        File.AppendAllText(debugFileName, String.Format("Creating a sub tree at: {0}{1}", dirName, Environment.NewLine));
+                        File.AppendAllText(debugFileName, string.Format("Creating a sub tree at: {0}{1}", dirName, Environment.NewLine));
                         using (ManageFileSystem fileManager = new ManageFileSystem(dirName, 2, 30))
                         {
                             Eval(Directory.Exists(dirName), "Err_715tdq! Directory {0} doesn't exist: {1}", dirName, Directory.Exists(dirName));
-                            String[] dirs = fileManager.GetDirectories(1);
+                            string[] dirs = fileManager.GetDirectories(1);
                             mountedDirName = Path.GetFullPath(dirs[0]);
                             if (dirs.Length > 1)
                                 mountedDirName = Path.GetFullPath(dirs[1]);
                             if (Eval(Directory.GetDirectories(mountedDirName).Length == 0, "Err_492qwl! the sub directory has directories: {0}", mountedDirName))
                             {
-                                foreach (String file in Directory.GetFiles(mountedDirName))
+                                foreach (string file in Directory.GetFiles(mountedDirName))
                                     File.Delete(file);
                                 if (Eval(Directory.GetFiles(mountedDirName).Length == 0, "Err_904kij! the mounted directory has files: {0}", mountedDirName))
                                 {
-                                    File.AppendAllText(debugFileName, String.Format("Mounting on {0}{1}{2}", Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName, Environment.NewLine));
+                                    File.AppendAllText(debugFileName, string.Format("Mounting on {0}{1}{2}", Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName, Environment.NewLine));
                                     MountHelper.Mount(Directory.GetCurrentDirectory().Substring(0, 2), mountedDirName);
                                     //now lets call delete on the parent directory
                                     Directory.Delete(dirName, true);
@@ -351,7 +352,7 @@ public class Directory_Delete_MountVolume
                             DeleteDir(mountedDirName, true);
                         }
                     }
-                    File.AppendAllText(debugFileName, String.Format("Completed scenario {0}", Environment.NewLine));
+                    File.AppendAllText(debugFileName, string.Format("Completed scenario {0}", Environment.NewLine));
                 }
             }
             catch (Exception ex)
@@ -371,13 +372,13 @@ public class Directory_Delete_MountVolume
         }
     }
 
-    private static void DeleteFile(String debugFileName)
+    private static void DeleteFile(string debugFileName)
     {
         if (File.Exists(debugFileName))
             File.Delete(debugFileName);
     }
 
-    private static void DeleteDir(String debugFileName, bool sub)
+    private static void DeleteDir(string debugFileName, bool sub)
     {
         bool deleted = false; int maxAttempts = 5;
         while (!deleted && maxAttempts > 0)
@@ -401,12 +402,12 @@ public class Directory_Delete_MountVolume
     }
 
     //Checks for error
-    private static bool Eval(bool expression, String msg, params Object[] values)
+    private static bool Eval(bool expression, string msg, params object[] values)
     {
-        return Eval(expression, String.Format(msg, values));
+        return Eval(expression, string.Format(msg, values));
     }
 
-    private static bool Eval<T>(T actual, T expected, String errorMsg)
+    private static bool Eval<T>(T actual, T expected, string errorMsg)
     {
         bool retValue = expected == null ? actual == null : expected.Equals(actual);
 
@@ -418,7 +419,7 @@ public class Directory_Delete_MountVolume
         return retValue;
     }
 
-    private static bool Eval(bool expression, String msg)
+    private static bool Eval(bool expression, string msg)
     {
         if (!expression)
         {
@@ -435,13 +436,13 @@ public class Directory_Delete_MountVolume
     }
 
     //Checks for a particular type of exception and an Exception msg in the English locale
-    private static void CheckException<E>(ExceptionCode test, string error, String msgExpected)
+    private static void CheckException<E>(ExceptionCode test, string error, string msgExpected)
     {
         bool exception = false;
         try
         {
             test();
-            error = String.Format("{0} Exception NOT thrown ", error);
+            error = string.Format("{0} Exception NOT thrown ", error);
         }
         catch (Exception e)
         {
@@ -451,11 +452,11 @@ public class Directory_Delete_MountVolume
                 if (System.Globalization.CultureInfo.CurrentUICulture.Name == "en-US" && msgExpected != null && e.Message != msgExpected)
                 {
                     exception = false;
-                    error = String.Format("{0} Message Different: <{1}>", error, e.Message);
+                    error = string.Format("{0} Message Different: <{1}>", error, e.Message);
                 }
             }
             else
-                error = String.Format("{0} Exception type: {1}", error, e.GetType().Name);
+                error = string.Format("{0} Exception type: {1}", error, e.GetType().Name);
         }
         Eval(exception, error);
     }

@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property001.property001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property001.property001;
-
     public class Test
     {
         private class MyClass
@@ -43,8 +42,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property002.property002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property002.property002;
-
     public class Test
     {
         private class MyClass
@@ -80,8 +77,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property003.property003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property003.property003;
-
     public class Test
     {
         private class MyClass<T>
@@ -117,8 +112,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property004.property004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property004.property004;
-
     public class Test
     {
         private class MyClass<T>
@@ -155,8 +148,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property005.property005
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property005.property005;
-
     public class Test
     {
         private class MyClass<T>
@@ -193,8 +184,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property006.property006
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property006.property006;
-
     public class Test
     {
         private class MyClass<T>
@@ -239,8 +228,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property007.property007
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property007.property007;
-
     public class Test
     {
         private class MyClass
@@ -286,8 +273,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property008.property008
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.properties.property008.property008;
-
     public class Test
     {
         private class MyClass

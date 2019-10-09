@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections;
@@ -8,10 +9,10 @@ namespace System.Diagnostics
 {
     public class SourceSwitch : Switch
     {
-        public SourceSwitch(string name) : base(name, String.Empty) { }
+        public SourceSwitch(string name) : base(name, string.Empty) { }
 
         public SourceSwitch(string displayName, string defaultSwitchValue)
-            : base(displayName, String.Empty, defaultSwitchValue)
+            : base(displayName, string.Empty, defaultSwitchValue)
         { }
 
         public SourceLevels Level

@@ -1,29 +1,16 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-/*=============================================================================
-**
-** Struct: BigInteger
-**
-** Purpose: Represents an arbitrary precision integer.
-**
-=============================================================================*/
-
-using System;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Numerics;
-using System.Text;
 
 namespace System.Numerics
 {
-    public struct BigInteger : IFormattable, IComparable, IComparable<BigInteger>, IEquatable<BigInteger>
+    [Serializable]
+    [System.Runtime.CompilerServices.TypeForwardedFrom("System.Numerics, Version=4.0.0.0, PublicKeyToken=b77a5c561934e089")]
+    public readonly struct BigInteger : IFormattable, IComparable, IComparable<BigInteger>, IEquatable<BigInteger>
     {
-        // ---- SECTION:  members supporting exposed properties -------------*
-        #region members supporting exposed properties
-        private const int knMaskHighBit = int.MinValue;
         private const uint kuMaskHighBit = unchecked((uint)int.MinValue);
         private const int kcbitUint = 32;
         private const int kcbitUlong = 64;
@@ -32,8 +19,8 @@ namespace System.Numerics
 
         // For values int.MinValue < n <= int.MaxValue, the value is stored in sign
         // and _bits is null. For all other values, sign is +1 or -1 and the bits are in _bits
-        internal int _sign;
-        internal uint[] _bits;
+        internal readonly int _sign; // Do not rename (binary serialization)
+        internal readonly uint[] _bits; // Do not rename (binary serialization)
 
         // We have to make a choice of how to represent int.MinValue. This is the one
         // value that fits in an int, but whose negation does not fit in an int.
@@ -43,364 +30,9 @@ namespace System.Numerics
         private static readonly BigInteger s_bnZeroInt = new BigInteger(0);
         private static readonly BigInteger s_bnMinusOneInt = new BigInteger(-1);
 
-        [Conditional("DEBUG")]
-        private void AssertValid()
-        {
-            if (_bits != null)
-            {
-                // _sign must be +1 or -1 when _bits is non-null
-                Debug.Assert(_sign == 1 || _sign == -1);
-                // _bits must contain at least 1 element or be null
-                Debug.Assert(_bits.Length > 0);
-                // Wasted space: _bits[0] could have been packed into _sign
-                Debug.Assert(_bits.Length > 1 || _bits[0] >= kuMaskHighBit);
-                // Wasted space: leading zeros could have been truncated
-                Debug.Assert(_bits[_bits.Length - 1] != 0);
-            }
-            else
-            {
-                // Int32.MinValue should not be stored in the _sign field
-                Debug.Assert(_sign > int.MinValue);
-            }
-        }
-        #endregion members supporting exposed properties
-
-        // ---- SECTION: public properties --------------*
-        #region public properties
-
-        public static BigInteger Zero
-        {
-            get { return s_bnZeroInt; }
-        }
-
-        public static BigInteger One
-        {
-            get { return s_bnOneInt; }
-        }
-
-        public static BigInteger MinusOne
-        {
-            get { return s_bnMinusOneInt; }
-        }
-
-        public bool IsPowerOfTwo
-        {
-            get
-            {
-                AssertValid();
-
-                if (_bits == null)
-                    return (_sign & (_sign - 1)) == 0 && _sign != 0;
-
-                if (_sign != 1)
-                    return false;
-                int iu = Length(_bits) - 1;
-                if ((_bits[iu] & (_bits[iu] - 1)) != 0)
-                    return false;
-                while (--iu >= 0)
-                {
-                    if (_bits[iu] != 0)
-                        return false;
-                }
-                return true;
-            }
-        }
-
-        public bool IsZero { get { AssertValid(); return _sign == 0; } }
-
-        public bool IsOne { get { AssertValid(); return _sign == 1 && _bits == null; } }
-
-        public bool IsEven { get { AssertValid(); return _bits == null ? (_sign & 1) == 0 : (_bits[0] & 1) == 0; } }
-
-        public int Sign
-        {
-            get { AssertValid(); return (_sign >> (kcbitUint - 1)) - (-_sign >> (kcbitUint - 1)); }
-        }
-
-        #endregion public properties
-
-
-        // ---- SECTION: public instance methods --------------*
-        #region public instance methods
-
-        public override bool Equals(object obj)
-        {
-            AssertValid();
-
-            if (!(obj is BigInteger))
-                return false;
-            return Equals((BigInteger)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            AssertValid();
-
-            if (_bits == null)
-                return _sign;
-            int hash = _sign;
-            for (int iv = Length(_bits); --iv >= 0;)
-                hash = NumericsHelpers.CombineHash(hash, (int)_bits[iv]);
-            return hash;
-        }
-
-        public bool Equals(Int64 other)
-        {
-            AssertValid();
-
-            if (_bits == null)
-                return _sign == other;
-
-            int cu;
-            if ((_sign ^ other) < 0 || (cu = Length(_bits)) > 2)
-                return false;
-
-            ulong uu = other < 0 ? (ulong)-other : (ulong)other;
-            if (cu == 1)
-                return _bits[0] == uu;
-
-            return NumericsHelpers.MakeUlong(_bits[1], _bits[0]) == uu;
-        }
-
-        [CLSCompliant(false)]
-        public bool Equals(UInt64 other)
-        {
-            AssertValid();
-
-            if (_sign < 0)
-                return false;
-            if (_bits == null)
-                return (ulong)_sign == other;
-
-            int cu = Length(_bits);
-            if (cu > 2)
-                return false;
-            if (cu == 1)
-                return _bits[0] == other;
-            return NumericsHelpers.MakeUlong(_bits[1], _bits[0]) == other;
-        }
-
-        public bool Equals(BigInteger other)
-        {
-            AssertValid();
-            other.AssertValid();
-
-            if (_sign != other._sign)
-                return false;
-            if (_bits == other._bits)
-                // _sign == other._sign && _bits == null && other._bits == null
-                return true;
-
-            if (_bits == null || other._bits == null)
-                return false;
-            int cu = Length(_bits);
-            if (cu != Length(other._bits))
-                return false;
-            int cuDiff = GetDiffLength(_bits, other._bits, cu);
-            return cuDiff == 0;
-        }
-
-        public int CompareTo(Int64 other)
-        {
-            AssertValid();
-
-            if (_bits == null)
-                return ((long)_sign).CompareTo(other);
-            int cu;
-            if ((_sign ^ other) < 0 || (cu = Length(_bits)) > 2)
-                return _sign;
-            ulong uu = other < 0 ? (ulong)-other : (ulong)other;
-            ulong uuTmp = cu == 2 ? NumericsHelpers.MakeUlong(_bits[1], _bits[0]) : _bits[0];
-            return _sign * uuTmp.CompareTo(uu);
-        }
-
-        [CLSCompliant(false)]
-        public int CompareTo(UInt64 other)
-        {
-            AssertValid();
-
-            if (_sign < 0)
-                return -1;
-            if (_bits == null)
-                return ((ulong)_sign).CompareTo(other);
-            int cu = Length(_bits);
-            if (cu > 2)
-                return +1;
-            ulong uuTmp = cu == 2 ? NumericsHelpers.MakeUlong(_bits[1], _bits[0]) : _bits[0];
-            return uuTmp.CompareTo(other);
-        }
-
-        public int CompareTo(BigInteger other)
-        {
-            AssertValid();
-            other.AssertValid();
-
-            if ((_sign ^ other._sign) < 0)
-            {
-                // Different signs, so the comparison is easy.
-                return _sign < 0 ? -1 : +1;
-            }
-
-            // Same signs
-            if (_bits == null)
-            {
-                if (other._bits == null)
-                    return _sign < other._sign ? -1 : _sign > other._sign ? +1 : 0;
-                return -other._sign;
-            }
-            int cuThis, cuOther;
-            if (other._bits == null || (cuThis = Length(_bits)) > (cuOther = Length(other._bits)))
-                return _sign;
-            if (cuThis < cuOther)
-                return -_sign;
-
-            int cuDiff = GetDiffLength(_bits, other._bits, cuThis);
-            if (cuDiff == 0)
-                return 0;
-            return _bits[cuDiff - 1] < other._bits[cuDiff - 1] ? -_sign : _sign;
-        }
-
-        int IComparable.CompareTo(Object obj)
-        {
-            if (obj == null)
-                return 1;
-            if (!(obj is BigInteger))
-                throw new ArgumentException(SR.Argument_MustBeBigInt);
-            return this.CompareTo((BigInteger)obj);
-        }
-
-
-        // Return the value of this BigInteger as a little-endian twos-complement
-        // byte array, using the fewest number of bytes possible. If the value is zero,
-        // return an array of one byte whose element is 0x00.
-        public byte[] ToByteArray()
-        {
-            if (_bits == null && _sign == 0)
-                return new byte[] { 0 };
-
-            // We could probably make this more efficient by eliminating one of the passes.
-            // The current code does one pass for uint array -> byte array conversion,
-            // and then another pass to remove unneeded bytes at the top of the array.
-            uint[] dwords;
-            byte highByte;
-
-            if (_bits == null)
-            {
-                dwords = new uint[] { (uint)_sign };
-                highByte = (byte)((_sign < 0) ? 0xff : 0x00);
-            }
-            else if (_sign == -1)
-            {
-                dwords = (uint[])_bits.Clone();
-                NumericsHelpers.DangerousMakeTwosComplement(dwords);  // mutates dwords
-                highByte = 0xff;
-            }
-            else
-            {
-                dwords = _bits;
-                highByte = 0x00;
-            }
-
-            byte[] bytes = new byte[checked(4 * dwords.Length)];
-            int curByte = 0;
-            uint dword;
-            for (int i = 0; i < dwords.Length; i++)
-            {
-                dword = dwords[i];
-                for (int j = 0; j < 4; j++)
-                {
-                    bytes[curByte++] = (byte)(dword & 0xff);
-                    dword >>= 8;
-                }
-            }
-
-            // find highest significant byte
-            int msb;
-            for (msb = bytes.Length - 1; msb > 0; msb--)
-            {
-                if (bytes[msb] != highByte) break;
-            }
-            // ensure high bit is 0 if positive, 1 if negative
-            bool needExtraByte = (bytes[msb] & 0x80) != (highByte & 0x80);
-
-            byte[] trimmedBytes = new byte[msb + 1 + (needExtraByte ? 1 : 0)];
-            Array.Copy(bytes, trimmedBytes, msb + 1);
-
-            if (needExtraByte) trimmedBytes[trimmedBytes.Length - 1] = highByte;
-            return trimmedBytes;
-        }
-
-        // Return the value of this BigInteger as a little-endian twos-complement
-        // uint array, using the fewest number of uints possible. If the value is zero,
-        // return an array of one uint whose element is 0.
-        private UInt32[] ToUInt32Array()
-        {
-            if (_bits == null && _sign == 0)
-                return new uint[] { 0 };
-
-            uint[] dwords;
-            uint highDWord;
-
-            if (_bits == null)
-            {
-                dwords = new uint[] { (uint)_sign };
-                highDWord = (_sign < 0) ? UInt32.MaxValue : 0;
-            }
-            else if (_sign == -1)
-            {
-                dwords = (uint[])_bits.Clone();
-                NumericsHelpers.DangerousMakeTwosComplement(dwords);  // mutates dwords
-                highDWord = UInt32.MaxValue;
-            }
-            else
-            {
-                dwords = _bits;
-                highDWord = 0;
-            }
-
-            // find highest significant byte
-            int msb;
-            for (msb = dwords.Length - 1; msb > 0; msb--)
-            {
-                if (dwords[msb] != highDWord) break;
-            }
-            // ensure high bit is 0 if positive, 1 if negative
-            bool needExtraByte = (dwords[msb] & 0x80000000) != (highDWord & 0x80000000);
-
-            uint[] trimmed = new uint[msb + 1 + (needExtraByte ? 1 : 0)];
-            Array.Copy(dwords, trimmed, msb + 1);
-
-            if (needExtraByte) trimmed[trimmed.Length - 1] = highDWord;
-            return trimmed;
-        }
-
-
-        public override String ToString()
-        {
-            return BigNumber.FormatBigInteger(this, null, NumberFormatInfo.CurrentInfo);
-        }
-
-        public String ToString(IFormatProvider provider)
-        {
-            return BigNumber.FormatBigInteger(this, null, NumberFormatInfo.GetInstance(provider));
-        }
-
-        public String ToString(String format)
-        {
-            return BigNumber.FormatBigInteger(this, format, NumberFormatInfo.CurrentInfo);
-        }
-
-        public String ToString(String format, IFormatProvider provider)
-        {
-            return BigNumber.FormatBigInteger(this, format, NumberFormatInfo.GetInstance(provider));
-        }
-        #endregion public instance methods
-
-        // -------- SECTION: constructors -----------------*
-        #region constructors
         public BigInteger(int value)
         {
-            if (value == Int32.MinValue)
+            if (value == int.MinValue)
                 this = s_bnMinInt;
             else
             {
@@ -413,7 +45,7 @@ namespace System.Numerics
         [CLSCompliant(false)]
         public BigInteger(uint value)
         {
-            if (value <= Int32.MaxValue)
+            if (value <= int.MaxValue)
             {
                 _sign = (int)value;
                 _bits = null;
@@ -443,7 +75,7 @@ namespace System.Numerics
                 ulong x = 0;
                 if (value < 0)
                 {
-                    x = (ulong)-value;
+                    x = unchecked((ulong)-value);
                     _sign = -1;
                 }
                 else
@@ -460,7 +92,7 @@ namespace System.Numerics
                 else
                 {
                     _bits = new uint[2];
-                    _bits[0] = (uint)x;
+                    _bits[0] = unchecked((uint)x);
                     _bits[1] = (uint)(x >> kcbitUint);
                 }
             }
@@ -486,45 +118,95 @@ namespace System.Numerics
             {
                 _sign = +1;
                 _bits = new uint[2];
-                _bits[0] = (uint)value;
+                _bits[0] = unchecked((uint)value);
                 _bits[1] = (uint)(value >> kcbitUint);
             }
 
             AssertValid();
         }
 
-        public BigInteger(Single value)
+        public BigInteger(float value) : this((double)value)
         {
-            if (Single.IsInfinity(value))
-                throw new OverflowException(SR.Overflow_BigIntInfinity);
-            if (Single.IsNaN(value))
-                throw new OverflowException(SR.Overflow_NotANumber);
-            Contract.EndContractBlock();
+        }
+
+        public BigInteger(double value)
+        {
+            if (!double.IsFinite(value))
+            {
+                if (double.IsInfinity(value))
+                {
+                    throw new OverflowException(SR.Overflow_BigIntInfinity);
+                }
+                else // NaN
+                {
+                    throw new OverflowException(SR.Overflow_NotANumber);
+                }
+            }
 
             _sign = 0;
             _bits = null;
-            SetBitsFromDouble(value);
+
+            int sign, exp;
+            ulong man;
+            bool fFinite;
+            NumericsHelpers.GetDoubleParts(value, out sign, out exp, out man, out fFinite);
+            Debug.Assert(sign == +1 || sign == -1);
+
+            if (man == 0)
+            {
+                this = Zero;
+                return;
+            }
+
+            Debug.Assert(man < (1UL << 53));
+            Debug.Assert(exp <= 0 || man >= (1UL << 52));
+
+            if (exp <= 0)
+            {
+                if (exp <= -kcbitUlong)
+                {
+                    this = Zero;
+                    return;
+                }
+                this = man >> -exp;
+                if (sign < 0)
+                    _sign = -_sign;
+            }
+            else if (exp <= 11)
+            {
+                this = man << exp;
+                if (sign < 0)
+                    _sign = -_sign;
+            }
+            else
+            {
+                // Overflow into at least 3 uints.
+                // Move the leading 1 to the high bit.
+                man <<= 11;
+                exp -= 11;
+
+                // Compute cu and cbit so that exp == 32 * cu - cbit and 0 <= cbit < 32.
+                int cu = (exp - 1) / kcbitUint + 1;
+                int cbit = cu * kcbitUint - exp;
+                Debug.Assert(0 <= cbit && cbit < kcbitUint);
+                Debug.Assert(cu >= 1);
+
+                // Populate the uints.
+                _bits = new uint[cu + 2];
+                _bits[cu + 1] = (uint)(man >> (cbit + kcbitUint));
+                _bits[cu] = unchecked((uint)(man >> cbit));
+                if (cbit > 0)
+                    _bits[cu - 1] = unchecked((uint)man) << (kcbitUint - cbit);
+                _sign = sign;
+            }
+
             AssertValid();
         }
 
-        public BigInteger(Double value)
-        {
-            if (Double.IsInfinity(value))
-                throw new OverflowException(SR.Overflow_BigIntInfinity);
-            if (Double.IsNaN(value))
-                throw new OverflowException(SR.Overflow_NotANumber);
-            Contract.EndContractBlock();
-
-            _sign = 0;
-            _bits = null;
-            SetBitsFromDouble(value);
-            AssertValid();
-        }
-
-        public BigInteger(Decimal value)
+        public BigInteger(decimal value)
         {
             // First truncate to get scale to 0 and extract bits
-            int[] bits = Decimal.GetBits(Decimal.Truncate(value));
+            int[] bits = decimal.GetBits(decimal.Truncate(value));
 
             Debug.Assert(bits.Length == 4 && (bits[3] & DecimalScaleFactorMask) == 0);
 
@@ -545,32 +227,74 @@ namespace System.Numerics
             }
             else
             {
-                _bits = new UInt32[size];
-                _bits[0] = (UInt32)bits[0];
-                if (size > 1)
-                    _bits[1] = (UInt32)bits[1];
-                if (size > 2)
-                    _bits[2] = (UInt32)bits[2];
+                _bits = new uint[size];
+
+                unchecked
+                {
+                    _bits[0] = (uint)bits[0];
+                    if (size > 1)
+                        _bits[1] = (uint)bits[1];
+                    if (size > 2)
+                        _bits[2] = (uint)bits[2];
+                }
+
                 _sign = ((bits[3] & DecimalSignMask) != 0) ? -1 : +1;
             }
             AssertValid();
         }
 
+        /// <summary>
+        /// Creates a BigInteger from a little-endian twos-complement byte array.
+        /// </summary>
+        /// <param name="value"></param>
         [CLSCompliant(false)]
-        //
-        // Create a BigInteger from a little-endian twos-complement byte array
-        //
-        public BigInteger(Byte[] value)
+        public BigInteger(byte[] value) :
+            this(new ReadOnlySpan<byte>(value ?? throw new ArgumentNullException(nameof(value))))
         {
-            if (value == null)
-                throw new ArgumentNullException("value");
-            Contract.EndContractBlock();
+        }
 
+        public BigInteger(ReadOnlySpan<byte> value, bool isUnsigned = false, bool isBigEndian = false)
+        {
             int byteCount = value.Length;
-            bool isNegative = byteCount > 0 && ((value[byteCount - 1] & 0x80) == 0x80);
 
-            // Try to conserve space as much as possible by checking for wasted leading byte[] entries 
-            while (byteCount > 0 && value[byteCount - 1] == 0) byteCount--;
+            bool isNegative;
+            if (byteCount > 0)
+            {
+                byte mostSignificantByte = isBigEndian ? value[0] : value[byteCount - 1];
+                isNegative = (mostSignificantByte & 0x80) != 0 && !isUnsigned;
+
+                if (mostSignificantByte == 0)
+                {
+                    // Try to conserve space as much as possible by checking for wasted leading byte[] entries
+                    if (isBigEndian)
+                    {
+                        int offset = 1;
+
+                        while (offset < byteCount && value[offset] == 0)
+                        {
+                            offset++;
+                        }
+
+                        value = value.Slice(offset);
+                        byteCount = value.Length;
+                    }
+                    else
+                    {
+                        byteCount -= 2;
+
+                        while (byteCount >= 0 && value[byteCount] == 0)
+                        {
+                            byteCount--;
+                        }
+
+                        byteCount++;
+                    }
+                }
+            }
+            else
+            {
+                isNegative = false;
+            }
 
             if (byteCount == 0)
             {
@@ -581,102 +305,146 @@ namespace System.Numerics
                 return;
             }
 
-
             if (byteCount <= 4)
             {
-                if (isNegative)
-                    _sign = unchecked((int)0xffffffff);
-                else
-                    _sign = 0;
-                for (int i = byteCount - 1; i >= 0; i--)
-                {
-                    _sign <<= 8;
-                    _sign |= value[i];
-                }
-                _bits = null;
+                _sign = isNegative ? unchecked((int)0xffffffff) : 0;
 
+                if (isBigEndian)
+                {
+                    for (int i = 0; i < byteCount; i++)
+                    {
+                        _sign = (_sign << 8) | value[i];
+                    }
+                }
+                else
+                {
+                    for (int i = byteCount - 1; i >= 0; i--)
+                    {
+                        _sign = (_sign << 8) | value[i];
+                    }
+                }
+
+                _bits = null;
                 if (_sign < 0 && !isNegative)
                 {
-                    // int32 overflow
-                    // example: Int64 value 2362232011 (0xCB, 0xCC, 0xCC, 0x8C, 0x0)
+                    // Int32 overflow
+                    // Example: Int64 value 2362232011 (0xCB, 0xCC, 0xCC, 0x8C, 0x0)
                     // can be naively packed into 4 bytes (due to the leading 0x0)
                     // it overflows into the int32 sign bit
-                    _bits = new uint[1];
-                    _bits[0] = (uint)_sign;
+                    _bits = new uint[1] { unchecked((uint)_sign) };
                     _sign = +1;
                 }
-                if (_sign == Int32.MinValue)
+                if (_sign == int.MinValue)
+                {
                     this = s_bnMinInt;
+                }
             }
             else
             {
                 int unalignedBytes = byteCount % 4;
                 int dwordCount = byteCount / 4 + (unalignedBytes == 0 ? 0 : 1);
-                bool isZero = true;
                 uint[] val = new uint[dwordCount];
+                int byteCountMinus1 = byteCount - 1;
 
-                // Copy all dwords, except but don't do the last one if it's not a full four bytes
-                int curDword, curByte, byteInDword;
-                curByte = 3;
-                for (curDword = 0; curDword < dwordCount - (unalignedBytes == 0 ? 0 : 1); curDword++)
+                // Copy all dwords, except don't do the last one if it's not a full four bytes
+                int curDword, curByte;
+
+                if (isBigEndian)
                 {
-                    byteInDword = 0;
-                    while (byteInDword < 4)
+                    curByte = byteCount - sizeof(int);
+                    for (curDword = 0; curDword < dwordCount - (unalignedBytes == 0 ? 0 : 1); curDword++)
                     {
-                        if (value[curByte] != 0x00) isZero = false;
-                        val[curDword] <<= 8;
-                        val[curDword] |= value[curByte];
-                        curByte--;
-                        byteInDword++;
+                        for (int byteInDword = 0; byteInDword < 4; byteInDword++)
+                        {
+                            byte curByteValue = value[curByte];
+                            val[curDword] = (val[curDword] << 8) | curByteValue;
+                            curByte++;
+                        }
+
+                        curByte -= 8;
                     }
-                    curByte += 8;
+                }
+                else
+                {
+                    curByte = sizeof(int) - 1;
+                    for (curDword = 0; curDword < dwordCount - (unalignedBytes == 0 ? 0 : 1); curDword++)
+                    {
+                        for (int byteInDword = 0; byteInDword < 4; byteInDword++)
+                        {
+                            byte curByteValue = value[curByte];
+                            val[curDword] = (val[curDword] << 8) | curByteValue;
+                            curByte--;
+                        }
+
+                        curByte += 8;
+                    }
                 }
 
                 // Copy the last dword specially if it's not aligned
                 if (unalignedBytes != 0)
                 {
-                    if (isNegative) val[dwordCount - 1] = 0xffffffff;
-                    for (curByte = byteCount - 1; curByte >= byteCount - unalignedBytes; curByte--)
+                    if (isNegative)
                     {
-                        if (value[curByte] != 0x00) isZero = false;
-                        val[curDword] <<= 8;
-                        val[curDword] |= value[curByte];
+                        val[dwordCount - 1] = 0xffffffff;
+                    }
+
+                    if (isBigEndian)
+                    {
+                        for (curByte = 0; curByte < unalignedBytes; curByte++)
+                        {
+                            byte curByteValue = value[curByte];
+                            val[curDword] = (val[curDword] << 8) | curByteValue;
+                        }
+                    }
+                    else
+                    {
+                        for (curByte = byteCountMinus1; curByte >= byteCount - unalignedBytes; curByte--)
+                        {
+                            byte curByteValue = value[curByte];
+                            val[curDword] = (val[curDword] << 8) | curByteValue;
+                        }
                     }
                 }
 
-                if (isZero)
+                if (isNegative)
                 {
-                    this = s_bnZeroInt;
-                }
-                else if (isNegative)
-                {
-                    NumericsHelpers.DangerousMakeTwosComplement(val); // mutates val
+                    NumericsHelpers.DangerousMakeTwosComplement(val); // Mutates val
 
-                    // pack _bits to remove any wasted space after the twos complement
-                    int len = val.Length;
-                    while (len > 0 && val[len - 1] == 0)
-                        len--;
-                    if (len == 1 && ((int)(val[0])) > 0)
+                    // Pack _bits to remove any wasted space after the twos complement
+                    int len = val.Length - 1;
+                    while (len >= 0 && val[len] == 0) len--;
+                    len++;
+
+                    if (len == 1)
                     {
-                        if (val[0] == 1 /* abs(-1) */)
+                        switch (val[0])
                         {
-                            this = s_bnMinusOneInt;
-                        }
-                        else if (val[0] == kuMaskHighBit /* abs(Int32.MinValue) */)
-                        {
-                            this = s_bnMinInt;
-                        }
-                        else
-                        {
-                            _sign = (-1) * ((int)val[0]);
-                            _bits = null;
+                            case 1: // abs(-1)
+                                this = s_bnMinusOneInt;
+                                return;
+
+                            case kuMaskHighBit: // abs(Int32.MinValue)
+                                this = s_bnMinInt;
+                                return;
+
+                            default:
+                                if (unchecked((int)val[0]) > 0)
+                                {
+                                    _sign = (-1) * ((int)val[0]);
+                                    _bits = null;
+                                    AssertValid();
+                                    return;
+                                }
+
+                                break;
                         }
                     }
-                    else if (len != val.Length)
+
+                    if (len != val.Length)
                     {
                         _sign = -1;
                         _bits = new uint[len];
-                        Array.Copy(val, _bits, len);
+                        Array.Copy(val, 0, _bits, 0, len);
                     }
                     else
                     {
@@ -700,63 +468,58 @@ namespace System.Numerics
             AssertValid();
         }
 
-        //
-        // BigInteger(uint[] value, bool negative) 
-        //
-        // Constructor used during bit manipulation and arithmetic
-        //
-        // The uint[] value is expected to be the absolute value of the number
-        // with the bool negative indicating the Sign of the value.
-        //
-        // When possible the uint[] will be packed into  _sign to conserve space
-        //
+        /// <summary>
+        /// Constructor used during bit manipulation and arithmetic.
+        /// When possible the uint[] will be packed into  _sign to conserve space.
+        /// </summary>
+        /// <param name="value">The absolute value of the number</param>
+        /// <param name="negative">The bool indicating the sign of the value.</param>
         internal BigInteger(uint[] value, bool negative)
         {
             if (value == null)
-                throw new ArgumentNullException("value");
-            Contract.EndContractBlock();
+                throw new ArgumentNullException(nameof(value));
 
             int len;
 
-            // Try to conserve space as much as possible by checking for wasted leading uint[] entries 
+            // Try to conserve space as much as possible by checking for wasted leading uint[] entries
             // sometimes the uint[] has leading zeros from bit manipulation operations & and ^
-            for (len = value.Length; len > 0 && value[len - 1] == 0; len--) ;
+            for (len = value.Length; len > 0 && value[len - 1] == 0; len--);
 
             if (len == 0)
                 this = s_bnZeroInt;
-            // values like (Int32.MaxValue+1) are stored as "0x80000000" and as such cannot be packed into _sign
+            // Values like (Int32.MaxValue+1) are stored as "0x80000000" and as such cannot be packed into _sign
             else if (len == 1 && value[0] < kuMaskHighBit)
             {
                 _sign = (negative ? -(int)value[0] : (int)value[0]);
                 _bits = null;
                 // Although Int32.MinValue fits in _sign, we represent this case differently for negate
-                if (_sign == Int32.MinValue)
+                if (_sign == int.MinValue)
                     this = s_bnMinInt;
             }
             else
             {
                 _sign = negative ? -1 : +1;
                 _bits = new uint[len];
-                Array.Copy(value, _bits, len);
+                Array.Copy(value, 0, _bits, 0, len);
             }
             AssertValid();
         }
 
-
-        //
-        // Create a BigInteger from a little-endian twos-complement UInt32 array
-        // When possible, value is assigned directly to this._bits without an array copy
-        // so use this ctor with care
-        //
+        /// <summary>
+        /// Create a BigInteger from a little-endian twos-complement UInt32 array.
+        /// When possible, value is assigned directly to this._bits without an array copy
+        /// so use this ctor with care.
+        /// </summary>
+        /// <param name="value"></param>
         private BigInteger(uint[] value)
         {
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
 
             int dwordCount = value.Length;
             bool isNegative = dwordCount > 0 && ((value[dwordCount - 1] & 0x80000000) == 0x80000000);
 
-            // Try to conserve space as much as possible by checking for wasted leading uint[] entries 
+            // Try to conserve space as much as possible by checking for wasted leading uint[] entries
             while (dwordCount > 0 && value[dwordCount - 1] == 0) dwordCount--;
 
             if (dwordCount == 0)
@@ -768,20 +531,20 @@ namespace System.Numerics
             }
             if (dwordCount == 1)
             {
-                if ((int)value[0] < 0 && !isNegative)
+                if (unchecked((int)value[0]) < 0 && !isNegative)
                 {
                     _bits = new uint[1];
                     _bits[0] = value[0];
                     _sign = +1;
                 }
-                // handle the special cases where the BigInteger likely fits into _sign
-                else if (Int32.MinValue == (int)value[0])
+                // Handle the special cases where the BigInteger likely fits into _sign
+                else if (int.MinValue == unchecked((int)value[0]))
                 {
                     this = s_bnMinInt;
                 }
                 else
                 {
-                    _sign = (int)value[0];
+                    _sign = unchecked((int)value[0]);
                     _bits = null;
                 }
                 AssertValid();
@@ -790,14 +553,14 @@ namespace System.Numerics
 
             if (!isNegative)
             {
-                // handle the simple postive value cases where the input is already in sign magnitude
+                // Handle the simple positive value cases where the input is already in sign magnitude
                 if (dwordCount != value.Length)
                 {
                     _sign = +1;
                     _bits = new uint[dwordCount];
-                    Array.Copy(value, _bits, dwordCount);
+                    Array.Copy(value, 0, _bits, 0, dwordCount);
                 }
-                // no trimming is possible.  Assign value directly to _bits.  
+                // No trimming is possible.  Assign value directly to _bits.
                 else
                 {
                     _sign = +1;
@@ -807,16 +570,15 @@ namespace System.Numerics
                 return;
             }
 
-
-            // finally handle the more complex cases where we must transform the input into sign magnitude
+            // Finally handle the more complex cases where we must transform the input into sign magnitude
             NumericsHelpers.DangerousMakeTwosComplement(value); // mutates val
 
-            // pack _bits to remove any wasted space after the twos complement
+            // Pack _bits to remove any wasted space after the twos complement
             int len = value.Length;
             while (len > 0 && value[len - 1] == 0) len--;
 
-            // the number is represented by a single dword
-            if (len == 1 && ((int)(value[0])) > 0)
+            // The number is represented by a single dword
+            if (len == 1 && unchecked((int)(value[0])) > 0)
             {
                 if (value[0] == 1 /* abs(-1) */)
                 {
@@ -832,15 +594,15 @@ namespace System.Numerics
                     _bits = null;
                 }
             }
-            // the number is represented by multiple dwords
-            // trim off any wasted uint values when possible
+            // The number is represented by multiple dwords.
+            // Trim off any wasted uint values when possible.
             else if (len != value.Length)
             {
                 _sign = -1;
                 _bits = new uint[len];
-                Array.Copy(value, _bits, len);
+                Array.Copy(value, 0, _bits, 0, len);
             }
-            // no trimming is possible.  Assign value directly to _bits.  
+            // No trimming is possible.  Assign value directly to _bits.
             else
             {
                 _sign = -1;
@@ -850,50 +612,99 @@ namespace System.Numerics
             return;
         }
 
+        public static BigInteger Zero { get { return s_bnZeroInt; } }
 
-        #endregion constructors
+        public static BigInteger One { get { return s_bnOneInt; } }
 
+        public static BigInteger MinusOne { get { return s_bnMinusOneInt; } }
 
-        // -------- SECTION: public static methods -----------------*
-        #region public static methods
-        public static BigInteger Parse(String value)
+        public bool IsPowerOfTwo
         {
-            return BigNumber.ParseBigInteger(value, NumberStyles.Integer, NumberFormatInfo.CurrentInfo);
+            get
+            {
+                AssertValid();
+
+                if (_bits == null)
+                    return (_sign & (_sign - 1)) == 0 && _sign != 0;
+
+                if (_sign != 1)
+                    return false;
+                int iu = _bits.Length - 1;
+                if ((_bits[iu] & (_bits[iu] - 1)) != 0)
+                    return false;
+                while (--iu >= 0)
+                {
+                    if (_bits[iu] != 0)
+                        return false;
+                }
+                return true;
+            }
         }
 
-        public static BigInteger Parse(String value, NumberStyles style)
+        public bool IsZero { get { AssertValid(); return _sign == 0; } }
+
+        public bool IsOne { get { AssertValid(); return _sign == 1 && _bits == null; } }
+
+        public bool IsEven { get { AssertValid(); return _bits == null ? (_sign & 1) == 0 : (_bits[0] & 1) == 0; } }
+
+        public int Sign
         {
-            return BigNumber.ParseBigInteger(value, style, NumberFormatInfo.CurrentInfo);
+            get { AssertValid(); return (_sign >> (kcbitUint - 1)) - (-_sign >> (kcbitUint - 1)); }
         }
 
-        public static BigInteger Parse(String value, IFormatProvider provider)
+        public static BigInteger Parse(string value)
         {
-            return BigNumber.ParseBigInteger(value, NumberStyles.Integer, NumberFormatInfo.GetInstance(provider));
+            return Parse(value, NumberStyles.Integer);
         }
 
-        public static BigInteger Parse(String value, NumberStyles style, IFormatProvider provider)
+        public static BigInteger Parse(string value, NumberStyles style)
+        {
+            return Parse(value, style, NumberFormatInfo.CurrentInfo);
+        }
+
+        public static BigInteger Parse(string value, IFormatProvider provider)
+        {
+            return Parse(value, NumberStyles.Integer, NumberFormatInfo.GetInstance(provider));
+        }
+
+        public static BigInteger Parse(string value, NumberStyles style, IFormatProvider provider)
         {
             return BigNumber.ParseBigInteger(value, style, NumberFormatInfo.GetInstance(provider));
         }
 
-        public static Boolean TryParse(String value, out BigInteger result)
+        public static bool TryParse(string value, out BigInteger result)
         {
-            return BigNumber.TryParseBigInteger(value, NumberStyles.Integer, NumberFormatInfo.CurrentInfo, out result);
+            return TryParse(value, NumberStyles.Integer, NumberFormatInfo.CurrentInfo, out result);
         }
 
-        public static Boolean TryParse(String value, NumberStyles style, IFormatProvider provider, out BigInteger result)
+        public static bool TryParse(string value, NumberStyles style, IFormatProvider provider, out BigInteger result)
         {
             return BigNumber.TryParseBigInteger(value, style, NumberFormatInfo.GetInstance(provider), out result);
         }
 
-        public static Int32 Compare(BigInteger left, BigInteger right)
+        public static BigInteger Parse(ReadOnlySpan<char> value, NumberStyles style = NumberStyles.Integer, IFormatProvider provider = null)
+        {
+            return BigNumber.ParseBigInteger(value, style, NumberFormatInfo.GetInstance(provider));
+        }
+
+        public static bool TryParse(ReadOnlySpan<char> value, out BigInteger result)
+        {
+            return BigNumber.TryParseBigInteger(value, NumberStyles.Integer, NumberFormatInfo.CurrentInfo, out result);
+        }
+
+        public static bool TryParse(ReadOnlySpan<char> value, NumberStyles style, IFormatProvider provider, out BigInteger result)
+        {
+            return BigNumber.TryParseBigInteger(value, style, NumberFormatInfo.GetInstance(provider), out result);
+        }
+
+        public static int Compare(BigInteger left, BigInteger right)
         {
             return left.CompareTo(right);
         }
 
         public static BigInteger Abs(BigInteger value)
         {
-            return (value >= BigInteger.Zero) ? value : -value;
+            return (value >= Zero) ? value : -value;
         }
 
         public static BigInteger Add(BigInteger left, BigInteger right)
@@ -937,7 +748,7 @@ namespace System.Numerics
 
             if (trivialDividend)
             {
-                // the divisor is non-trivial
+                // The divisor is non-trivial
                 // and therefore the bigger one
                 remainder = dividend;
                 return s_bnZeroInt;
@@ -948,7 +759,7 @@ namespace System.Numerics
                 uint rest;
                 uint[] bits = BigIntegerCalculator.Divide(dividend._bits, NumericsHelpers.Abs(divisor._sign), out rest);
 
-                remainder = dividend._sign < 0 ? -1 * (long)rest : rest;
+                remainder = dividend._sign < 0 ? -1 * rest : rest;
                 return new BigInteger(bits, (dividend._sign < 0) ^ (divisor._sign < 0));
             }
 
@@ -972,50 +783,41 @@ namespace System.Numerics
             return -value;
         }
 
-        // Returns the natural (base e) logarithm of a specified number.
-        public static Double Log(BigInteger value)
+        public static double Log(BigInteger value)
         {
-            return BigInteger.Log(value, Math.E);
+            return Log(value, Math.E);
         }
 
-
-        public static Double Log(BigInteger value, Double baseValue)
+        public static double Log(BigInteger value, double baseValue)
         {
             if (value._sign < 0 || baseValue == 1.0D)
-                return Double.NaN;
-            if (baseValue == Double.PositiveInfinity)
-                return value.IsOne ? 0.0D : Double.NaN;
+                return double.NaN;
+            if (baseValue == double.PositiveInfinity)
+                return value.IsOne ? 0.0D : double.NaN;
             if (baseValue == 0.0D && !value.IsOne)
-                return Double.NaN;
+                return double.NaN;
             if (value._bits == null)
-                return Math.Log((double)value._sign, baseValue);
+                return Math.Log(value._sign, baseValue);
 
-            Double c = 0, d = 0.5D;
-            const Double log2 = 0.69314718055994529D;
+            ulong h = value._bits[value._bits.Length - 1];
+            ulong m = value._bits.Length > 1 ? value._bits[value._bits.Length - 2] : 0;
+            ulong l = value._bits.Length > 2 ? value._bits[value._bits.Length - 3] : 0;
 
-            int uintLength = Length(value._bits);
-            int topbits = BitLengthOfUInt(value._bits[uintLength - 1]);
-            int bitlen = (uintLength - 1) * kcbitUint + topbits;
-            uint indbit = (uint)(1 << (topbits - 1));
+            // Measure the exact bit count
+            int c = NumericsHelpers.CbitHighZero((uint)h);
+            long b = (long)value._bits.Length * 32 - c;
 
-            for (int index = uintLength - 1; index >= 0; --index)
-            {
-                while (indbit != 0)
-                {
-                    if ((value._bits[index] & indbit) != 0)
-                        c += d;
-                    d *= 0.5;
-                    indbit >>= 1;
-                }
-                indbit = 0x80000000;
-            }
-            return (Math.Log(c) + log2 * bitlen) / Math.Log(baseValue);
+            // Extract most significant bits
+            ulong x = (h << 32 + c) | (m << c) | (l >> 32 - c);
+
+            // Let v = value, b = bit count, x = v/2^b-64
+            // log ( v/2^b-64 * 2^b-64 ) = log ( x ) + log ( 2^b-64 )
+            return Math.Log(x, baseValue) + (b - 64) / Math.Log(baseValue, 2);
         }
 
-
-        public static Double Log10(BigInteger value)
+        public static double Log10(BigInteger value)
         {
-            return BigInteger.Log(value, 10);
+            return Log(value, 10);
         }
 
         public static BigInteger GreatestCommonDivisor(BigInteger left, BigInteger right)
@@ -1023,16 +825,61 @@ namespace System.Numerics
             left.AssertValid();
             right.AssertValid();
 
-            // gcd(0, 0) =  0 
-            // gcd(a, 0) = |a|, for a != 0, since any number is a divisor of 0, and the greatest divisor of a is |a|
-            if (left._sign == 0) return BigInteger.Abs(right);
-            if (right._sign == 0) return BigInteger.Abs(left);
+            bool trivialLeft = left._bits == null;
+            bool trivialRight = right._bits == null;
 
-            BigIntegerBuilder reg1 = new BigIntegerBuilder(left);
-            BigIntegerBuilder reg2 = new BigIntegerBuilder(right);
-            BigIntegerBuilder.GCD(ref reg1, ref reg2);
+            if (trivialLeft && trivialRight)
+            {
+                return BigIntegerCalculator.Gcd(NumericsHelpers.Abs(left._sign), NumericsHelpers.Abs(right._sign));
+            }
 
-            return reg1.GetInteger(+1);
+            if (trivialLeft)
+            {
+                return left._sign != 0
+                    ? BigIntegerCalculator.Gcd(right._bits, NumericsHelpers.Abs(left._sign))
+                    : new BigInteger(right._bits, false);
+            }
+
+            if (trivialRight)
+            {
+                return right._sign != 0
+                    ? BigIntegerCalculator.Gcd(left._bits, NumericsHelpers.Abs(right._sign))
+                    : new BigInteger(left._bits, false);
+            }
+
+            if (BigIntegerCalculator.Compare(left._bits, right._bits) < 0)
+            {
+                return GreatestCommonDivisor(right._bits, left._bits);
+            }
+            else
+            {
+                return GreatestCommonDivisor(left._bits, right._bits);
+            }
+        }
+
+        private static BigInteger GreatestCommonDivisor(uint[] leftBits, uint[] rightBits)
+        {
+            Debug.Assert(BigIntegerCalculator.Compare(leftBits, rightBits) >= 0);
+
+            // Short circuits to spare some allocations...
+            if (rightBits.Length == 1)
+            {
+                uint temp = BigIntegerCalculator.Remainder(leftBits, rightBits[0]);
+                return BigIntegerCalculator.Gcd(rightBits[0], temp);
+            }
+
+            if (rightBits.Length == 2)
+            {
+                uint[] tempBits = BigIntegerCalculator.Remainder(leftBits, rightBits);
+
+                ulong left = ((ulong)rightBits[1] << 32) | rightBits[0];
+                ulong right = ((ulong)tempBits[1] << 32) | tempBits[0];
+
+                return BigIntegerCalculator.Gcd(left, right);
+            }
+
+            uint[] bits = BigIntegerCalculator.Gcd(leftBits, rightBits);
+            return new BigInteger(bits, false);
         }
 
         public static BigInteger Max(BigInteger left, BigInteger right)
@@ -1052,8 +899,7 @@ namespace System.Numerics
         public static BigInteger ModPow(BigInteger value, BigInteger exponent, BigInteger modulus)
         {
             if (exponent.Sign < 0)
-                throw new ArgumentOutOfRangeException("exponent", SR.ArgumentOutOfRange_MustBeNonNeg);
-            Contract.EndContractBlock();
+                throw new ArgumentOutOfRangeException(nameof(exponent), SR.ArgumentOutOfRange_MustBeNonNeg);
 
             value.AssertValid();
             exponent.AssertValid();
@@ -1070,7 +916,7 @@ namespace System.Numerics
                             trivialExponent ? BigIntegerCalculator.Pow(value._bits, NumericsHelpers.Abs(exponent._sign), NumericsHelpers.Abs(modulus._sign)) :
                             BigIntegerCalculator.Pow(value._bits, exponent._bits, NumericsHelpers.Abs(modulus._sign));
 
-                return value._sign < 0 && !exponent.IsEven ? -1 * (long)bits : bits;
+                return value._sign < 0 && !exponent.IsEven ? -1 * bits : bits;
             }
             else
             {
@@ -1086,8 +932,7 @@ namespace System.Numerics
         public static BigInteger Pow(BigInteger value, int exponent)
         {
             if (exponent < 0)
-                throw new ArgumentOutOfRangeException("exponent", SR.ArgumentOutOfRange_MustBeNonNeg);
-            Contract.EndContractBlock();
+                throw new ArgumentOutOfRangeException(nameof(exponent), SR.ArgumentOutOfRange_MustBeNonNeg);
 
             value.AssertValid();
 
@@ -1115,427 +960,516 @@ namespace System.Numerics
             return new BigInteger(bits, value._sign < 0 && (exponent & 1) != 0);
         }
 
-        #endregion public static methods
-
-        // -------- SECTION: public static operators -----------------*
-        #region public static operators
-        public static implicit operator BigInteger(Byte value)
+        public override int GetHashCode()
         {
-            return new BigInteger(value);
+            AssertValid();
+
+            if (_bits == null)
+                return _sign;
+            int hash = _sign;
+            for (int iv = _bits.Length; --iv >= 0;)
+                hash = NumericsHelpers.CombineHash(hash, unchecked((int)_bits[iv]));
+            return hash;
+        }
+
+        public override bool Equals(object obj)
+        {
+            AssertValid();
+
+            if (!(obj is BigInteger))
+                return false;
+            return Equals((BigInteger)obj);
+        }
+
+        public bool Equals(long other)
+        {
+            AssertValid();
+
+            if (_bits == null)
+                return _sign == other;
+
+            int cu;
+            if ((_sign ^ other) < 0 || (cu = _bits.Length) > 2)
+                return false;
+
+            ulong uu = other < 0 ? (ulong)-other : (ulong)other;
+            if (cu == 1)
+                return _bits[0] == uu;
+
+            return NumericsHelpers.MakeUlong(_bits[1], _bits[0]) == uu;
         }
 
         [CLSCompliant(false)]
-        public static implicit operator BigInteger(SByte value)
+        public bool Equals(ulong other)
         {
-            return new BigInteger(value);
+            AssertValid();
+
+            if (_sign < 0)
+                return false;
+            if (_bits == null)
+                return (ulong)_sign == other;
+
+            int cu = _bits.Length;
+            if (cu > 2)
+                return false;
+            if (cu == 1)
+                return _bits[0] == other;
+            return NumericsHelpers.MakeUlong(_bits[1], _bits[0]) == other;
         }
 
-        public static implicit operator BigInteger(Int16 value)
+        public bool Equals(BigInteger other)
         {
-            return new BigInteger(value);
+            AssertValid();
+            other.AssertValid();
+
+            if (_sign != other._sign)
+                return false;
+            if (_bits == other._bits)
+                // _sign == other._sign && _bits == null && other._bits == null
+                return true;
+
+            if (_bits == null || other._bits == null)
+                return false;
+            int cu = _bits.Length;
+            if (cu != other._bits.Length)
+                return false;
+            int cuDiff = GetDiffLength(_bits, other._bits, cu);
+            return cuDiff == 0;
         }
 
-        [CLSCompliant(false)]
-        public static implicit operator BigInteger(UInt16 value)
+        public int CompareTo(long other)
         {
-            return new BigInteger(value);
-        }
+            AssertValid();
 
-
-        public static implicit operator BigInteger(int value)
-        {
-            return new BigInteger(value);
-        }
-
-        [CLSCompliant(false)]
-        public static implicit operator BigInteger(uint value)
-        {
-            return new BigInteger(value);
-        }
-
-        public static implicit operator BigInteger(long value)
-        {
-            return new BigInteger(value);
-        }
-
-        [CLSCompliant(false)]
-        public static implicit operator BigInteger(ulong value)
-        {
-            return new BigInteger(value);
-        }
-
-        public static explicit operator BigInteger(Single value)
-        {
-            return new BigInteger(value);
-        }
-
-        public static explicit operator BigInteger(Double value)
-        {
-            return new BigInteger(value);
-        }
-
-        public static explicit operator BigInteger(Decimal value)
-        {
-            return new BigInteger(value);
-        }
-
-        public static explicit operator Byte(BigInteger value)
-        {
-            return checked((byte)((int)value));
+            if (_bits == null)
+                return ((long)_sign).CompareTo(other);
+            int cu;
+            if ((_sign ^ other) < 0 || (cu = _bits.Length) > 2)
+                return _sign;
+            ulong uu = other < 0 ? (ulong)-other : (ulong)other;
+            ulong uuTmp = cu == 2 ? NumericsHelpers.MakeUlong(_bits[1], _bits[0]) : _bits[0];
+            return _sign * uuTmp.CompareTo(uu);
         }
 
         [CLSCompliant(false)]
-        public static explicit operator SByte(BigInteger value)
+        public int CompareTo(ulong other)
         {
-            return checked((sbyte)((int)value));
+            AssertValid();
+
+            if (_sign < 0)
+                return -1;
+            if (_bits == null)
+                return ((ulong)_sign).CompareTo(other);
+            int cu = _bits.Length;
+            if (cu > 2)
+                return +1;
+            ulong uuTmp = cu == 2 ? NumericsHelpers.MakeUlong(_bits[1], _bits[0]) : _bits[0];
+            return uuTmp.CompareTo(other);
         }
 
-        public static explicit operator Int16(BigInteger value)
+        public int CompareTo(BigInteger other)
         {
-            return checked((short)((int)value));
+            AssertValid();
+            other.AssertValid();
+
+            if ((_sign ^ other._sign) < 0)
+            {
+                // Different signs, so the comparison is easy.
+                return _sign < 0 ? -1 : +1;
+            }
+
+            // Same signs
+            if (_bits == null)
+            {
+                if (other._bits == null)
+                    return _sign < other._sign ? -1 : _sign > other._sign ? +1 : 0;
+                return -other._sign;
+            }
+            int cuThis, cuOther;
+            if (other._bits == null || (cuThis = _bits.Length) > (cuOther = other._bits.Length))
+                return _sign;
+            if (cuThis < cuOther)
+                return -_sign;
+
+            int cuDiff = GetDiffLength(_bits, other._bits, cuThis);
+            if (cuDiff == 0)
+                return 0;
+            return _bits[cuDiff - 1] < other._bits[cuDiff - 1] ? -_sign : _sign;
         }
 
-        [CLSCompliant(false)]
-        public static explicit operator UInt16(BigInteger value)
+        public int CompareTo(object obj)
         {
-            return checked((ushort)((int)value));
+            if (obj == null)
+                return 1;
+            if (!(obj is BigInteger))
+                throw new ArgumentException(SR.Argument_MustBeBigInt, nameof(obj));
+            return CompareTo((BigInteger)obj);
         }
 
-        public static explicit operator Int32(BigInteger value)
+        /// <summary>
+        /// Returns the value of this BigInteger as a little-endian twos-complement
+        /// byte array, using the fewest number of bytes possible. If the value is zero,
+        /// return an array of one byte whose element is 0x00.
+        /// </summary>
+        /// <returns></returns>
+        public byte[] ToByteArray() => ToByteArray(isUnsigned: false, isBigEndian: false);
+
+        /// <summary>
+        /// Returns the value of this BigInteger as a byte array using the fewest number of bytes possible.
+        /// If the value is zero, returns an array of one byte whose element is 0x00.
+        /// </summary>
+        /// <param name="isUnsigned">Whether or not an unsigned encoding is to be used</param>
+        /// <param name="isBigEndian">Whether or not to write the bytes in a big-endian byte order</param>
+        /// <returns></returns>
+        /// <exception cref="OverflowException">
+        ///   If <paramref name="isUnsigned"/> is <c>true</c> and <see cref="Sign"/> is negative.
+        /// </exception>
+        /// <remarks>
+        /// The integer value <c>33022</c> can be exported as four different arrays.
+        ///
+        /// <list type="bullet">
+        ///   <item>
+        ///     <description>
+        ///       <c>(isUnsigned: false, isBigEndian: false)</c> => <c>new byte[] { 0xFE, 0x80, 0x00 }</c>
+        ///     </description>
+        ///   </item>
+        ///   <item>
+        ///     <description>
+        ///       <c>(isUnsigned: false, isBigEndian: true)</c> => <c>new byte[] { 0x00, 0x80, 0xFE }</c>
+        ///     </description>
+        ///   </item>
+        ///   <item>
+        ///     <description>
+        ///       <c>(isUnsigned: true, isBigEndian: false)</c> => <c>new byte[] { 0xFE, 0x80 }</c>
+        ///     </description>
+        ///   </item>
+        ///   <item>
+        ///     <description>
+        ///       <c>(isUnsigned: true, isBigEndian: true)</c> => <c>new byte[] { 0x80, 0xFE }</c>
+        ///     </description>
+        ///   </item>
+        /// </list>
+        /// </remarks>
+        public byte[] ToByteArray(bool isUnsigned = false, bool isBigEndian = false)
         {
-            value.AssertValid();
-            if (value._bits == null)
-            {
-                return value._sign;  // value packed into int32 sign
-            }
-            else if (Length(value._bits) > 1)
-            { // more than 32 bits
-                throw new OverflowException(SR.Overflow_Int32);
-            }
-            else if (value._sign > 0)
-            {
-                return checked((int)value._bits[0]);
-            }
-            else
-            {
-                if (value._bits[0] > kuMaskHighBit)
-                {  // value > Int32.MinValue
-                    throw new OverflowException(SR.Overflow_Int32);
-                }
-                return unchecked(-(int)value._bits[0]);
-            }
+            int ignored = 0;
+            return TryGetBytes(GetBytesMode.AllocateArray, default, isUnsigned, isBigEndian, ref ignored);
         }
 
-        [CLSCompliant(false)]
-        public static explicit operator UInt32(BigInteger value)
+        /// <summary>
+        /// Copies the value of this BigInteger as little-endian twos-complement
+        /// bytes, using the fewest number of bytes possible. If the value is zero,
+        /// outputs one byte whose element is 0x00.
+        /// </summary>
+        /// <param name="destination">The destination span to which the resulting bytes should be written.</param>
+        /// <param name="bytesWritten">The number of bytes written to <paramref name="destination"/>.</param>
+        /// <param name="isUnsigned">Whether or not an unsigned encoding is to be used</param>
+        /// <param name="isBigEndian">Whether or not to write the bytes in a big-endian byte order</param>
+        /// <returns>true if the bytes fit in <paramref name="destination"/>; false if not all bytes could be written due to lack of space.</returns>
+        /// <exception cref="OverflowException">If <paramref name="isUnsigned"/> is <c>true</c> and <see cref="Sign"/> is negative.</exception>
+        public bool TryWriteBytes(Span<byte> destination, out int bytesWritten, bool isUnsigned = false, bool isBigEndian = false)
         {
-            value.AssertValid();
-            if (value._bits == null)
+            bytesWritten = 0;
+            if (TryGetBytes(GetBytesMode.Span, destination, isUnsigned, isBigEndian, ref bytesWritten) == null)
             {
-                return checked((uint)value._sign);
+                bytesWritten = 0;
+                return false;
             }
-            else if (Length(value._bits) > 1 || value._sign < 0)
-            {
-                throw new OverflowException(SR.Overflow_UInt32);
-            }
-            else
-            {
-                return value._bits[0];
-            }
+            return true;
         }
 
-        public static explicit operator Int64(BigInteger value)
+        internal bool TryWriteOrCountBytes(Span<byte> destination, out int bytesWritten, bool isUnsigned = false, bool isBigEndian = false)
         {
-            value.AssertValid();
-            if (value._bits == null)
-            {
-                return value._sign;
-            }
-
-            int len = Length(value._bits);
-            if (len > 2)
-            {
-                throw new OverflowException(SR.Overflow_Int64);
-            }
-
-            ulong uu;
-            if (len > 1)
-            {
-                uu = NumericsHelpers.MakeUlong(value._bits[1], value._bits[0]);
-            }
-            else
-            {
-                uu = (ulong)value._bits[0];
-            }
-
-            long ll = value._sign > 0 ? (long)uu : -(long)uu;
-            if ((ll > 0 && value._sign > 0) || (ll < 0 && value._sign < 0))
-            {
-                // signs match, no overflow
-                return ll;
-            }
-            throw new OverflowException(SR.Overflow_Int64);
+            bytesWritten = 0;
+            return TryGetBytes(GetBytesMode.Span, destination, isUnsigned, isBigEndian, ref bytesWritten) != null;
         }
 
-        [CLSCompliant(false)]
-        public static explicit operator UInt64(BigInteger value)
+        /// <summary>Gets the number of bytes that will be output by <see cref="ToByteArray(bool, bool)"/> and <see cref="TryWriteBytes(Span{byte}, out int, bool, bool)"/>.</summary>
+        /// <returns>The number of bytes.</returns>
+        public int GetByteCount(bool isUnsigned = false)
         {
-            value.AssertValid();
-            if (value._bits == null)
-            {
-                return checked((ulong)value._sign);
-            }
-
-            int len = Length(value._bits);
-            if (len > 2 || value._sign < 0)
-            {
-                throw new OverflowException(SR.Overflow_UInt64);
-            }
-
-            if (len > 1)
-            {
-                return NumericsHelpers.MakeUlong(value._bits[1], value._bits[0]);
-            }
-            else
-            {
-                return value._bits[0];
-            }
+            int count = 0;
+            // Big or Little Endian doesn't matter for the byte count.
+            const bool IsBigEndian = false;
+            TryGetBytes(GetBytesMode.Count, default(Span<byte>), isUnsigned, IsBigEndian, ref count);
+            return count;
         }
 
-        public static explicit operator Single(BigInteger value)
+        /// <summary>Mode used to enable sharing <see cref="TryGetBytes(GetBytesMode, Span{byte}, bool, bool, ref int)"/> for multiple purposes.</summary>
+        private enum GetBytesMode { AllocateArray, Count, Span }
+
+        /// <summary>Dummy array returned from TryGetBytes to indicate success when in span mode.</summary>
+        private static readonly byte[] s_success = Array.Empty<byte>();
+
+        /// <summary>Shared logic for <see cref="ToByteArray(bool, bool)"/>, <see cref="TryWriteBytes(Span{byte}, out int, bool, bool)"/>, and <see cref="GetByteCount"/>.</summary>
+        /// <param name="mode">Which entry point is being used.</param>
+        /// <param name="destination">The destination span, if mode is <see cref="GetBytesMode.Span"/>.</param>
+        /// <param name="isUnsigned">True to never write a padding byte, false to write it if the high bit is set.</param>
+        /// <param name="isBigEndian">True for big endian byte ordering, false for little endian byte ordering.</param>
+        /// <param name="bytesWritten">
+        /// If <paramref name="mode"/>==<see cref="GetBytesMode.AllocateArray"/>, ignored.
+        /// If <paramref name="mode"/>==<see cref="GetBytesMode.Count"/>, the number of bytes that would be written.
+        /// If <paramref name="mode"/>==<see cref="GetBytesMode.Span"/>, the number of bytes written to the span or that would be written if it were long enough.
+        /// </param>
+        /// <returns>
+        /// If <paramref name="mode"/>==<see cref="GetBytesMode.AllocateArray"/>, the result array.
+        /// If <paramref name="mode"/>==<see cref="GetBytesMode.Count"/>, null.
+        /// If <paramref name="mode"/>==<see cref="GetBytesMode.Span"/>, non-null if the span was long enough, null if there wasn't enough room.
+        /// </returns>
+        /// <exception cref="OverflowException">If <paramref name="isUnsigned"/> is <c>true</c> and <see cref="Sign"/> is negative.</exception>
+        private byte[] TryGetBytes(GetBytesMode mode, Span<byte> destination, bool isUnsigned, bool isBigEndian, ref int bytesWritten)
         {
-            return (Single)((Double)value);
-        }
+            Debug.Assert(mode == GetBytesMode.AllocateArray || mode == GetBytesMode.Count || mode == GetBytesMode.Span, $"Unexpected mode {mode}.");
+            Debug.Assert(mode == GetBytesMode.Span || destination.IsEmpty, $"If we're not in span mode, we shouldn't have been passed a destination.");
 
-        public static explicit operator Double(BigInteger value)
-        {
-            value.AssertValid();
-            if (value._bits == null)
-                return value._sign;
-
-            ulong man;
-            int exp;
-            int sign = +1;
-            BigIntegerBuilder reg = new BigIntegerBuilder(value, ref sign);
-            reg.GetApproxParts(out exp, out man);
-            return NumericsHelpers.GetDoubleFromParts(sign, exp, man);
-        }
-
-        public static explicit operator Decimal(BigInteger value)
-        {
-            value.AssertValid();
-            if (value._bits == null)
-                return (Decimal)value._sign;
-
-            int length = Length(value._bits);
-            if (length > 3) throw new OverflowException(SR.Overflow_Decimal);
-
-            int lo = 0, mi = 0, hi = 0;
-            if (length > 2) hi = (Int32)value._bits[2];
-            if (length > 1) mi = (Int32)value._bits[1];
-            if (length > 0) lo = (Int32)value._bits[0];
-
-            return new Decimal(lo, mi, hi, value._sign < 0, 0);
-        }
-
-        public static BigInteger operator &(BigInteger left, BigInteger right)
-        {
-            if (left.IsZero || right.IsZero)
+            int sign = _sign;
+            if (sign == 0)
             {
-                return BigInteger.Zero;
-            }
-
-            uint[] x = left.ToUInt32Array();
-            uint[] y = right.ToUInt32Array();
-            uint[] z = new uint[Math.Max(x.Length, y.Length)];
-            uint xExtend = (left._sign < 0) ? UInt32.MaxValue : 0;
-            uint yExtend = (right._sign < 0) ? UInt32.MaxValue : 0;
-
-            for (int i = 0; i < z.Length; i++)
-            {
-                uint xu = (i < x.Length) ? x[i] : xExtend;
-                uint yu = (i < y.Length) ? y[i] : yExtend;
-                z[i] = xu & yu;
-            }
-            return new BigInteger(z);
-        }
-
-        public static BigInteger operator |(BigInteger left, BigInteger right)
-        {
-            if (left.IsZero)
-                return right;
-            if (right.IsZero)
-                return left;
-
-            uint[] x = left.ToUInt32Array();
-            uint[] y = right.ToUInt32Array();
-            uint[] z = new uint[Math.Max(x.Length, y.Length)];
-            uint xExtend = (left._sign < 0) ? UInt32.MaxValue : 0;
-            uint yExtend = (right._sign < 0) ? UInt32.MaxValue : 0;
-
-            for (int i = 0; i < z.Length; i++)
-            {
-                uint xu = (i < x.Length) ? x[i] : xExtend;
-                uint yu = (i < y.Length) ? y[i] : yExtend;
-                z[i] = xu | yu;
-            }
-            return new BigInteger(z);
-        }
-
-        public static BigInteger operator ^(BigInteger left, BigInteger right)
-        {
-            uint[] x = left.ToUInt32Array();
-            uint[] y = right.ToUInt32Array();
-            uint[] z = new uint[Math.Max(x.Length, y.Length)];
-            uint xExtend = (left._sign < 0) ? UInt32.MaxValue : 0;
-            uint yExtend = (right._sign < 0) ? UInt32.MaxValue : 0;
-
-            for (int i = 0; i < z.Length; i++)
-            {
-                uint xu = (i < x.Length) ? x[i] : xExtend;
-                uint yu = (i < y.Length) ? y[i] : yExtend;
-                z[i] = xu ^ yu;
-            }
-
-            return new BigInteger(z);
-        }
-
-
-        public static BigInteger operator <<(BigInteger value, int shift)
-        {
-            if (shift == 0) return value;
-            else if (shift == Int32.MinValue) return ((value >> Int32.MaxValue) >> 1);
-            else if (shift < 0) return value >> -shift;
-
-            int digitShift = shift / kcbitUint;
-            int smallShift = shift - (digitShift * kcbitUint);
-
-            uint[] xd; int xl; bool negx;
-            negx = GetPartsForBitManipulation(ref value, out xd, out xl);
-
-            int zl = xl + digitShift + 1;
-            uint[] zd = new uint[zl];
-
-            if (smallShift == 0)
-            {
-                for (int i = 0; i < xl; i++)
+                switch (mode)
                 {
-                    zd[i + digitShift] = xd[i];
+                    case GetBytesMode.AllocateArray:
+                        return new byte[] { 0 };
+                    case GetBytesMode.Count:
+                        bytesWritten = 1;
+                        return null;
+                    default: // case GetBytesMode.Span:
+                        bytesWritten = 1;
+                        if (destination.Length != 0)
+                        {
+                            destination[0] = 0;
+                            return s_success;
+                        }
+                        return null;
+                }
+            }
+
+            if (isUnsigned && sign < 0)
+            {
+                throw new OverflowException(SR.Overflow_Negative_Unsigned);
+            }
+
+            byte highByte;
+            int nonZeroDwordIndex = 0;
+            uint highDword;
+            uint[] bits = _bits;
+            if (bits == null)
+            {
+                highByte = (byte)((sign < 0) ? 0xff : 0x00);
+                highDword = unchecked((uint)sign);
+            }
+            else if (sign == -1)
+            {
+                highByte = 0xff;
+
+                // If sign is -1, we will need to two's complement bits.
+                // Previously this was accomplished via NumericsHelpers.DangerousMakeTwosComplement(),
+                // however, we can do the two's complement on the stack so as to avoid
+                // creating a temporary copy of bits just to hold the two's complement.
+                // One special case in DangerousMakeTwosComplement() is that if the array
+                // is all zeros, then it would allocate a new array with the high-order
+                // uint set to 1 (for the carry). In our usage, we will not hit this case
+                // because a bits array of all zeros would represent 0, and this case
+                // would be encoded as _bits = null and _sign = 0.
+                Debug.Assert(bits.Length > 0);
+                Debug.Assert(bits[bits.Length - 1] != 0);
+                while (bits[nonZeroDwordIndex] == 0U)
+                {
+                    nonZeroDwordIndex++;
+                }
+
+                highDword = ~bits[bits.Length - 1];
+                if (bits.Length - 1 == nonZeroDwordIndex)
+                {
+                    // This will not overflow because highDword is less than or equal to uint.MaxValue - 1.
+                    Debug.Assert(highDword <= uint.MaxValue - 1);
+                    highDword += 1U;
                 }
             }
             else
             {
-                int carryShift = kcbitUint - smallShift;
-                uint carry = 0;
-                int i;
-                for (i = 0; i < xl; i++)
-                {
-                    uint rot = xd[i];
-                    zd[i + digitShift] = rot << smallShift | carry;
-                    carry = rot >> carryShift;
-                }
-                zd[i + digitShift] = carry;
-            }
-            return new BigInteger(zd, negx);
-        }
-
-        public static BigInteger operator >>(BigInteger value, int shift)
-        {
-            if (shift == 0) return value;
-            else if (shift == Int32.MinValue) return ((value << Int32.MaxValue) << 1);
-            else if (shift < 0) return value << -shift;
-
-            int digitShift = shift / kcbitUint;
-            int smallShift = shift - (digitShift * kcbitUint);
-
-            uint[] xd; int xl; bool negx;
-            negx = GetPartsForBitManipulation(ref value, out xd, out xl);
-
-            if (negx)
-            {
-                if (shift >= (kcbitUint * xl))
-                {
-                    return BigInteger.MinusOne;
-                }
-                uint[] temp = new uint[xl];
-                Array.Copy(xd /* sourceArray */, temp /* destinationArray */, xl /* length */);  // make a copy of immutable value._bits
-                xd = temp;
-                NumericsHelpers.DangerousMakeTwosComplement(xd); // mutates xd
+                Debug.Assert(sign == 1);
+                highByte = 0x00;
+                highDword = bits[bits.Length - 1];
             }
 
-            int zl = xl - digitShift;
-            if (zl < 0) zl = 0;
-            uint[] zd = new uint[zl];
-
-            if (smallShift == 0)
+            byte msb;
+            int msbIndex;
+            if ((msb = unchecked((byte)(highDword >> 24))) != highByte)
             {
-                for (int i = xl - 1; i >= digitShift; i--)
-                {
-                    zd[i - digitShift] = xd[i];
-                }
+                msbIndex = 3;
+            }
+            else if ((msb = unchecked((byte)(highDword >> 16))) != highByte)
+            {
+                msbIndex = 2;
+            }
+            else if ((msb = unchecked((byte)(highDword >> 8))) != highByte)
+            {
+                msbIndex = 1;
             }
             else
             {
-                int carryShift = kcbitUint - smallShift;
-                uint carry = 0;
-                for (int i = xl - 1; i >= digitShift; i--)
+                msb = unchecked((byte)highDword);
+                msbIndex = 0;
+            }
+
+            // Ensure high bit is 0 if positive, 1 if negative
+            bool needExtraByte = (msb & 0x80) != (highByte & 0x80) && !isUnsigned;
+            int length = msbIndex + 1 + (needExtraByte ? 1 : 0);
+            if (bits != null)
+            {
+                length = checked(4 * (bits.Length - 1) + length);
+            }
+
+            byte[] array;
+            switch (mode)
+            {
+                case GetBytesMode.AllocateArray:
+                    destination = array = new byte[length];
+                    break;
+                case GetBytesMode.Count:
+                    bytesWritten = length;
+                    return null;
+                default: // case GetBytesMode.Span:
+                    bytesWritten = length;
+                    if (destination.Length < length)
+                    {
+                        return null;
+                    }
+                    array = s_success;
+                    break;
+            }
+
+            int curByte = isBigEndian ? length - 1 : 0;
+            int increment = isBigEndian ? -1 : 1;
+
+            if (bits != null)
+            {
+                for (int i = 0; i < bits.Length - 1; i++)
                 {
-                    uint rot = xd[i];
-                    if (negx && i == xl - 1)
-                        // sign-extend the first shift for negative ints then let the carry propagate
-                        zd[i - digitShift] = (rot >> smallShift) | (0xFFFFFFFF << carryShift);
-                    else
-                        zd[i - digitShift] = (rot >> smallShift) | carry;
-                    carry = rot << carryShift;
+                    uint dword = bits[i];
+
+                    if (sign == -1)
+                    {
+                        dword = ~dword;
+                        if (i <= nonZeroDwordIndex)
+                        {
+                            dword = unchecked(dword + 1U);
+                        }
+                    }
+
+                    destination[curByte] = unchecked((byte)dword);
+                    curByte += increment;
+                    destination[curByte] = unchecked((byte)(dword >> 8));
+                    curByte += increment;
+                    destination[curByte] = unchecked((byte)(dword >> 16));
+                    curByte += increment;
+                    destination[curByte] = unchecked((byte)(dword >> 24));
+                    curByte += increment;
                 }
             }
-            if (negx)
+
+            Debug.Assert(msbIndex >= 0 && msbIndex <= 3);
+            destination[curByte] = unchecked((byte)highDword);
+            if (msbIndex != 0)
             {
-                NumericsHelpers.DangerousMakeTwosComplement(zd); // mutates zd
+                curByte += increment;
+                destination[curByte] = unchecked((byte)(highDword >> 8));
+                if (msbIndex != 1)
+                {
+                    curByte += increment;
+                    destination[curByte] = unchecked((byte)(highDword >> 16));
+                    if (msbIndex != 2)
+                    {
+                        curByte += increment;
+                        destination[curByte] = unchecked((byte)(highDword >> 24));
+                    }
+                }
             }
-            return new BigInteger(zd, negx);
+
+            // Assert we're big endian, or little endian consistency holds.
+            Debug.Assert(isBigEndian || (!needExtraByte && curByte == length - 1) || (needExtraByte && curByte == length - 2));
+            // Assert we're little endian, or big endian consistency holds.
+            Debug.Assert(!isBigEndian || (!needExtraByte && curByte == 0) || (needExtraByte && curByte == 1));
+
+            if (needExtraByte)
+            {
+                curByte += increment;
+                destination[curByte] = highByte;
+            }
+
+            return array;
         }
 
-
-        public static BigInteger operator ~(BigInteger value)
+        /// <summary>
+        /// Return the value of this BigInteger as a little-endian twos-complement
+        /// uint array, using the fewest number of uints possible. If the value is zero,
+        /// return an array of one uint whose element is 0.
+        /// </summary>
+        /// <returns></returns>
+        private uint[] ToUInt32Array()
         {
-            return -(value + BigInteger.One);
+            if (_bits == null && _sign == 0)
+                return new uint[] { 0 };
+
+            uint[] dwords;
+            uint highDWord;
+
+            if (_bits == null)
+            {
+                dwords = new uint[] { unchecked((uint)_sign) };
+                highDWord = (_sign < 0) ? uint.MaxValue : 0;
+            }
+            else if (_sign == -1)
+            {
+                dwords = (uint[])_bits.Clone();
+                NumericsHelpers.DangerousMakeTwosComplement(dwords);  // Mutates dwords
+                highDWord = uint.MaxValue;
+            }
+            else
+            {
+                dwords = _bits;
+                highDWord = 0;
+            }
+
+            // Find highest significant byte
+            int msb;
+            for (msb = dwords.Length - 1; msb > 0; msb--)
+            {
+                if (dwords[msb] != highDWord) break;
+            }
+            // Ensure high bit is 0 if positive, 1 if negative
+            bool needExtraByte = (dwords[msb] & 0x80000000) != (highDWord & 0x80000000);
+
+            uint[] trimmed = new uint[msb + 1 + (needExtraByte ? 1 : 0)];
+            Array.Copy(dwords, 0, trimmed, 0, msb + 1);
+
+            if (needExtraByte) trimmed[trimmed.Length - 1] = highDWord;
+            return trimmed;
         }
 
-        public static BigInteger operator -(BigInteger value)
+        public override string ToString()
         {
-            value.AssertValid();
-            value._sign = -value._sign;
-            value.AssertValid();
-            return value;
+            return BigNumber.FormatBigInteger(this, null, NumberFormatInfo.CurrentInfo);
         }
 
-        public static BigInteger operator +(BigInteger value)
+        public string ToString(IFormatProvider provider)
         {
-            value.AssertValid();
-            return value;
+            return BigNumber.FormatBigInteger(this, null, NumberFormatInfo.GetInstance(provider));
         }
 
-
-        public static BigInteger operator ++(BigInteger value)
+        public string ToString(string format)
         {
-            return value + BigInteger.One;
+            return BigNumber.FormatBigInteger(this, format, NumberFormatInfo.CurrentInfo);
         }
 
-        public static BigInteger operator --(BigInteger value)
+        public string ToString(string format, IFormatProvider provider)
         {
-            return value - BigInteger.One;
+            return BigNumber.FormatBigInteger(this, format, NumberFormatInfo.GetInstance(provider));
         }
 
-
-        public static BigInteger operator +(BigInteger left, BigInteger right)
+        public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format = default, IFormatProvider provider = null) // TODO: change format to ReadOnlySpan<char>
         {
-            left.AssertValid();
-            right.AssertValid();
-
-            if (left._sign < 0 != right._sign < 0)
-                return Subtract(left._bits, left._sign, right._bits, -1 * right._sign);
-            return Add(left._bits, left._sign, right._bits, right._sign);
+            return BigNumber.TryFormatBigInteger(this, format, NumberFormatInfo.GetInstance(provider), destination, out charsWritten);
         }
 
         private static BigInteger Add(uint[] leftBits, int leftSign, uint[] rightBits, int rightSign)
@@ -1616,6 +1550,456 @@ namespace System.Numerics
             }
         }
 
+        public static implicit operator BigInteger(byte value)
+        {
+            return new BigInteger(value);
+        }
+
+        [CLSCompliant(false)]
+        public static implicit operator BigInteger(sbyte value)
+        {
+            return new BigInteger(value);
+        }
+
+        public static implicit operator BigInteger(short value)
+        {
+            return new BigInteger(value);
+        }
+
+        [CLSCompliant(false)]
+        public static implicit operator BigInteger(ushort value)
+        {
+            return new BigInteger(value);
+        }
+
+        public static implicit operator BigInteger(int value)
+        {
+            return new BigInteger(value);
+        }
+
+        [CLSCompliant(false)]
+        public static implicit operator BigInteger(uint value)
+        {
+            return new BigInteger(value);
+        }
+
+        public static implicit operator BigInteger(long value)
+        {
+            return new BigInteger(value);
+        }
+
+        [CLSCompliant(false)]
+        public static implicit operator BigInteger(ulong value)
+        {
+            return new BigInteger(value);
+        }
+
+        public static explicit operator BigInteger(float value)
+        {
+            return new BigInteger(value);
+        }
+
+        public static explicit operator BigInteger(double value)
+        {
+            return new BigInteger(value);
+        }
+
+        public static explicit operator BigInteger(decimal value)
+        {
+            return new BigInteger(value);
+        }
+
+        public static explicit operator byte(BigInteger value)
+        {
+            return checked((byte)((int)value));
+        }
+
+        [CLSCompliant(false)]
+        public static explicit operator sbyte(BigInteger value)
+        {
+            return checked((sbyte)((int)value));
+        }
+
+        public static explicit operator short(BigInteger value)
+        {
+            return checked((short)((int)value));
+        }
+
+        [CLSCompliant(false)]
+        public static explicit operator ushort(BigInteger value)
+        {
+            return checked((ushort)((int)value));
+        }
+
+        public static explicit operator int(BigInteger value)
+        {
+            value.AssertValid();
+            if (value._bits == null)
+            {
+                return value._sign;  // Value packed into int32 sign
+            }
+            if (value._bits.Length > 1)
+            {
+                // More than 32 bits
+                throw new OverflowException(SR.Overflow_Int32);
+            }
+            if (value._sign > 0)
+            {
+                return checked((int)value._bits[0]);
+            }
+            if (value._bits[0] > kuMaskHighBit)
+            {
+                // Value > Int32.MinValue
+                throw new OverflowException(SR.Overflow_Int32);
+            }
+            return unchecked(-(int)value._bits[0]);
+        }
+
+        [CLSCompliant(false)]
+        public static explicit operator uint(BigInteger value)
+        {
+            value.AssertValid();
+            if (value._bits == null)
+            {
+                return checked((uint)value._sign);
+            }
+            else if (value._bits.Length > 1 || value._sign < 0)
+            {
+                throw new OverflowException(SR.Overflow_UInt32);
+            }
+            else
+            {
+                return value._bits[0];
+            }
+        }
+
+        public static explicit operator long(BigInteger value)
+        {
+            value.AssertValid();
+            if (value._bits == null)
+            {
+                return value._sign;
+            }
+
+            int len = value._bits.Length;
+            if (len > 2)
+            {
+                throw new OverflowException(SR.Overflow_Int64);
+            }
+
+            ulong uu;
+            if (len > 1)
+            {
+                uu = NumericsHelpers.MakeUlong(value._bits[1], value._bits[0]);
+            }
+            else
+            {
+                uu = value._bits[0];
+            }
+
+            long ll = value._sign > 0 ? unchecked((long)uu) : unchecked(-(long)uu);
+            if ((ll > 0 && value._sign > 0) || (ll < 0 && value._sign < 0))
+            {
+                // Signs match, no overflow
+                return ll;
+            }
+            throw new OverflowException(SR.Overflow_Int64);
+        }
+
+        [CLSCompliant(false)]
+        public static explicit operator ulong(BigInteger value)
+        {
+            value.AssertValid();
+            if (value._bits == null)
+            {
+                return checked((ulong)value._sign);
+            }
+
+            int len = value._bits.Length;
+            if (len > 2 || value._sign < 0)
+            {
+                throw new OverflowException(SR.Overflow_UInt64);
+            }
+
+            if (len > 1)
+            {
+                return NumericsHelpers.MakeUlong(value._bits[1], value._bits[0]);
+            }
+            return value._bits[0];
+        }
+
+        public static explicit operator float(BigInteger value)
+        {
+            return (float)((double)value);
+        }
+
+        public static explicit operator double(BigInteger value)
+        {
+            value.AssertValid();
+
+            int sign = value._sign;
+            uint[] bits = value._bits;
+
+            if (bits == null)
+                return sign;
+
+            int length = bits.Length;
+
+            // The maximum exponent for doubles is 1023, which corresponds to a uint bit length of 32.
+            // All BigIntegers with bits[] longer than 32 evaluate to Double.Infinity (or NegativeInfinity).
+            // Cases where the exponent is between 1024 and 1035 are handled in NumericsHelpers.GetDoubleFromParts.
+            const int InfinityLength = 1024 / kcbitUint;
+
+            if (length > InfinityLength)
+            {
+                if (sign == 1)
+                    return double.PositiveInfinity;
+                else
+                    return double.NegativeInfinity;
+            }
+
+            ulong h = bits[length - 1];
+            ulong m = length > 1 ? bits[length - 2] : 0;
+            ulong l = length > 2 ? bits[length - 3] : 0;
+
+            int z = NumericsHelpers.CbitHighZero((uint)h);
+
+            int exp = (length - 2) * 32 - z;
+            ulong man = (h << 32 + z) | (m << z) | (l >> 32 - z);
+
+            return NumericsHelpers.GetDoubleFromParts(sign, exp, man);
+        }
+
+        public static explicit operator decimal(BigInteger value)
+        {
+            value.AssertValid();
+            if (value._bits == null)
+                return value._sign;
+
+            int length = value._bits.Length;
+            if (length > 3) throw new OverflowException(SR.Overflow_Decimal);
+
+            int lo = 0, mi = 0, hi = 0;
+
+            unchecked
+            {
+                if (length > 2) hi = (int)value._bits[2];
+                if (length > 1) mi = (int)value._bits[1];
+                if (length > 0) lo = (int)value._bits[0];
+            }
+
+            return new decimal(lo, mi, hi, value._sign < 0, 0);
+        }
+
+        public static BigInteger operator &(BigInteger left, BigInteger right)
+        {
+            if (left.IsZero || right.IsZero)
+            {
+                return Zero;
+            }
+
+            if (left._bits == null && right._bits == null)
+            {
+                return left._sign & right._sign;
+            }
+
+            uint[] x = left.ToUInt32Array();
+            uint[] y = right.ToUInt32Array();
+            uint[] z = new uint[Math.Max(x.Length, y.Length)];
+            uint xExtend = (left._sign < 0) ? uint.MaxValue : 0;
+            uint yExtend = (right._sign < 0) ? uint.MaxValue : 0;
+
+            for (int i = 0; i < z.Length; i++)
+            {
+                uint xu = (i < x.Length) ? x[i] : xExtend;
+                uint yu = (i < y.Length) ? y[i] : yExtend;
+                z[i] = xu & yu;
+            }
+            return new BigInteger(z);
+        }
+
+        public static BigInteger operator |(BigInteger left, BigInteger right)
+        {
+            if (left.IsZero)
+                return right;
+            if (right.IsZero)
+                return left;
+
+            if (left._bits == null && right._bits == null)
+            {
+                return left._sign | right._sign;
+            }
+
+            uint[] x = left.ToUInt32Array();
+            uint[] y = right.ToUInt32Array();
+            uint[] z = new uint[Math.Max(x.Length, y.Length)];
+            uint xExtend = (left._sign < 0) ? uint.MaxValue : 0;
+            uint yExtend = (right._sign < 0) ? uint.MaxValue : 0;
+
+            for (int i = 0; i < z.Length; i++)
+            {
+                uint xu = (i < x.Length) ? x[i] : xExtend;
+                uint yu = (i < y.Length) ? y[i] : yExtend;
+                z[i] = xu | yu;
+            }
+            return new BigInteger(z);
+        }
+
+        public static BigInteger operator ^(BigInteger left, BigInteger right)
+        {
+            if (left._bits == null && right._bits == null)
+            {
+                return left._sign ^ right._sign;
+            }
+
+            uint[] x = left.ToUInt32Array();
+            uint[] y = right.ToUInt32Array();
+            uint[] z = new uint[Math.Max(x.Length, y.Length)];
+            uint xExtend = (left._sign < 0) ? uint.MaxValue : 0;
+            uint yExtend = (right._sign < 0) ? uint.MaxValue : 0;
+
+            for (int i = 0; i < z.Length; i++)
+            {
+                uint xu = (i < x.Length) ? x[i] : xExtend;
+                uint yu = (i < y.Length) ? y[i] : yExtend;
+                z[i] = xu ^ yu;
+            }
+
+            return new BigInteger(z);
+        }
+
+        public static BigInteger operator <<(BigInteger value, int shift)
+        {
+            if (shift == 0) return value;
+            else if (shift == int.MinValue) return ((value >> int.MaxValue) >> 1);
+            else if (shift < 0) return value >> -shift;
+
+            int digitShift = shift / kcbitUint;
+            int smallShift = shift - (digitShift * kcbitUint);
+
+            uint[] xd; int xl; bool negx;
+            negx = GetPartsForBitManipulation(ref value, out xd, out xl);
+
+            int zl = xl + digitShift + 1;
+            uint[] zd = new uint[zl];
+
+            if (smallShift == 0)
+            {
+                for (int i = 0; i < xl; i++)
+                {
+                    zd[i + digitShift] = xd[i];
+                }
+            }
+            else
+            {
+                int carryShift = kcbitUint - smallShift;
+                uint carry = 0;
+                int i;
+                for (i = 0; i < xl; i++)
+                {
+                    uint rot = xd[i];
+                    zd[i + digitShift] = rot << smallShift | carry;
+                    carry = rot >> carryShift;
+                }
+                zd[i + digitShift] = carry;
+            }
+            return new BigInteger(zd, negx);
+        }
+
+        public static BigInteger operator >>(BigInteger value, int shift)
+        {
+            if (shift == 0) return value;
+            else if (shift == int.MinValue) return ((value << int.MaxValue) << 1);
+            else if (shift < 0) return value << -shift;
+
+            int digitShift = shift / kcbitUint;
+            int smallShift = shift - (digitShift * kcbitUint);
+
+            uint[] xd; int xl; bool negx;
+            negx = GetPartsForBitManipulation(ref value, out xd, out xl);
+
+            if (negx)
+            {
+                if (shift >= (kcbitUint * xl))
+                {
+                    return MinusOne;
+                }
+                uint[] temp = new uint[xl];
+                Array.Copy(xd /* sourceArray */, 0 /* sourceIndex */, temp /* destinationArray */, 0 /* destinationIndex */, xl /* length */);  // Make a copy of immutable value._bits
+                xd = temp;
+                NumericsHelpers.DangerousMakeTwosComplement(xd); // Mutates xd
+            }
+
+            int zl = xl - digitShift;
+            if (zl < 0) zl = 0;
+            uint[] zd = new uint[zl];
+
+            if (smallShift == 0)
+            {
+                for (int i = xl - 1; i >= digitShift; i--)
+                {
+                    zd[i - digitShift] = xd[i];
+                }
+            }
+            else
+            {
+                int carryShift = kcbitUint - smallShift;
+                uint carry = 0;
+                for (int i = xl - 1; i >= digitShift; i--)
+                {
+                    uint rot = xd[i];
+                    if (negx && i == xl - 1)
+                        // Sign-extend the first shift for negative ints then let the carry propagate
+                        zd[i - digitShift] = (rot >> smallShift) | (0xFFFFFFFF << carryShift);
+                    else
+                        zd[i - digitShift] = (rot >> smallShift) | carry;
+                    carry = rot << carryShift;
+                }
+            }
+            if (negx)
+            {
+                NumericsHelpers.DangerousMakeTwosComplement(zd); // Mutates zd
+            }
+            return new BigInteger(zd, negx);
+        }
+
+        public static BigInteger operator ~(BigInteger value)
+        {
+            return -(value + One);
+        }
+
+        public static BigInteger operator -(BigInteger value)
+        {
+            value.AssertValid();
+            return new BigInteger(-value._sign, value._bits);
+        }
+
+        public static BigInteger operator +(BigInteger value)
+        {
+            value.AssertValid();
+            return value;
+        }
+
+        public static BigInteger operator ++(BigInteger value)
+        {
+            return value + One;
+        }
+
+        public static BigInteger operator --(BigInteger value)
+        {
+            return value - One;
+        }
+
+        public static BigInteger operator +(BigInteger left, BigInteger right)
+        {
+            left.AssertValid();
+            right.AssertValid();
+
+            if (left._sign < 0 != right._sign < 0)
+                return Subtract(left._bits, left._sign, right._bits, -1 * right._sign);
+            return Add(left._bits, left._sign, right._bits, right._sign);
+        }
+
         public static BigInteger operator *(BigInteger left, BigInteger right)
         {
             left.AssertValid();
@@ -1674,7 +2058,7 @@ namespace System.Numerics
 
             if (trivialDividend)
             {
-                // the divisor is non-trivial
+                // The divisor is non-trivial
                 // and therefore the bigger one
                 return s_bnZeroInt;
             }
@@ -1711,36 +2095,35 @@ namespace System.Numerics
 
             if (trivialDividend)
             {
-                // the divisor is non-trivial
+                // The divisor is non-trivial
                 // and therefore the bigger one
                 return dividend;
             }
 
             if (trivialDivisor)
             {
-                uint bits = BigIntegerCalculator.Remainder(dividend._bits, NumericsHelpers.Abs(divisor._sign));
-                return dividend._sign < 0 ? -1 * (long)bits : bits;
+                uint remainder = BigIntegerCalculator.Remainder(dividend._bits, NumericsHelpers.Abs(divisor._sign));
+                return dividend._sign < 0 ? -1 * remainder : remainder;
             }
 
             if (dividend._bits.Length < divisor._bits.Length)
             {
                 return dividend;
             }
-            else
-            {
-                uint[] bits = BigIntegerCalculator.Remainder(dividend._bits, divisor._bits);
-                return new BigInteger(bits, dividend._sign < 0);
-            }
+            uint[] bits = BigIntegerCalculator.Remainder(dividend._bits, divisor._bits);
+            return new BigInteger(bits, dividend._sign < 0);
         }
 
         public static bool operator <(BigInteger left, BigInteger right)
         {
             return left.CompareTo(right) < 0;
         }
+
         public static bool operator <=(BigInteger left, BigInteger right)
         {
             return left.CompareTo(right) <= 0;
         }
+
         public static bool operator >(BigInteger left, BigInteger right)
         {
             return left.CompareTo(right) > 0;
@@ -1749,231 +2132,162 @@ namespace System.Numerics
         {
             return left.CompareTo(right) >= 0;
         }
+
         public static bool operator ==(BigInteger left, BigInteger right)
         {
             return left.Equals(right);
         }
+
         public static bool operator !=(BigInteger left, BigInteger right)
         {
             return !left.Equals(right);
         }
 
-        public static bool operator <(BigInteger left, Int64 right)
+        public static bool operator <(BigInteger left, long right)
         {
             return left.CompareTo(right) < 0;
         }
-        public static bool operator <=(BigInteger left, Int64 right)
+
+        public static bool operator <=(BigInteger left, long right)
         {
             return left.CompareTo(right) <= 0;
         }
-        public static bool operator >(BigInteger left, Int64 right)
+
+        public static bool operator >(BigInteger left, long right)
         {
             return left.CompareTo(right) > 0;
         }
-        public static bool operator >=(BigInteger left, Int64 right)
+
+        public static bool operator >=(BigInteger left, long right)
         {
             return left.CompareTo(right) >= 0;
         }
-        public static bool operator ==(BigInteger left, Int64 right)
+
+        public static bool operator ==(BigInteger left, long right)
         {
             return left.Equals(right);
         }
-        public static bool operator !=(BigInteger left, Int64 right)
+
+        public static bool operator !=(BigInteger left, long right)
         {
             return !left.Equals(right);
         }
 
-        public static bool operator <(Int64 left, BigInteger right)
+        public static bool operator <(long left, BigInteger right)
         {
             return right.CompareTo(left) > 0;
         }
-        public static bool operator <=(Int64 left, BigInteger right)
+
+        public static bool operator <=(long left, BigInteger right)
         {
             return right.CompareTo(left) >= 0;
         }
-        public static bool operator >(Int64 left, BigInteger right)
+
+        public static bool operator >(long left, BigInteger right)
         {
             return right.CompareTo(left) < 0;
         }
-        public static bool operator >=(Int64 left, BigInteger right)
+
+        public static bool operator >=(long left, BigInteger right)
         {
             return right.CompareTo(left) <= 0;
         }
-        public static bool operator ==(Int64 left, BigInteger right)
+
+        public static bool operator ==(long left, BigInteger right)
         {
             return right.Equals(left);
         }
-        public static bool operator !=(Int64 left, BigInteger right)
+
+        public static bool operator !=(long left, BigInteger right)
         {
             return !right.Equals(left);
         }
 
         [CLSCompliant(false)]
-        public static bool operator <(BigInteger left, UInt64 right)
+        public static bool operator <(BigInteger left, ulong right)
         {
             return left.CompareTo(right) < 0;
         }
+
         [CLSCompliant(false)]
-        public static bool operator <=(BigInteger left, UInt64 right)
+        public static bool operator <=(BigInteger left, ulong right)
         {
             return left.CompareTo(right) <= 0;
         }
+
         [CLSCompliant(false)]
-        public static bool operator >(BigInteger left, UInt64 right)
+        public static bool operator >(BigInteger left, ulong right)
         {
             return left.CompareTo(right) > 0;
         }
+
         [CLSCompliant(false)]
-        public static bool operator >=(BigInteger left, UInt64 right)
+        public static bool operator >=(BigInteger left, ulong right)
         {
             return left.CompareTo(right) >= 0;
         }
+
         [CLSCompliant(false)]
-        public static bool operator ==(BigInteger left, UInt64 right)
+        public static bool operator ==(BigInteger left, ulong right)
         {
             return left.Equals(right);
         }
+
         [CLSCompliant(false)]
-        public static bool operator !=(BigInteger left, UInt64 right)
+        public static bool operator !=(BigInteger left, ulong right)
         {
             return !left.Equals(right);
         }
 
         [CLSCompliant(false)]
-        public static bool operator <(UInt64 left, BigInteger right)
+        public static bool operator <(ulong left, BigInteger right)
         {
             return right.CompareTo(left) > 0;
         }
+
         [CLSCompliant(false)]
-        public static bool operator <=(UInt64 left, BigInteger right)
+        public static bool operator <=(ulong left, BigInteger right)
         {
             return right.CompareTo(left) >= 0;
         }
+
         [CLSCompliant(false)]
-        public static bool operator >(UInt64 left, BigInteger right)
+        public static bool operator >(ulong left, BigInteger right)
         {
             return right.CompareTo(left) < 0;
         }
+
         [CLSCompliant(false)]
-        public static bool operator >=(UInt64 left, BigInteger right)
+        public static bool operator >=(ulong left, BigInteger right)
         {
             return right.CompareTo(left) <= 0;
         }
+
         [CLSCompliant(false)]
-        public static bool operator ==(UInt64 left, BigInteger right)
+        public static bool operator ==(ulong left, BigInteger right)
         {
             return right.Equals(left);
         }
+
         [CLSCompliant(false)]
-        public static bool operator !=(UInt64 left, BigInteger right)
+        public static bool operator !=(ulong left, BigInteger right)
         {
             return !right.Equals(left);
         }
 
-        #endregion public static operators
-
-
-        // ----- SECTION: internal instance utility methods ----------------*
-        #region internal instance utility methods
-
-        private void SetBitsFromDouble(Double value)
-        {
-            int sign, exp;
-            ulong man;
-            bool fFinite;
-            NumericsHelpers.GetDoubleParts(value, out sign, out exp, out man, out fFinite);
-            Debug.Assert(sign == +1 || sign == -1);
-
-            if (man == 0)
-            {
-                this = BigInteger.Zero;
-                return;
-            }
-
-            Debug.Assert(man < (1UL << 53));
-            Debug.Assert(exp <= 0 || man >= (1UL << 52));
-
-            if (exp <= 0)
-            {
-                if (exp <= -kcbitUlong)
-                {
-                    this = BigInteger.Zero;
-                    return;
-                }
-                this = man >> -exp;
-                if (sign < 0)
-                    _sign = -_sign;
-            }
-            else if (exp <= 11)
-            {
-                this = man << exp;
-                if (sign < 0)
-                    _sign = -_sign;
-            }
-            else
-            {
-                // Overflow into at least 3 uints.
-                // Move the leading 1 to the high bit.
-                man <<= 11;
-                exp -= 11;
-
-                // Compute cu and cbit so that exp == 32 * cu - cbit and 0 <= cbit < 32.
-                int cu = (exp - 1) / kcbitUint + 1;
-                int cbit = cu * kcbitUint - exp;
-                Debug.Assert(0 <= cbit && cbit < kcbitUint);
-                Debug.Assert(cu >= 1);
-
-                // Populate the uints.
-                _bits = new uint[cu + 2];
-                _bits[cu + 1] = (uint)(man >> (cbit + kcbitUint));
-                _bits[cu] = (uint)(man >> cbit);
-                if (cbit > 0)
-                    _bits[cu - 1] = (uint)man << (kcbitUint - cbit);
-                _sign = sign;
-            }
-        }
-        #endregion internal instance utility methods
-
-
-        // ----- SECTION: internal static utility methods ----------------*
-        #region internal static utility methods
-        [Pure]
-        internal static int Length(uint[] rgu)
-        {
-            Debug.Assert(rgu[rgu.Length - 1] != 0);
-
-            // no leading zeros
-            return rgu.Length;
-        }
-
-        internal int _Sign { get { return _sign; } }
-        internal uint[] _Bits { get { return _bits; } }
-
-
-        internal static int BitLengthOfUInt(uint x)
-        {
-            int numBits = 0;
-            while (x > 0)
-            {
-                x >>= 1;
-                numBits++;
-            }
-            return numBits;
-        }
-
-        //
-        // GetPartsForBitManipulation -
-        //
-        // Encapsulate the logic of normalizing the "small" and "large" forms of BigInteger
-        // into the "large" form so that Bit Manipulation algorithms can be simplified 
-        //
-        // uint[] xd    =    the UInt32 array containing the entire big integer in "large" (denormalized) form
-        //                       E.g., the number one (1) and negative one (-1) are both stored as 0x00000001
-        //                       BigInteger values Int32.MinValue < x <= Int32.MaxValue are converted to this
-        //                       format for convenience.
-        // int xl       =    the length of xd
-        // return bool  =    true for negative numbers
-        //
+        /// <summary>
+        /// Encapsulate the logic of normalizing the "small" and "large" forms of BigInteger
+        /// into the "large" form so that Bit Manipulation algorithms can be simplified.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="xd">
+        /// The UInt32 array containing the entire big integer in "large" (denormalized) form.
+        /// E.g., the number one (1) and negative one (-1) are both stored as 0x00000001
+        /// BigInteger values Int32.MinValue &lt; x &lt;= Int32.MaxValue are converted to this
+        /// format for convenience.
+        /// </param>
+        /// <param name="xl">The length of xd.</param>
+        /// <returns>True for negative numbers.</returns>
         private static bool GetPartsForBitManipulation(ref BigInteger x, out uint[] xd, out int xl)
         {
             if (x._bits == null)
@@ -2004,6 +2318,26 @@ namespace System.Numerics
             }
             return 0;
         }
-        #endregion internal static utility methods
+
+        [Conditional("DEBUG")]
+        private void AssertValid()
+        {
+            if (_bits != null)
+            {
+                // _sign must be +1 or -1 when _bits is non-null
+                Debug.Assert(_sign == 1 || _sign == -1);
+                // _bits must contain at least 1 element or be null
+                Debug.Assert(_bits.Length > 0);
+                // Wasted space: _bits[0] could have been packed into _sign
+                Debug.Assert(_bits.Length > 1 || _bits[0] >= kuMaskHighBit);
+                // Wasted space: leading zeros could have been truncated
+                Debug.Assert(_bits[_bits.Length - 1] != 0);
+            }
+            else
+            {
+                // Int32.MinValue should not be stored in the _sign field
+                Debug.Assert(_sign > int.MinValue);
+            }
+        }
     }
 }

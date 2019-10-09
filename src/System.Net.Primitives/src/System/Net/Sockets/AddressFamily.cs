@@ -1,14 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.Net.Sockets
 {
-    /// <devdoc>
-    ///    <para>
-    ///       Specifies the address families that an instance of the <see cref='System.Net.Sockets.Socket'/>
-    ///       class can use.
-    ///    </para>
-    /// </devdoc>
+    /// <summary>Specifies the addressing scheme that an instance of the Socket class can use.</summary>
     public enum AddressFamily
     {
         Unknown = -1,           // Unknown
@@ -42,5 +38,10 @@ namespace System.Net.Sockets
         Irda = 26,              // IrDA
         NetworkDesigners = 28,  // Network Designers OSI & gateway enabled protocols
         Max = 29,               // Max
+        // Unix specific values are past Uint16.MaxValue to avoid conflicts with Windows values.
+        // On Windows we pass values straight to OS and if we add new protocol supported by Windows,
+        // we should use actual OS value.
+        Packet = 65536,         // Linux Packet
+        ControllerAreaNetwork = 65537, // Controller Area Network automotive bus protocol
     }
 }

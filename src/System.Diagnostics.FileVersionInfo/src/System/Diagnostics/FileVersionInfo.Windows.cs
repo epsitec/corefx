@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Globalization;
 using System.Runtime.InteropServices;
@@ -14,17 +15,17 @@ namespace System.Diagnostics
             _fileName = fileName;
 
             uint handle;  // This variable is not used, but we need an out variable.
-            uint infoSize = Interop.mincore.GetFileVersionInfoSizeEx(
-                (uint)Interop.mincore.FileVersionInfoType.FILE_VER_GET_LOCALISED, _fileName, out handle);
+            uint infoSize = Interop.Version.GetFileVersionInfoSizeEx(
+                (uint)Interop.Version.FileVersionInfoType.FILE_VER_GET_LOCALISED, _fileName, out handle);
 
             if (infoSize != 0)
             {
                 byte[] mem = new byte[infoSize];
-                fixed (byte* memPtr = mem)
+                fixed (byte* memPtr = &mem[0])
                 {
                     IntPtr memIntPtr = new IntPtr((void*)memPtr);
-                    if (Interop.mincore.GetFileVersionInfoEx(
-                            (uint)Interop.mincore.FileVersionInfoType.FILE_VER_GET_LOCALISED | (uint)Interop.mincore.FileVersionInfoType.FILE_VER_GET_NEUTRAL,
+                    if (Interop.Version.GetFileVersionInfoEx(
+                            (uint)Interop.Version.FileVersionInfoType.FILE_VER_GET_LOCALISED | (uint)Interop.Version.FileVersionInfoType.FILE_VER_GET_NEUTRAL,
                             _fileName,
                             0U,
                             infoSize,
@@ -73,26 +74,27 @@ namespace System.Diagnostics
             return value.ToString("X8", CultureInfo.InvariantCulture);
         }
 
-        private static Interop.mincore.VS_FIXEDFILEINFO GetFixedFileInfo(IntPtr memPtr)
+        private static Interop.Version.VS_FIXEDFILEINFO GetFixedFileInfo(IntPtr memPtr)
         {
             IntPtr memRef = IntPtr.Zero;
             uint memLen;
 
-            if (Interop.mincore.VerQueryValue(memPtr, "\\", out memRef, out memLen))
+            if (Interop.Version.VerQueryValue(memPtr, "\\", out memRef, out memLen))
             {
-                return (Interop.mincore.VS_FIXEDFILEINFO)Marshal.PtrToStructure<Interop.mincore.VS_FIXEDFILEINFO>(memRef);
+                return (Interop.Version.VS_FIXEDFILEINFO)Marshal.PtrToStructure<Interop.Version.VS_FIXEDFILEINFO>(memRef);
             }
 
-            return new Interop.mincore.VS_FIXEDFILEINFO();
+            return new Interop.Version.VS_FIXEDFILEINFO();
         }
 
-        private static string GetFileVersionLanguage(IntPtr memPtr)
+        private static unsafe string GetFileVersionLanguage(IntPtr memPtr)
         {
             uint langid = GetVarEntry(memPtr) >> 16;
 
-            var lang = new StringBuilder(256);
-            Interop.mincore.VerLanguageName(langid, lang, (uint)lang.Capacity);
-            return lang.ToString();
+            const int MaxLength = 256;
+            char* lang = stackalloc char[MaxLength];
+            int charsWritten = Interop.Kernel32.VerLanguageName(langid, lang, MaxLength);
+            return new string(lang, 0, charsWritten);
         }
 
         private static string GetFileVersionString(IntPtr memPtr, string name)
@@ -100,7 +102,7 @@ namespace System.Diagnostics
             IntPtr memRef = IntPtr.Zero;
             uint memLen;
 
-            if (Interop.mincore.VerQueryValue(memPtr, name, out memRef, out memLen))
+            if (Interop.Version.VerQueryValue(memPtr, name, out memRef, out memLen))
             {
                 if (memRef != IntPtr.Zero)
                 {
@@ -116,7 +118,7 @@ namespace System.Diagnostics
             IntPtr memRef = IntPtr.Zero;
             uint memLen;
 
-            if (Interop.mincore.VerQueryValue(memPtr, "\\VarFileInfo\\Translation", out memRef, out memLen))
+            if (Interop.Version.VerQueryValue(memPtr, "\\VarFileInfo\\Translation", out memRef, out memLen))
             {
                 return (uint)((Marshal.ReadInt16(memRef) << 16) + Marshal.ReadInt16((IntPtr)((long)memRef + 2)));
             }
@@ -147,7 +149,7 @@ namespace System.Diagnostics
 
             _language = GetFileVersionLanguage(memIntPtr);
 
-            Interop.mincore.VS_FIXEDFILEINFO ffi = GetFixedFileInfo(memIntPtr);
+            Interop.Version.VS_FIXEDFILEINFO ffi = GetFixedFileInfo(memIntPtr);
             _fileMajor = (int)HIWORD(ffi.dwFileVersionMS);
             _fileMinor = (int)LOWORD(ffi.dwFileVersionMS);
             _fileBuild = (int)HIWORD(ffi.dwFileVersionLS);
@@ -157,11 +159,11 @@ namespace System.Diagnostics
             _productBuild = (int)HIWORD(ffi.dwProductVersionLS);
             _productPrivate = (int)LOWORD(ffi.dwProductVersionLS);
 
-            _isDebug = (ffi.dwFileFlags & (uint)Interop.mincore.FileVersionInfo.VS_FF_DEBUG) != 0;
-            _isPatched = (ffi.dwFileFlags & (uint)Interop.mincore.FileVersionInfo.VS_FF_PATCHED) != 0;
-            _isPrivateBuild = (ffi.dwFileFlags & (uint)Interop.mincore.FileVersionInfo.VS_FF_PRIVATEBUILD) != 0;
-            _isPreRelease = (ffi.dwFileFlags & (uint)Interop.mincore.FileVersionInfo.VS_FF_PRERELEASE) != 0;
-            _isSpecialBuild = (ffi.dwFileFlags & (uint)Interop.mincore.FileVersionInfo.VS_FF_SPECIALBUILD) != 0;
+            _isDebug = (ffi.dwFileFlags & (uint)Interop.Version.FileVersionInfo.VS_FF_DEBUG) != 0;
+            _isPatched = (ffi.dwFileFlags & (uint)Interop.Version.FileVersionInfo.VS_FF_PATCHED) != 0;
+            _isPrivateBuild = (ffi.dwFileFlags & (uint)Interop.Version.FileVersionInfo.VS_FF_PRIVATEBUILD) != 0;
+            _isPreRelease = (ffi.dwFileFlags & (uint)Interop.Version.FileVersionInfo.VS_FF_PRERELEASE) != 0;
+            _isSpecialBuild = (ffi.dwFileFlags & (uint)Interop.Version.FileVersionInfo.VS_FF_SPECIALBUILD) != 0;
 
             // fileVersion is chosen based on best guess. Other fields can be used if appropriate.
             return (_fileVersion != string.Empty);

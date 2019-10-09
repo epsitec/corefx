@@ -1,14 +1,13 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
+using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass001.regclass001;
     using System;
-    using System.Reflection;
 
     public class MyClass
     {
@@ -30,19 +29,19 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
     public class MemberClass
     {
         [ThreadStatic]
-        public static int Status;
+        public static int t_status;
 
         public bool? this[string p1, float p2, short[] p3]
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return null;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -50,13 +49,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return (byte)3;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -64,7 +63,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new byte?[]
                 {
                 null, (byte)2
@@ -75,7 +74,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             private set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -83,13 +82,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             protected get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return 'a';
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -97,13 +96,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return null;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -111,13 +110,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return null;
             }
 
             private set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -125,7 +124,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             protected internal get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new decimal[]
                 {
                 1m, 0m
@@ -136,7 +135,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -144,7 +143,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new double[]
                 {
                 1.4, double.Epsilon, double.NaN
@@ -155,7 +154,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             internal set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -163,13 +162,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return p1;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -177,7 +176,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new dynamic[]
                 {
                 p1, p2
@@ -188,7 +187,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -196,13 +195,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return float.NegativeInfinity;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -210,13 +209,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return float.NegativeInfinity;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -224,13 +223,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return 0;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -238,13 +237,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return 4;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -252,7 +251,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new int?[]
                 {
                 1, null, int.MinValue
@@ -263,7 +262,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -271,7 +270,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new MyClass()
                 {
                     Field = 3
@@ -282,7 +281,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -290,7 +289,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new MyClass[]
                 {
                 null, new MyClass()
@@ -304,7 +303,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -312,13 +311,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return MyEnum.Second;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -326,13 +325,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return null;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -340,7 +339,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new MyEnum?[]
                 {
                 null, MyEnum.Second
@@ -351,7 +350,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -359,7 +358,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new MyEnum[]
                 {
                 MyEnum.Second, MyEnum.First
@@ -370,7 +369,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -378,7 +377,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new MyStruct()
                 {
                     Number = 4
@@ -389,7 +388,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -397,13 +396,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return null;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -411,7 +410,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new MyStruct?[]
                 {
                 null, new MyStruct()
@@ -425,7 +424,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -433,7 +432,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new MyStruct[]
                 {
                 }
@@ -443,7 +442,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -451,7 +450,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new object[]
                 {
                 p1, p2, p3
@@ -462,7 +461,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -470,7 +469,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new short[]
                 {
                 1
@@ -481,7 +480,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -489,13 +488,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return string.Empty;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -503,7 +502,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new ulong[]
                 {
                 ulong.MaxValue
@@ -514,7 +513,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -522,14 +521,14 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
+                MemberClass.t_status = 1;
                 return null;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -537,13 +536,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return (byte)3;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -551,7 +550,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new byte?[]
                 {
                 null, (byte)2
@@ -562,7 +561,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -570,13 +569,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return 'a';
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -584,13 +583,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return null;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -598,13 +597,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return null;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -612,7 +611,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new decimal[]
                 {
                 1m, 0m
@@ -623,7 +622,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -631,7 +630,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new double[]
                 {
                 1.4, double.Epsilon, double.NaN
@@ -642,7 +641,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -650,13 +649,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return p1;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -664,7 +663,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new dynamic[]
                 {
                 p1
@@ -675,7 +674,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -683,13 +682,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return float.NegativeInfinity;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -697,13 +696,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return float.PositiveInfinity;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -711,13 +710,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return 0;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -725,13 +724,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return 4;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -739,7 +738,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new int?[]
                 {
                 1, null, int.MinValue
@@ -750,7 +749,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -758,7 +757,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new MyClass()
                 {
                     Field = 3
@@ -769,7 +768,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -777,7 +776,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new MyClass[]
                 {
                 null, new MyClass()
@@ -791,7 +790,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -799,13 +798,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return null;
             }
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -813,7 +812,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new MyEnum?[]
                 {
                 null, MyEnum.Second
@@ -824,7 +823,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -833,7 +832,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new MyEnum[]
                 {
                 MyEnum.Second, MyEnum.First
@@ -844,7 +843,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -852,7 +851,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new MyStruct()
                 {
                     Number = 4
@@ -863,7 +862,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -871,13 +870,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return null;
             }
 
             internal set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -885,7 +884,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new MyStruct?[]
                 {
                 null, new MyStruct()
@@ -899,7 +898,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -907,7 +906,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new MyStruct[]
                 {
                 }
@@ -917,7 +916,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -925,7 +924,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new object[]
                 {
                 p1
@@ -936,7 +935,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -944,7 +943,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new short[]
                 {
                 1
@@ -955,7 +954,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -963,13 +962,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return string.Empty;
             }
 
             private set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
 
@@ -977,7 +976,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             get
             {
-                MemberClass.Status = 1;
+                MemberClass.t_status = 1;
                 return new ulong[]
                 {
                 ulong.MaxValue
@@ -988,7 +987,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             set
             {
-                MemberClass.Status = 2;
+                MemberClass.t_status = 2;
             }
         }
     }
@@ -998,15 +997,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass001.regclass001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass001.regclass001;
     // <Title> Tests regular class indexer used in regular method body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1025,7 +1021,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         public int TestGetMethod(MemberClass mc)
         {
             dynamic dy = mc;
-            if (dy[string.Empty, 1.2f, new short[0]] != null && MemberClass.Status != 1)
+            if (dy[string.Empty, 1.2f, new short[0]] != null && MemberClass.t_status != 1)
                 return 1;
             else
                 return 0;
@@ -1035,7 +1031,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             dynamic dy = mc;
             dy[string.Empty, 1.2f, new short[0]] = false;
-            if (MemberClass.Status != 2)
+            if (MemberClass.t_status != 2)
                 return 1;
             else
                 return 0;
@@ -1048,15 +1044,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass002.regclass002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass002.regclass002;
     // <Title> Tests regular class indexer used in static method body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1082,7 +1075,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             ;
             ulong[] p2 = new ulong[1];
             dynamic p3 = dy;
-            if (dy[p1, p2, p3] != 3 && MemberClass.Status != 1)
+            if (dy[p1, p2, p3] != 3 && MemberClass.t_status != 1)
                 return 1;
             else
                 return 0;
@@ -1100,7 +1093,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             ulong[] p2 = new ulong[1];
             dynamic p3 = dy;
             dy[p1, p2, p3] = (byte)4;
-            if (MemberClass.Status != 2)
+            if (MemberClass.t_status != 2)
                 return 1;
             else
                 return 0;
@@ -1113,15 +1106,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass003.regclass003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass003.regclass003;
     // <Title> Tests regular class indexer used in generic method body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1144,7 +1134,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             byte p2 = 11;
             decimal? p3 = null;
             byte?[] result = dy[p1, p2, p3];
-            if (result.Length == 2 && result[0] == null && result[1] == 2 && MemberClass.Status == 1)
+            if (result.Length == 2 && result[0] == null && result[1] == 2 && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -1175,15 +1165,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass004.regclass004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass004.regclass004;
     // <Title> Tests regular class indexer used in extension method body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test : MemberClass
     {
@@ -1210,7 +1197,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         }
     }
 
-    static public class Extension
+    public static class Extension
     {
         public static Test ExReturnTest(this MyEnum me)
         {
@@ -1233,15 +1220,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass007.regclass007
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass007.regclass007;
     // <Title> Tests regular class indexer used in variable initializer.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1256,7 +1240,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             MemberClass mc = new MemberClass();
             dynamic dy = mc;
             double[] result = dy[1, new object[1], 1.2f];
-            if (result.Length == 3 && result[0] == 1.4 && result[1] == double.Epsilon && double.IsNaN(result[2]) && MemberClass.Status == 1)
+            if (result.Length == 3 && result[0] == 1.4 && result[1] == double.Epsilon && double.IsNaN(result[2]) && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -1268,15 +1252,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass008.regclass008
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass008.regclass008;
     // <Title> Tests regular class indexer used in arguments to method invocation.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1292,9 +1273,9 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             MemberClass mc = new MemberClass();
             dynamic dy = mc;
             int result1 = t.TestMethod(dy['a', 10, new MyEnum[10]]);
-            if (MemberClass.Status != 1)
+            if (MemberClass.t_status != 1)
                 return 1;
-            MemberClass.Status = 0;
+            MemberClass.t_status = 0;
             char? pp = null;
             int result2 = Test.TestMethod(dy[new MyClass()
             {
@@ -1302,7 +1283,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             }
 
             , pp, new MyEnum[3]]);
-            if (result1 == 0 && result2 == 0 && MemberClass.Status == 1)
+            if (result1 == 0 && result2 == 0 && MemberClass.t_status == 1)
                 return 0;
             else
                 return 1;
@@ -1339,15 +1320,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass009.regclass009
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass009.regclass009;
     // <Title> Tests regular class indexer used in implicitly-typed variable initializer.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1371,7 +1349,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             ;
             var result = dy[p1, p2, p3];
-            if (result == float.NegativeInfinity && MemberClass.Status == 1)
+            if (result == float.NegativeInfinity && MemberClass.t_status == 1)
                 return 0;
             else
                 return 1;
@@ -1384,15 +1362,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass010.regclass010
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass010.regclass010;
     // <Title> Tests regular class indexer used in array initializer.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1416,7 +1391,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             }
 
             ;
-            if (result.Length == 2 && result[0] == float.NegativeInfinity && result[1] == float.PositiveInfinity && MemberClass.Status == 1)
+            if (result.Length == 2 && result[0] == float.NegativeInfinity && result[1] == float.PositiveInfinity && MemberClass.t_status == 1)
                 return 0;
             else
                 return 1;
@@ -1429,15 +1404,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass011.regclass011
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass011.regclass011;
     // <Title> Tests regular class indexer used in implicitly-typed array initializer.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1460,7 +1432,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             }
 
             ;
-            if (result.Length == 2 && result[0].Field == 3 && result[1].Field == 3 && MemberClass.Status == 1)
+            if (result.Length == 2 && result[0].Field == 3 && result[1].Field == 3 && MemberClass.t_status == 1)
                 return 0;
             else
                 return 1;
@@ -1473,15 +1445,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass012.regclass012
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass012.regclass012;
     // <Title> Tests regular class indexer used in member initializer of object initializer.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1520,7 +1489,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             }
 
             ;
-            if (result.Field == 4 && result.MyEnum == MyEnum.Second && MemberClass.Status == 1)
+            if (result.Field == 4 && result.MyEnum == MyEnum.Second && MemberClass.t_status == 1)
                 return 0;
             else
                 return 1;
@@ -1533,15 +1502,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass013.regclass013
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass013.regclass013;
     // <Title> Tests regular class indexer used in member initializer of anonymous type.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1570,7 +1536,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             }
 
             ;
-            if (result.Field1 == 'a' && result.Field2.Length == 1 && result.Field2[0] == ulong.MaxValue && MemberClass.Status == 1)
+            if (result.Field1 == 'a' && result.Field2.Length == 1 && result.Field2[0] == ulong.MaxValue && MemberClass.t_status == 1)
                 return 0;
             else
                 return 1;
@@ -1583,15 +1549,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass014.regclass014
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass014.regclass014;
     // <Title> Tests regular class indexer used in static variable.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class StaticTestClass
     {
@@ -1623,7 +1586,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
         public static int MainMethod()
         {
-            if (s_result.Length == 2 && s_result[0] == StaticTestClass.p1 && ((MyStruct?)s_result[1]).Value.Number == StaticTestClass.p2.Value.Number && MemberClass.Status == 1)
+            if (s_result.Length == 2 && s_result[0] == StaticTestClass.p1 && ((MyStruct?)s_result[1]).Value.Number == StaticTestClass.p2.Value.Number && MemberClass.t_status == 1)
                 return 0;
             else
                 return 1;
@@ -1636,15 +1599,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass015.regclass015
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass015.regclass015;
     // <Title> Tests regular class indexer used in property get.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1658,7 +1618,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         {
             Test t = new Test();
             int?[] result = t.MyProperty;
-            if (result.Length == 3 && result[0] == 1 && result[1] == null && result[2] == int.MinValue && MemberClass.Status == 1)
+            if (result.Length == 3 && result[0] == 1 && result[1] == null && result[2] == int.MinValue && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -1688,15 +1648,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass016.regclass016
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass016.regclass016;
     // <Title> Tests regular class indexer used in property set.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1711,7 +1668,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         public static int MainMethod()
         {
             Test.MyProperty = "Test";
-            if (MemberClass.Status == 2)
+            if (MemberClass.t_status == 2)
                 return 0;
             return 1;
         }
@@ -1735,24 +1692,20 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass018.regclass018
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass018.regclass018;
     // <Title> Tests regular class indexer used in iterator.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
     using System.Collections;
-    using System.Collections.Generic;
 
     public class Test
     {
         private static int s_a = 0;
         private static MemberClass s_mc = new MemberClass();
 
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -1768,7 +1721,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
                 index++;
             }
 
-            if (index == 3 && MemberClass.Status == 1)
+            if (index == 3 && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -1796,16 +1749,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass019.regclass019
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass019.regclass019;
     // <Title> Tests regular class indexer used in collection initializer list.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
-    using System.Collections;
     using System.Collections.Generic;
 
     public class Test
@@ -1829,7 +1778,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             }
 
             ;
-            if (list.Count == 3 && list[0].Number == 4 && list[1].Number == 4 && list[2].Number == 4 && MemberClass.Status == 1)
+            if (list.Count == 3 && list[0].Number == 4 && list[1].Number == 4 && list[2].Number == 4 && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -1841,15 +1790,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass020.regclass020
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass020.regclass020;
     // <Title> Tests regular class indexer used in ctor.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1898,7 +1844,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         public static int MainMethod()
         {
             Test t = new Test();
-            if (t._filed1.Length == 2 && t._filed1[0] == null && t._filed1[1].Field == 3 && t._filed2 == null && MemberClass.Status == 1)
+            if (t._filed1.Length == 2 && t._filed1[0] == null && t._filed1[1].Field == 3 && t._filed2 == null && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -1910,15 +1856,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass021.regclass021
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass021.regclass021;
     // <Title> Tests regular class indexer used in checked and unchecked.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1934,7 +1877,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             dynamic dy = mc;
             int m1 = unchecked(dy[new double[3]] + int.MaxValue); // max + 4
             int m2 = checked(dy[new MyStruct()] + int.MaxValue);
-            if (m1 == -2147483645 && m2 == int.MaxValue && MemberClass.Status == 1) // 0xFFFFFFFF80000003
+            if (m1 == -2147483645 && m2 == int.MaxValue && MemberClass.t_status == 1) // 0xFFFFFFFF80000003
                 return 0;
             return 1;
         }
@@ -1946,15 +1889,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass022.regclass022
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass022.regclass022;
     // <Title> Tests regular class indexer used in null coalescing operator.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -1982,7 +1922,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             }
 
             ;
-            if (ms.Value.Number == 10 && MemberClass.Status == 1)
+            if (ms.Value.Number == 10 && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -1994,15 +1934,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass023.regclass023
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass023.regclass023;
     // <Title> Tests regular class indexer used in query expression.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
     using System.Linq;
     using System.Collections.Generic;
 
@@ -2045,7 +1982,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             byte p1 = 10;
             int p2 = p1;
             var result = list.Where(p => !p._field1.HasValue && !((MyStruct?)dy[p1]).HasValue && p._field2 == dy[p2]).Select(p => p._field3).Average();
-            if (result == 1 && MemberClass.Status == 1)
+            if (result == 1 && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -2057,15 +1994,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass024.regclass024
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass024.regclass024;
     // <Title> Tests regular class indexer used in short-circuit boolean expression.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -2096,7 +2030,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
                     b = false;
             }
 
-            if (MemberClass.Status != 2)
+            if (MemberClass.t_status != 2)
                 return 1;
             b = true;
             index = 0;
@@ -2112,7 +2046,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
                     b = false;
             }
 
-            if (MemberClass.Status != 1)
+            if (MemberClass.t_status != 1)
                 return 1;
             return 0;
         }
@@ -2124,15 +2058,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass025.regclass025
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass025.regclass025;
     // <Title> Tests regular class indexer used in ternary operator expression.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -2148,11 +2079,11 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             dynamic dy = mc;
             int? p1 = 10;
             dy[p1] = true;
-            if (MemberClass.Status != 2)
+            if (MemberClass.t_status != 2)
                 return 1;
             var result0 = dy[p1];
             var result1 = result0 == null ? false : result0;
-            if (result1 == false && MemberClass.Status == 1)
+            if (result1 == false && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -2164,15 +2095,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass027.regclass027
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass027.regclass027;
     // <Title> Tests regular class indexer used in try/catch/finally.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -2214,7 +2142,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
                 if (!ErrorVerifier.Verify(ErrorMessageId.BadArgCount, e.Message, "this", "6"))
                     return 1;
                 ms = dy[p1, p2, p3];
-                if (ms.Number != 4 || MemberClass.Status != 1)
+                if (ms.Number != 4 || MemberClass.t_status != 1)
                     return 1;
             }
             finally
@@ -2222,7 +2150,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
                 dy[p1, p2, p3] = ms;
             }
 
-            if (MemberClass.Status != 2)
+            if (MemberClass.t_status != 2)
                 return 1;
             return 0;
         }
@@ -2234,15 +2162,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass028.regclass028
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass028.regclass028;
     // <Title> Tests regular class indexer used in static ctor.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -2266,7 +2191,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
         public static int MainMethod()
         {
-            if (Test.s_ms.Length == 2 && Test.s_ms[0] == null && Test.s_ms[1].Value.Number == 4 && MemberClass.Status == 1)
+            if (Test.s_ms.Length == 2 && Test.s_ms[0] == null && Test.s_ms[1].Value.Number == 4 && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -2278,11 +2203,9 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass029.regclass029
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass029.regclass029;
     // <Title> Tests regular class indexer used in dtor.</Title>
     // <Description>
-    // On IA64 the GC.WaitForPendingFinalizers() does not actually work... 
+    // On IA64 the GC.WaitForPendingFinalizers() does not actually work...
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
@@ -2313,12 +2236,8 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
                 dy[p1, p2, p3] = null;
                 s_field = dy[p1, p2, p3];
 
-                memberClassStatus = MemberClass.Status;
+                memberClassStatus = MemberClass.t_status;
             }
-        }
-
-        public void Foo()
-        {
         }
 
         private static int Verify()
@@ -2344,23 +2263,18 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         private static void RequireLifetimesEnded()
         {
             Test t = new Test();
-            t.Foo();
             Test.s_field = null;
+            // should finalize only after s_field is set to null.
+            GC.KeepAlive(t);
         }
 
-        [Fact]
+        [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsPreciseGcSupported))]
         public static void DynamicCSharpRunTest()
-        {
-            Assert.Equal(0, MainMethod());
-        }
-
-        public static int MainMethod()
         {
             RequireLifetimesEnded();
             GC.Collect();
             GC.WaitForPendingFinalizers();
-            // If move the code in Verify() to here, the finalizer will only be executed after exited Main
-            return Verify();
+            Assert.Equal(0, Verify());
         }
     }
     //</Code>
@@ -2370,15 +2284,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass030.regclass030
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass030.regclass030;
     // <Title> Tests regular class indexer used in variable named dynamic.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -2394,7 +2305,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             dynamic dynamic = mc;
             object[] array = dynamic[true, 10, dynamic];
 
-            if (array.Length == 3 && (bool?)array[0] == true && (int?)array[1] == 10 && array[2] == dynamic && MemberClass.Status == 1)
+            if (array.Length == 3 && (bool?)array[0] == true && (int?)array[1] == 10 && array[2] == dynamic && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -2406,15 +2317,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass032.regclass032
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass032.regclass032;
     // <Title> Tests regular class indexer used in this-argument of extension method.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -2434,13 +2342,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             ;
             char result = ((char?)dy[p1]).Method();
-            if (result == '&' && MemberClass.Status == 1)
+            if (result == '&' && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
     }
 
-    static public class Extension
+    public static class Extension
     {
         public static char Method(this char? c)
         {
@@ -2454,8 +2362,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass034.regclass034
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass034.regclass034;
     // <Title> Tests regular class indexer used in anonymous method.</Title>
     // <Description>
     // </Description>
@@ -2485,7 +2391,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
             ;
             decimal[] result = dy[b];
-            if (result.Length == 2 && result[0] == 1M && result[1] == 0M && MemberClass.Status == 1)
+            if (result.Length == 2 && result[0] == 1M && result[1] == 0M && MemberClass.t_status == 1)
                 return 0;
             else
                 return 1;
@@ -2498,15 +2404,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass035.regclass035
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass035.regclass035;
     // <Title> Tests regular class indexer used in static method.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -2524,10 +2427,10 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             object[] p2 = null;
             dynamic p3 = null;
             ulong[] result = dy[p1, p2, p3];
-            if (result.Length != 1 || result[0] != ulong.MaxValue || MemberClass.Status != 1)
+            if (result.Length != 1 || result[0] != ulong.MaxValue || MemberClass.t_status != 1)
                 return 1;
             dy[p1, p2, p3] = result;
-            if (MemberClass.Status != 2)
+            if (MemberClass.t_status != 2)
                 return 1;
             return 0;
         }
@@ -2539,8 +2442,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass037.regclass037
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass037.regclass037;
     // <Title> Tests regular class indexer used in lambda expression.</Title>
     // <Description>
     // </Description>
@@ -2548,7 +2449,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
     //<Expects Status=success></Expects>
     // <Code>
     using System;
-    using System.Linq;
 
     public class Test
     {
@@ -2570,7 +2470,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             ;
             Func<int, dynamic[]> func = (int arg1) => dy[p1];
             dynamic[] result = func(1);
-            if (result.Length != 1 || MemberClass.Status != 1)
+            if (result.Length != 1 || MemberClass.t_status != 1)
                 return 1;
             MyEnum?[] meArray = result[0];
             if (meArray[0] == MyEnum.First && meArray[1] == MyEnum.Third && meArray[2] == null)
@@ -2586,8 +2486,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass038.regclass038
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass038.regclass038;
     // <Title> Tests regular class indexer used in lambda expression.</Title>
     // <Description>
     // </Description>
@@ -2611,7 +2509,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             char p1 = 'a';
             Func<char, decimal?> func = (char arg1) => dy[arg1];
             decimal? result = func(p1);
-            if (result == null && MemberClass.Status == 1)
+            if (result == null && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -2623,15 +2521,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass039.regclass039
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass039.regclass039;
     // <Title> Tests regular class indexer used in field initializer outside of ctor.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -2646,7 +2541,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
         public static int MainMethod()
         {
-            if (s_result.Length == 3 && s_result[0] == 1.4 && s_result[1] == double.Epsilon && double.IsNaN(s_result[2]) && MemberClass.Status == 1)
+            if (s_result.Length == 3 && s_result[0] == 1.4 && s_result[1] == double.Epsilon && double.IsNaN(s_result[2]) && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -2658,15 +2553,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass040.regclass040
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass040.regclass040;
     // <Title> Tests regular class indexer used in volatile field initializer.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -2682,7 +2574,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
         public static int MainMethod()
         {
             Test t = new Test();
-            if (t._field.Length == 10 && MemberClass.Status == 1)
+            if (t._field.Length == 10 && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -2694,15 +2586,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass041.regclass041
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass041.regclass041;
     // <Title> Tests regular class indexer used in foreach body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -2728,7 +2617,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
                 index++;
             }
 
-            if (index == 3 && MemberClass.Status == 1)
+            if (index == 3 && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -2740,15 +2629,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass042.regclass042
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass042.regclass042;
     // <Title> Tests regular class indexer used in for loop initializer.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test : MemberClass
     {
@@ -2769,7 +2655,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
                 index++;
             }
 
-            if (index == 2 && MemberClass.Status == 1)
+            if (index == 2 && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -2781,15 +2667,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass043.regclass043
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass043.regclass043;
     // <Title> Tests regular class indexer used in lock expression.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -2810,7 +2693,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
                 isChecked = true;
             }
 
-            if (isChecked && MemberClass.Status == 1)
+            if (isChecked && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -2822,8 +2705,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass044.regclass044
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass044.regclass044;
     // <Title> Tests regular class indexer used in lock expression body.</Title>
     // <Description>
     // </Description>
@@ -2831,7 +2712,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
     //<Expects Status=success></Expects>
     // <Code>
     //<Expects Status=warning>\(21,14\).*CS0219</Expects>
-    using System;
 
     public class Test
     {
@@ -2862,7 +2742,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
                 dy[p1] = new MyStruct[7];
             }
 
-            if (ms.Length == 0 && MemberClass.Status == 2)
+            if (ms.Length == 0 && MemberClass.t_status == 2)
                 return 0;
             return 1;
         }
@@ -2874,15 +2754,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass045.regclass045
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass045.regclass045;
     // <Title> Tests regular class indexer used in generic method body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -2903,10 +2780,10 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
             dynamic dy = mc;
             char? p1 = null;
             MyStruct?[] result = dy[p1];
-            if (result.Length != 2 || result[0] != null || result[1].Value.Number != 4 || MemberClass.Status != 1)
+            if (result.Length != 2 || result[0] != null || result[1].Value.Number != 4 || MemberClass.t_status != 1)
                 return 1;
             dy[p1] = result;
-            if (MemberClass.Status != 2)
+            if (MemberClass.t_status != 2)
                 return 1;
             return 0;
         }
@@ -2918,15 +2795,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass046.regclass046
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass046.regclass046;
     // <Title> Tests regular class indexer used in foreach loop body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -2956,7 +2830,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
                 index++;
             }
 
-            if (index == 2 && result.Length == 2 && result[0] == null && result[1].Field == 3 && MemberClass.Status == 1)
+            if (index == 2 && result.Length == 2 && result[0] == null && result[1].Field == 3 && MemberClass.t_status == 1)
                 return 0;
             return 1;
         }
@@ -2968,15 +2842,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass047.regclass047
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclassregindexer.regclassregindexer;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass047.regclass047;
     // <Title> Tests regular class indexer used in while loop body.</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Test
     {
@@ -3000,7 +2871,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
                 dy[new MyEnum[index]] = null;
             }
 
-            if (MemberClass.Status != 2)
+            if (MemberClass.t_status != 2)
                 return 1;
             foreach (MyEnum? me in array)
                 if (me != null)
@@ -3015,14 +2886,12 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclas
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass048.regclass048
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.indexer.regclass.regclass048.regclass048;
     // <Title> Tests IndexerNameAttribute applied to indexer. </Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     // <Expects Status=success></Expects>
     // <Code>
-    using System;
     using System.Runtime.CompilerServices;
 
     public class MyString

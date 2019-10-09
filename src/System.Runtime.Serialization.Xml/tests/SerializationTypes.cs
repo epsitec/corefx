@@ -1,9 +1,11 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
@@ -11,7 +13,11 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Schema;
 using System.Xml.Serialization;
-using System.ComponentModel;
+using System.IO;
+using System.Text;
+using System.Reflection;
+using System.Threading.Tasks;
+using System.Runtime.Serialization.Json;
 
 namespace SerializationTypes
 {
@@ -22,34 +28,6 @@ namespace SerializationTypes
 
         public TypeWithDateTimeStringProperty() { }
     }
-
-    public class MyTypeA
-    {
-        public MyTypeB PropX { get; set; }
-        public int PropY { get; set; }
-
-        public MyTypeB[] P_Col_Array { get; set; }
-    }
-
-    [KnownType(typeof(MyTypeC))]
-    [KnownType(typeof(MyTypeD))]
-    public class MyTypeB
-    {
-        public char PropC { get; set; }
-        public MyTypeA PropA { get; set; }
-    }
-
-    public class MyTypeC : MyTypeB
-    {
-        public bool PropB { get; set; }
-    }
-
-    public class MyTypeD : MyTypeB
-    {
-        public string PropS { get; set; }
-        public int PropI { get; set; }
-    }
-
     public class SimpleType
     {
         public string P1 { get; set; }
@@ -102,130 +80,6 @@ namespace SerializationTypes
         }
     }
 
-    public class TypeWithDictionaryGenericMembers
-    {
-        public Dictionary<string, int> F1;
-        public IDictionary<string, int> F2;
-
-        // read-write properties: strong type and interface type
-        public Dictionary<string, int> P1 { get; set; }
-        public IDictionary<string, int> P2 { get; set; }
-
-        // read-only properties: strong type and interface type
-        private Dictionary<bool, char> _ro1 = new Dictionary<bool, char>();
-        public Dictionary<bool, char> RO1
-        {
-            get
-            {
-                return _ro1;
-            }
-        }
-
-        private IDictionary<bool, char> _ro2 = new Dictionary<bool, char>();
-        public IDictionary<bool, char> RO2
-        {
-            get
-            {
-                return _ro2;
-            }
-        }
-    }
-
-    public class MyDictionary : IDictionary
-    {
-        private Dictionary<object, object> _d = new Dictionary<object, object>();
-
-        public void Add(object key, object value)
-        {
-            _d.Add(key, value);
-        }
-
-        public void Clear()
-        {
-            _d.Clear();
-        }
-
-        public bool Contains(object key)
-        {
-            return _d.ContainsKey(key);
-        }
-
-        public IDictionaryEnumerator GetEnumerator()
-        {
-            return ((IDictionary)_d).GetEnumerator();
-        }
-
-        public bool IsFixedSize
-        {
-            get { return ((IDictionary)_d).IsFixedSize; }
-        }
-
-        public bool IsReadOnly
-        {
-            get { return ((IDictionary)_d).IsReadOnly; }
-        }
-
-        public ICollection Keys
-        {
-            get { return _d.Keys; }
-        }
-
-        public void Remove(object key)
-        {
-            _d.Remove(key);
-        }
-
-        public ICollection Values
-        {
-            get { return _d.Values; }
-        }
-
-        public object this[object key]
-        {
-            get
-            {
-                return _d[key];
-            }
-            set
-            {
-                _d[key] = value;
-            }
-        }
-
-        public void CopyTo(Array array, int index)
-        {
-            ((IDictionary)_d).CopyTo(array, index);
-        }
-
-        public int Count
-        {
-            get { return _d.Count; }
-        }
-
-        public bool IsSynchronized
-        {
-            get { return ((IDictionary)_d).IsSynchronized; }
-        }
-
-        public object SyncRoot
-        {
-            get { return ((IDictionary)_d).SyncRoot; }
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IEnumerable)_d).GetEnumerator();
-        }
-    }
-
-    public struct ReadOnlyNonSerialziableProperty
-    {
-        public Uri Uri
-        {
-            get { return new Uri("http://www.microsoft.com"); }
-        }
-    }
-
     public struct StructNotSerializable
     {
         public int value;
@@ -233,111 +87,6 @@ namespace SerializationTypes
         public override int GetHashCode()
         {
             return value;
-        }
-    }
-
-    public class DictionaryWithVariousKeyValueTypes
-    {
-        public Dictionary<MyEnum, MyEnum> WithEnums;
-        public Dictionary<StructNotSerializable, StructNotSerializable> WithStructs;
-        public Dictionary<Nullable<Int16>, Nullable<Boolean>> WithNullables;
-
-        public DictionaryWithVariousKeyValueTypes() { }
-
-        public DictionaryWithVariousKeyValueTypes(bool init)
-        {
-            WithEnums = new Dictionary<MyEnum, MyEnum>();
-            WithEnums.Add(MyEnum.Two, MyEnum.Three);
-            WithEnums.Add(MyEnum.One, MyEnum.One);
-
-            WithStructs = new Dictionary<StructNotSerializable, StructNotSerializable>();
-            WithStructs.Add(new StructNotSerializable() { value = 10 }, new StructNotSerializable() { value = 12 });
-            WithStructs.Add(new StructNotSerializable() { value = int.MaxValue }, new StructNotSerializable() { value = int.MinValue });
-
-            WithNullables = new Dictionary<Nullable<Int16>, Nullable<Boolean>>();
-            WithNullables.Add(Int16.MinValue, true);
-            WithNullables.Add(0, false);
-            WithNullables.Add(Int16.MaxValue, null);
-        }
-    }
-
-    public class TypeWithDictionaryMembers
-    {
-        public MyDictionary F1;
-        public IDictionary F2;
-
-        // read-write properties: strong type and interface type
-        public MyDictionary P1 { get; set; }
-        public IDictionary P2 { get; set; }
-
-        // read-only properties: strong type and interface type
-        private MyDictionary _ro1 = new MyDictionary();
-        public MyDictionary RO1
-        {
-            get
-            {
-                return _ro1;
-            }
-        }
-
-        private IDictionary _ro2 = new MyDictionary();
-        public IDictionary RO2
-        {
-            get
-            {
-                return _ro2;
-            }
-        }
-    }
-
-    public class TypeWithIDictionaryPropertyInitWithConcreteType
-    {
-        private IDictionary<string, string> _dictionaryProperty;
-
-        public IDictionary<string, string> DictionaryProperty
-        {
-            get
-            {
-                return _dictionaryProperty;
-            }
-            set
-            {
-                _dictionaryProperty = value;
-            }
-        }
-
-        public TypeWithIDictionaryPropertyInitWithConcreteType()
-        {
-            _dictionaryProperty = new Dictionary<string, string>();
-        }
-    }
-
-    public class TypeWithListGenericMembers
-    {
-        public List<string> F1;
-        public IList<string> F2;
-
-        // read-write properties: strong type and interface type
-        public List<int> P1 { get; set; }
-        public IList<int> P2 { get; set; }
-
-        // read-only properties: strong type and interface type
-        private List<char> _ro1 = new List<char>();
-        public List<char> RO1
-        {
-            get
-            {
-                return _ro1;
-            }
-        }
-
-        private IList<char> _ro2 = new List<char>();
-        public IList<char> RO2
-        {
-            get
-            {
-                return _ro2;
-            }
         }
     }
 
@@ -400,31 +149,19 @@ namespace SerializationTypes
         }
     }
 
-    public class TypeWithCollectionGenericMembers
+    public class TypeWithMyCollectionField
     {
-        public MyCollection<string> F1;
-        public ICollection<string> F2;
+        public MyCollection<string> Collection;
+    }
 
-        // read-write properties: strong type and interface type
-        public MyCollection<string> P1 { get; set; }
-        public ICollection<string> P2 { get; set; }
-
-        // read-only properties: strong type and interface type
-        private MyCollection<string> _ro1 = new MyCollection<string>();
-        public MyCollection<string> RO1
+    public class TypeWithReadOnlyMyCollectionProperty
+    {
+        private MyCollection<string> _ro = new MyCollection<string>();
+        public MyCollection<string> Collection
         {
             get
             {
-                return _ro1;
-            }
-        }
-
-        private ICollection<string> _ro2 = new MyCollection<string>();
-        public ICollection<string> RO2
-        {
-            get
-            {
-                return _ro2;
+                return _ro;
             }
         }
     }
@@ -524,333 +261,6 @@ namespace SerializationTypes
             return ((IEnumerable)_items).GetEnumerator();
         }
     }
-
-    public class TypeWithListMembers
-    {
-        public MyList F1;
-        public IList F2;
-
-        // read-write properties: strong type and interface type
-        public MyList P1 { get; set; }
-        public IList P2 { get; set; }
-
-        // read-only properties: strong type and interface type
-        private MyList _ro1 = new MyList();
-        public MyList RO1
-        {
-            get
-            {
-                return _ro1;
-            }
-        }
-
-        private IList _ro2 = new MyList();
-        public IList RO2
-        {
-            get
-            {
-                return _ro2;
-            }
-        }
-    }
-
-    public class MyEnumerable<T> : IEnumerable<T>
-    {
-        private List<T> _items = new List<T>();
-
-        public MyEnumerable()
-        {
-        }
-
-        public MyEnumerable(params T[] values)
-        {
-            _items.AddRange(values);
-        }
-
-        public void Add(T value)
-        {
-            _items.Add(value);
-        }
-
-        public int Count
-        {
-            get
-            {
-                return _items.Count;
-            }
-        }
-
-        public IEnumerator<T> GetEnumerator()
-        {
-            return ((IEnumerable<T>)_items).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IEnumerable)_items).GetEnumerator();
-        }
-    }
-
-    public class TypeWithEnumerableGenericMembers
-    {
-        public MyEnumerable<string> F1;
-        public IEnumerable<string> F2;
-
-        // read-write properties: strong type and interface type
-        public MyEnumerable<string> P1 { get; set; }
-        public IEnumerable<string> P2 { get; set; }
-
-        // read-only properties: strong type and interface type
-        private MyEnumerable<string> _ro1 = new MyEnumerable<string>();
-        public MyEnumerable<string> RO1
-        {
-            get
-            {
-                return _ro1;
-            }
-        }
-    }
-
-    public class MyCollection : ICollection
-    {
-        private List<object> _items = new List<object>();
-
-        public MyCollection()
-        {
-        }
-
-        public MyCollection(params object[] values)
-        {
-            _items.AddRange(values);
-        }
-
-        public object this[int index]
-        {
-            get
-            {
-                return _items[index];
-            }
-        }
-
-        public void Add(object value)
-        {
-            _items.Add(value);
-        }
-
-        public void CopyTo(Array array, int index)
-        {
-            ((ICollection)_items).CopyTo(array, index);
-        }
-
-        public int Count
-        {
-            get { return _items.Count; }
-        }
-
-        public bool IsSynchronized
-        {
-            get { return ((ICollection)_items).IsSynchronized; }
-        }
-
-        public object SyncRoot
-        {
-            get { return ((ICollection)_items).SyncRoot; }
-        }
-
-        public IEnumerator GetEnumerator()
-        {
-            return ((ICollection)_items).GetEnumerator();
-        }
-    }
-
-    public class TypeWithCollectionMembers
-    {
-        public MyCollection F1;
-        public ICollection F2;
-
-        // read-write properties: strong type and interface type
-        public MyCollection P1 { get; set; }
-        public ICollection P2 { get; set; }
-
-        // read-only properties: strong type and interface type
-        private MyCollection _ro1 = new MyCollection();
-        public MyCollection RO1
-        {
-            get
-            {
-                return _ro1;
-            }
-        }
-    }
-
-    public class MyEnumerable : IEnumerable
-    {
-        private List<object> _items = new List<object>();
-
-        public MyEnumerable()
-        {
-        }
-
-        public MyEnumerable(params object[] values)
-        {
-            _items.AddRange(values);
-        }
-
-        public IEnumerator GetEnumerator()
-        {
-            return ((IEnumerable)_items).GetEnumerator();
-        }
-
-        public void Add(object value)
-        {
-            _items.Add(value);
-        }
-
-        public object this[int index]
-        {
-            get
-            {
-                return _items[index];
-            }
-        }
-
-        public int Count
-        {
-            get
-            {
-                return _items.Count;
-            }
-        }
-    }
-
-    public class TypeWithEnumerableMembers
-    {
-        public MyEnumerable F1;
-        public IEnumerable F2;
-
-        // read-write properties: strong type and interface type
-        public MyEnumerable P1 { get; set; }
-        public IEnumerable P2 { get; set; }
-
-        // read-only properties: strong type and interface type
-        private MyEnumerable _ro1 = new MyEnumerable();
-        public MyEnumerable RO1
-        {
-            get
-            {
-                return _ro1;
-            }
-        }
-    }
-
-    [DataContract]
-    public class DCA_1
-    {
-        public string P1 { get; set; }
-    }
-
-    [DataContract(Name = "abc")]
-    public class DCA_2
-    {
-        public string P1 { get; set; }
-    }
-
-    [DataContract(Namespace = "def")]
-    public class DCA_3
-    {
-        public string P1 { get; set; }
-    }
-
-    [DataContract(IsReference = true)]
-    public class DCA_4
-    {
-        public string P1 { get; set; }
-    }
-
-    [DataContract(Name = "abc", Namespace = "def", IsReference = false)]
-    public class DCA_5
-    {
-        public string P1 { get; set; }
-    }
-
-    [DataContract]
-    public class DMA_1
-    {
-        [DataMember]
-        public string P1 { get; set; }
-
-        [DataMember(Name = "xyz")]
-        public int P2 { get; set; }
-
-        [DataMember(Order = 100)]
-        public bool Order100 { get; set; }
-
-        [DataMember(Order = 2)]
-        public bool P3 { get; set; }
-
-        [DataMember(Order = int.MaxValue)]
-        public bool OrderMaxValue { get; set; }
-
-        [DataMember(IsRequired = true)]
-        public char P4 { get; set; }
-
-        [DataMember(EmitDefaultValue = true)]
-        public short P5 { get; set; }
-
-        [DataMember]
-        public MyDataContractClass04_1 MyDataMemberInAnotherNamespace { get; set; }
-    }
-
-    [DataContract(Namespace = "http://MyDataContractClass04_1.com/")]
-    public class MyDataContractClass04_1
-    {
-        [DataMember]
-        public string MyDataMember { get; set; }
-    }
-
-    [DataContract(IsReference = true)]
-    [KnownType(typeof(CircularLinkDerived))]
-    public class CircularLink
-    {
-        [DataMember]
-        public CircularLink Link;
-        [DataMember]
-        public CircularLink RandomHangingLink;
-
-        public CircularLink() { }
-        public CircularLink(bool init)
-        {
-            Link = new CircularLink();
-            Link.Link = new CircularLink();
-            Link.Link.Link = this;
-
-            RandomHangingLink = new CircularLink();
-            RandomHangingLink.Link = new CircularLink();
-            RandomHangingLink.Link.Link = new CircularLinkDerived();
-            RandomHangingLink.Link.Link.Link = RandomHangingLink;
-        }
-    }
-
-    [DataContract(IsReference = true)]
-    [KnownType(typeof(CircularLink))]
-    public class CircularLinkDerived : CircularLink
-    {
-        public CircularLinkDerived() { }
-        public CircularLinkDerived(bool init) : base(init) { }
-    }
-
-    [DataContract]
-    public class IDMA_1
-    {
-        [DataMember]
-        public string MyDataMember { get; set; }
-
-        [IgnoreDataMember]
-        public string MyIgnoreDataMember { get; set; }
-
-        public string MyUnsetDataMember { get; set; }
-    }
-
     public enum MyEnum
     {
         [EnumMember]
@@ -892,106 +302,9 @@ namespace SerializationTypes
             MyStruct = new DCStruct(init);
         }
     }
-
     public class BuiltInTypes
     {
         public byte[] ByteArray { get; set; }
-    }
-
-    [DataContract(IsReference = true)]
-    [KnownType(typeof(SimpleBaseDerived))]
-    public class SimpleBase
-    {
-        [DataMember]
-        public string BaseData = String.Empty;
-
-        public SimpleBase() { }
-        public SimpleBase(bool init) { }
-    }
-
-    [DataContract(IsReference = true)]
-    [KnownType(typeof(SimpleBaseDerived))]
-    [KnownType(typeof(SimpleBaseDerived2))]
-    public class GenericBase2<T, K>
-        where T : new()
-        where K : new()
-    {
-        [DataMember]
-        public T genericData1;
-        [DataMember]
-        public K genericData2;
-
-        public GenericBase2() { }
-        public GenericBase2(bool init)
-        {
-            genericData1 = new T();
-            genericData2 = new K();
-        }
-    }
-
-    [DataContract(IsReference = true)]
-    public class SimpleBaseDerived : SimpleBase
-    {
-        [DataMember]
-        public string DerivedData = String.Empty;
-
-        public SimpleBaseDerived() { }
-        public SimpleBaseDerived(bool init) : base(init) { }
-    }
-
-    [DataContract(IsReference = true)]
-    public class SimpleBaseDerived2 : SimpleBase
-    {
-        [DataMember]
-        public string DerivedData = String.Empty;
-
-        public SimpleBaseDerived2() { }
-        public SimpleBaseDerived2(bool init) : base(init) { }
-    }
-
-    [DataContract(IsReference = true)]
-    [KnownType(typeof(GenericBase<SimpleBaseContainer>))]
-    [KnownType(typeof(SimpleBaseContainer))]
-    public class GenericContainer
-    {
-        [DataMember]
-        public object GenericData;
-
-        public GenericContainer() { }
-        public GenericContainer(bool init)
-        {
-            GenericData = new GenericBase<SimpleBaseContainer>(init);
-        }
-    }
-
-    [DataContract(IsReference = true)]
-    public class GenericBase<T> where T : new()
-    {
-        [DataMember]
-        public object genericData;
-
-        public GenericBase() { }
-        public GenericBase(bool init)
-        {
-            genericData = new T();
-        }
-    }
-
-    [DataContract(IsReference = true)]
-    [KnownType(typeof(SimpleBaseDerived2))]
-    public class SimpleBaseContainer
-    {
-        [DataMember]
-        public SimpleBase Base1;
-        [DataMember]
-        public object Base2;
-
-        public SimpleBaseContainer() { }
-        public SimpleBaseContainer(bool init)
-        {
-            Base1 = new SimpleBaseDerived();
-            Base2 = new SimpleBaseDerived2();
-        }
     }
 
     public class TypeA
@@ -1029,202 +342,9 @@ namespace SerializationTypes
         }
     }
 
-    public class WithDuplicateNames
+    public class __TypeNameWithSpecialCharacters\u6F22\u00F1
     {
-        public DuplicateTypeNamesTest.ns1.ClassA ClassA1 { get; set; }
-        public DuplicateTypeNamesTest.ns1.StructA StructA1 { get; set; }
-        public DuplicateTypeNamesTest.ns1.EnumA EnumA1 { get; set; }
-        public DuplicateTypeNamesTest.ns2.ClassA ClassA2;
-        public DuplicateTypeNamesTest.ns2.StructA StructA2;
-        public DuplicateTypeNamesTest.ns2.EnumA EnumA2;
-
-        public WithDuplicateNames() { }
-        public WithDuplicateNames(bool init)
-        {
-            ClassA1 = new DuplicateTypeNamesTest.ns1.ClassA() { Name = "Hello World! 漢 ñ" };
-            StructA1 = new DuplicateTypeNamesTest.ns1.StructA() { Text = "" };
-            EnumA1 = DuplicateTypeNamesTest.ns1.EnumA.two;
-            ClassA2 = new DuplicateTypeNamesTest.ns2.ClassA() { Nombre = "" };
-            StructA2 = new DuplicateTypeNamesTest.ns2.StructA() { Texto = "" };
-            EnumA2 = DuplicateTypeNamesTest.ns2.EnumA.dos;
-        }
-    }
-
-    public class WithXElement
-    {
-        public XElement e;
-
-        public WithXElement() { }
-
-        public WithXElement(bool init)
-        {
-            e = new XElement("ElementName1");
-            e.SetAttributeValue(XName.Get("Attribute1"), "AttributeValue1");
-            e.SetValue("Value1");
-        }
-    }
-
-    public class WithXElementWithNestedXElement
-    {
-        public XElement e1;
-
-        public WithXElementWithNestedXElement() { }
-
-        public WithXElementWithNestedXElement(bool init)
-        {
-            e1 = new XElement("ElementName1");
-            e1.SetAttributeValue(XName.Get("Attribute1"), "AttributeValue1");
-
-            XElement e2 = new XElement("ElementName2");
-            e2.SetAttributeValue(XName.Get("Attribute2"), "AttributeValue2");
-            e2.SetValue("Value2");
-
-            e1.Add(e2);
-        }
-    }
-
-    public class WithArrayOfXElement
-    {
-        public XElement[] a;
-
-        public WithArrayOfXElement() { }
-
-        public WithArrayOfXElement(bool init)
-        {
-            string ns = "http://p.com/";
-
-            a = new XElement[]
-            {
-                new XElement(XName.Get("item", ns), "item0"),
-                new XElement(XName.Get("item", ns), "item1"),
-                new XElement(XName.Get("item", ns), "item2"),
-            };
-        }
-    }
-
-    public class WithListOfXElement
-    {
-        public List<XElement> list;
-
-        public WithListOfXElement() { }
-
-        public WithListOfXElement(bool init)
-        {
-            string ns = "http://p.com/";
-
-            list = new List<XElement>()
-            {
-                new XElement(XName.Get("item", ns), "item0"),
-                new XElement(XName.Get("item", ns), "item1"),
-                new XElement(XName.Get("item", ns), "item2"),
-            };
-        }
-    }
-
-    public class BaseType
-    {
-        public virtual string Name1 { get; set; }
-
-        public string Name2 { get; set; }
-
-        public string Name3 { get; set; }
-
-        public string Name4 { get; set; }
-
-        public string @Name5 { get; set; }
-    }
-
-    public class DerivedTypeWithDifferentOverrides : BaseType
-    {
-        public override string Name1 { get; set; }
-
-        new public string Name2 { get; set; }
-
-        new public string Name3 { get; set; }
-
-        new internal string Name4 { get; set; }
-
-        new public string Name5 { get; set; }
-    }
-
-    public class __TypeNameWithSpecialCharacters漢ñ
-    {
-        public string PropertyNameWithSpecialCharacters漢ñ { get; set; }
-    }
-
-    [DataContract]
-    public class MyOtherType
-    {
-        [DataMember]
-        public string Str;
-    }
-
-    [DataContract]
-    public class MyType
-    {
-        [IgnoreDataMember]
-        public bool OnSerializingMethodInvoked;
-
-        [IgnoreDataMember]
-        public bool OnSerializedMethodInvoked;
-
-        [IgnoreDataMember]
-        public bool OnDeserializingMethodInvoked;
-
-        [IgnoreDataMember]
-        public bool OnDeserializedMethodInvoked;
-
-        [DataMember]
-        public object Value;
-
-        [OnSerializing()]
-        private void OnSerializingMethod(StreamingContext context)
-        {
-            OnSerializingMethodInvoked = true;
-        }
-
-        [OnSerialized()]
-        private void OnSerializedMethod(StreamingContext context)
-        {
-            OnSerializedMethodInvoked = true;
-        }
-
-        [OnDeserializing()]
-        private void OnDeserializingMethod(StreamingContext context)
-        {
-            OnDeserializingMethodInvoked = true;
-        }
-
-        [OnDeserialized()]
-        private void OnDeserializedMethod(StreamingContext context)
-        {
-            OnDeserializedMethodInvoked = true;
-        }
-    }
-
-    public struct EnumerableStruct : IEnumerable<string>
-    {
-        private List<string> _values;
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return _values.GetEnumerator();
-        }
-
-        IEnumerator<string> IEnumerable<string>.GetEnumerator()
-        {
-            return _values.GetEnumerator();
-        }
-
-        public void Add(string value)
-        {
-            if (_values == null)
-            {
-                _values = new List<string>();
-            }
-
-            _values.Add(value);
-        }
+        public string PropertyNameWithSpecialCharacters\u6F22\u00F1 { get; set; }
     }
 
     public class BaseClassWithSamePropertyName
@@ -1257,24 +377,31 @@ namespace SerializationTypes
         public new List<string> ListProperty;
     }
 
-    public class EnumerableCollection : IEnumerable<DateTime>
+    public class DerivedClassWithSameProperty2 : DerivedClassWithSameProperty
     {
-        private List<DateTime> _values = new List<DateTime>();
+        [DataMember]
+        public new DateTime DateTimeProperty;
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return _values.GetEnumerator();
-        }
+        [DataMember]
+        public new List<string> ListProperty;
+    }
 
-        IEnumerator<DateTime> IEnumerable<DateTime>.GetEnumerator()
-        {
-            return _values.GetEnumerator();
-        }
+    public class TypeWithDateTimePropertyAsXmlTime
+    {
+        DateTime _value;
 
-        public void Add(DateTime value)
+        [XmlText(DataType = "time")]
+        public DateTime Value
         {
-            _values.Add(value);
+            get { return _value; }
+            set { _value = value; }
         }
+    }
+
+    public class TypeWithByteArrayAsXmlText
+    {
+        [XmlText(DataType = "base64Binary")]
+        public byte[] Value;
     }
 
     [DataContract(IsReference = false)]
@@ -1289,153 +416,11 @@ namespace SerializationTypes
         }
     }
 
-    [DataContract(IsReference = false)]
-    public class SimpleDCWithRef
-    {
-        [DataMember]
-        public SimpleDC Data;
-
-        [DataMember]
-        public SimpleDC RefData;
-
-        public SimpleDCWithRef() { }
-        public SimpleDCWithRef(bool init)
-        {
-            Data = new SimpleDC(true);
-            RefData = Data;
-        }
-    }
-
-    [DataContract]
-    public class ContainsLinkedList
-    {
-        [DataMember]
-        public LinkedList<SimpleDCWithRef> Data;
-
-        public ContainsLinkedList() { }
-        public ContainsLinkedList(bool init)
-        {
-            this.Data = new LinkedList<SimpleDCWithRef>();
-            SimpleDCWithRef d1 = new SimpleDCWithRef(true);
-            SimpleDCWithRef d2 = new SimpleDCWithRef(true);
-            d2.Data.Data = d1.RefData.Data;
-            Data.AddLast(d1);
-            Data.AddLast(d2);
-            Data.AddLast(d2);
-            Data.AddLast(d1);
-            SimpleDCWithRef d3 = new SimpleDCWithRef(true);
-            SimpleDCWithRef d4 = new SimpleDCWithRef(true);
-            d4.Data = d3.RefData;
-            Data.AddLast(d4);
-            Data.AddLast(d3);
-            SimpleDCWithRef d5 = new SimpleDCWithRef(true);
-            SimpleDCWithRef d6 = new SimpleDCWithRef(true);
-            SimpleDCWithRef d7 = new SimpleDCWithRef(true);
-            d6.Data = d5.Data;
-            d7.Data = d5.RefData;
-            d7.RefData = d6.RefData;
-            Data.AddLast(d7);
-        }
-    }
-
-    [CollectionDataContract(Name = "SimpleCDC", ItemName = "Item")]
-    public class SimpleCDC : ICollection<string>
-    {
-        private List<string> _data = new List<string>();
-        public SimpleCDC() { }
-        public SimpleCDC(bool init)
-        {
-            _data.Add("One");
-            _data.Add("Two");
-            _data.Add("Three");
-        }
-
-        #region ICollection<string> Members
-
-        public void Add(string item)
-        {
-            _data.Add(item);
-        }
-
-        public void Clear()
-        {
-            _data.Clear();
-        }
-
-        public bool Contains(string item)
-        {
-            return _data.Contains(item);
-        }
-
-        public void CopyTo(string[] array, int arrayIndex)
-        {
-            _data.CopyTo(array, arrayIndex);
-        }
-
-        public int Count
-        {
-            get { return _data.Count; }
-        }
-
-        public bool IsReadOnly
-        {
-            get { return false; }
-        }
-
-        public bool Remove(string item)
-        {
-            return _data.Remove(item);
-        }
-
-        #endregion
-
-        #region IEnumerable<string> Members
-
-        public IEnumerator<string> GetEnumerator()
-        {
-            return _data.GetEnumerator();
-        }
-
-        #endregion
-
-        #region IEnumerable Members
-
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-        {
-            return _data.GetEnumerator();
-        }
-        #endregion
-    }
-
-    [XmlRoot(Namespace = "http://www.w3.org/2003/05/soap-envelope", ElementName = "Envelope")]
-    public class TypeWithMemberWithXmlNamespaceDeclarationsAttribute
-    {
-        public string header;
-        public string body;
-        [XmlNamespaceDeclarations]
-        public XmlSerializerNamespaces xmlns;
-    }
-
     [XmlRoot(Namespace = "http://schemas.xmlsoap.org/ws/2005/04/discovery", IsNullable = false)]
     public class TypeWithXmlTextAttributeOnArray
     {
         [XmlText]
         public string[] Text;
-    }
-
-    [CollectionDataContract]
-    public class MyDerivedCollection : LinkedList<string>
-    {
-        public MyDerivedCollection() { }
-    }
-
-    [DataContract]
-    public class MyDerivedCollectionContainer
-    {
-        public MyDerivedCollectionContainer() { Items = new MyDerivedCollection(); }
-
-        [DataMember]
-        public MyDerivedCollection Items { get; set; }
     }
 
     [Flags]
@@ -1476,17 +461,8 @@ namespace SerializationTypes
         public bool IsLoaded { get; set; }
     }
 
+
     #region XmlSerializer specific
-
-    public class LocalReadingPosition
-    {
-        public string Ean { get; set; }
-        public DateTime LastReadTime { get; set; }
-        public int PageCount { get; set; }
-        public string PageNumber { get; set; }
-        public string PlatformOffset { get; set; }
-    }
-
     public class WithStruct
     {
         public SomeStruct Some { get; set; }
@@ -1525,11 +501,6 @@ namespace SerializationTypes
     }
 
     public enum ShortEnum : short
-    {
-        Option0, Option1, Option2
-    }
-
-    public enum UShortEnum : ushort
     {
         Option0, Option1, Option2
     }
@@ -1674,7 +645,6 @@ namespace SerializationTypes
             writer.WriteAttributeString("BoolValue", BoolValue.ToString());
         }
     }
-
     public class TypeWithPropertyNameSpecified
     {
         public string MyField;
@@ -1718,119 +688,6 @@ namespace SerializationTypes
 
     #endregion
 
-    public class UnspecifiedRootSerializationType
-    {
-        public int MyIntProperty { get; set; }
-
-        public string MyStringProperty { get; set; }
-    }
-
-    [DataContract]
-    internal class InternalType
-    {
-        public InternalType()
-        {
-            PrivateProperty = 100;
-        }
-
-        [DataMember]
-        internal int InternalProperty { get; set; }
-
-        [DataMember]
-        private int PrivateProperty { get; set; }
-
-        public int GetPrivatePropertyValue()
-        {
-            return PrivateProperty;
-        }
-    }
-
-    [DataContract]
-    public class TypeWithUriTypeProperty
-    {
-        [DataMember]
-        public Uri ConfigUri
-        {
-            get;
-            set;
-        }
-    }
-
-    [DataContract]
-    public class TypeWithDateTimeOffsetTypeProperty
-    {
-        [DataMember]
-        public DateTimeOffset ModifiedTime
-        {
-            get;
-            set;
-        }
-    }
-
-    public class TypeWithCommonTypeProperties
-    {
-        public Guid Id { get; set; }
-        public TimeSpan Ts { get; set; }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is TypeWithCommonTypeProperties)
-            {
-                TypeWithCommonTypeProperties other = (TypeWithCommonTypeProperties)obj;
-                return (this.Id == other.Id && this.Ts == other.Ts);
-            }
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return Id.GetHashCode() + Ts.GetHashCode();
-        }
-    }
-
-    public class BaseClassForInvalidDerivedClass
-    {
-        public int Id;
-    }
-
-    public class TypeWithTypeProperty
-    {
-        public int Id { get; set; }
-        public Type Type { get; set; }
-        public string Name { get; set; }
-    }
-
-    [DataContract(Namespace = "SerializationTypes.GenericTypeWithPrivateSetter")]
-    public class GenericTypeWithPrivateSetter<T>
-    {
-        public GenericTypeWithPrivateSetter()
-        {
-        }
-
-        public GenericTypeWithPrivateSetter(string value)
-        {
-            PropertyWithPrivateSetter = value;
-        }
-
-        [DataMember]
-        public string PropertyWithPrivateSetter { get; private set; }
-    }
-
-    public class TypeWithExplicitIEnumerableImplementation : IEnumerable
-    {
-        private List<string> _innerCollection = new List<string>();
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return _innerCollection.GetEnumerator();
-        }
-        public int Count { get { return _innerCollection.Count; } }
-        public void Add(object item)
-        {
-            _innerCollection.Add((string)item);
-        }
-    }
-
     public class TypeWithNonPublicDefaultConstructor
     {
         private static string s_prefix;
@@ -1846,101 +703,6 @@ namespace SerializationTypes
         public string Name { get; set; }
     }
 
-    [XmlRoot("RootElement")]
-    public class TypeWithMismatchBetweenAttributeAndPropertyType
-    {
-        private int _intValue = 120;
-
-        [DefaultValue(true), XmlAttribute("IntValue")]
-        public int IntValue
-        {
-            get
-            {
-                return _intValue;
-            }
-            set
-            {
-                _intValue = value;
-            }
-        }
-    }
-
-    public class Level
-    {
-        public string Name { get; set; }
-        public int LevelNo { get; set; }
-    }
-
-    [KnownType(typeof(Dictionary<int, Level>))]
-    public class TypeWithGenericDictionaryAsKnownType
-    {
-        [DataMember]
-        public Dictionary<int, Level> Foo = new Dictionary<int, Level>();
-    }
-
-    public interface IArticle
-    {
-        string Title { get; set; }
-        string Category { get; set; }
-    }
-
-    [DataContract]
-    public class ArticleBase : IArticle
-    {
-        public ArticleBase() : this("Untitled", "Uncategorized") { }
-
-        public ArticleBase(string title, string category)
-        {
-            _title = title;
-            _category = category;
-        }
-
-        private string _title;
-
-        [DataMember]
-        public string Title { get { return _title; } set { _title = value; } }
-
-        private string _category;
-
-        [DataMember]
-        public string Category { get { return _category; } set { _category = value; } }
-
-        public override string ToString()
-        {
-            return Category + " - " + Title;
-        }
-    }
-
-    public class NewsArticle : ArticleBase
-    {
-        public NewsArticle() : base("Untitled News", "News") { }
-    }
-
-    public class SummaryArticle : ArticleBase
-    {
-        public SummaryArticle() : base("Untitled Summary", "Summary") { }
-    }
-
-    [DataContract]
-    [KnownType(typeof(ArticleBase))]
-    [KnownType(typeof(NewsArticle))]
-    [KnownType(typeof(SummaryArticle))]
-    public class TypeWithKnownTypeAttributeAndInterfaceMember
-    {
-        [DataMember]
-        public IArticle HeadLine { get; set; }
-    }
-
-    [DataContract]
-    [KnownType(typeof(ArticleBase))]
-    [KnownType(typeof(NewsArticle))]
-    [KnownType(typeof(SummaryArticle))]
-    public class TypeWithKnownTypeAttributeAndListOfInterfaceMember
-    {
-        [DataMember]
-        public List<IArticle> Articles { get; set; }
-    }
-
     // Comes from app: The Weather Channel. See bug 1101076 for details
     public class ServerSettings
     {
@@ -1948,167 +710,148 @@ namespace SerializationTypes
         public string MetricConfigUrl { get; set; }
     }
 
-    public class MyGenericList<T> : IList<T>
+    [DataContract]
+    public class TypeWithXmlQualifiedName
     {
-        private List<T> _internalList = new List<T>();
+        [DataMember(IsRequired = true, EmitDefaultValue = false)]
+        public XmlQualifiedName Value { get; set; }
+    }
 
-        public int IndexOf(T item)
-        {
-            return _internalList.IndexOf(item);
-        }
+    public class TypeWith2DArrayProperty2
+    {
+        [System.Xml.Serialization.XmlArrayItemAttribute("SimpleType", typeof(SimpleType[]), IsNullable = false)]
+        public SimpleType[][] TwoDArrayOfSimpleType;
+    }
 
-        public void Insert(int index, T item)
-        {
-            _internalList.Insert(index, item);
-        }
+    public class TypeWithPropertiesHavingDefaultValue
+    {
+        [DefaultValue("")]
+        public string EmptyStringProperty { get; set; } = "";
 
-        public void RemoveAt(int index)
-        {
-            _internalList.RemoveAt(index);
-        }
+        [DefaultValue("DefaultString")]
+        public string StringProperty { get; set; } = "DefaultString";
 
-        public T this[int index]
-        {
-            get
-            {
-                return _internalList[index];
-            }
-            set
-            {
-                _internalList[index] = value;
-            }
-        }
+        [DefaultValue(11)]
+        public int IntProperty { get; set; } = 11;
 
-        public void Add(T item)
-        {
-            _internalList.Add(item);
-        }
+        [DefaultValue('m')]
+        public char CharProperty { get; set; } = 'm';
+    }
 
-        public void Clear()
-        {
-            _internalList.Clear();
-        }
+    public class TypeWithEnumPropertyHavingDefaultValue
+    {
+        [DefaultValue(1)]
+        public IntEnum EnumProperty { get; set; } = IntEnum.Option1;
+    }
 
-        public bool Contains(T item)
-        {
-            return _internalList.Contains(item);
-        }
+    public class TypeWithEnumFlagPropertyHavingDefaultValue
+    {
+        [DefaultValue(EnumFlags.One | EnumFlags.Four)]
+        public EnumFlags EnumProperty { get; set; } = EnumFlags.One | EnumFlags.Four;
+    }
 
-        public void CopyTo(T[] array, int arrayIndex)
-        {
-            _internalList.CopyTo(array, arrayIndex);
-        }
+    public class TypeWithShouldSerializeMethod
+    {
+        private static readonly string DefaultFoo = "default";
 
-        public int Count
-        {
-            get { return _internalList.Count; }
-        }
+        public string Foo { get; set; } = DefaultFoo;
 
-        public bool IsReadOnly
+        public bool ShouldSerializeFoo()
         {
-            get { return false; }
-        }
-
-        public bool Remove(T item)
-        {
-            return _internalList.Remove(item);
-        }
-
-        public IEnumerator<T> GetEnumerator()
-        {
-            return _internalList.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return _internalList.GetEnumerator();
+            return Foo != DefaultFoo;
         }
     }
 
-    public class TypeWithListPropertiesWithoutPublicSetters
+    public class KnownTypesThroughConstructorWithArrayProperties
     {
-        private List<string> _anotherStringList = new List<string>();
-
-        public TypeWithListPropertiesWithoutPublicSetters()
-        {
-            IntList = new MyGenericList<int>();
-            StringList = new List<string>();
-        }
-        public MyGenericList<int> IntList { get; private set; }
-        public List<string> StringList { get; private set; }
-        public List<string> AnotherStringList { get { return _anotherStringList; } }
+        public object StringArrayValue;
+        public object IntArrayValue;
     }
 
-    public abstract class HighScoreManager<T> where T : HighScoreManager<T>.HighScoreBase
+    public class KnownTypesThroughConstructorWithValue
     {
-        public abstract class HighScoreBase
-        {
-        }
+        public object Value;
     }
 
-    public class HighScores : HighScoreManager<HighScores.BridgeGameHighScore>
+    public class TypeWithTypesHavingCustomFormatter
     {
-        public class BridgeGameHighScore : HighScoreManager<HighScores.BridgeGameHighScore>.HighScoreBase
-        {
-            public int Id { get; set; }
-            public string Name { get; set; }
-        }
+        [XmlElement(DataType = "dateTime")]
+        public DateTime DateTimeContent;
+
+        [XmlElement(DataType = "QName")]
+        public XmlQualifiedName QNameContent;
+
+        // The case where DataType = "date" is verified by Xml_TypeWithDateTimePropertyAsXmlTime.
+        [XmlElement(DataType = "date")]
+        public DateTime DateContent;
+
+        [XmlElement(DataType = "Name")]
+        public string NameContent;
+
+        [XmlElement(DataType = "NCName")]
+        public string NCNameContent;
+
+        [XmlElement(DataType = "NMTOKEN")]
+        public string NMTOKENContent;
+
+        [XmlElement(DataType = "NMTOKENS")]
+        public string NMTOKENSContent;
+
+        [XmlElement(DataType = "base64Binary")]
+        public byte[] Base64BinaryContent;
+
+        [XmlElement(DataType = "hexBinary")]
+        public byte[] HexBinaryContent;
+    }
+
+    public class TypeWithArrayPropertyHavingChoice
+    {
+        // The ManyChoices field can contain an array
+        // of choices. Each choice must be matched to
+        // an array item in the ChoiceArray field.
+        [XmlChoiceIdentifier("ChoiceArray")]
+        [XmlElement("Item", typeof(string))]
+        [XmlElement("Amount", typeof(int))]
+        public object[] ManyChoices;
+
+        // TheChoiceArray field contains the enumeration
+        // values, one for each item in the ManyChoices array.
+        [XmlIgnore]
+        public MoreChoices[] ChoiceArray;
+    }
+
+    public enum MoreChoices
+    {
+        None,
+        Item,
+        Amount
+    }
+
+    public class TypeWithFieldsOrdered
+    {
+        [XmlElement(Order = 0)]
+        public int IntField1;
+        [XmlElement(Order = 1)]
+        public int IntField2;
+        [XmlElement(Order = 3)]
+        public string StringField1;
+        [XmlElement(Order = 2)]
+        public string StringField2;
+    }
+
+    [KnownType(typeof(List<SimpleType>))]
+    [KnownType(typeof(SimpleType[]))]
+    [DataContract]
+    public class TypeWithKnownTypesOfCollectionsWithConflictingXmlName
+    {
+        [DataMember]
+        public object Value1 = new List<SimpleType>();
+
+        [DataMember]
+        public object Value2 = new SimpleType[1];
+
     }
 }
-
-namespace DuplicateTypeNamesTest.ns1
-{
-    public class ClassA
-    {
-        public string Name;
-    }
-
-    public struct StructA
-    {
-        public string Text;
-    }
-
-    public enum EnumA
-    {
-        one, two, three,
-    }
-}
-
-namespace DuplicateTypeNamesTest.ns2
-{
-    public class ClassA
-    {
-        public string Nombre;
-    }
-
-    public struct StructA
-    {
-        public string Texto;
-    }
-
-    public enum EnumA
-    {
-        uno, dos, tres,
-    }
-}
-
-public class TestableDerivedException : System.Exception
-{
-    public TestableDerivedException()
-        : base()
-    { }
-
-    public TestableDerivedException(string message)
-        : base(message)
-    { }
-
-    public TestableDerivedException(string message, Exception innerException)
-        : base(message, innerException)
-    { }
-
-    public string TestProperty { get; set; }
-}
-
 
 public class TypeWithXmlElementProperty
 {
@@ -2121,30 +864,433 @@ public class TypeWithXmlDocumentProperty
     public XmlDocument Document;
 }
 
-public class TypeWithNonParameterlessConstructor
-{
-    public string StringProperty { get; set; }
-
-    public TypeWithNonParameterlessConstructor(string value)
-    {
-        StringProperty = value;
-    }
-}
-
-[DataContract]
-public class AppEnvironment
-{
-    [DataMember(Name = "screen:orientation")]
-    public string ScreenOrientation { get; set; }
-
-    [DataMember(Name = "screen_dpi(x:y)")]
-    public int ScreenDpi { get; set; }
-}
-
 public class TypeWithBinaryProperty
 {
     [XmlElement(DataType = "hexBinary")]
     public byte[] BinaryHexContent { get; set; }
     [XmlElement(DataType = "base64Binary")]
     public byte[] Base64Content { get; set; }
+}
+
+public class TypeWithTimeSpanProperty
+{
+    public TimeSpan TimeSpanProperty;
+}
+
+public class TypeWithDefaultTimeSpanProperty
+{
+    public TypeWithDefaultTimeSpanProperty()
+    {
+        TimeSpanProperty = GetDefaultValue("TimeSpanProperty");
+        TimeSpanProperty2 = GetDefaultValue("TimeSpanProperty2");
+    }
+
+    [DefaultValue(typeof(TimeSpan), "00:01:00")]
+    public TimeSpan TimeSpanProperty { get; set; }
+
+    [DefaultValue(typeof(TimeSpan), "00:00:01")]
+    public TimeSpan TimeSpanProperty2 { get; set; }
+
+    public TimeSpan GetDefaultValue(string propertyName)
+    {
+        var property = this.GetType().GetProperty(propertyName);
+
+        var attribute = property.GetCustomAttribute(typeof(DefaultValueAttribute))
+                as DefaultValueAttribute;
+
+        if (attribute != null)
+        {
+            return (TimeSpan)attribute.Value;
+        }
+        else
+        {
+            return new TimeSpan(0, 0, 0);
+        }
+    }
+}
+
+public class TypeWithByteProperty
+{
+    public byte ByteProperty;
+}
+
+
+[XmlRoot()]
+public class TypeWithXmlNodeArrayProperty
+{
+    [XmlText]
+    public XmlNode[] CDATA { get; set; }
+}
+
+
+public class Animal
+{
+    public int Age;
+    public string Name;
+}
+
+public class Dog : Animal
+{
+    public DogBreed Breed;
+}
+
+public enum DogBreed
+{
+    GermanShepherd,
+    LabradorRetriever
+}
+
+public class Group
+{
+    public string GroupName;
+    public Vehicle GroupVehicle;
+}
+
+public class Vehicle
+{
+    public string LicenseNumber;
+}
+
+[DataContract(Namespace = "www.msn.com/Examples/")]
+public class Employee
+{
+    [DataMember]
+    public string EmployeeName;
+    [DataMember]
+    private string ID = string.Empty;
+}
+
+public class SerializeIm : XmlSerializerImplementation
+{
+    public override XmlSerializer GetSerializer(Type type)
+    {
+        return new XmlSerializer(type);
+    }
+}
+
+[XmlInclude(typeof(DerivedClass))]
+public class BaseClass
+{
+    public string value { get; set; }
+    public string Value;
+}
+
+public class DerivedClass : BaseClass
+{
+    public new string value;
+    public new string Value { get; set; }
+}
+
+[XmlRootAttribute("PurchaseOrder", Namespace = "http://www.contoso1.com", IsNullable = false)]
+public class PurchaseOrder
+{
+    public Address ShipTo;
+    public string OrderDate;
+
+    [XmlArrayAttribute("Items")]
+    public OrderedItem[] OrderedItems;
+    public decimal SubTotal;
+    public decimal ShipCost;
+    public decimal TotalCost;
+
+    public static PurchaseOrder CreateInstance()
+    {
+        PurchaseOrder po = new PurchaseOrder();
+        Address billAddress = new Address();
+        billAddress.Name = "John Doe";
+        billAddress.Line1 = "1 Main St.";
+        billAddress.City = "AnyTown";
+        billAddress.State = "WA";
+        billAddress.Zip = "00000";
+        po.ShipTo = billAddress;
+        po.OrderDate = new DateTime(2017, 4, 10).ToString("D", CultureInfo.InvariantCulture);
+
+        OrderedItem item = new OrderedItem();
+        item.ItemName = "Widget S";
+        item.Description = "Small widget";
+        item.UnitPrice = (decimal)5.23;
+        item.Quantity = 3;
+        item.Calculate();
+
+        OrderedItem[] items = { item };
+        po.OrderedItems = items;
+        decimal subTotal = new decimal();
+        foreach (OrderedItem oi in items)
+        {
+            subTotal += oi.LineTotal;
+        }
+        po.SubTotal = subTotal;
+        po.ShipCost = (decimal)12.51;
+        po.TotalCost = po.SubTotal + po.ShipCost;
+        return po;
+    }
+}
+
+public class Address
+{
+    [XmlAttribute]
+    public string Name;
+    public string Line1;
+
+    [XmlElementAttribute(IsNullable = false)]
+    public string City;
+    public string State;
+    public string Zip;
+
+    public static void CreateInstance()
+    {
+        Address obj = new Address();
+        obj.City = "Pune";
+        obj.State = "WA";
+        obj.Zip = "98052";
+    }
+}
+
+public class OrderedItem
+{
+    public string ItemName;
+    public string Description;
+    public decimal UnitPrice;
+    public int Quantity;
+    public decimal LineTotal;
+
+    public void Calculate()
+    {
+        LineTotal = UnitPrice * Quantity;
+    }
+}
+
+[XmlType("AliasedTestType")]
+public class AliasedTestType
+{
+    [XmlElement("X", typeof(List<int>))]
+    [XmlElement("Y", typeof(List<string>))]
+    [XmlElement("Z", typeof(List<double>))]
+    public object Aliased { get; set; }
+}
+
+public class BaseClass1
+{
+    [XmlElement]
+    public MyCollection1 Prop;
+}
+
+public class DerivedClass1 : BaseClass1
+{
+    [XmlElement]
+    public new MyCollection1 Prop;
+}
+
+public class MyCollection1 : IEnumerable<DateTime>, IEnumerable
+{
+    private List<DateTime> _values = new List<DateTime>();
+
+    public void Add(DateTime value)
+    {
+        _values.Add(value);
+    }
+
+    IEnumerator<DateTime> IEnumerable<DateTime>.GetEnumerator()
+    {
+        return _values.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return _values.GetEnumerator();
+    }
+}
+
+public static class Outer
+{
+    public class Person
+    {
+        public string FirstName { get; set; }
+        public string MiddleName { get; set; }
+        public string LastName { get; set; }
+    }
+}
+
+public class Orchestra
+{
+    public Instrument[] Instruments;
+}
+
+public class Instrument
+{
+    public string Name;
+}
+
+public class Brass : Instrument
+{
+    public bool IsValved;
+}
+
+public class Trumpet : Brass
+{
+    public char Modulation;
+}
+
+public class Pet
+{
+    [DefaultValueAttribute("Dog")]
+    public string Animal;
+    [XmlIgnoreAttribute]
+    public string Comment;
+    public string Comment2;
+}
+
+public class TypeWithVirtualGenericProperty<T>
+{
+    public virtual T Value { get; set; }
+}
+
+public class TypeWithVirtualGenericPropertyDerived<T> : TypeWithVirtualGenericProperty<T>
+{
+    public override T Value { get; set; }
+}
+
+public class DefaultValuesSetToNaN
+{
+    [DefaultValue(double.NaN)]
+    public double DoubleProp { get; set; }
+
+    [DefaultValue(float.NaN)]
+    public float FloatProp { get; set; }
+
+    [DefaultValue(double.NaN)]
+    public double DoubleField;
+
+    [DefaultValue(float.NaN)]
+    public float SingleField;
+
+    public override bool Equals(object obj)
+    {
+        var other = obj as DefaultValuesSetToNaN;
+        return other == null ? false :
+            other.DoubleProp == this.DoubleProp && other.FloatProp == this.FloatProp &&
+            other.DoubleField == this.DoubleField && other.SingleField == this.SingleField;
+    }
+
+    public override int GetHashCode()
+    {
+        return this.DoubleProp.GetHashCode() ^ this.FloatProp.GetHashCode() ^
+            this.DoubleField.GetHashCode() ^ this.SingleField.GetHashCode();
+    }
+}
+
+public class DefaultValuesSetToPositiveInfinity
+{
+    [DefaultValue(double.PositiveInfinity)]
+    public double DoubleProp { get; set; }
+
+    [DefaultValue(float.PositiveInfinity)]
+    public float FloatProp { get; set; }
+
+    [DefaultValue(double.PositiveInfinity)]
+    public double DoubleField;
+
+    [DefaultValue(float.PositiveInfinity)]
+    public float SingleField;
+
+    public override bool Equals(object obj)
+    {
+        var other = obj as DefaultValuesSetToPositiveInfinity;
+        return other == null ? false :
+            other.DoubleProp == this.DoubleProp && other.FloatProp == this.FloatProp &&
+            other.DoubleField == this.DoubleField && other.SingleField == this.SingleField;
+    }
+
+    public override int GetHashCode()
+    {
+        return this.DoubleProp.GetHashCode() ^ this.FloatProp.GetHashCode() ^
+            this.DoubleField.GetHashCode() ^ this.SingleField.GetHashCode();
+    }
+}
+
+public class DefaultValuesSetToNegativeInfinity
+{
+    [DefaultValue(double.NegativeInfinity)]
+    public double DoubleProp { get; set; }
+
+    [DefaultValue(float.NegativeInfinity)]
+    public float FloatProp { get; set; }
+
+    [DefaultValue(double.NegativeInfinity)]
+    public double DoubleField;
+
+    [DefaultValue(float.NegativeInfinity)]
+    public float SingleField;
+
+    public override bool Equals(object obj)
+    {
+        var other = obj as DefaultValuesSetToNegativeInfinity;
+        return other == null ? false :
+            other.DoubleProp == this.DoubleProp && other.FloatProp == this.FloatProp &&
+            other.DoubleField == this.DoubleField && other.SingleField == this.SingleField;
+    }
+
+    public override int GetHashCode()
+    {
+        return this.DoubleProp.GetHashCode() ^ this.FloatProp.GetHashCode() ^
+            this.DoubleField.GetHashCode() ^ this.SingleField.GetHashCode();
+    }
+}
+
+[XmlRoot("RootElement")]
+public class TypeWithMismatchBetweenAttributeAndPropertyType
+{
+    private int _intValue = 120;
+
+    [DefaultValue(true), XmlAttribute("IntValue")]
+    public int IntValue
+    {
+        get
+        {
+            return _intValue;
+        }
+        set
+        {
+            _intValue = value;
+        }
+    }
+}
+
+[DataContract(IsReference = true)]
+public class TypeWithLinkedProperty
+{
+    [DataMember]
+    public TypeWithLinkedProperty Child { get; set; }
+    [DataMember]
+    public List<TypeWithLinkedProperty> Children { get; set; }
+}
+
+[Serializable()]
+[System.Xml.Serialization.XmlType("MsgDocumentType", Namespace = "http://example.com")]
+[System.Xml.Serialization.XmlRoot("Document", Namespace = "http://example.com")]
+public partial class MsgDocumentType
+{
+    [System.Xml.Serialization.XmlAttribute("id", DataType = "ID")]
+    public string Id { get; set; }
+
+    [System.Xml.Serialization.XmlAttribute("refs", DataType = "IDREFS")]
+    public string[] Refs { get; set; }
+}
+
+public class RootClass
+{
+    [XmlArray]
+    public List<Parameter> Parameters { get; set; }
+}
+
+[XmlInclude(typeof(Parameter<string>))]
+public class Parameter
+{
+    [XmlAttribute]
+    public string Name { get; set; }
+}
+
+public class Parameter<T> : Parameter
+{
+    public T Value { get; set; }
 }

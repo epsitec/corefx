@@ -1,18 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-//-----------------------------------------------------------------------------
-//
-// Description:
-//  EncryptionOption enumeration is used as an aggregate mechanism to give users controls 
-//  over Encryption features within MMCF container. 
-//
-//-----------------------------------------------------------------------------
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.IO.Packaging
 {
     /// <summary>
-    /// This class is used to control Encryption RM for package parts.  
+    /// This class is used to control Encryption RM for package parts.
     /// </summary>
     public enum EncryptionOption : int
     {

@@ -1,17 +1,17 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 
 namespace System.Net.Http.Headers
 {
-    // Don't derive from BaseHeaderParser since parsing is delegated to Uri.TryCreate() 
-    // which will remove leading and trailing whitespaces.
+    // Don't derive from BaseHeaderParser since parsing is delegated to Uri.TryCreate()
+    // which will remove leading and trailing whitespace.
     internal class UriHeaderParser : HttpHeaderParser
     {
-        private UriKind _uriKind;
+        private readonly UriKind _uriKind;
 
         internal static readonly UriHeaderParser RelativeOrAbsoluteUriParser =
             new UriHeaderParser(UriKind.RelativeOrAbsolute);
@@ -55,7 +55,7 @@ namespace System.Net.Http.Headers
             return true;
         }
 
-        // TODO: This is a helper method copied from WebHeaderCollection.HeaderEncoding.DecodeUtf8FromString.
+        // TODO (#5525): This is a helper method copied from WebHeaderCollection.HeaderEncoding.DecodeUtf8FromString.
         // Merge this code and move to System.Net.Common.
         //
         // The normal client header parser just casts bytes to chars (see GetString).
@@ -95,7 +95,7 @@ namespace System.Net.Http.Headers
                 try
                 {
                     // We don't want '?' replacement characters, just fail.
-#if PHONE || NETNative
+#if uap
                     System.Text.Encoding decoder = new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: true, throwOnInvalidBytes: true);
 #else
                     System.Text.Encoding decoder = System.Text.Encoding.GetEncoding("utf-8", System.Text.EncoderFallback.ExceptionFallback,

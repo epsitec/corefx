@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 using System;
@@ -127,7 +128,7 @@ namespace System.Threading.Tasks.Tests.Status
                             CancellationTokenSource cts = new CancellationTokenSource();
                             scheduler.Cancellation = cts;
 
-                            // Replace _task with a task that has a cutoms scheduler
+                            // Replace _task with a task that has a custom scheduler
                             _task = Task.Factory.StartNew(() => { }, cts.Token, TaskCreationOptions.None, scheduler);
 
                             try { _task.GetAwaiter().GetResult(); }
@@ -154,11 +155,11 @@ namespace System.Threading.Tasks.Tests.Status
                     {
                         _mre.Wait();
                         //
-                        // Current Task status is WaitingForChildrenToComplete if Task didn't Cancel/Faulted and Child was created 
+                        // Current Task status is WaitingForChildrenToComplete if Task didn't Cancel/Faulted and Child was created
                         // without Detached options and current status of the child isn't RanToCompletion or Faulted yet
                         //
 
-                        Task.Delay(100).Wait();
+                        Task.Delay(1).Wait();
 
                         if (_createChildTask &&
                             _childTask != null &&
@@ -171,13 +172,19 @@ namespace System.Threading.Tasks.Tests.Status
                         {
                             //we may have reach this point too soon, let's keep spinning until the status changes.
                             while (_task.Status == TaskStatus.Running)
-                                ;
-                            //
-                            // If we're still waiting for children our Status should reflect so
-                            //
-                            if (_task.Status != TaskStatus.WaitingForChildrenToComplete)
                             {
-                                Assert.True(false, string.Format("Expecting currrent Task status to be WaitingForChildren but getting {0}", _task.Status.ToString()));
+                                Task.Delay(1).Wait();
+                            }
+
+                            //
+                            // If we're still waiting for children our Status should reflect so. For this verification, the
+                            // parent task's status needs to be read before the child task's status (they are volatile loads) to
+                            // make the child task's status more recent, since the child task may complete during the status
+                            // reads.
+                            //
+                            if (_task.Status != TaskStatus.WaitingForChildrenToComplete && !_childTask.IsCompleted)
+                            {
+                                Assert.True(false, string.Format("Expecting current Task status to be WaitingForChildren but getting {0}", _task.Status.ToString()));
                             }
                         }
                         _task.Wait();
@@ -204,7 +211,7 @@ namespace System.Threading.Tasks.Tests.Status
                 try
                 {
                     //
-                    // Need to wait for Children task if it was created with Default option (Detached by default), 
+                    // Need to wait for Children task if it was created with Default option (Detached by default),
                     // or current task was either canceled or failed
                     //
                     if (_createChildTask &&
@@ -293,6 +300,8 @@ namespace System.Threading.Tasks.Tests.Status
         {
             try
             {
+                ManualResetEventSlim childMre = new ManualResetEventSlim(initialState: false);
+
                 if (_createChildTask)
                 {
                     TaskCreationOptions childTCO = (TaskCreationOptions)(int)_childCreationOptions;
@@ -306,18 +315,21 @@ namespace System.Threading.Tasks.Tests.Status
                         childTCO = TaskCreationOptions.AttachedToParent;
                     }
 
-                    _childTask = new Task(ChildTaskRun, null, _childTaskToken, childTCO);
+                    _childTask = new Task(ChildTaskRun, childMre, _childTaskToken, childTCO);
 
                     if (_childTask.Status != TaskStatus.Created)
                     {
                         Assert.True(false, string.Format("Expecting Child Task status to be Created while getting {0}", _childTask.Status.ToString()));
                     }
+
+                    _childTask.Start();
+
                     if (_testAction != TestAction.CancelTask && _testAction != TestAction.CancelTaskAndAcknowledge)
                     {
                         //
-                        // if cancel action, start the child task after calling Cancel()
+                        // if cancel action, release the child task after calling Cancel()
                         //
-                        _childTask.Start();
+                        childMre.Set();
                     }
                 }
 
@@ -329,19 +341,14 @@ namespace System.Threading.Tasks.Tests.Status
                 switch (_testAction)
                 {
                     case TestAction.CancelTask:
-                        if (_createChildTask)
-                        {
-                            _childTask.Start();
-                        }
                         _taskCts.Cancel();
+                        childMre.Set();
 
                         break;
                     case TestAction.CancelTaskAndAcknowledge:
-                        if (_createChildTask)
-                        {
-                            _childTask.Start();
-                        }
                         _taskCts.Cancel();
+                        childMre.Set();
+
                         if (_taskCts.Token.IsCancellationRequested)
                         {
                             throw new OperationCanceledException(_taskCts.Token);
@@ -360,6 +367,8 @@ namespace System.Threading.Tasks.Tests.Status
 
         private void ChildTaskRun(object o)
         {
+            (o as ManualResetEventSlim)?.Wait();
+
             if (_childTask.Status != TaskStatus.Running)
             {
                 Assert.True(false, string.Format("Expecting Child Task status to be Running while getting {0}", _childTask.Status.ToString()));
@@ -371,9 +380,9 @@ namespace System.Threading.Tasks.Tests.Status
             }
 
             //
-            // Sleep for 5 sec to simulate long running child task
+            // Sleep for a few milliseconds to simulate a child task executing
             //
-            Task t = Task.Delay(5000);
+            Task t = Task.Delay(1);
             t.Wait();
 
             if (_childTaskToken.IsCancellationRequested)

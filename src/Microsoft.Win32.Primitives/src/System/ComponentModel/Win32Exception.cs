@@ -1,82 +1,125 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Text;
+using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
+using System.Text;
 
 namespace System.ComponentModel
 {
-    /// <devdoc>
-    ///    <para>The exception that is thrown for a Win32 error code.</para>
-    /// </devdoc>
-    public partial class Win32Exception : Exception
+    /// <summary>
+    /// The exception that is thrown for a Win32 error code.
+    /// </summary>
+    [Serializable]
+    [System.Runtime.CompilerServices.TypeForwardedFrom("System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
+    public partial class Win32Exception : ExternalException, ISerializable
     {
-        /// <devdoc>
-        ///    <para>Represents the Win32 error code associated with this exception. This 
-        ///       field is read-only.</para>
-        /// </devdoc>
-        private readonly int nativeErrorCode;
-
         private const int E_FAIL = unchecked((int)0x80004005);
 
-        /// <devdoc>
-        /// <para>Initializes a new instance of the <see cref='System.ComponentModel.Win32Exception'/> class with the last Win32 error 
-        ///    that occured.</para>
-        /// </devdoc>
+        /// <summary>
+        /// Initializes a new instance of the <see cref='System.ComponentModel.Win32Exception'/> class with the last Win32 error
+        /// that occurred.
+        /// </summary>
         public Win32Exception() : this(Marshal.GetLastWin32Error())
         {
         }
-        /// <devdoc>
-        /// <para>Initializes a new instance of the <see cref='System.ComponentModel.Win32Exception'/> class with the specified error.</para>
-        /// </devdoc>
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref='System.ComponentModel.Win32Exception'/> class with the specified error.
+        /// </summary>
         public Win32Exception(int error) : this(error, GetErrorMessage(error))
         {
         }
-        /// <devdoc>
-        /// <para>Initializes a new instance of the <see cref='System.ComponentModel.Win32Exception'/> class with the specified error and the 
-        ///    specified detailed description.</para>
-        /// </devdoc>
-        public Win32Exception(int error, string message)
-        : base(message)
+        /// <summary>
+        /// Initializes a new instance of the <see cref='System.ComponentModel.Win32Exception'/> class with the specified error and the
+        /// specified detailed description.
+        /// </summary>
+        public Win32Exception(int error, string? message) : base(message)
         {
-            nativeErrorCode = error;
-            // Win32Exception is not inheriting from ExternalException anymore, 
-            // so we set the HResult manually to have the exact behavior we used to have when inherited from ExternalException
-            HResult = E_FAIL;
+            NativeErrorCode = error;
         }
 
-        /// <devdoc>
-        ///     Initializes a new instance of the Exception class with a specified error message.
-        ///     FxCop CA1032: Multiple constructors are required to correctly implement a custom exception.
-        /// </devdoc>
-        public Win32Exception(string message) : this(Marshal.GetLastWin32Error(), message)
+        /// <summary>
+        /// Initializes a new instance of the Exception class with a specified error message.
+        /// </summary>
+        public Win32Exception(string? message) : this(Marshal.GetLastWin32Error(), message)
         {
         }
 
-        /// <devdoc>
-        ///     Initializes a new instance of the Exception class with a specified error message and a 
-        ///     reference to the inner exception that is the cause of this exception.
-        ///     FxCop CA1032: Multiple constructors are required to correctly implement a custom exception.
-        /// </devdoc>
-        public Win32Exception(string message, Exception innerException) : base(message, innerException)
+        /// <summary>
+        /// Initializes a new instance of the Exception class with a specified error message and a
+        /// reference to the inner exception that is the cause of this exception.
+        /// </summary>
+        public Win32Exception(string? message, Exception? innerException) : base(message, innerException)
         {
-            nativeErrorCode = Marshal.GetLastWin32Error();
-            // Win32Exception is not inheriting from ExternalException anymore, 
-            // so we set the HResult manually to have the exact behavior we used to have when inherited from ExternalException
-            HResult = E_FAIL;
+            NativeErrorCode = Marshal.GetLastWin32Error();
         }
 
-        /// <devdoc>
-        ///    <para>Represents the Win32 error code associated with this exception. This 
-        ///       field is read-only.</para>
-        /// </devdoc>
-        public int NativeErrorCode
+        protected Win32Exception(SerializationInfo info, StreamingContext context) : base(info, context)
         {
-            get
+            NativeErrorCode = info.GetInt32(nameof(NativeErrorCode));
+        }
+
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            base.GetObjectData(info, context);
+            info.AddValue(nameof(NativeErrorCode), NativeErrorCode);
+        }
+
+        /// <summary>
+        /// Represents the Win32 error code associated with this exception. This field is read-only.
+        /// </summary>
+        public int NativeErrorCode { get; }
+
+        /// <summary>
+        /// Returns a string that contains the <see cref="NativeErrorCode"/>, or <see cref="Exception.HResult"/>, or both.
+        /// </summary>
+        /// <returns>A string that represents the <see cref="NativeErrorCode"/>, or <see cref="Exception.HResult"/>, or both.</returns>
+        public override string ToString()
+        {
+            if (NativeErrorCode == 0 || NativeErrorCode == HResult)
             {
-                return nativeErrorCode;
+                return base.ToString();
             }
+
+            string message = Message;
+            string className = GetType().ToString();
+            StringBuilder s = new StringBuilder(className);
+            string nativeErrorString = NativeErrorCode < 0
+                ? string.Format(CultureInfo.InvariantCulture, "0x{0:X8}", NativeErrorCode)
+                : NativeErrorCode.ToString(CultureInfo.InvariantCulture);
+            if (HResult == E_FAIL)
+            {
+                s.AppendFormat(CultureInfo.InvariantCulture, " ({0})", nativeErrorString);
+            }
+            else
+            {
+                s.AppendFormat(CultureInfo.InvariantCulture, " ({0:X8}, {1})", HResult, nativeErrorString);
+            }
+
+            if (!(string.IsNullOrEmpty(message)))
+            {
+                s.Append(": ");
+                s.Append(message);
+            }
+
+            Exception? innerException = InnerException;
+            if (innerException != null)
+            {
+                s.Append(" ---> ");
+                s.Append(innerException.ToString());
+            }
+
+            string? stackTrace = StackTrace;
+            if (stackTrace != null)
+            {
+                s.AppendLine();
+                s.Append(stackTrace);
+            }
+
+            return s.ToString();
         }
     }
 }

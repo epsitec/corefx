@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Xml;
 using System.Runtime.Serialization;
@@ -9,7 +10,7 @@ namespace System.Runtime.Serialization.Json
 {
     internal class JsonReaderDelegator : XmlReaderDelegator
     {
-        private DateTimeFormat _dateTimeFormat;
+        private readonly DateTimeFormat _dateTimeFormat;
         private DateTimeArrayJsonHelperWithString _dateTimeArrayHelper;
 
         public JsonReaderDelegator(XmlReader reader)
@@ -55,7 +56,7 @@ namespace System.Runtime.Serialization.Json
             string name, ns;
             if (string.IsNullOrEmpty(qname))
             {
-                name = ns = String.Empty;
+                name = ns = string.Empty;
             }
             else
             {
@@ -75,7 +76,7 @@ namespace System.Runtime.Serialization.Json
             return new XmlQualifiedName(name, ns);
         }
 
-        internal char ReadContentAsChar()
+        internal override char ReadContentAsChar()
         {
             return XmlConvert.ToChar(ReadContentAsString());
         }
@@ -90,7 +91,7 @@ namespace System.Runtime.Serialization.Json
             return XmlConvert.ToChar(ReadElementContentAsString());
         }
 
-        public byte[] ReadContentAsBase64()
+        public override byte[] ReadContentAsBase64()
         {
             if (isEndOfEmptyElement)
                 return Array.Empty<byte>();
@@ -134,7 +135,7 @@ namespace System.Runtime.Serialization.Json
             return buffer;
         }
 
-        internal DateTime ReadContentAsDateTime()
+        internal override DateTime ReadContentAsDateTime()
         {
             return ParseJsonDate(ReadContentAsString(), _dateTimeFormat);
         }
@@ -192,7 +193,7 @@ namespace System.Runtime.Serialization.Json
 
             try
             {
-                millisecondsSinceUnixEpoch = Int64.Parse(ticksvalue, CultureInfo.InvariantCulture);
+                millisecondsSinceUnixEpoch = long.Parse(ticksvalue, CultureInfo.InvariantCulture);
             }
             catch (ArgumentException exception)
             {
@@ -207,7 +208,7 @@ namespace System.Runtime.Serialization.Json
                 throw XmlExceptionHelper.CreateConversionException(ticksvalue, "Int64", exception);
             }
 
-            // Convert from # millseconds since epoch to # of 100-nanosecond units, which is what DateTime understands
+            // Convert from # milliseconds since epoch to # of 100-nanosecond units, which is what DateTime understands
             long ticks = millisecondsSinceUnixEpoch * 10000 + JsonGlobals.unixEpochTicks;
 
             try
@@ -235,6 +236,17 @@ namespace System.Runtime.Serialization.Json
             return ParseJsonDate(ReadElementContentAsString(), _dateTimeFormat);
         }
 
+#if USE_REFEMIT
+        public override bool TryReadDateTimeArray(XmlObjectSerializerReadContext context,
+#else
+        internal override bool TryReadDateTimeArray(XmlObjectSerializerReadContext context,
+#endif
+        XmlDictionaryString itemName, XmlDictionaryString itemNamespace,
+            int arrayLength, out DateTime[] array)
+        {
+            return TryReadJsonDateTimeArray(context, itemName, itemNamespace, arrayLength, out array);
+        }
+
         internal bool TryReadJsonDateTimeArray(XmlObjectSerializerReadContext context,
             XmlDictionaryString itemName, XmlDictionaryString itemNamespace,
             int arrayLength, out DateTime[] array)
@@ -253,7 +265,7 @@ namespace System.Runtime.Serialization.Json
 
         private class DateTimeArrayJsonHelperWithString : ArrayHelper<string, DateTime>
         {
-            private DateTimeFormat _dateTimeFormat;
+            private readonly DateTimeFormat _dateTimeFormat;
 
             public DateTimeArrayJsonHelperWithString(DateTimeFormat dateTimeFormat)
             {
@@ -279,7 +291,7 @@ namespace System.Runtime.Serialization.Json
         }
 
         // Overridden because base reader relies on XmlConvert.ToUInt64 for conversion to ulong
-        internal ulong ReadContentAsUnsignedLong()
+        internal override ulong ReadContentAsUnsignedLong()
         {
             string value = reader.ReadContentAsString();
 
@@ -307,7 +319,7 @@ namespace System.Runtime.Serialization.Json
         }
 
         // Overridden because base reader relies on XmlConvert.ToUInt64 for conversion to ulong
-        internal override UInt64 ReadElementContentAsUnsignedLong()
+        internal override ulong ReadElementContentAsUnsignedLong()
         {
             if (isEndOfEmptyElement)
             {

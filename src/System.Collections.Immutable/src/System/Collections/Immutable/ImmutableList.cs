@@ -1,9 +1,9 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using Validation;
 
 namespace System.Collections.Immutable
 {
@@ -18,10 +18,7 @@ namespace System.Collections.Immutable
         /// <typeparam name="T">The type of items stored by the collection.</typeparam>
         /// <returns>The immutable collection.</returns>
         [Pure]
-        public static ImmutableList<T> Create<T>()
-        {
-            return ImmutableList<T>.Empty;
-        }
+        public static ImmutableList<T> Create<T>() => ImmutableList<T>.Empty;
 
         /// <summary>
         /// Creates a new immutable collection prefilled with the specified item.
@@ -30,10 +27,7 @@ namespace System.Collections.Immutable
         /// <param name="item">The item to prepopulate.</param>
         /// <returns>The new immutable collection.</returns>
         [Pure]
-        public static ImmutableList<T> Create<T>(T item)
-        {
-            return ImmutableList<T>.Empty.Add(item);
-        }
+        public static ImmutableList<T> Create<T>(T item) => ImmutableList<T>.Empty.Add(item);
 
         /// <summary>
         /// Creates a new immutable collection prefilled with the specified items.
@@ -42,10 +36,7 @@ namespace System.Collections.Immutable
         /// <param name="items">The items to prepopulate.</param>
         /// <returns>The new immutable collection.</returns>
         [Pure]
-        public static ImmutableList<T> CreateRange<T>(IEnumerable<T> items)
-        {
-            return ImmutableList<T>.Empty.AddRange(items);
-        }
+        public static ImmutableList<T> CreateRange<T>(IEnumerable<T> items) => ImmutableList<T>.Empty.AddRange(items);
 
         /// <summary>
         /// Creates a new immutable collection prefilled with the specified items.
@@ -54,10 +45,7 @@ namespace System.Collections.Immutable
         /// <param name="items">The items to prepopulate.</param>
         /// <returns>The new immutable collection.</returns>
         [Pure]
-        public static ImmutableList<T> Create<T>(params T[] items)
-        {
-            return ImmutableList<T>.Empty.AddRange(items);
-        }
+        public static ImmutableList<T> Create<T>(params T[] items) => ImmutableList<T>.Empty.AddRange(items);
 
         /// <summary>
         /// Creates a new immutable list builder.
@@ -65,10 +53,7 @@ namespace System.Collections.Immutable
         /// <typeparam name="T">The type of items stored by the collection.</typeparam>
         /// <returns>The immutable collection builder.</returns>
         [Pure]
-        public static ImmutableList<T>.Builder CreateBuilder<T>()
-        {
-            return Create<T>().ToBuilder();
-        }
+        public static ImmutableList<T>.Builder CreateBuilder<T>() => Create<T>().ToBuilder();
 
         /// <summary>
         /// Enumerates a sequence exactly once and produces an immutable list of its contents.
@@ -89,6 +74,19 @@ namespace System.Collections.Immutable
         }
 
         /// <summary>
+        /// Returns an immutable copy of the current contents of the builder's collection.
+        /// </summary>
+        /// <param name="builder">The builder to create the immutable list from.</param>
+        /// <returns>An immutable list.</returns>
+        [Pure]
+        public static ImmutableList<TSource> ToImmutableList<TSource>(this ImmutableList<TSource>.Builder builder)
+        {
+            Requires.NotNull(builder, nameof(builder));
+
+            return builder.ToImmutable();
+        }
+
+        /// <summary>
         /// Replaces the first equal element in the list with the specified element.
         /// </summary>
         /// <param name="list">The list to search.</param>
@@ -99,7 +97,7 @@ namespace System.Collections.Immutable
         [Pure]
         public static IImmutableList<T> Replace<T>(this IImmutableList<T> list, T oldValue, T newValue)
         {
-            Requires.NotNull(list, "list");
+            Requires.NotNull(list, nameof(list));
             return list.Replace(oldValue, newValue, EqualityComparer<T>.Default);
         }
 
@@ -112,7 +110,7 @@ namespace System.Collections.Immutable
         [Pure]
         public static IImmutableList<T> Remove<T>(this IImmutableList<T> list, T value)
         {
-            Requires.NotNull(list, "list");
+            Requires.NotNull(list, nameof(list));
             return list.Remove(value, EqualityComparer<T>.Default);
         }
 
@@ -127,7 +125,7 @@ namespace System.Collections.Immutable
         [Pure]
         public static IImmutableList<T> RemoveRange<T>(this IImmutableList<T> list, IEnumerable<T> items)
         {
-            Requires.NotNull(list, "list");
+            Requires.NotNull(list, nameof(list));
             return list.RemoveRange(items, EqualityComparer<T>.Default);
         }
 
@@ -148,7 +146,7 @@ namespace System.Collections.Immutable
         [Pure]
         public static int IndexOf<T>(this IImmutableList<T> list, T item)
         {
-            Requires.NotNull(list, "list");
+            Requires.NotNull(list, nameof(list));
             return list.IndexOf(item, 0, list.Count, EqualityComparer<T>.Default);
         }
 
@@ -170,7 +168,7 @@ namespace System.Collections.Immutable
         [Pure]
         public static int IndexOf<T>(this IImmutableList<T> list, T item, IEqualityComparer<T> equalityComparer)
         {
-            Requires.NotNull(list, "list");
+            Requires.NotNull(list, nameof(list));
             return list.IndexOf(item, 0, list.Count, equalityComparer);
         }
 
@@ -196,7 +194,7 @@ namespace System.Collections.Immutable
         [Pure]
         public static int IndexOf<T>(this IImmutableList<T> list, T item, int startIndex)
         {
-            Requires.NotNull(list, "list");
+            Requires.NotNull(list, nameof(list));
             return list.IndexOf(item, startIndex, list.Count - startIndex, EqualityComparer<T>.Default);
         }
 
@@ -225,7 +223,7 @@ namespace System.Collections.Immutable
         [Pure]
         public static int IndexOf<T>(this IImmutableList<T> list, T item, int startIndex, int count)
         {
-            Requires.NotNull(list, "list");
+            Requires.NotNull(list, nameof(list));
             return list.IndexOf(item, startIndex, count, EqualityComparer<T>.Default);
         }
 
@@ -245,7 +243,7 @@ namespace System.Collections.Immutable
         [Pure]
         public static int LastIndexOf<T>(this IImmutableList<T> list, T item)
         {
-            Requires.NotNull(list, "list");
+            Requires.NotNull(list, nameof(list));
 
             if (list.Count == 0)
             {
@@ -273,7 +271,7 @@ namespace System.Collections.Immutable
         [Pure]
         public static int LastIndexOf<T>(this IImmutableList<T> list, T item, IEqualityComparer<T> equalityComparer)
         {
-            Requires.NotNull(list, "list");
+            Requires.NotNull(list, nameof(list));
 
             if (list.Count == 0)
             {
@@ -305,7 +303,7 @@ namespace System.Collections.Immutable
         [Pure]
         public static int LastIndexOf<T>(this IImmutableList<T> list, T item, int startIndex)
         {
-            Requires.NotNull(list, "list");
+            Requires.NotNull(list, nameof(list));
 
             if (list.Count == 0 && startIndex == 0)
             {
@@ -339,7 +337,7 @@ namespace System.Collections.Immutable
         [Pure]
         public static int LastIndexOf<T>(this IImmutableList<T> list, T item, int startIndex, int count)
         {
-            Requires.NotNull(list, "list");
+            Requires.NotNull(list, nameof(list));
             return list.LastIndexOf(item, startIndex, count, EqualityComparer<T>.Default);
         }
     }

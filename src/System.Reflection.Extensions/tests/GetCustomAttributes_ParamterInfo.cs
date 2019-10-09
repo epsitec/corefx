@@ -1,13 +1,14 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using Xunit;
-using Assembly = System.Reflection.Extensions.Tests;
+using Assembly = System.Reflection.Tests;
 
 [module: Assembly.MyAttribute_Single_P("single"), Assembly.MyAttribute_AllowMultiple_P("multiple1"), Assembly.MyAttribute_AllowMultiple_P("multiple2")]
 
-namespace System.Reflection.Extensions.Tests
+namespace System.Reflection.Tests
 {
     public class GetCustomAttributes_ParameterInfo
     {
@@ -31,9 +32,9 @@ namespace System.Reflection.Extensions.Tests
 
             Assert.True(CustomAttributeExtensions.IsDefined(piWithAttributes, typeof(MyAttribute_Single_P)));
 
-            Assert.Throws<ArgumentException>(() =>
+            AssertExtensions.Throws<ArgumentException>(null, () =>
             {
-                CustomAttributeExtensions.IsDefined(piWithAttributes, typeof(String));
+                CustomAttributeExtensions.IsDefined(piWithAttributes, typeof(string));
             });
 
             Assert.Throws<ArgumentNullException>(() =>
@@ -126,9 +127,9 @@ namespace System.Reflection.Extensions.Tests
                 attribute = CustomAttributeExtensions.GetCustomAttribute(piWithAttributes, typeof(MyAttribute_AllowMultiple_P));
             });
 
-            Assert.Throws<ArgumentException>(() =>
+            AssertExtensions.Throws<ArgumentException>(null, () =>
             {
-                attribute = CustomAttributeExtensions.GetCustomAttribute(piWithAttributes, typeof(String));
+                attribute = CustomAttributeExtensions.GetCustomAttribute(piWithAttributes, typeof(string));
             });
 
             Assert.Throws<ArgumentNullException>(() =>
@@ -166,9 +167,9 @@ namespace System.Reflection.Extensions.Tests
             attributes = CustomAttributeExtensions.GetCustomAttributes(piWithAttributes, typeof(CLSCompliantAttribute));
             Assert.Equal(0, attributes.Count());
 
-            Assert.Throws<ArgumentException>(() =>
+            AssertExtensions.Throws<ArgumentException>(null, () =>
             {
-                attributes = CustomAttributeExtensions.GetCustomAttributes(piWithAttributes, typeof(String));
+                attributes = CustomAttributeExtensions.GetCustomAttributes(piWithAttributes, typeof(string));
             });
 
             Assert.Throws<ArgumentNullException>(() =>
@@ -195,11 +196,11 @@ namespace System.Reflection.Extensions.Tests
 
             attributes = CustomAttributeExtensions.GetCustomAttributes(piWithAttributes, false);
             Assert.Equal(5, attributes.Count());
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_Single_P single", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple_P multiple1", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple_P multiple2", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_Single_Inherited_P single", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple_Inherited_P multiple", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_Single_P single", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple_P multiple1", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple_P multiple2", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_Single_Inherited_P single", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple_Inherited_P multiple", StringComparison.Ordinal)));
         }
 
         [Fact]
@@ -221,55 +222,66 @@ namespace System.Reflection.Extensions.Tests
 
             attributes = CustomAttributeExtensions.GetCustomAttributes(piWithAttributes);
             Assert.Equal(5, attributes.Count());
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_Single_P single", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple_P multiple1", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple_P multiple2", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_Single_Inherited_P single", StringComparison.Ordinal)));
-            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple_Inherited_P multiple", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_Single_P single", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple_P multiple1", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple_P multiple2", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_Single_Inherited_P single", StringComparison.Ordinal)));
+            Assert.Equal(1, attributes.Count(attr => attr.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple_Inherited_P multiple", StringComparison.Ordinal)));
 
             attributeData = piWithAttributes.CustomAttributes;
             Assert.Equal(5, attributeData.Count());
 
-            Assert.Equal(2, attributeData.Count(attr => attr.AttributeType.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple_P", StringComparison.Ordinal)));
-            Assert.Equal(1, attributeData.Count(attr => attr.AttributeType.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_Single_P", StringComparison.Ordinal)));
-            Assert.Equal(1, attributeData.Count(attr => attr.AttributeType.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_Single_Inherited_P", StringComparison.Ordinal)));
-            Assert.Equal(1, attributeData.Count(attr => attr.AttributeType.ToString().Equals("System.Reflection.Extensions.Tests.MyAttribute_AllowMultiple_Inherited_P", StringComparison.Ordinal)));
+            Assert.Equal(2, attributeData.Count(attr => attr.AttributeType.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple_P", StringComparison.Ordinal)));
+            Assert.Equal(1, attributeData.Count(attr => attr.AttributeType.ToString().Equals("System.Reflection.Tests.MyAttribute_Single_P", StringComparison.Ordinal)));
+            Assert.Equal(1, attributeData.Count(attr => attr.AttributeType.ToString().Equals("System.Reflection.Tests.MyAttribute_Single_Inherited_P", StringComparison.Ordinal)));
+            Assert.Equal(1, attributeData.Count(attr => attr.AttributeType.ToString().Equals("System.Reflection.Tests.MyAttribute_AllowMultiple_Inherited_P", StringComparison.Ordinal)));
+        }
+
+        [Fact]
+        [ActiveIssue(@"https://github.com/dotnet/coreclr/issues/6600")]
+        public void GetCustom_Attribute_On_Return_Parameter_On_Parent_Method()
+        {
+            Type type = typeof(TestClass_P_Derived);
+            MethodInfo miWithReturnAttribute = type.GetTypeInfo().GetDeclaredMethod("methodWithReturnAttribute");
+            ParameterInfo returnParameter = miWithReturnAttribute.ReturnParameter;
+            MyAttribute_Single_P attribute = CustomAttributeExtensions.GetCustomAttribute<MyAttribute_Single_P>(returnParameter, inherit: true);
+            Assert.NotNull(attribute);
         }
     }
 
     public class ParameterInfoAttributeBase : Attribute
     {
-        private String _name;
-        public ParameterInfoAttributeBase(String name)
+        private string _name;
+        public ParameterInfoAttributeBase(string name)
         {
             _name = name;
         }
 
-        public override String ToString() { return this.GetType() + " " + _name; }
+        public override string ToString() { return this.GetType() + " " + _name; }
     }
 
     [AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = false)]
     public class MyAttribute_Single_P : ParameterInfoAttributeBase
     {
-        public MyAttribute_Single_P(String name) : base(name) { }
+        public MyAttribute_Single_P(string name) : base(name) { }
     }
 
     [AttributeUsage(AttributeTargets.All, AllowMultiple = true, Inherited = false)]
     public class MyAttribute_AllowMultiple_P : ParameterInfoAttributeBase
     {
-        public MyAttribute_AllowMultiple_P(String name) : base(name) { }
+        public MyAttribute_AllowMultiple_P(string name) : base(name) { }
     }
 
     [AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
     public class MyAttribute_Single_Inherited_P : ParameterInfoAttributeBase
     {
-        public MyAttribute_Single_Inherited_P(String name) : base(name) { }
+        public MyAttribute_Single_Inherited_P(string name) : base(name) { }
     }
 
     [AttributeUsage(AttributeTargets.All, AllowMultiple = true, Inherited = true)]
     public class MyAttribute_AllowMultiple_Inherited_P : ParameterInfoAttributeBase
     {
-        public MyAttribute_AllowMultiple_Inherited_P(String name) : base(name) { }
+        public MyAttribute_AllowMultiple_Inherited_P(string name) : base(name) { }
     }
 
     public class TestClass_P
@@ -281,5 +293,13 @@ namespace System.Reflection.Extensions.Tests
                                       MyAttribute_Single_Inherited_P("single"),
                                       MyAttribute_AllowMultiple_Inherited_P("multiple")] int param)
         { }
+
+        [return: MyAttribute_Single_P("single")]
+        public virtual byte methodWithReturnAttribute() { return 0; }
+    }
+
+    public class TestClass_P_Derived : TestClass_P
+    {
+        public override byte methodWithReturnAttribute() { return 1; }
     }
 }

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Globalization;
 
@@ -11,8 +12,6 @@ namespace System.ComponentModel.DataAnnotations.Schema
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class InversePropertyAttribute : Attribute
     {
-        private readonly string _property;
-
         /// <summary>
         ///     Initializes a new instance of the <see cref="InversePropertyAttribute" /> class.
         /// </summary>
@@ -21,18 +20,15 @@ namespace System.ComponentModel.DataAnnotations.Schema
         {
             if (string.IsNullOrWhiteSpace(property))
             {
-                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture,
-                    SR.ArgumentIsNullOrWhitespace, "property"));
+                throw new ArgumentException(SR.Format(SR.ArgumentIsNullOrWhitespace, nameof(property)), nameof(property));
             }
-            _property = property;
+
+            Property = property;
         }
 
         /// <summary>
         ///     The navigation property representing the other end of the same relationship.
         /// </summary>
-        public string Property
-        {
-            get { return _property; }
-        }
+        public string Property { get; }
     }
 }

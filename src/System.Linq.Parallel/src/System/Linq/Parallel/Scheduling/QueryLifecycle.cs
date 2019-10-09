@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -12,7 +13,6 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Diagnostics.Contracts;
 
 namespace System.Linq.Parallel
 {
@@ -22,7 +22,7 @@ namespace System.Linq.Parallel
         // (It is not called multiple time if repartitionings occur)
         internal static void LogicalQueryExecutionBegin(int queryID)
         {
-            //We call NOCTD to inform the debugger that multiple threads will most likely be required to 
+            //We call NOCTD to inform the debugger that multiple threads will most likely be required to
             //execute this query.  We do not attempt to run the query even if we think we could, for simplicity and consistency.
             PlinqEtwProvider.Log.ParallelQueryBegin(queryID);
         }

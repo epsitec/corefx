@@ -1,7 +1,9 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,7 +33,7 @@ namespace System.IO.Pipes.Tests
         }
 
         [Theory]
-        [MemberData("OneWayReadWritesMemberData")]
+        [MemberData(nameof(OneWayReadWritesMemberData))]
         public async Task OneWayReadWrites(PipeOptions serverOptions, PipeOptions clientOptions, bool asyncServerOps, bool asyncClientOps)
         {
             using (NamedPipePair pair = CreateNamedPipePair(serverOptions, clientOptions))
@@ -223,7 +225,7 @@ namespace System.IO.Pipes.Tests
                 NamedPipeServerStream server = pair.serverStream;
                 var ctx = new CancellationTokenSource();
 
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) // [ActiveIssue(812, PlatformID.AnyUnix)] - cancellation token after the operation has been initiated
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) // cancellation token after the operation has been initiated
                 {
                     Task serverWaitTimeout = server.WaitForConnectionAsync(ctx.Token);
                     ctx.Cancel();
@@ -236,7 +238,7 @@ namespace System.IO.Pipes.Tests
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.Windows)]
+        [PlatformSpecific(TestPlatforms.Windows)] // P/Invoking to Win32 functions
         public async Task CancelTokenOff_ServerWaitForConnectionAsyncWithOuterCancellation_Throws_OperationCanceledException()
         {
             using (NamedPipePair pair = CreateNamedPipePair())
@@ -244,14 +246,14 @@ namespace System.IO.Pipes.Tests
                 NamedPipeServerStream server = pair.serverStream;
                 Task waitForConnectionTask = server.WaitForConnectionAsync(CancellationToken.None);
 
-                Assert.True(Interop.CancelIoEx(server.SafePipeHandle), "Outer cancellation failed");
+                Assert.True(InteropTest.CancelIoEx(server.SafePipeHandle), "Outer cancellation failed");
                 await Assert.ThrowsAnyAsync<OperationCanceledException>(() => waitForConnectionTask);
                 Assert.True(waitForConnectionTask.IsCanceled);
             }
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.Windows)]
+        [PlatformSpecific(TestPlatforms.Windows)] // P/Invoking to Win32 functions
         public async Task CancelTokenOn_ServerWaitForConnectionAsyncWithOuterCancellation_Throws_IOException()
         {
             using (NamedPipePair pair = CreateNamedPipePair())
@@ -260,7 +262,7 @@ namespace System.IO.Pipes.Tests
                 NamedPipeServerStream server = pair.serverStream;
                 Task waitForConnectionTask = server.WaitForConnectionAsync(cts.Token);
 
-                Assert.True(Interop.CancelIoEx(server.SafePipeHandle), "Outer cancellation failed");
+                Assert.True(InteropTest.CancelIoEx(server.SafePipeHandle), "Outer cancellation failed");
                 await Assert.ThrowsAsync<IOException>(() => waitForConnectionTask);
             }
         }
@@ -321,12 +323,15 @@ namespace System.IO.Pipes.Tests
 
                 if (!pair.writeToServer)
                 {
-                    // Pipe is broken
-                    Assert.Throws<IOException>(() => client.Write(buffer, 0, buffer.Length));
-                    Assert.Throws<IOException>(() => client.WriteByte(5));
-                    Assert.Throws<IOException>(() => { client.WriteAsync(buffer, 0, buffer.Length); });
-                    Assert.Throws<IOException>(() => client.Flush());
-                    Assert.Throws<IOException>(() => client.NumberOfServerInstances);
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) // writes on Unix may still succeed after other end disconnects, due to socket being used
+                    {
+                        // Pipe is broken
+                        Assert.Throws<IOException>(() => client.Write(buffer, 0, buffer.Length));
+                        Assert.Throws<IOException>(() => client.WriteByte(5));
+                        Assert.Throws<IOException>(() => { client.WriteAsync(buffer, 0, buffer.Length); });
+                        Assert.Throws<IOException>(() => client.Flush());
+                        Assert.Throws<IOException>(() => client.NumberOfServerInstances);
+                    }
                 }
                 else
                 {
@@ -334,7 +339,7 @@ namespace System.IO.Pipes.Tests
                     Assert.Equal(0, client.Read(buffer, 0, buffer.Length));
                     Assert.Equal(-1, client.ReadByte());
 
-                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) // NumberOfServerInstances not supported on Unix
                     {
                         Assert.Throws<PlatformNotSupportedException>(() => client.NumberOfServerInstances);
                     }
@@ -345,7 +350,7 @@ namespace System.IO.Pipes.Tests
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.Windows)]
+        [PlatformSpecific(TestPlatforms.Windows)] // Unix implemented on sockets, where disposal information doesn't propagate
         public async Task Windows_OperationsOnNamedServerWithDisposedClient()
         {
             using (NamedPipePair pair = CreateNamedPipePair())
@@ -361,7 +366,7 @@ namespace System.IO.Pipes.Tests
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.AnyUnix)]
+        [PlatformSpecific(TestPlatforms.AnyUnix)] // Unix implemented on sockets, where disposal information doesn't propagate
         public async Task Unix_OperationsOnNamedServerWithDisposedClient()
         {
             using (NamedPipePair pair = CreateNamedPipePair())
@@ -373,7 +378,7 @@ namespace System.IO.Pipes.Tests
                 // On Unix, the server still thinks that it is connected after client Disposal.
                 Assert.Throws<InvalidOperationException>(() => server.WaitForConnection());
                 await Assert.ThrowsAsync<InvalidOperationException>(() => server.WaitForConnectionAsync());
-                Assert.Throws<PlatformNotSupportedException>(() => server.GetImpersonationUserName());
+                Assert.NotNull(server.GetImpersonationUserName());
             }
         }
 
@@ -392,29 +397,21 @@ namespace System.IO.Pipes.Tests
 
                 if (pair.writeToServer)
                 {
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                        Assert.Equal(0, server.OutBufferSize);
-                    else
-                        Assert.Throws<PlatformNotSupportedException>(() => server.OutBufferSize);
-
+                    Assert.Equal(0, server.OutBufferSize);
                     Assert.Throws<InvalidOperationException>(() => server.Write(buffer, 0, buffer.Length));
                     Assert.Throws<InvalidOperationException>(() => server.WriteByte(5));
                     Assert.Throws<InvalidOperationException>(() => { server.WriteAsync(buffer, 0, buffer.Length); });
                 }
                 else
                 {
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                        Assert.Equal(0, server.InBufferSize);
-                    else
-                        Assert.Throws<PlatformNotSupportedException>(() => server.InBufferSize);
-
+                    Assert.Equal(0, server.InBufferSize);
                     PipeTransmissionMode readMode = server.ReadMode;
                     Assert.Throws<InvalidOperationException>(() => server.Read(buffer, 0, buffer.Length));
                     Assert.Throws<InvalidOperationException>(() => server.ReadByte());
                     Assert.Throws<InvalidOperationException>(() => { server.ReadAsync(buffer, 0, buffer.Length); });
                 }
 
-                Assert.Throws<InvalidOperationException>(() => server.Disconnect());    // disconnect when not connected 
+                Assert.Throws<InvalidOperationException>(() => server.Disconnect());    // disconnect when not connected
                 Assert.Throws<InvalidOperationException>(() => server.IsMessageComplete);
             }
         }
@@ -483,24 +480,72 @@ namespace System.IO.Pipes.Tests
         }
 
         [Fact]
+        public async Task ReadAsync_DisconnectDuringRead_Returns0()
+        {
+            using (NamedPipePair pair = CreateNamedPipePair())
+            {
+                pair.Connect();
+                Task<int> readTask;
+                if (pair.clientStream.CanRead)
+                {
+                    readTask = pair.clientStream.ReadAsync(new byte[1], 0, 1);
+                    pair.serverStream.Dispose();
+                }
+                else
+                {
+                    readTask = pair.serverStream.ReadAsync(new byte[1], 0, 1);
+                    pair.clientStream.Dispose();
+                }
+                Assert.Equal(0, await readTask);
+            }
+        }
+
+        [PlatformSpecific(TestPlatforms.Windows)] // Unix named pipes are on sockets, where small writes with an empty buffer will succeed immediately
+        [Fact]
+        public async Task WriteAsync_DisconnectDuringWrite_Throws()
+        {
+            using (NamedPipePair pair = CreateNamedPipePair())
+            {
+                pair.Connect();
+                Task writeTask;
+                if (pair.clientStream.CanWrite)
+                {
+                    writeTask = pair.clientStream.WriteAsync(new byte[1], 0, 1);
+                    pair.serverStream.Dispose();
+                }
+                else
+                {
+                    writeTask = pair.serverStream.WriteAsync(new byte[1], 0, 1);
+                    pair.clientStream.Dispose();
+                }
+                await Assert.ThrowsAsync<IOException>(() => writeTask);
+            }
+        }
+
+        [Fact]
         public async Task Server_ReadWriteCancelledToken_Throws_OperationCanceledException()
         {
             using (NamedPipePair pair = CreateNamedPipePair())
             {
                 NamedPipeServerStream server = pair.serverStream;
+                NamedPipeClientStream client = pair.clientStream;
                 byte[] buffer = new byte[] { 0, 0, 0, 0 };
 
                 pair.Connect();
 
-                if (server.CanRead)
+                if (server.CanRead && client.CanWrite)
                 {
                     var ctx1 = new CancellationTokenSource();
-                    Task serverReadToken = server.ReadAsync(buffer, 0, buffer.Length, ctx1.Token);
+
+                    Task<int> serverReadToken = server.ReadAsync(buffer, 0, buffer.Length, ctx1.Token);
                     ctx1.Cancel();
                     await Assert.ThrowsAnyAsync<OperationCanceledException>(() => serverReadToken);
+
+                    ctx1.Cancel();
                     Assert.True(server.ReadAsync(buffer, 0, buffer.Length, ctx1.Token).IsCanceled);
                 }
-                if (server.CanWrite) 
+
+                if (server.CanWrite)
                 {
                     var ctx1 = new CancellationTokenSource();
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) // On Unix WriteAsync's aren't cancelable once initiated
@@ -516,7 +561,7 @@ namespace System.IO.Pipes.Tests
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.Windows)]
+        [PlatformSpecific(TestPlatforms.Windows)] // P/Invoking to Win32 functions
         public async Task CancelTokenOff_Server_ReadWriteCancelledToken_Throws_OperationCanceledException()
         {
             using (NamedPipePair pair = CreateNamedPipePair())
@@ -530,7 +575,7 @@ namespace System.IO.Pipes.Tests
                 {
                     Task serverReadToken = server.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None);
 
-                    Assert.True(Interop.CancelIoEx(server.SafePipeHandle), "Outer cancellation failed");
+                    Assert.True(InteropTest.CancelIoEx(server.SafePipeHandle), "Outer cancellation failed");
                     await Assert.ThrowsAnyAsync<OperationCanceledException>(() => serverReadToken);
                     Assert.True(serverReadToken.IsCanceled);
                 }
@@ -538,7 +583,7 @@ namespace System.IO.Pipes.Tests
                 {
                     Task serverWriteToken = server.WriteAsync(buffer, 0, buffer.Length, CancellationToken.None);
 
-                    Assert.True(Interop.CancelIoEx(server.SafePipeHandle), "Outer cancellation failed");
+                    Assert.True(InteropTest.CancelIoEx(server.SafePipeHandle), "Outer cancellation failed");
                     await Assert.ThrowsAnyAsync<OperationCanceledException>(() => serverWriteToken);
                     Assert.True(serverWriteToken.IsCanceled);
                 }
@@ -546,8 +591,8 @@ namespace System.IO.Pipes.Tests
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.Windows)]
-        public async Task CancelTokenOn_Server_ReadWriteCancelledToken_Throws_IOException()
+        [PlatformSpecific(TestPlatforms.Windows)] // P/Invoking to Win32 functions
+        public async Task CancelTokenOn_Server_ReadWriteCancelledToken_Throws_OperationCanceledException()
         {
             using (NamedPipePair pair = CreateNamedPipePair())
             {
@@ -561,16 +606,16 @@ namespace System.IO.Pipes.Tests
                     var cts = new CancellationTokenSource();
                     Task serverReadToken = server.ReadAsync(buffer, 0, buffer.Length, cts.Token);
 
-                    Assert.True(Interop.CancelIoEx(server.SafePipeHandle), "Outer cancellation failed");
-                    await Assert.ThrowsAsync<IOException>(() => serverReadToken);
+                    Assert.True(InteropTest.CancelIoEx(server.SafePipeHandle), "Outer cancellation failed");
+                    await Assert.ThrowsAnyAsync<OperationCanceledException>(() => serverReadToken);
                 }
                 if (server.CanWrite)
                 {
                     var cts = new CancellationTokenSource();
                     Task serverWriteToken = server.WriteAsync(buffer, 0, buffer.Length, cts.Token);
 
-                    Assert.True(Interop.CancelIoEx(server.SafePipeHandle), "Outer cancellation failed");
-                    await Assert.ThrowsAsync<IOException>(() => serverWriteToken);
+                    Assert.True(InteropTest.CancelIoEx(server.SafePipeHandle), "Outer cancellation failed");
+                    await Assert.ThrowsAnyAsync<OperationCanceledException>(() => serverWriteToken);
                 }
             }
         }
@@ -584,14 +629,18 @@ namespace System.IO.Pipes.Tests
                 byte[] buffer = new byte[] { 0, 0, 0, 0 };
 
                 pair.Connect();
+
                 if (client.CanRead)
                 {
                     var ctx1 = new CancellationTokenSource();
+
                     Task serverReadToken = client.ReadAsync(buffer, 0, buffer.Length, ctx1.Token);
                     ctx1.Cancel();
                     await Assert.ThrowsAnyAsync<OperationCanceledException>(() => serverReadToken);
+
                     Assert.True(client.ReadAsync(buffer, 0, buffer.Length, ctx1.Token).IsCanceled);
                 }
+
                 if (client.CanWrite)
                 {
                     var ctx1 = new CancellationTokenSource();
@@ -608,7 +657,7 @@ namespace System.IO.Pipes.Tests
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.Windows)]
+        [PlatformSpecific(TestPlatforms.Windows)] // P/Invoking to Win32 functions
         public async Task CancelTokenOff_Client_ReadWriteCancelledToken_Throws_OperationCanceledException()
         {
             using (NamedPipePair pair = CreateNamedPipePair())
@@ -621,7 +670,7 @@ namespace System.IO.Pipes.Tests
                 {
                     Task clientReadToken = client.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None);
 
-                    Assert.True(Interop.CancelIoEx(client.SafePipeHandle), "Outer cancellation failed");
+                    Assert.True(InteropTest.CancelIoEx(client.SafePipeHandle), "Outer cancellation failed");
                     await Assert.ThrowsAnyAsync<OperationCanceledException>(() => clientReadToken);
                     Assert.True(clientReadToken.IsCanceled);
                 }
@@ -629,7 +678,7 @@ namespace System.IO.Pipes.Tests
                 {
                     Task clientWriteToken = client.WriteAsync(buffer, 0, buffer.Length, CancellationToken.None);
 
-                    Assert.True(Interop.CancelIoEx(client.SafePipeHandle), "Outer cancellation failed");
+                    Assert.True(InteropTest.CancelIoEx(client.SafePipeHandle), "Outer cancellation failed");
                     await Assert.ThrowsAnyAsync<OperationCanceledException>(() => clientWriteToken);
                     Assert.True(clientWriteToken.IsCanceled);
                 }
@@ -637,8 +686,8 @@ namespace System.IO.Pipes.Tests
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.Windows)]
-        public async Task CancelTokenOn_Client_ReadWriteCancelledToken_Throws_IOException()
+        [PlatformSpecific(TestPlatforms.Windows)] // P/Invoking to Win32 functions
+        public async Task CancelTokenOn_Client_ReadWriteCancelledToken_Throws_OperationCanceledException()
         {
             using (NamedPipePair pair = CreateNamedPipePair())
             {
@@ -651,16 +700,16 @@ namespace System.IO.Pipes.Tests
                     var cts = new CancellationTokenSource();
                     Task clientReadToken = client.ReadAsync(buffer, 0, buffer.Length, cts.Token);
 
-                    Assert.True(Interop.CancelIoEx(client.SafePipeHandle), "Outer cancellation failed");
-                    await Assert.ThrowsAsync<IOException>(() => clientReadToken);
+                    Assert.True(InteropTest.CancelIoEx(client.SafePipeHandle), "Outer cancellation failed");
+                    await Assert.ThrowsAnyAsync<OperationCanceledException>(() => clientReadToken);
                 }
                 if (client.CanWrite)
                 {
                     var cts = new CancellationTokenSource();
                     Task clientWriteToken = client.WriteAsync(buffer, 0, buffer.Length, cts.Token);
 
-                    Assert.True(Interop.CancelIoEx(client.SafePipeHandle), "Outer cancellation failed");
-                    await Assert.ThrowsAsync<IOException>(() => clientWriteToken);
+                    Assert.True(InteropTest.CancelIoEx(client.SafePipeHandle), "Outer cancellation failed");
+                    await Assert.ThrowsAnyAsync<OperationCanceledException>(() => clientWriteToken);
                 }
             }
         }
@@ -695,11 +744,15 @@ namespace System.IO.Pipes.Tests
                 const int WaitTimeout = 30000;
                 Assert.True(Task.WaitAll(writes, WaitTimeout));
                 Assert.True(Task.WaitAll(reads, WaitTimeout));
-                Assert.Equal(sendingData, readingData);
+
+                // The data of each write may not be written atomically, and as such some of the data may be
+                // interleaved rather than entirely in the order written.
+                Assert.Equal(sendingData.OrderBy(b => b), readingData.OrderBy(b => b));
             }
         }
     }
 
+    [ActiveIssue(22271, TargetFrameworkMonikers.Uap)]
     public class NamedPipeTest_Simple_ServerInOutRead_ClientInOutWrite : NamedPipeTest_Simple
     {
         protected override NamedPipePair CreateNamedPipePair(PipeOptions serverOptions, PipeOptions clientOptions)
@@ -711,40 +764,9 @@ namespace System.IO.Pipes.Tests
             ret.writeToServer = false;
             return ret;
         }
-
-        [Fact]
-        public override async Task OperationsOnDisconnectedClient()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                await base.OperationsOnDisconnectedClient();
-            else
-            {
-                using (NamedPipePair pair = CreateNamedPipePair())
-                {
-                    NamedPipeServerStream server = pair.serverStream;
-                    NamedPipeClientStream client = pair.clientStream;
-                    pair.Connect();
-
-                    Assert.Throws<InvalidOperationException>(() => client.IsMessageComplete);
-                    Assert.Throws<InvalidOperationException>(() => client.Connect());
-                    await Assert.ThrowsAsync<InvalidOperationException>(() => client.ConnectAsync());
-
-                    server.Disconnect();
-
-                    byte[] buffer = new byte[] { 0, 0, 0, 0 };
-
-                    // The pipe is broken, but Unix InOut will allow the writes regardless
-                    client.Write(buffer, 0, buffer.Length);
-                    client.WriteByte(5);
-                    await client.WriteAsync(buffer, 0, buffer.Length);
-                    client.Flush();
-                    Assert.Throws<InvalidOperationException>(() => client.IsMessageComplete);
-                    Assert.Throws<PlatformNotSupportedException>(() => client.NumberOfServerInstances);
-                }
-            }
-        }
     }
 
+    [ActiveIssue(22271, TargetFrameworkMonikers.Uap)]
     public class NamedPipeTest_Simple_ServerInOutWrite_ClientInOutRead : NamedPipeTest_Simple
     {
         protected override NamedPipePair CreateNamedPipePair(PipeOptions serverOptions, PipeOptions clientOptions)
@@ -756,16 +778,9 @@ namespace System.IO.Pipes.Tests
             ret.writeToServer = true;
             return ret;
         }
-
-        [Fact]
-        public override async Task OperationsOnDisconnectedClient()
-        {
-            // Any reads to the client will wait indefinitely on Unix regardless of the disconnected server
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                await base.OperationsOnDisconnectedClient();
-        }
     }
 
+    [ActiveIssue(22271, TargetFrameworkMonikers.Uap)]
     public class NamedPipeTest_Simple_ServerInOut_ClientIn : NamedPipeTest_Simple
     {
         protected override NamedPipePair CreateNamedPipePair(PipeOptions serverOptions, PipeOptions clientOptions)
@@ -779,6 +794,7 @@ namespace System.IO.Pipes.Tests
         }
     }
 
+    [ActiveIssue(22271, TargetFrameworkMonikers.Uap)]
     public class NamedPipeTest_Simple_ServerInOut_ClientOut : NamedPipeTest_Simple
     {
         protected override NamedPipePair CreateNamedPipePair(PipeOptions serverOptions, PipeOptions clientOptions)
@@ -792,6 +808,7 @@ namespace System.IO.Pipes.Tests
         }
     }
 
+    [ActiveIssue(22271, TargetFrameworkMonikers.Uap)]
     public class NamedPipeTest_Simple_ServerOut_ClientIn : NamedPipeTest_Simple
     {
         protected override NamedPipePair CreateNamedPipePair(PipeOptions serverOptions, PipeOptions clientOptions)
@@ -805,6 +822,7 @@ namespace System.IO.Pipes.Tests
         }
     }
 
+    [ActiveIssue(22271, TargetFrameworkMonikers.Uap)]
     public class NamedPipeTest_Simple_ServerIn_ClientOut : NamedPipeTest_Simple
     {
         protected override NamedPipePair CreateNamedPipePair(PipeOptions serverOptions, PipeOptions clientOptions)
@@ -817,5 +835,5 @@ namespace System.IO.Pipes.Tests
             return ret;
         }
     }
-      
+
 }

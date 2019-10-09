@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 
@@ -29,10 +30,10 @@ namespace MockInterop01.Impl
     {
         public object DoSomething(params string[] ary)
         { return null; }
-        
+
         public object Register(ref object p)
-        { 
-            return p; 
+        {
+            return p;
         }
         public void UnRegister(object o)
         {
@@ -41,8 +42,8 @@ namespace MockInterop01.Impl
         public void LibFunc(decimal p1, DateTime p2)
         {
         }
-    }   
-      
+    }
+
     public class EventImpl : IEventEvent
     {
         public event EventDele01 OnEvent01;

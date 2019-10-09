@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -15,7 +16,7 @@ namespace System.Linq.Parallel
 {
     /// <summary>
     /// Inlined aggregations for summing up primitives (int, long, float, double, decimal), as
-    /// well as the nullable versions of each (int?, long?, float?, double?, decimal?). 
+    /// well as the nullable versions of each (int?, long?, float?, double?, decimal?).
     /// </summary>
     internal sealed class IntSumAggregationOperator : InlinedAggregationOperator<int, int, int>
     {
@@ -37,7 +38,7 @@ namespace System.Linq.Parallel
 
         protected override int InternalAggregate(ref Exception singularExceptionToThrow)
         {
-            // Because the final reduction is typically much cheaper than the intermediate 
+            // Because the final reduction is typically much cheaper than the intermediate
             // reductions over the individual partitions, and because each parallel partition
             // will do a lot of work to produce a single output element, we prefer to turn off
             // pipelining, and process the final reductions serially.

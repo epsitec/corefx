@@ -1,12 +1,11 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Microsoft.Win32.SafeHandles;
-using System;
-using System.IO;
 using Xunit;
 
-namespace System.IO.FileSystem.Tests
+namespace System.IO.Tests
 {
     public class FileStream_ctor_sfh_fa_buffer : FileStream_ctor_sfh_fa
     {
@@ -20,13 +19,29 @@ namespace System.IO.FileSystem.Tests
             return new FileStream(handle, access, bufferSize);
         }
 
-        [Fact]
-        public void InvalidBufferSizeThrows()
+
+        [Theory,
+            InlineData(0),
+            InlineData(-1)]
+        [ActiveIssue(31909, TargetFrameworkMonikers.Uap)]
+        public void InvalidBufferSize_Throws(int size)
         {
-            using (FileStream fs = new FileStream(GetTestFilePath(), FileMode.Create))
+            using (var handle = new SafeFileHandle(new IntPtr(1), ownsHandle: false))
             {
-                Assert.Throws<ArgumentOutOfRangeException>("bufferSize", () => CreateFileStream(fs.SafeFileHandle, FileAccess.Read, -1));
-                Assert.Throws<ArgumentOutOfRangeException>("bufferSize", () => CreateFileStream(fs.SafeFileHandle, FileAccess.Read, 0));
+                AssertExtensions.Throws<ArgumentOutOfRangeException>("bufferSize", () => CreateFileStream(handle, FileAccess.Read, size));
+            }
+        }
+
+        [Fact]
+        [ActiveIssue(31909, TargetFrameworkMonikers.Uap)]
+        public void InvalidBufferSize_DoesNotCloseHandle()
+        {
+            using (var handle = new SafeFileHandle(new IntPtr(1), ownsHandle: false))
+            {
+                Assert.Throws<ArgumentOutOfRangeException>(() => CreateFileStream(handle, FileAccess.Read, -1));
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                Assert.False(handle.IsClosed);
             }
         }
 

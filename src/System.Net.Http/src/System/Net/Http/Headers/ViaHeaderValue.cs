@@ -1,8 +1,9 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
+using System.IO;
 using System.Text;
 
 namespace System.Net.Http.Headers
@@ -46,18 +47,18 @@ namespace System.Net.Http.Headers
 
         public ViaHeaderValue(string protocolVersion, string receivedBy, string protocolName, string comment)
         {
-            HeaderUtilities.CheckValidToken(protocolVersion, "protocolVersion");
+            HeaderUtilities.CheckValidToken(protocolVersion, nameof(protocolVersion));
             CheckReceivedBy(receivedBy);
 
             if (!string.IsNullOrEmpty(protocolName))
             {
-                HeaderUtilities.CheckValidToken(protocolName, "protocolName");
+                HeaderUtilities.CheckValidToken(protocolName, nameof(protocolName));
                 _protocolName = protocolName;
             }
 
             if (!string.IsNullOrEmpty(comment))
             {
-                HeaderUtilities.CheckValidComment(comment, "comment");
+                HeaderUtilities.CheckValidComment(comment, nameof(comment));
                 _comment = comment;
             }
 
@@ -71,7 +72,7 @@ namespace System.Net.Http.Headers
 
         private ViaHeaderValue(ViaHeaderValue source)
         {
-            Contract.Requires(source != null);
+            Debug.Assert(source != null);
 
             _protocolName = source._protocolName;
             _protocolVersion = source._protocolVersion;
@@ -81,7 +82,7 @@ namespace System.Net.Http.Headers
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = StringBuilderCache.Acquire();
 
             if (!string.IsNullOrEmpty(_protocolName))
             {
@@ -99,7 +100,7 @@ namespace System.Net.Http.Headers
                 sb.Append(_comment);
             }
 
-            return sb.ToString();
+            return StringBuilderCache.GetStringAndRelease(sb);
         }
 
         public override bool Equals(object obj)
@@ -159,7 +160,7 @@ namespace System.Net.Http.Headers
 
         internal static int GetViaLength(string input, int startIndex, out object parsedValue)
         {
-            Contract.Requires(startIndex >= 0);
+            Debug.Assert(startIndex >= 0);
 
             parsedValue = null;
 
@@ -174,7 +175,7 @@ namespace System.Net.Http.Headers
             int current = GetProtocolEndIndex(input, startIndex, out protocolName, out protocolVersion);
 
             // If we reached the end of the string after reading protocolName/Version we return (we expect at least
-            // <receivedBy> to follow). If reading protocolName/Version read 0 bytes, we return. 
+            // <receivedBy> to follow). If reading protocolName/Version read 0 bytes, we return.
             if ((current == startIndex) || (current == input.Length))
             {
                 return 0;
@@ -289,7 +290,7 @@ namespace System.Net.Http.Headers
         {
             if (string.IsNullOrEmpty(receivedBy))
             {
-                throw new ArgumentException(SR.net_http_argument_empty_string, "receivedBy");
+                throw new ArgumentException(SR.net_http_argument_empty_string, nameof(receivedBy));
             }
 
             // 'receivedBy' can either be a host or a token. Since a token is a valid host, we only verify if the value
@@ -297,7 +298,7 @@ namespace System.Net.Http.Headers
             string host = null;
             if (HttpRuleParser.GetHostLength(receivedBy, 0, true, out host) != receivedBy.Length)
             {
-                throw new FormatException(string.Format(System.Globalization.CultureInfo.InvariantCulture, SR.net_http_headers_invalid_value, receivedBy));
+                throw new FormatException(SR.Format(System.Globalization.CultureInfo.InvariantCulture, SR.net_http_headers_invalid_value, receivedBy));
             }
         }
     }

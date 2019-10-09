@@ -1,13 +1,15 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
+using System.IO;
+using System.Text;
 
 namespace System.Net.Http.Headers
 {
-    // According to the RFC, in places where a "parameter" is required, the value is mandatory 
+    // According to the RFC, in places where a "parameter" is required, the value is mandatory
     // (e.g. Media-Type, Accept). However, we don't introduce a dedicated type for this.
     public class NameValueWithParametersHeaderValue : NameValueHeaderValue, ICloneable
     {
@@ -78,7 +80,11 @@ namespace System.Net.Http.Headers
 
         public override string ToString()
         {
-            return base.ToString() + NameValueHeaderValue.ToString(_parameters, ';', true);
+            string baseString = base.ToString();
+            StringBuilder sb = StringBuilderCache.Acquire();
+            sb.Append(baseString);
+            NameValueHeaderValue.ToString(_parameters, ';', true, sb);
+            return StringBuilderCache.GetStringAndRelease(sb);
         }
 
         public static new NameValueWithParametersHeaderValue Parse(string input)
@@ -105,8 +111,8 @@ namespace System.Net.Http.Headers
 
         internal static int GetNameValueWithParametersLength(string input, int startIndex, out object parsedValue)
         {
-            Contract.Requires(input != null);
-            Contract.Requires(startIndex >= 0);
+            Debug.Assert(input != null);
+            Debug.Assert(startIndex >= 0);
 
             parsedValue = null;
 

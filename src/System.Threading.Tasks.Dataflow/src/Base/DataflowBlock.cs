@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -13,13 +14,12 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
-using System.Security;
 using System.Threading.Tasks.Dataflow.Internal;
+
+#if USE_INTERNAL_THREADING
 using System.Threading.Tasks.Dataflow.Internal.Threading;
+#endif
 
 namespace System.Threading.Tasks.Dataflow
 {
@@ -40,11 +40,10 @@ namespace System.Threading.Tasks.Dataflow
             ITargetBlock<TOutput> target)
         {
             // Validate arguments
-            if (source == null) throw new ArgumentNullException("source");
-            if (target == null) throw new ArgumentNullException("target");
-            Contract.EndContractBlock();
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (target == null) throw new ArgumentNullException(nameof(target));
 
-            // This method exists purely to pass default DataflowLinkOptions 
+            // This method exists purely to pass default DataflowLinkOptions
             // to increase usability of the "90%" case.
             return source.LinkTo(target, DataflowLinkOptions.Default);
         }
@@ -83,11 +82,10 @@ namespace System.Threading.Tasks.Dataflow
             Predicate<TOutput> predicate)
         {
             // Validate arguments
-            if (source == null) throw new ArgumentNullException("source");
-            if (target == null) throw new ArgumentNullException("target");
-            if (linkOptions == null) throw new ArgumentNullException("linkOptions");
-            if (predicate == null) throw new ArgumentNullException("predicate");
-            Contract.EndContractBlock();
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (target == null) throw new ArgumentNullException(nameof(target));
+            if (linkOptions == null) throw new ArgumentNullException(nameof(linkOptions));
+            if (predicate == null) throw new ArgumentNullException(nameof(predicate));
 
             // Create the filter, which links to the real target, and then
             // link the real source to this intermediate filter.
@@ -111,12 +109,12 @@ namespace System.Threading.Tasks.Dataflow
             /// <summary>Initializes the filter passthrough.</summary>
             /// <param name="source">The source connected to this filter.</param>
             /// <param name="target">The target to which filtered messages should be passed.</param>
-            /// <param name="predicate">The predicate to run for each messsage.</param>
+            /// <param name="predicate">The predicate to run for each message.</param>
             internal FilteredLinkPropagator(ISourceBlock<T> source, ITargetBlock<T> target, Predicate<T> predicate)
             {
-                Contract.Requires(source != null, "Filtered link requires a source to filter on.");
-                Contract.Requires(target != null, "Filtered link requires a target to filter to.");
-                Contract.Requires(predicate != null, "Filtered link requires a predicate to filter with.");
+                Debug.Assert(source != null, "Filtered link requires a source to filter on.");
+                Debug.Assert(target != null, "Filtered link requires a target to filter to.");
+                Debug.Assert(predicate != null, "Filtered link requires a predicate to filter with.");
 
                 // Store the arguments
                 _source = source;
@@ -129,47 +127,18 @@ namespace System.Threading.Tasks.Dataflow
             /// <returns>true if the item passed the filter; otherwise, false.</returns>
             private bool RunPredicate(T item)
             {
-                Contract.Requires(_userProvidedPredicate != null, "User-provided predicate is required.");
+                Debug.Assert(_userProvidedPredicate != null, "User-provided predicate is required.");
 
-                return _userProvidedPredicate(item); // avoid state object allocation if execution context isn't needed
-            }
-
-            /// <summary>Manually closes over state necessary in FilteredLinkPropagator.</summary>
-            private sealed class PredicateContextState
-            {
-                /// <summary>The input to be filtered.</summary>
-                internal readonly T Input;
-                /// <summary>The predicate function.</summary>
-                internal readonly Predicate<T> Predicate;
-                /// <summary>The result of the filtering operation.</summary>
-                internal bool Output;
-
-                /// <summary>Initializes the predicate state.</summary>
-                /// <param name="input">The input to be filtered.</param>
-                /// <param name="predicate">The predicate function.</param>
-                internal PredicateContextState(T input, Predicate<T> predicate)
-                {
-                    Contract.Requires(predicate != null, "A predicate with which to filter is required.");
-                    this.Input = input;
-                    this.Predicate = predicate;
-                }
-
-                /// <summary>Runs the predicate function over the input and stores the result into the output.</summary>
-                internal void Run()
-                {
-                    Contract.Requires(Predicate != null, "Non-null predicate required");
-                    Output = Predicate(Input);
-                }
+                return _userProvidedPredicate(item);
             }
 
             /// <include file='XmlDocs/CommonXmlDocComments.xml' path='CommonXmlDocComments/Targets/Member[@name="OfferMessage"]/*' />
-            DataflowMessageStatus ITargetBlock<T>.OfferMessage(DataflowMessageHeader messageHeader, T messageValue, ISourceBlock<T> source, Boolean consumeToAccept)
+            DataflowMessageStatus ITargetBlock<T>.OfferMessage(DataflowMessageHeader messageHeader, T messageValue, ISourceBlock<T> source, bool consumeToAccept)
             {
                 // Validate arguments.  Some targets may have a null source, but FilteredLinkPropagator
                 // is an internal target that should only ever have source non-null.
-                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, "messageHeader");
-                if (source == null) throw new ArgumentNullException("source");
-                Contract.EndContractBlock();
+                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, nameof(messageHeader));
+                if (source == null) throw new ArgumentNullException(nameof(source));
 
                 // Run the filter.
                 bool passedFilter = RunPredicate(messageValue);
@@ -184,7 +153,7 @@ namespace System.Threading.Tasks.Dataflow
             }
 
             /// <include file='XmlDocs/CommonXmlDocComments.xml' path='CommonXmlDocComments/Sources/Member[@name="ConsumeMessage"]/*' />
-            T ISourceBlock<T>.ConsumeMessage(DataflowMessageHeader messageHeader, ITargetBlock<T> target, out Boolean messageConsumed)
+            T ISourceBlock<T>.ConsumeMessage(DataflowMessageHeader messageHeader, ITargetBlock<T> target, out bool messageConsumed)
             {
                 // This message should have only made it to the target if it passes the filter, so we shouldn't need to check again.
                 // The real source will also be doing verifications, so we don't need to validate args here.
@@ -247,7 +216,7 @@ namespace System.Threading.Tasks.Dataflow
                 /// <param name="filter">The filter to view.</param>
                 public DebugView(FilteredLinkPropagator<T> filter)
                 {
-                    Contract.Requires(filter != null, "Need a filter with which to construct the debug view.");
+                    Debug.Assert(filter != null, "Need a filter with which to construct the debug view.");
                     _filter = filter;
                 }
 
@@ -258,7 +227,7 @@ namespace System.Threading.Tasks.Dataflow
         #endregion
 
         #region Post and SendAsync
-        /// <summary>Posts an item to the <see cref="T:System.Threading.Tasks.Dataflow.ITargetBlock`1"/>.</summary>
+        /// <summary>Posts an item to the <see cref="System.Threading.Tasks.Dataflow.ITargetBlock{T}"/>.</summary>
         /// <typeparam name="TInput">Specifies the type of data accepted by the target block.</typeparam>
         /// <param name="target">The target block.</param>
         /// <param name="item">The item being offered to the target.</param>
@@ -266,17 +235,17 @@ namespace System.Threading.Tasks.Dataflow
         /// <remarks>
         /// This method will return once the target block has decided to accept or decline the item,
         /// but unless otherwise dictated by special semantics of the target block, it does not wait
-        /// for the item to actually be processed (for example, <see cref="T:System.Threading.Tasks.Dataflow.ActionBlock`1"/>
+        /// for the item to actually be processed (for example, <see cref="System.Threading.Tasks.Dataflow.ActionBlock{T}"/>
         /// will return from Post as soon as it has stored the posted item into its input queue).  From the perspective
-        /// of the block's processing, Post is asynchronous. For target blocks that support postponing offered messages, 
+        /// of the block's processing, Post is asynchronous. For target blocks that support postponing offered messages,
         /// or for blocks that may do more processing in their Post implementation, consider using
-        ///  <see cref="T:System.Threading.Tasks.Dataflow.DataflowBlock.SendAsync">SendAsync</see>, 
-        /// which will return immediately and will enable the target to postpone the posted message and later consume it 
+        /// <see cref="System.Threading.Tasks.Dataflow.DataflowBlock.SendAsync{TInput}(ITargetBlock{TInput}, TInput)">SendAsync</see>,
+        /// which will return immediately and will enable the target to postpone the posted message and later consume it
         /// after SendAsync returns.
         /// </remarks>
-        public static Boolean Post<TInput>(this ITargetBlock<TInput> target, TInput item)
+        public static bool Post<TInput>(this ITargetBlock<TInput> target, TInput item)
         {
-            if (target == null) throw new ArgumentNullException("target");
+            if (target == null) throw new ArgumentNullException(nameof(target));
             return target.OfferMessage(Common.SingleMessageHeader, item, source: null, consumeToAccept: false) == DataflowMessageStatus.Accepted;
         }
 
@@ -287,7 +256,7 @@ namespace System.Threading.Tasks.Dataflow
         /// <returns>
         /// A <see cref="System.Threading.Tasks.Task{Boolean}"/> that represents the asynchronous send.  If the target
         /// accepts and consumes the offered element during the call to SendAsync, upon return
-        /// from the call the resulting <see cref="System.Threading.Tasks.Task{Boolean}"/> will be completed and its <see cref="System.Threading.Tasks.Task{Boolean}.Result">Result</see> 
+        /// from the call the resulting <see cref="System.Threading.Tasks.Task{Boolean}"/> will be completed and its <see cref="System.Threading.Tasks.Task{Boolean}.Result">Result</see>
         /// property will return true.  If the target declines the offered element during the call, upon return from the call the resulting <see cref="System.Threading.Tasks.Task{Boolean}"/> will
         /// be completed and its <see cref="System.Threading.Tasks.Task{Boolean}.Result">Result</see> property will return false. If the target
         /// postpones the offered element, the element will be buffered until such time that the target consumes or releases it, at which
@@ -295,7 +264,7 @@ namespace System.Threading.Tasks.Dataflow
         /// never attempts to consume or release the message, the returned task will never complete.
         /// </returns>
         /// <exception cref="System.ArgumentNullException">The <paramref name="target"/> is null (Nothing in Visual Basic).</exception>
-        public static Task<Boolean> SendAsync<TInput>(this ITargetBlock<TInput> target, TInput item)
+        public static Task<bool> SendAsync<TInput>(this ITargetBlock<TInput> target, TInput item)
         {
             return SendAsync<TInput>(target, item, CancellationToken.None);
         }
@@ -309,7 +278,7 @@ namespace System.Threading.Tasks.Dataflow
         /// <para>
         /// A <see cref="System.Threading.Tasks.Task{Boolean}"/> that represents the asynchronous send.  If the target
         /// accepts and consumes the offered element during the call to SendAsync, upon return
-        /// from the call the resulting <see cref="System.Threading.Tasks.Task{Boolean}"/> will be completed and its <see cref="System.Threading.Tasks.Task{Boolean}.Result">Result</see> 
+        /// from the call the resulting <see cref="System.Threading.Tasks.Task{Boolean}"/> will be completed and its <see cref="System.Threading.Tasks.Task{Boolean}.Result">Result</see>
         /// property will return true.  If the target declines the offered element during the call, upon return from the call the resulting <see cref="System.Threading.Tasks.Task{Boolean}"/> will
         /// be completed and its <see cref="System.Threading.Tasks.Task{Boolean}.Result">Result</see> property will return false. If the target
         /// postpones the offered element, the element will be buffered until such time that the target consumes or releases it, at which
@@ -317,21 +286,20 @@ namespace System.Threading.Tasks.Dataflow
         /// never attempts to consume or release the message, the returned task will never complete.
         /// </para>
         /// <para>
-        /// If cancellation is requested before the target has successfully consumed the sent data, 
+        /// If cancellation is requested before the target has successfully consumed the sent data,
         /// the returned task will complete in the Canceled state and the data will no longer be available to the target.
         /// </para>
         /// </returns>
         /// <exception cref="System.ArgumentNullException">The <paramref name="target"/> is null (Nothing in Visual Basic).</exception>
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
-        public static Task<Boolean> SendAsync<TInput>(this ITargetBlock<TInput> target, TInput item, CancellationToken cancellationToken)
+        public static Task<bool> SendAsync<TInput>(this ITargetBlock<TInput> target, TInput item, CancellationToken cancellationToken)
         {
             // Validate arguments.  No validation necessary for item.
-            if (target == null) throw new ArgumentNullException("target");
-            Contract.EndContractBlock();
+            if (target == null) throw new ArgumentNullException(nameof(target));
 
             // Fast path check for cancellation
             if (cancellationToken.IsCancellationRequested)
-                return Common.CreateTaskFromCancellation<Boolean>(cancellationToken);
+                return Common.CreateTaskFromCancellation<bool>(cancellationToken);
 
             SendAsyncSource<TInput> source;
 
@@ -370,7 +338,7 @@ namespace System.Threading.Tasks.Dataflow
             {
                 // If the target throws from OfferMessage, return a faulted task
                 Common.StoreDataflowMessageValueIntoExceptionData(exc, item);
-                return Common.CreateTaskFromException<Boolean>(exc);
+                return Common.CreateTaskFromException<bool>(exc);
             }
 
             Debug.Assert(source != null, "The SendAsyncSource instance must have been constructed.");
@@ -384,7 +352,7 @@ namespace System.Threading.Tasks.Dataflow
         /// <remarks>This source must only be passed to a single target, and must only be used once.</remarks>
         [DebuggerDisplay("{DebuggerDisplayContent,nq}")]
         [DebuggerTypeProxy(typeof(SendAsyncSource<>.DebugView))]
-        private sealed class SendAsyncSource<TOutput> : TaskCompletionSource<Boolean>, ISourceBlock<TOutput>, IDebuggerDisplay
+        private sealed class SendAsyncSource<TOutput> : TaskCompletionSource<bool>, ISourceBlock<TOutput>, IDebuggerDisplay
         {
             /// <summary>The target to offer to.</summary>
             private readonly ITargetBlock<TOutput> _target;
@@ -403,7 +371,7 @@ namespace System.Threading.Tasks.Dataflow
             // is provided in the initial OfferToTarget call.  As such, unless a token is provided,
             // all synchronization related to cancellation will be avoided.  Once a token is provided,
             // the state transitions to REGISTERED.  If cancellation then is requested or if the target
-            // calls back to consume the message, the state will transition to COMPLETING prior to 
+            // calls back to consume the message, the state will transition to COMPLETING prior to
             // actually committing the action; if it can't transition to COMPLETING, then the action doesn't
             // take effect (e.g. if cancellation raced with the target consuming, such that the cancellation
             // action was able to transition to COMPLETING but the consumption wasn't, then ConsumeMessage
@@ -429,7 +397,7 @@ namespace System.Threading.Tasks.Dataflow
             /// <param name="cancellationToken">The cancellation token with which to cancel the send.</param>
             internal SendAsyncSource(ITargetBlock<TOutput> target, TOutput messageValue, CancellationToken cancellationToken)
             {
-                Contract.Requires(target != null, "A valid target to send to is required.");
+                Debug.Assert(target != null, "A valid target to send to is required.");
                 _target = target;
                 _messageValue = messageValue;
 
@@ -462,7 +430,7 @@ namespace System.Threading.Tasks.Dataflow
             /// <summary>Finalizer that completes the returned task if all references to this source are dropped.</summary>
             ~SendAsyncSource()
             {
-                // CompleteAsDeclined uses synchronization, which is dangerous for a finalizer 
+                // CompleteAsDeclined uses synchronization, which is dangerous for a finalizer
                 // during shutdown or appdomain unload.
                 if (!Environment.HasShutdownStarted)
                 {
@@ -487,7 +455,7 @@ namespace System.Threading.Tasks.Dataflow
             {
                 RunCompletionAction(state =>
                 {
-                    // The try/catch for ObjectDisposedException handles the case where the 
+                    // The try/catch for ObjectDisposedException handles the case where the
                     // user disposes of the returned task before we're done with it.
                     try { ((SendAsyncSource<TOutput>)state).TrySetResult(false); }
                     catch (ObjectDisposedException) { }
@@ -530,7 +498,7 @@ namespace System.Threading.Tasks.Dataflow
             [SuppressMessage("Microsoft.Usage", "CA1816:CallGCSuppressFinalizeCorrectly")]
             private void RunCompletionAction(Action<object> completionAction, object completionActionState, bool runAsync)
             {
-                Contract.Requires(completionAction != null, "Completion action to run is required.");
+                Debug.Assert(completionAction != null, "Completion action to run is required.");
 
                 // Suppress finalization.  Finalization is only required if the target drops a reference
                 // to the source before the source has completed, and here we're completing the source.
@@ -567,7 +535,7 @@ namespace System.Threading.Tasks.Dataflow
             }
 
             /// <summary>Cached delegate used to cancel a send in response to a cancellation request.</summary>
-            private readonly static Action<object> _cancellationCallback = CancellationHandler;
+            private static readonly Action<object> _cancellationCallback = CancellationHandler;
 
             /// <summary>Attempts to cancel the source passed as state in response to a cancellation request.</summary>
             /// <param name="state">
@@ -583,7 +551,7 @@ namespace System.Threading.Tasks.Dataflow
                         "If cancellation is in play, we must have already moved out of the NONE state.");
 
                     // Try to reserve completion, and if we can, complete as canceled.  Note that we can only
-                    // achieve cancellation when in the REGISTERED state, and not when in the RESERVED state, 
+                    // achieve cancellation when in the REGISTERED state, and not when in the RESERVED state,
                     // as if a target has reserved the message, we must allow the message to be consumed successfully.
                     if (source._cancellationState == CANCELLATION_STATE_REGISTERED && // fast check to avoid the interlocked if we can
                         Interlocked.CompareExchange(ref source._cancellationState, CANCELLATION_STATE_COMPLETING, CANCELLATION_STATE_REGISTERED) == CANCELLATION_STATE_REGISTERED)
@@ -655,12 +623,11 @@ namespace System.Threading.Tasks.Dataflow
             }
 
             /// <summary>Called by the target to consume the buffered message.</summary>
-            TOutput ISourceBlock<TOutput>.ConsumeMessage(DataflowMessageHeader messageHeader, ITargetBlock<TOutput> target, out Boolean messageConsumed)
+            TOutput ISourceBlock<TOutput>.ConsumeMessage(DataflowMessageHeader messageHeader, ITargetBlock<TOutput> target, out bool messageConsumed)
             {
                 // Validate arguments
-                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, "messageHeader");
-                if (target == null) throw new ArgumentNullException("target");
-                Contract.EndContractBlock();
+                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, nameof(messageHeader));
+                if (target == null) throw new ArgumentNullException(nameof(target));
 
                 // If the task has already completed, there's nothing to consume.  This could happen if
                 // cancellation was already requested and completed the task as a result.
@@ -682,8 +649,8 @@ namespace System.Threading.Tasks.Dataflow
                         curState == CANCELLATION_STATE_RESERVED || curState == CANCELLATION_STATE_COMPLETING,
                         "The current cancellation state is not valid.");
 
-                    // If we're not dealing with cancellation, then if we're currently registered or reserved, try to transition 
-                    // to completing. If we're able to, allow the message to be consumed, and we're done.  At this point, we 
+                    // If we're not dealing with cancellation, then if we're currently registered or reserved, try to transition
+                    // to completing. If we're able to, allow the message to be consumed, and we're done.  At this point, we
                     // support transitioning out of REGISTERED or RESERVED.
                     if (curState == CANCELLATION_STATE_NONE || // no synchronization necessary if there's no cancellation
                         (curState != CANCELLATION_STATE_COMPLETING && // fast check to avoid unnecessary synchronization
@@ -704,9 +671,8 @@ namespace System.Threading.Tasks.Dataflow
             bool ISourceBlock<TOutput>.ReserveMessage(DataflowMessageHeader messageHeader, ITargetBlock<TOutput> target)
             {
                 // Validate arguments
-                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, "messageHeader");
-                if (target == null) throw new ArgumentNullException("target");
-                Contract.EndContractBlock();
+                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, nameof(messageHeader));
+                if (target == null) throw new ArgumentNullException(nameof(target));
 
                 // If the task has already completed, such as due to cancellation, there's nothing to reserve.
                 if (Task.IsCompleted) return false;
@@ -722,9 +688,8 @@ namespace System.Threading.Tasks.Dataflow
             void ISourceBlock<TOutput>.ReleaseReservation(DataflowMessageHeader messageHeader, ITargetBlock<TOutput> target)
             {
                 // Validate arguments
-                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, "messageHeader");
-                if (target == null) throw new ArgumentNullException("target");
-                Contract.EndContractBlock();
+                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, nameof(messageHeader));
+                if (target == null) throw new ArgumentNullException(nameof(target));
 
                 // If this is not the message we posted, bail
                 if (messageHeader.Id != Common.SINGLE_MESSAGE_ID)
@@ -784,7 +749,7 @@ namespace System.Threading.Tasks.Dataflow
                 /// <param name="source">The source to view.</param>
                 public DebugView(SendAsyncSource<TOutput> source)
                 {
-                    Contract.Requires(source != null, "Need a source with which to construct the debug view.");
+                    Debug.Assert(source != null, "Need a source with which to construct the debug view.");
                     _source = source;
                 }
 
@@ -801,7 +766,7 @@ namespace System.Threading.Tasks.Dataflow
         #region TryReceive, ReceiveAsync, and Receive
         #region TryReceive
         /// <summary>
-        /// Attempts to synchronously receive an item from the <see cref="T:System.Threading.Tasks.Dataflow.ISourceBlock`1"/>.
+        /// Attempts to synchronously receive an item from the <see cref="System.Threading.Tasks.Dataflow.ISourceBlock{T}"/>.
         /// </summary>
         /// <param name="source">The source from which to receive.</param>
         /// <param name="item">The item received from the source.</param>
@@ -812,8 +777,7 @@ namespace System.Threading.Tasks.Dataflow
         /// </remarks>
         public static bool TryReceive<TOutput>(this IReceivableSourceBlock<TOutput> source, out TOutput item)
         {
-            if (source == null) throw new ArgumentNullException("source");
-            Contract.EndContractBlock();
+            if (source == null) throw new ArgumentNullException(nameof(source));
 
             return source.TryReceive(null, out item);
         }
@@ -864,7 +828,7 @@ namespace System.Threading.Tasks.Dataflow
         /// </returns>
         /// <exception cref="System.ArgumentNullException">The <paramref name="source"/> is null (Nothing in Visual Basic).</exception>
         /// <exception cref="System.ArgumentOutOfRangeException">
-        /// timeout is a negative number other than -1 milliseconds, which represents an infinite time-out -or- timeout is greater than <see cref="System.Int32.MaxValue"/>.
+        /// timeout is a negative number other than -1 milliseconds, which represents an infinite time-out -or- timeout is greater than <see cref="int.MaxValue"/>.
         /// </exception>
         public static Task<TOutput> ReceiveAsync<TOutput>(
             this ISourceBlock<TOutput> source, TimeSpan timeout)
@@ -885,7 +849,7 @@ namespace System.Threading.Tasks.Dataflow
         /// </returns>
         /// <exception cref="System.ArgumentNullException">The <paramref name="source"/> is null (Nothing in Visual Basic).</exception>
         /// <exception cref="System.ArgumentOutOfRangeException">
-        /// timeout is a negative number other than -1 milliseconds, which represents an infinite time-out -or- timeout is greater than <see cref="System.Int32.MaxValue"/>.
+        /// timeout is a negative number other than -1 milliseconds, which represents an infinite time-out -or- timeout is greater than <see cref="int.MaxValue"/>.
         /// </exception>
         public static Task<TOutput> ReceiveAsync<TOutput>(
             this ISourceBlock<TOutput> source, TimeSpan timeout, CancellationToken cancellationToken)
@@ -893,8 +857,8 @@ namespace System.Threading.Tasks.Dataflow
             // Validate arguments
 
 
-            if (source == null) throw new ArgumentNullException("source");
-            if (!Common.IsValidTimeout(timeout)) throw new ArgumentOutOfRangeException("timeout", SR.ArgumentOutOfRange_NeedNonNegOrNegative1);
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (!Common.IsValidTimeout(timeout)) throw new ArgumentOutOfRangeException(nameof(timeout), SR.ArgumentOutOfRange_NeedNonNegOrNegative1);
 
             // Return the task representing the core receive operation
             return ReceiveCore(source, true, timeout, cancellationToken);
@@ -939,7 +903,7 @@ namespace System.Threading.Tasks.Dataflow
         /// <param name="timeout">A <see cref="System.TimeSpan"/> that represents the number of milliseconds to wait, or a TimeSpan that represents -1 milliseconds to wait indefinitely.</param>
         /// <returns>The received item.</returns>
         /// <exception cref="System.ArgumentOutOfRangeException">
-        /// timeout is a negative number other than -1 milliseconds, which represents an infinite time-out -or- timeout is greater than <see cref="System.Int32.MaxValue"/>.
+        /// timeout is a negative number other than -1 milliseconds, which represents an infinite time-out -or- timeout is greater than <see cref="int.MaxValue"/>.
         /// </exception>
         /// <exception cref="System.ArgumentNullException">The <paramref name="source"/> is null (Nothing in Visual Basic).</exception>
         /// <exception cref="System.InvalidOperationException">No item could be received from the source.</exception>
@@ -962,7 +926,7 @@ namespace System.Threading.Tasks.Dataflow
         /// <returns>The received item.</returns>
         /// <exception cref="System.ArgumentNullException">The <paramref name="source"/> is null (Nothing in Visual Basic).</exception>
         /// <exception cref="System.ArgumentOutOfRangeException">
-        /// timeout is a negative number other than -1 milliseconds, which represents an infinite time-out -or- timeout is greater than <see cref="System.Int32.MaxValue"/>.
+        /// timeout is a negative number other than -1 milliseconds, which represents an infinite time-out -or- timeout is greater than <see cref="int.MaxValue"/>.
         /// </exception>
         /// <exception cref="System.InvalidOperationException">No item could be received from the source.</exception>
         /// <exception cref="System.TimeoutException">The specified timeout expired before an item was received from the source.</exception>
@@ -975,8 +939,8 @@ namespace System.Threading.Tasks.Dataflow
             this ISourceBlock<TOutput> source, TimeSpan timeout, CancellationToken cancellationToken)
         {
             // Validate arguments
-            if (source == null) throw new ArgumentNullException("source");
-            if (!Common.IsValidTimeout(timeout)) throw new ArgumentOutOfRangeException("timeout", SR.ArgumentOutOfRange_NeedNonNegOrNegative1);
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (!Common.IsValidTimeout(timeout)) throw new ArgumentOutOfRangeException(nameof(timeout), SR.ArgumentOutOfRange_NeedNonNegOrNegative1);
 
             // Do fast path checks for both cancellation and data already existing.
             cancellationToken.ThrowIfCancellationRequested();
@@ -988,7 +952,7 @@ namespace System.Threading.Tasks.Dataflow
             }
 
             // Get a TCS to represent the receive operation and wait for it to complete.
-            // If it completes successfully, return the result. Otherwise, throw the 
+            // If it completes successfully, return the result. Otherwise, throw the
             // original inner exception representing the cause.  This could be an OCE.
             Task<TOutput> task = ReceiveCore(source, false, timeout, cancellationToken);
             try
@@ -998,7 +962,7 @@ namespace System.Threading.Tasks.Dataflow
             catch
             {
                 // Special case cancellation in order to ensure the exception contains the token.
-                // The public TrySetCanceled, used by ReceiveCore, is parameterless and doesn't 
+                // The public TrySetCanceled, used by ReceiveCore, is parameterless and doesn't
                 // accept the token to use.  Thus the exception that we're catching here
                 // won't contain the cancellation token we want propagated.
                 if (task.IsCanceled) cancellationToken.ThrowIfCancellationRequested();
@@ -1021,7 +985,7 @@ namespace System.Threading.Tasks.Dataflow
         private static Task<TOutput> ReceiveCore<TOutput>(
             this ISourceBlock<TOutput> source, bool attemptTryReceive, TimeSpan timeout, CancellationToken cancellationToken)
         {
-            Contract.Requires(source != null, "Need a source from which to receive.");
+            Debug.Assert(source != null, "Need a source from which to receive.");
 
             // If cancellation has been requested, we're done before we've even started, cancel this receive.
             if (cancellationToken.IsCancellationRequested)
@@ -1093,7 +1057,7 @@ namespace System.Threading.Tasks.Dataflow
             // Keep cancellation registrations inside the try/catch in case the underlying CTS is disposed in which case an exception is thrown
             try
             {
-                // Create a cancellation token that will be canceled when either the provided token 
+                // Create a cancellation token that will be canceled when either the provided token
                 // is canceled or the source block completes.
                 if (cancellationToken.CanBeCanceled)
                 {
@@ -1109,7 +1073,7 @@ namespace System.Threading.Tasks.Dataflow
                 // Note that there's a potential race here, in that the cleanup delegate could be executed
                 // from the timer before the timer variable is set, but that's ok, because then timer variable
                 // will just show up as null in the cleanup and there will be nothing to dispose (nor will anything
-                // need to be disposed, since it's the timer that fired.  Timer.Dispose is also thread-safe to be 
+                // need to be disposed, since it's the timer that fired.  Timer.Dispose is also thread-safe to be
                 // called multiple times concurrently.)
                 if (millisecondsTimeout > 0)
                 {
@@ -1156,7 +1120,7 @@ namespace System.Threading.Tasks.Dataflow
         {
             /// <summary>Cached delegate used in ReceiveCoreByLinking on the created timer.  Passed the ReceiveTarget as the argument.</summary>
             /// <remarks>The C# compiler will not cache this delegate by default due to it being a generic method on a non-generic class.</remarks>
-            internal readonly static TimerCallback CachedLinkingTimerCallback = state =>
+            internal static readonly TimerCallback CachedLinkingTimerCallback = state =>
             {
                 var receiveTarget = (ReceiveTarget<T>)state;
                 receiveTarget.TryCleanupAndComplete(ReceiveCoreByLinkingCleanupReason.Timer);
@@ -1164,7 +1128,7 @@ namespace System.Threading.Tasks.Dataflow
 
             /// <summary>Cached delegate used in ReceiveCoreByLinking on the cancellation token. Passed the ReceiveTarget as the state argument.</summary>
             /// <remarks>The C# compiler will not cache this delegate by default due to it being a generic method on a non-generic class.</remarks>
-            internal readonly static Action<object> CachedLinkingCancellationCallback = state =>
+            internal static readonly Action<object> CachedLinkingCancellationCallback = state =>
             {
                 var receiveTarget = (ReceiveTarget<T>)state;
                 receiveTarget.TryCleanupAndComplete(ReceiveCoreByLinkingCleanupReason.Cancellation);
@@ -1196,12 +1160,11 @@ namespace System.Threading.Tasks.Dataflow
 
             /// <summary>Offers a message to be used to complete the TaskCompletionSource.</summary>
             [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
-            DataflowMessageStatus ITargetBlock<T>.OfferMessage(DataflowMessageHeader messageHeader, T messageValue, ISourceBlock<T> source, Boolean consumeToAccept)
+            DataflowMessageStatus ITargetBlock<T>.OfferMessage(DataflowMessageHeader messageHeader, T messageValue, ISourceBlock<T> source, bool consumeToAccept)
             {
                 // Validate arguments
-                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, "messageHeader");
-                if (source == null && consumeToAccept) throw new ArgumentException(SR.Argument_CantConsumeFromANullSource, "consumeToAccept");
-                Contract.EndContractBlock();
+                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, nameof(messageHeader));
+                if (source == null && consumeToAccept) throw new ArgumentException(SR.Argument_CantConsumeFromANullSource, nameof(consumeToAccept));
 
                 DataflowMessageStatus status = DataflowMessageStatus.NotAvailable;
 
@@ -1229,7 +1192,7 @@ namespace System.Threading.Tasks.Dataflow
                     }
                     catch (Exception exc)
                     {
-                        // An error occured.  Take ourselves out of the game.
+                        // An error occurred.  Take ourselves out of the game.
                         status = DataflowMessageStatus.DecliningPermanently;
                         Common.StoreDataflowMessageValueIntoExceptionData(exc, messageValue);
                         _receivedException = exc;
@@ -1251,7 +1214,7 @@ namespace System.Threading.Tasks.Dataflow
             }
 
             /// <summary>
-            /// Attempts to reserve the right to cleanup and complete, and if successfully, 
+            /// Attempts to reserve the right to cleanup and complete, and if successfully,
             /// continues to cleanup and complete.
             /// </summary>
             /// <param name="reason">The reason we're completing and cleaning up.</param>
@@ -1375,12 +1338,11 @@ namespace System.Threading.Tasks.Dataflow
                         goto case ReceiveCoreByLinkingCleanupReason.SourceProtocolError;
                     case ReceiveCoreByLinkingCleanupReason.SourceProtocolError:
                     case ReceiveCoreByLinkingCleanupReason.ErrorDuringCleanup:
-                        Debug.Assert(_receivedException != null, "We need an exception with which to fault the task.");
                         System.Threading.Tasks.Task.Factory.StartNew(state =>
                         {
                             // Complete with the received exception
                             var target = (ReceiveTarget<T>)state;
-                            try { target.TrySetException(target._receivedException ?? new Exception()); }
+                            try { target.TrySetException(target._receivedException ?? new InvalidOperationException(SR.InvalidOperation_ErrorDuringCleanup)); }
                             catch (ObjectDisposedException) { /* benign race if returned task is already disposed */ }
                         }, this, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Default);
                         break;
@@ -1431,16 +1393,16 @@ namespace System.Threading.Tasks.Dataflow
 
         #region OutputAvailableAsync
         /// <summary>
-        /// Provides a <see cref="System.Threading.Tasks.Task{TResult}"/> 
+        /// Provides a <see cref="System.Threading.Tasks.Task{TResult}"/>
         /// that asynchronously monitors the source for available output.
         /// </summary>
         /// <typeparam name="TOutput">Specifies the type of data contained in the source.</typeparam>
         /// <param name="source">The source to monitor.</param>
         /// <returns>
         /// A <see cref="System.Threading.Tasks.Task{Boolean}"/> that informs of whether and when
-        /// more output is available.  When the task completes, if its <see cref="System.Threading.Tasks.Task{Boolean}.Result"/> is true, more output 
-        /// is available in the source (though another consumer of the source may retrieve the data).  
-        /// If it returns false, more output is not and will never be available, due to the source 
+        /// more output is available.  When the task completes, if its <see cref="System.Threading.Tasks.Task{Boolean}.Result"/> is true, more output
+        /// is available in the source (though another consumer of the source may retrieve the data).
+        /// If it returns false, more output is not and will never be available, due to the source
         /// completing prior to output being available.
         /// </returns>
         public static Task<bool> OutputAvailableAsync<TOutput>(this ISourceBlock<TOutput> source)
@@ -1449,7 +1411,7 @@ namespace System.Threading.Tasks.Dataflow
         }
 
         /// <summary>
-        /// Provides a <see cref="System.Threading.Tasks.Task{TResult}"/> 
+        /// Provides a <see cref="System.Threading.Tasks.Task{TResult}"/>
         /// that asynchronously monitors the source for available output.
         /// </summary>
         /// <typeparam name="TOutput">Specifies the type of data contained in the source.</typeparam>
@@ -1457,9 +1419,9 @@ namespace System.Threading.Tasks.Dataflow
         /// <param name="cancellationToken">The cancellation token with which to cancel the asynchronous operation.</param>
         /// <returns>
         /// A <see cref="System.Threading.Tasks.Task{Boolean}"/> that informs of whether and when
-        /// more output is available.  When the task completes, if its <see cref="System.Threading.Tasks.Task{Boolean}.Result"/> is true, more output 
-        /// is available in the source (though another consumer of the source may retrieve the data).  
-        /// If it returns false, more output is not and will never be available, due to the source 
+        /// more output is available.  When the task completes, if its <see cref="System.Threading.Tasks.Task{Boolean}.Result"/> is true, more output
+        /// is available in the source (though another consumer of the source may retrieve the data).
+        /// If it returns false, more output is not and will never be available, due to the source
         /// completing prior to output being available.
         /// </returns>
         [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
@@ -1469,8 +1431,7 @@ namespace System.Threading.Tasks.Dataflow
             this ISourceBlock<TOutput> source, CancellationToken cancellationToken)
         {
             // Validate arguments
-            if (source == null) throw new ArgumentNullException("source");
-            Contract.EndContractBlock();
+            if (source == null) throw new ArgumentNullException(nameof(source));
 
             // Fast path for cancellation
             if (cancellationToken.IsCancellationRequested)
@@ -1537,7 +1498,7 @@ namespace System.Threading.Tasks.Dataflow
             /// Cached continuation delegate that unregisters from cancellation and
             /// marshals the antecedent's result to the return value.
             /// </summary>
-            internal readonly static Func<Task<bool>, object, bool> s_handleCompletion = (antecedent, state) =>
+            internal static readonly Func<Task<bool>, object, bool> s_handleCompletion = (antecedent, state) =>
             {
                 var target = state as OutputAvailableAsyncTarget<T>;
                 Debug.Assert(target != null, "Expected non-null target");
@@ -1547,9 +1508,9 @@ namespace System.Threading.Tasks.Dataflow
 
             /// <summary>
             /// Cached delegate that cancels the target and unlinks the target from the source.
-            /// Expects an OutputAvailableAsyncTarget as the state argument. 
+            /// Expects an OutputAvailableAsyncTarget as the state argument.
             /// </summary>
-            internal readonly static Action<object> s_cancelAndUnlink = CancelAndUnlink;
+            internal static readonly Action<object> s_cancelAndUnlink = CancelAndUnlink;
 
             /// <summary>Cancels the target and unlinks the target from the source.</summary>
             /// <param name="state">An OutputAvailableAsyncTarget.</param>
@@ -1587,11 +1548,10 @@ namespace System.Threading.Tasks.Dataflow
             internal CancellationTokenRegistration _ctr;
 
             /// <summary>Completes the task when offered a message (but doesn't consume the message).</summary>
-            DataflowMessageStatus ITargetBlock<T>.OfferMessage(DataflowMessageHeader messageHeader, T messageValue, ISourceBlock<T> source, Boolean consumeToAccept)
+            DataflowMessageStatus ITargetBlock<T>.OfferMessage(DataflowMessageHeader messageHeader, T messageValue, ISourceBlock<T> source, bool consumeToAccept)
             {
-                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, "messageHeader");
-                if (source == null) throw new ArgumentNullException("source");
-                Contract.EndContractBlock();
+                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, nameof(messageHeader));
+                if (source == null) throw new ArgumentNullException(nameof(source));
 
                 TrySetResult(true);
                 return DataflowMessageStatus.DecliningPermanently;
@@ -1606,8 +1566,7 @@ namespace System.Threading.Tasks.Dataflow
             /// <include file='XmlDocs/CommonXmlDocComments.xml' path='CommonXmlDocComments/Blocks/Member[@name="Fault"]/*' />
             void IDataflowBlock.Fault(Exception exception)
             {
-                if (exception == null) throw new ArgumentNullException("exception");
-                Contract.EndContractBlock();
+                if (exception == null) throw new ArgumentNullException(nameof(exception));
                 TrySetResult(false);
             }
 
@@ -1646,9 +1605,8 @@ namespace System.Threading.Tasks.Dataflow
         public static IPropagatorBlock<TInput, TOutput> Encapsulate<TInput, TOutput>(
             ITargetBlock<TInput> target, ISourceBlock<TOutput> source)
         {
-            if (target == null) throw new ArgumentNullException("target");
-            if (source == null) throw new ArgumentNullException("source");
-            Contract.EndContractBlock();
+            if (target == null) throw new ArgumentNullException(nameof(target));
+            if (source == null) throw new ArgumentNullException(nameof(source));
             return new EncapsulatingPropagator<TInput, TOutput>(target, source);
         }
 
@@ -1658,14 +1616,14 @@ namespace System.Threading.Tasks.Dataflow
         private sealed class EncapsulatingPropagator<TInput, TOutput> : IPropagatorBlock<TInput, TOutput>, IReceivableSourceBlock<TOutput>, IDebuggerDisplay
         {
             /// <summary>The target half.</summary>
-            private ITargetBlock<TInput> _target;
+            private readonly ITargetBlock<TInput> _target;
             /// <summary>The source half.</summary>
-            private ISourceBlock<TOutput> _source;
+            private readonly ISourceBlock<TOutput> _source;
 
             public EncapsulatingPropagator(ITargetBlock<TInput> target, ISourceBlock<TOutput> source)
             {
-                Contract.Requires(target != null, "The target should never be null; this should be checked by all internal usage.");
-                Contract.Requires(source != null, "The source should never be null; this should be checked by all internal usage.");
+                Debug.Assert(target != null, "The target should never be null; this should be checked by all internal usage.");
+                Debug.Assert(source != null, "The source should never be null; this should be checked by all internal usage.");
                 _target = target;
                 _source = source;
             }
@@ -1679,8 +1637,7 @@ namespace System.Threading.Tasks.Dataflow
             /// <include file='XmlDocs/CommonXmlDocComments.xml' path='CommonXmlDocComments/Blocks/Member[@name="Fault"]/*' />
             void IDataflowBlock.Fault(Exception exception)
             {
-                if (exception == null) throw new ArgumentNullException("exception");
-                Contract.EndContractBlock();
+                if (exception == null) throw new ArgumentNullException(nameof(exception));
 
                 _target.Fault(exception);
             }
@@ -1720,7 +1677,7 @@ namespace System.Threading.Tasks.Dataflow
             }
 
             /// <include file='XmlDocs/CommonXmlDocComments.xml' path='CommonXmlDocComments/Sources/Member[@name="ConsumeMessage"]/*' />
-            public TOutput ConsumeMessage(DataflowMessageHeader messageHeader, ITargetBlock<TOutput> target, out Boolean messageConsumed)
+            public TOutput ConsumeMessage(DataflowMessageHeader messageHeader, ITargetBlock<TOutput> target, out bool messageConsumed)
             {
                 return _source.ConsumeMessage(messageHeader, target, out messageConsumed);
             }
@@ -1764,7 +1721,7 @@ namespace System.Threading.Tasks.Dataflow
                 /// <param name="propagator">The propagator being debugged.</param>
                 public DebugView(EncapsulatingPropagator<TInput, TOutput> propagator)
                 {
-                    Contract.Requires(propagator != null, "Need a block with which to construct the debug view.");
+                    Debug.Assert(propagator != null, "Need a block with which to construct the debug view.");
                     _propagator = propagator;
                 }
 
@@ -1788,8 +1745,8 @@ namespace System.Threading.Tasks.Dataflow
         /// <returns>
         /// <para>
         /// A <see cref="System.Threading.Tasks.Task{Int32}"/> that represents the asynchronous choice.
-        /// If both sources are completed prior to the choice completing, 
-        /// the resulting task will be canceled. When one of the sources has data available and successfully propagates 
+        /// If both sources are completed prior to the choice completing,
+        /// the resulting task will be canceled. When one of the sources has data available and successfully propagates
         /// it to the choice, the resulting task will complete when the handler completes: if the handler throws an exception,
         /// the task will end in the <see cref="System.Threading.Tasks.TaskStatus.Faulted"/> state containing the unhandled exception, otherwise the task
         /// will end with its <see cref="System.Threading.Tasks.Task{Int32}.Result"/> set to either 0 or 1 to
@@ -1803,7 +1760,7 @@ namespace System.Threading.Tasks.Dataflow
         /// <exception cref="System.ArgumentNullException">The <paramref name="action1"/> is null (Nothing in Visual Basic).</exception>
         /// <exception cref="System.ArgumentNullException">The <paramref name="source2"/> is null (Nothing in Visual Basic).</exception>
         /// <exception cref="System.ArgumentNullException">The <paramref name="action2"/> is null (Nothing in Visual Basic).</exception>
-        public static Task<Int32> Choose<T1, T2>(
+        public static Task<int> Choose<T1, T2>(
             ISourceBlock<T1> source1, Action<T1> action1,
             ISourceBlock<T2> source2, Action<T2> action2)
         {
@@ -1824,7 +1781,7 @@ namespace System.Threading.Tasks.Dataflow
         /// A <see cref="System.Threading.Tasks.Task{Int32}"/> that represents the asynchronous choice.
         /// If both sources are completed prior to the choice completing, or if the CancellationToken
         /// provided as part of <paramref name="dataflowBlockOptions"/> is canceled prior to the choice completing,
-        /// the resulting task will be canceled. When one of the sources has data available and successfully propagates 
+        /// the resulting task will be canceled. When one of the sources has data available and successfully propagates
         /// it to the choice, the resulting task will complete when the handler completes: if the handler throws an exception,
         /// the task will end in the <see cref="System.Threading.Tasks.TaskStatus.Faulted"/> state containing the unhandled exception, otherwise the task
         /// will end with its <see cref="System.Threading.Tasks.Task{Int32}.Result"/> set to either 0 or 1 to
@@ -1833,7 +1790,7 @@ namespace System.Threading.Tasks.Dataflow
         /// <para>
         /// This method will only consume an element from one of the two data sources, never both.
         /// If cancellation is requested after an element has been received, the cancellation request will be ignored,
-        /// and the relevant handler will be allowed to execute. 
+        /// and the relevant handler will be allowed to execute.
         /// </para>
         /// </returns>
         /// <exception cref="System.ArgumentNullException">The <paramref name="source1"/> is null (Nothing in Visual Basic).</exception>
@@ -1842,17 +1799,17 @@ namespace System.Threading.Tasks.Dataflow
         /// <exception cref="System.ArgumentNullException">The <paramref name="action2"/> is null (Nothing in Visual Basic).</exception>
         /// <exception cref="System.ArgumentNullException">The <paramref name="dataflowBlockOptions"/> is null (Nothing in Visual Basic).</exception>
         [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope")]
-        public static Task<Int32> Choose<T1, T2>(
+        public static Task<int> Choose<T1, T2>(
             ISourceBlock<T1> source1, Action<T1> action1,
             ISourceBlock<T2> source2, Action<T2> action2,
             DataflowBlockOptions dataflowBlockOptions)
         {
             // Validate arguments
-            if (source1 == null) throw new ArgumentNullException("source1");
-            if (action1 == null) throw new ArgumentNullException("action1");
-            if (source2 == null) throw new ArgumentNullException("source2");
-            if (action2 == null) throw new ArgumentNullException("action2");
-            if (dataflowBlockOptions == null) throw new ArgumentNullException("dataflowBlockOptions");
+            if (source1 == null) throw new ArgumentNullException(nameof(source1));
+            if (action1 == null) throw new ArgumentNullException(nameof(action1));
+            if (source2 == null) throw new ArgumentNullException(nameof(source2));
+            if (action2 == null) throw new ArgumentNullException(nameof(action2));
+            if (dataflowBlockOptions == null) throw new ArgumentNullException(nameof(dataflowBlockOptions));
 
             // Delegate to the shared implementation
             return ChooseCore<T1, T2, VoidResult>(source1, action1, source2, action2, null, null, dataflowBlockOptions);
@@ -1873,8 +1830,8 @@ namespace System.Threading.Tasks.Dataflow
         /// <returns>
         /// <para>
         /// A <see cref="System.Threading.Tasks.Task{Int32}"/> that represents the asynchronous choice.
-        /// If all sources are completed prior to the choice completing, 
-        /// the resulting task will be canceled. When one of the sources has data available and successfully propagates 
+        /// If all sources are completed prior to the choice completing,
+        /// the resulting task will be canceled. When one of the sources has data available and successfully propagates
         /// it to the choice, the resulting task will complete when the handler completes: if the handler throws an exception,
         /// the task will end in the <see cref="System.Threading.Tasks.TaskStatus.Faulted"/> state containing the unhandled exception, otherwise the task
         /// will end with its <see cref="System.Threading.Tasks.Task{Int32}.Result"/> set to the 0-based index of the source.
@@ -1889,7 +1846,7 @@ namespace System.Threading.Tasks.Dataflow
         /// <exception cref="System.ArgumentNullException">The <paramref name="action2"/> is null (Nothing in Visual Basic).</exception>
         /// <exception cref="System.ArgumentNullException">The <paramref name="source3"/> is null (Nothing in Visual Basic).</exception>
         /// <exception cref="System.ArgumentNullException">The <paramref name="action3"/> is null (Nothing in Visual Basic).</exception>
-        public static Task<Int32> Choose<T1, T2, T3>(
+        public static Task<int> Choose<T1, T2, T3>(
             ISourceBlock<T1> source1, Action<T1> action1,
             ISourceBlock<T2> source2, Action<T2> action2,
             ISourceBlock<T3> source3, Action<T3> action3)
@@ -1914,7 +1871,7 @@ namespace System.Threading.Tasks.Dataflow
         /// A <see cref="System.Threading.Tasks.Task{Int32}"/> that represents the asynchronous choice.
         /// If all sources are completed prior to the choice completing, or if the CancellationToken
         /// provided as part of <paramref name="dataflowBlockOptions"/> is canceled prior to the choice completing,
-        /// the resulting task will be canceled. When one of the sources has data available and successfully propagates 
+        /// the resulting task will be canceled. When one of the sources has data available and successfully propagates
         /// it to the choice, the resulting task will complete when the handler completes: if the handler throws an exception,
         /// the task will end in the <see cref="System.Threading.Tasks.TaskStatus.Faulted"/> state containing the unhandled exception, otherwise the task
         /// will end with its <see cref="System.Threading.Tasks.Task{Int32}.Result"/> set to the 0-based index of the source.
@@ -1922,7 +1879,7 @@ namespace System.Threading.Tasks.Dataflow
         /// <para>
         /// This method will only consume an element from one of the data sources, never more than one.
         /// If cancellation is requested after an element has been received, the cancellation request will be ignored,
-        /// and the relevant handler will be allowed to execute. 
+        /// and the relevant handler will be allowed to execute.
         /// </para>
         /// </returns>
         /// <exception cref="System.ArgumentNullException">The <paramref name="source1"/> is null (Nothing in Visual Basic).</exception>
@@ -1933,20 +1890,20 @@ namespace System.Threading.Tasks.Dataflow
         /// <exception cref="System.ArgumentNullException">The <paramref name="action3"/> is null (Nothing in Visual Basic).</exception>
         /// <exception cref="System.ArgumentNullException">The <paramref name="dataflowBlockOptions"/> is null (Nothing in Visual Basic).</exception>
         [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope")]
-        public static Task<Int32> Choose<T1, T2, T3>(
+        public static Task<int> Choose<T1, T2, T3>(
             ISourceBlock<T1> source1, Action<T1> action1,
             ISourceBlock<T2> source2, Action<T2> action2,
             ISourceBlock<T3> source3, Action<T3> action3,
             DataflowBlockOptions dataflowBlockOptions)
         {
             // Validate arguments
-            if (source1 == null) throw new ArgumentNullException("source1");
-            if (action1 == null) throw new ArgumentNullException("action1");
-            if (source2 == null) throw new ArgumentNullException("source2");
-            if (action2 == null) throw new ArgumentNullException("action2");
-            if (source3 == null) throw new ArgumentNullException("source3");
-            if (action3 == null) throw new ArgumentNullException("action3");
-            if (dataflowBlockOptions == null) throw new ArgumentNullException("dataflowBlockOptions");
+            if (source1 == null) throw new ArgumentNullException(nameof(source1));
+            if (action1 == null) throw new ArgumentNullException(nameof(action1));
+            if (source2 == null) throw new ArgumentNullException(nameof(source2));
+            if (action2 == null) throw new ArgumentNullException(nameof(action2));
+            if (source3 == null) throw new ArgumentNullException(nameof(source3));
+            if (action3 == null) throw new ArgumentNullException(nameof(action3));
+            if (dataflowBlockOptions == null) throw new ArgumentNullException(nameof(dataflowBlockOptions));
 
             // Delegate to the shared implementation
             return ChooseCore<T1, T2, T3>(source1, action1, source2, action2, source3, action3, dataflowBlockOptions);
@@ -1967,21 +1924,21 @@ namespace System.Threading.Tasks.Dataflow
         /// <param name="dataflowBlockOptions">The options with which to configure this choice.</param>
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
         [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope")]
-        private static Task<Int32> ChooseCore<T1, T2, T3>(
+        private static Task<int> ChooseCore<T1, T2, T3>(
             ISourceBlock<T1> source1, Action<T1> action1,
             ISourceBlock<T2> source2, Action<T2> action2,
             ISourceBlock<T3> source3, Action<T3> action3,
             DataflowBlockOptions dataflowBlockOptions)
         {
-            Contract.Requires(source1 != null && action1 != null, "The first source and action should not be null.");
-            Contract.Requires(source2 != null && action2 != null, "The second source and action should not be null.");
-            Contract.Requires((source3 == null) == (action3 == null), "The third action should be null iff the third source is null.");
-            Contract.Requires(dataflowBlockOptions != null, "Options are required.");
+            Debug.Assert(source1 != null && action1 != null, "The first source and action should not be null.");
+            Debug.Assert(source2 != null && action2 != null, "The second source and action should not be null.");
+            Debug.Assert((source3 == null) == (action3 == null), "The third action should be null iff the third source is null.");
+            Debug.Assert(dataflowBlockOptions != null, "Options are required.");
             bool hasThirdSource = source3 != null; // In the future, if we want higher arities on Choose, we can simply add more such checks on additional arguments
 
             // Early cancellation check and bail out
             if (dataflowBlockOptions.CancellationToken.IsCancellationRequested)
-                return Common.CreateTaskFromCancellation<Int32>(dataflowBlockOptions.CancellationToken);
+                return Common.CreateTaskFromCancellation<int>(dataflowBlockOptions.CancellationToken);
 
             // Fast path: if any of the sources already has data available that can be received immediately.
             Task<int> resultTask;
@@ -2020,10 +1977,10 @@ namespace System.Threading.Tasks.Dataflow
             out Task<int> task)
         {
             // Validate arguments
-            Contract.Requires(source != null, "Expected a non-null source");
-            Contract.Requires(action != null, "Expected a non-null action");
-            Contract.Requires(branchId >= 0, "Expected a valid branch ID (> 0)");
-            Contract.Requires(scheduler != null, "Expected a non-null scheduler");
+            Debug.Assert(source != null, "Expected a non-null source");
+            Debug.Assert(action != null, "Expected a non-null action");
+            Debug.Assert(branchId >= 0, "Expected a valid branch ID (> 0)");
+            Debug.Assert(scheduler != null, "Expected a non-null scheduler");
 
             // Try to receive from the source.  If we can't, bail.
             T result;
@@ -2054,16 +2011,16 @@ namespace System.Threading.Tasks.Dataflow
         /// <param name="dataflowBlockOptions">The options with which to configure this choice.</param>
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
         [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope")]
-        private static Task<Int32> ChooseCoreByLinking<T1, T2, T3>(
+        private static Task<int> ChooseCoreByLinking<T1, T2, T3>(
             ISourceBlock<T1> source1, Action<T1> action1,
             ISourceBlock<T2> source2, Action<T2> action2,
             ISourceBlock<T3> source3, Action<T3> action3,
             DataflowBlockOptions dataflowBlockOptions)
         {
-            Contract.Requires(source1 != null && action1 != null, "The first source and action should not be null.");
-            Contract.Requires(source2 != null && action2 != null, "The second source and action should not be null.");
-            Contract.Requires((source3 == null) == (action3 == null), "The third action should be null iff the third source is null.");
-            Contract.Requires(dataflowBlockOptions != null, "Options are required.");
+            Debug.Assert(source1 != null && action1 != null, "The first source and action should not be null.");
+            Debug.Assert(source2 != null && action2 != null, "The second source and action should not be null.");
+            Debug.Assert((source3 == null) == (action3 == null), "The third action should be null iff the third source is null.");
+            Debug.Assert(dataflowBlockOptions != null, "Options are required.");
 
             bool hasThirdSource = source3 != null; // In the future, if we want higher arities on Choose, we can simply add more such checks on additional arguments
 
@@ -2160,7 +2117,7 @@ namespace System.Threading.Tasks.Dataflow
             if (cts.IsCancellationRequested)
                 return Common.CreateTaskFromCancellation<int>(cts.Token);
 
-            // Proceed with creating and linking a hidden target. Also get the source's completion task, 
+            // Proceed with creating and linking a hidden target. Also get the source's completion task,
             // as we need it to know when the source completes.  Both of these operations
             // could throw an exception if the block is faulty.
             var target = new ChooseTarget<T>(boxedCompleted, cts.Token);
@@ -2183,7 +2140,7 @@ namespace System.Threading.Tasks.Dataflow
             {
                 try
                 {
-                    // If the target ran to completion, i.e. it got a message, 
+                    // If the target ran to completion, i.e. it got a message,
                     // cancel the other branch(es) and proceed with the user callback.
                     if (completed.Status == TaskStatus.RanToCompletion)
                     {
@@ -2229,14 +2186,14 @@ namespace System.Threading.Tasks.Dataflow
             /// A wrapper for the task that represents the completed branch of this choice.
             /// The wrapper is also the sync object used to protect all choice branch's access to shared state.
             /// </summary>
-            private StrongBox<Task> _completed;
+            private readonly StrongBox<Task> _completed;
 
             /// <summary>Initializes the target.</summary>
             /// <param name="completed">The completed wrapper shared between all choice branches.</param>
             /// <param name="cancellationToken">The cancellation token used to cancel this target.</param>
             internal ChooseTarget(StrongBox<Task> completed, CancellationToken cancellationToken)
             {
-                Contract.Requires(completed != null, "Requires a shared target to complete.");
+                Debug.Assert(completed != null, "Requires a shared target to complete.");
                 _completed = completed;
 
                 // Handle async cancellation by canceling the target without storing it into _completed.
@@ -2250,12 +2207,11 @@ namespace System.Threading.Tasks.Dataflow
             }
 
             /// <summary>Called when this choice branch is being offered a message.</summary>
-            public DataflowMessageStatus OfferMessage(DataflowMessageHeader messageHeader, T messageValue, ISourceBlock<T> source, Boolean consumeToAccept)
+            public DataflowMessageStatus OfferMessage(DataflowMessageHeader messageHeader, T messageValue, ISourceBlock<T> source, bool consumeToAccept)
             {
                 // Validate arguments
-                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, "messageHeader");
-                if (source == null && consumeToAccept) throw new ArgumentException(SR.Argument_CantConsumeFromANullSource, "consumeToAccept");
-                Contract.EndContractBlock();
+                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, nameof(messageHeader));
+                if (source == null && consumeToAccept) throw new ArgumentException(SR.Argument_CantConsumeFromANullSource, nameof(consumeToAccept));
 
                 lock (_completed)
                 {
@@ -2313,8 +2269,7 @@ namespace System.Threading.Tasks.Dataflow
         /// <exception cref="System.ArgumentNullException">The <paramref name="source"/> is null (Nothing in Visual Basic).</exception>
         public static IObservable<TOutput> AsObservable<TOutput>(this ISourceBlock<TOutput> source)
         {
-            if (source == null) throw new ArgumentNullException("source");
-            Contract.EndContractBlock();
+            if (source == null) throw new ArgumentNullException(nameof(source));
             return SourceObservable<TOutput>.From(source);
         }
 
@@ -2341,7 +2296,7 @@ namespace System.Threading.Tasks.Dataflow
             /// <returns>The observable.</returns>
             internal static IObservable<TOutput> From(ISourceBlock<TOutput> source)
             {
-                Contract.Requires(source != null, "Requires a source for which to retrieve the observable.");
+                Debug.Assert(source != null, "Requires a source for which to retrieve the observable.");
                 return _table.GetValue(source, s => new SourceObservable<TOutput>(s));
             }
 
@@ -2359,7 +2314,7 @@ namespace System.Threading.Tasks.Dataflow
             /// <param name="source">The source to wrap.</param>
             internal SourceObservable(ISourceBlock<TOutput> source)
             {
-                Contract.Requires(source != null, "The observable requires a source to wrap.");
+                Debug.Assert(source != null, "The observable requires a source to wrap.");
                 _source = source;
                 _observersState = new ObserversState(this);
             }
@@ -2380,8 +2335,7 @@ namespace System.Threading.Tasks.Dataflow
             IDisposable IObservable<TOutput>.Subscribe(IObserver<TOutput> observer)
             {
                 // Validate arguments
-                if (observer == null) throw new ArgumentNullException("observer");
-                Contract.EndContractBlock();
+                if (observer == null) throw new ArgumentNullException(nameof(observer));
                 Common.ContractAssertMonitorStatus(_SubscriptionLock, held: false);
 
                 Task sourceCompletionTask = Common.GetPotentiallyNotSupportedCompletionTask(_source);
@@ -2410,7 +2364,7 @@ namespace System.Threading.Tasks.Dataflow
                             _observersState.Unlinker = _source.LinkTo(_observersState.Target);
                             if (_observersState.Unlinker == null)
                             {
-                                _observersState.Observers = ImmutableList<IObserver<TOutput>>.Empty;
+                                _observersState.Observers = ImmutableArray<IObserver<TOutput>>.Empty;
                                 return null;
                             }
                         }
@@ -2431,7 +2385,7 @@ namespace System.Threading.Tasks.Dataflow
             /// <param name="observer">The observer being unsubscribed.</param>
             private void Unsubscribe(IObserver<TOutput> observer)
             {
-                Contract.Requires(observer != null, "Expected an observer.");
+                Debug.Assert(observer != null, "Expected an observer.");
                 Common.ContractAssertMonitorStatus(_SubscriptionLock, held: false);
 
                 lock (_SubscriptionLock)
@@ -2460,7 +2414,7 @@ namespace System.Threading.Tasks.Dataflow
 
             /// <summary>Resets the observer state to the original, inactive state.</summary>
             /// <returns>The list of active observers prior to the reset.</returns>
-            private ImmutableList<IObserver<TOutput>> ResetObserverState()
+            private ImmutableArray<IObserver<TOutput>> ResetObserverState()
             {
                 Common.ContractAssertMonitorStatus(_SubscriptionLock, held: true);
 
@@ -2470,7 +2424,7 @@ namespace System.Threading.Tasks.Dataflow
                 Debug.Assert(currentState.Canceler != null, "The target should have set up continuations.");
 
                 // Replace the target with a clean one, unlink and cancel, and return the previous set of observers
-                ImmutableList<IObserver<TOutput>> currentObservers = currentState.Observers;
+                ImmutableArray<IObserver<TOutput>> currentObservers = currentState.Observers;
                 _observersState = new ObserversState(this);
                 currentState.Unlinker.Dispose();
                 currentState.Canceler.Cancel();
@@ -2502,7 +2456,7 @@ namespace System.Threading.Tasks.Dataflow
                 /// <param name="observable">The target being debugged.</param>
                 public DebugView(SourceObservable<TOutput> observable)
                 {
-                    Contract.Requires(observable != null, "Need a block with which to construct the debug view.");
+                    Debug.Assert(observable != null, "Need a block with which to construct the debug view.");
                     _observable = observable;
                 }
 
@@ -2525,7 +2479,7 @@ namespace System.Threading.Tasks.Dataflow
                 /// A list of the observers currently registered with this target.  The list is immutable
                 /// to enable iteration through the list while the set of observers may be changing.
                 /// </summary>
-                internal ImmutableList<IObserver<TOutput>> Observers = ImmutableList<IObserver<TOutput>>.Empty;
+                internal ImmutableArray<IObserver<TOutput>> Observers = ImmutableArray<IObserver<TOutput>>.Empty;
                 /// <summary>Used to unlink the source from this target when the last observer is unsubscribed.</summary>
                 internal IDisposable Unlinker;
                 /// <summary>
@@ -2538,13 +2492,13 @@ namespace System.Threading.Tasks.Dataflow
                 /// <param name="observable">The owning observable.</param>
                 internal ObserversState(SourceObservable<TOutput> observable)
                 {
-                    Contract.Requires(observable != null, "Observe state must be mapped to a source observable.");
+                    Debug.Assert(observable != null, "Observe state must be mapped to a source observable.");
 
                     // Set up the target block
                     Observable = observable;
                     Target = new ActionBlock<TOutput>((Func<TOutput, Task>)ProcessItemAsync, DataflowBlock._nonGreedyExecutionOptions);
 
-                    // If the target block fails due to an unexpected exception (e.g. it calls back to the source and the source throws an error), 
+                    // If the target block fails due to an unexpected exception (e.g. it calls back to the source and the source throws an error),
                     // we fault currently registered observers and reset the observable.
                     Target.Completion.ContinueWith(
                         (t, state) => ((ObserversState)state).NotifyObserversOfCompletion(t.Exception), this,
@@ -2552,7 +2506,7 @@ namespace System.Threading.Tasks.Dataflow
                         Common.GetContinuationOptions(TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously),
                         TaskScheduler.Default);
 
-                    // When the source completes, complete the target. Then when the target completes, 
+                    // When the source completes, complete the target. Then when the target completes,
                     // send completion messages to any observers still registered.
                     Task sourceCompletionTask = Common.GetPotentiallyNotSupportedCompletionTask(Observable._source);
                     if (sourceCompletionTask != null)
@@ -2577,7 +2531,7 @@ namespace System.Threading.Tasks.Dataflow
                 {
                     Common.ContractAssertMonitorStatus(Observable._SubscriptionLock, held: false);
 
-                    ImmutableList<IObserver<TOutput>> currentObservers;
+                    ImmutableArray<IObserver<TOutput>> currentObservers;
                     lock (Observable._SubscriptionLock) currentObservers = Observers;
                     try
                     {
@@ -2624,7 +2578,7 @@ namespace System.Threading.Tasks.Dataflow
                         return Common.CreateTaskFromException<VoidResult>(exc);
                     }
 
-                    // All observers accepted normally. 
+                    // All observers accepted normally.
                     // Return a completed task.
                     return Common.CompletedTaskWithTrueResult;
                 }
@@ -2637,19 +2591,19 @@ namespace System.Threading.Tasks.Dataflow
                 [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
                 private void NotifyObserversOfCompletion(Exception targetException = null)
                 {
-                    Contract.Requires(Target.Completion.IsCompleted, "The target must have already completed in order to notify of completion.");
+                    Debug.Assert(Target.Completion.IsCompleted, "The target must have already completed in order to notify of completion.");
                     Common.ContractAssertMonitorStatus(Observable._SubscriptionLock, held: false);
 
                     // Send completion notification to all observers.
-                    ImmutableList<IObserver<TOutput>> currentObservers;
+                    ImmutableArray<IObserver<TOutput>> currentObservers;
                     lock (Observable._SubscriptionLock)
                     {
-                        // Get the currently registered set of observers. Then, if we're being called due to the target 
-                        // block failing from an unexpected exception, reset the observer state so that subsequent 
+                        // Get the currently registered set of observers. Then, if we're being called due to the target
+                        // block failing from an unexpected exception, reset the observer state so that subsequent
                         // subscribed observers will get a new target block.  Finally clear out our observer list.
                         currentObservers = Observers;
                         if (targetException != null) Observable.ResetObserverState();
-                        Observers = ImmutableList<IObserver<TOutput>>.Empty;
+                        Observers = ImmutableArray<IObserver<TOutput>>.Empty;
                     }
 
                     // If there are any observers to complete...
@@ -2690,8 +2644,7 @@ namespace System.Threading.Tasks.Dataflow
         /// <returns>An observer that wraps the target block.</returns>
         public static IObserver<TInput> AsObserver<TInput>(this ITargetBlock<TInput> target)
         {
-            if (target == null) throw new ArgumentNullException("target");
-            Contract.EndContractBlock();
+            if (target == null) throw new ArgumentNullException(nameof(target));
             return new TargetObserver<TInput>(target);
         }
 
@@ -2706,7 +2659,7 @@ namespace System.Threading.Tasks.Dataflow
             /// <param name="target">The target to wrap.</param>
             internal TargetObserver(ITargetBlock<TInput> target)
             {
-                Contract.Requires(target != null, "A target to observe is required.");
+                Debug.Assert(target != null, "A target to observe is required.");
                 _target = target;
             }
 
@@ -2763,7 +2716,7 @@ namespace System.Threading.Tasks.Dataflow
         /// Gets a target block that synchronously accepts all messages offered to it and drops them.
         /// </summary>
         /// <typeparam name="TInput">The type of the messages this block can accept.</typeparam>
-        /// <returns>A <see cref="T:System.Threading.Tasks.Dataflow.ITargetBlock`1"/> that accepts and subsequently drops all offered messages.</returns>
+        /// <returns>A <see cref="System.Threading.Tasks.Dataflow.ITargetBlock{T}"/> that accepts and subsequently drops all offered messages.</returns>
         public static ITargetBlock<TInput> NullTarget<TInput>()
         {
             return new NullTargetBlock<TInput>();
@@ -2778,15 +2731,14 @@ namespace System.Threading.Tasks.Dataflow
             private Task _completion;
 
             /// <include file='XmlDocs/CommonXmlDocComments.xml' path='CommonXmlDocComments/Targets/Member[@name="OfferMessage"]/*' />
-            DataflowMessageStatus ITargetBlock<TInput>.OfferMessage(DataflowMessageHeader messageHeader, TInput messageValue, ISourceBlock<TInput> source, Boolean consumeToAccept)
+            DataflowMessageStatus ITargetBlock<TInput>.OfferMessage(DataflowMessageHeader messageHeader, TInput messageValue, ISourceBlock<TInput> source, bool consumeToAccept)
             {
-                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, "messageHeader");
-                Contract.EndContractBlock();
+                if (!messageHeader.IsValid) throw new ArgumentException(SR.Argument_InvalidMessageHeader, nameof(messageHeader));
 
                 // If the source requires an explicit synchronous consumption, do it
                 if (consumeToAccept)
                 {
-                    if (source == null) throw new ArgumentException(SR.Argument_CantConsumeFromANullSource, "consumeToAccept");
+                    if (source == null) throw new ArgumentException(SR.Argument_CantConsumeFromANullSource, nameof(consumeToAccept));
                     bool messageConsumed;
 
                     // If the source throws during this call, let the exception propagate back to the source

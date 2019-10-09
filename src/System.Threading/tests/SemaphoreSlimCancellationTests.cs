@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using Xunit;
-using System;
-using System.Threading;
 using System.Threading.Tasks;
+using Xunit;
 
-namespace Test
+namespace System.Threading.Tests
 {
     public static class SemaphoreSlimCancellationTests
     {
@@ -21,9 +20,9 @@ namespace Test
 
             const int millisec = 100;
             TimeSpan timeSpan = new TimeSpan(100);
-            EnsureOperationCanceledExceptionThrown(() => semaphoreSlim.Wait(ct), ct, "CancelBeforeWait:  An OCE should have been thrown.");
-            EnsureOperationCanceledExceptionThrown(() => semaphoreSlim.Wait(millisec, ct), ct, "CancelBeforeWait:  An OCE should have been thrown.");
-            EnsureOperationCanceledExceptionThrown(() => semaphoreSlim.Wait(timeSpan, ct), ct, "CancelBeforeWait:  An OCE should have been thrown.");
+            EnsureOperationCanceledExceptionThrown(() => semaphoreSlim.Wait(ct), ct);
+            EnsureOperationCanceledExceptionThrown(() => semaphoreSlim.Wait(millisec, ct), ct);
+            EnsureOperationCanceledExceptionThrown(() => semaphoreSlim.Wait(timeSpan, ct), ct);
             semaphoreSlim.Dispose();
         }
 
@@ -45,22 +44,17 @@ namespace Test
             //Now wait.. the wait should abort and an exception should be thrown
             EnsureOperationCanceledExceptionThrown(
                () => semaphoreSlim.Wait(cancellationToken),
-               cancellationToken, "CancelAfterWait:  An OCE(null) should have been thrown that references the cancellationToken.");
+               cancellationToken);
 
             // the token should not have any listeners.
             // currently we don't expose this.. but it was verified manually
         }
 
-        private static void EnsureOperationCanceledExceptionThrown(Action action, CancellationToken token, string message)
+        private static void EnsureOperationCanceledExceptionThrown(Action action, CancellationToken token)
         {
             OperationCanceledException operationCanceledEx =
                 Assert.Throws<OperationCanceledException>(action);
-            // Failure Case: OperationCanceledException not thrown.
-
-            if (operationCanceledEx.CancellationToken != token)
-            {
-                Assert.True(false, string.Format("SemaphoreSlimCancellationTests: Failed.  " + message));
-            }
+            Assert.Equal(token, operationCanceledEx.CancellationToken);
         }
     }
 }

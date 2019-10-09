@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -27,7 +28,7 @@ namespace System.Linq.Parallel
     ///     This class implements ParallelQuery so that any parallel query operator
     ///     can bind to the parallel query provider overloads. This allows us to string
     ///     together operators w/out the user always specifying AsParallel, e.g.
-    ///     Select(Where(..., ...), ...), and so forth. 
+    ///     Select(Where(..., ...), ...), and so forth.
     /// </summary>
     /// <typeparam name="TOutput"></typeparam>
     internal abstract class QueryOperator<TOutput> : ParallelQuery<TOutput>
@@ -141,7 +142,7 @@ namespace System.Linq.Parallel
             Debug.Assert(mergeOptions != null);
 
             // Top-level preemptive cancellation test.
-            // This handles situations where cancellation has occured before execution commences
+            // This handles situations where cancellation has occurred before execution commences
             // The handling for in-execution occurs in QueryTaskGroupState.QueryEnd()
 
             if (querySettings.CancellationState.MergedCancellationToken.IsCancellationRequested)
@@ -210,7 +211,7 @@ namespace System.Linq.Parallel
                 QueryResults<TOutput> results = GetQueryResults(querySettings);
 
                 // Top-level preemptive cancellation test.
-                // This handles situations where cancellation has occured before execution commences
+                // This handles situations where cancellation has occurred before execution commences
                 // The handling for in-execution occurs in QueryTaskGroupState.QueryEnd()
 
                 if (querySettings.CancellationState.MergedCancellationToken.IsCancellationRequested)
@@ -224,7 +225,7 @@ namespace System.Linq.Parallel
                 if (results.IsIndexible && OutputOrdered)
                 {
                     // The special array-based merge performs better if the output is ordered, because
-                    // it does not have to pay for ordering. In the unordered case, we it appears that 
+                    // it does not have to pay for ordering. In the unordered case, we it appears that
                     // the stop-and-go merge performs a little better.
                     ArrayMergeHelper<TOutput> merger = new ArrayMergeHelper<TOutput>(SpecifiedQuerySettings, results);
                     merger.Execute();

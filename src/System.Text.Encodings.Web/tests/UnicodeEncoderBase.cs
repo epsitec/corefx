@@ -1,16 +1,16 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.Encodings.Web;
 using System.Text.Internal;
 using System.Text.Unicode;
 
-namespace Microsoft.Framework.WebEncoders
+namespace System.Text.Encodings.Web.Tests
 {
     internal unsafe abstract class UnicodeEncoderBase
     {
@@ -50,7 +50,7 @@ namespace Microsoft.Framework.WebEncoders
         {
             _allowedCharacters.ForbidCharacter(c);
         }
-        
+
         /// <summary>
         /// Entry point to the encoder.
         /// </summary>
@@ -59,11 +59,11 @@ namespace Microsoft.Framework.WebEncoders
             // Input checking
             if (value == null)
             {
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             }
             if (output == null)
             {
-                throw new ArgumentNullException("output");
+                throw new ArgumentNullException(nameof(output));
             }
             ValidateInputs(startIndex, characterCount, actualInputLength: value.Length);
 
@@ -95,7 +95,7 @@ namespace Microsoft.Framework.WebEncoders
         /// </summary>
         public string Encode(string value)
         {
-            if (String.IsNullOrEmpty(value))
+            if (string.IsNullOrEmpty(value))
             {
                 return value;
             }
@@ -120,11 +120,11 @@ namespace Microsoft.Framework.WebEncoders
             // Input checking
             if (value == null)
             {
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             }
             if (output == null)
             {
-                throw new ArgumentNullException("output");
+                throw new ArgumentNullException(nameof(output));
             }
             ValidateInputs(startIndex, characterCount, actualInputLength: value.Length);
 
@@ -242,11 +242,11 @@ namespace Microsoft.Framework.WebEncoders
         {
             if (startIndex < 0 || startIndex > actualInputLength)
             {
-                throw new ArgumentOutOfRangeException("startIndex");
+                throw new ArgumentOutOfRangeException(nameof(startIndex));
             }
             if (characterCount < 0 || characterCount > (actualInputLength - startIndex))
             {
-                throw new ArgumentOutOfRangeException("characterCount");
+                throw new ArgumentOutOfRangeException(nameof(characterCount));
             }
         }
 

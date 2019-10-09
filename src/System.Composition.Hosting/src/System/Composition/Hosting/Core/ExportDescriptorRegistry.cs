@@ -1,9 +1,9 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-using System.Composition.Runtime;
-using Microsoft.Internal;
+using System.Diagnostics;
 
 namespace System.Composition.Hosting.Core
 {
@@ -47,7 +47,11 @@ namespace System.Composition.Hosting.Core
             // This check is duplicated in the update process- the update operation will catch
             // cardinality violations in advance of this in all but a few very rare scenarios.
             if (allForExport.Length != 1)
-                throw ThrowHelper.CardinalityMismatch_TooManyExports(exportKey.ToString());
+            {
+                var ex = new CompositionFailedException(SR.Format(SR.CardinalityMismatch_TooManyExports, exportKey));
+                Debug.WriteLine(SR.Diagnostic_ThrowingException, ex.ToString());
+                throw ex;
+            }
 
             defaultForExport = allForExport[0];
             return true;

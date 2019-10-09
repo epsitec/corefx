@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Diagnostics.CodeAnalysis;
 
@@ -27,10 +28,10 @@ namespace System.Net.WebSockets
         // 0 - 999 Status codes in the range 0-999 are not used.
         // 1000 - 1999 Status codes in the range 1000-1999 are reserved for definition by this protocol.
         // 2000 - 2999 Status codes in the range 2000-2999 are reserved for use by extensions.
-        // 3000 - 3999 Status codes in the range 3000-3999 MAY be used by libraries and frameworks. The 
-        //             interpretation of these codes is undefined by this protocol. End applications MUST 
-        //             NOT use status codes in this range.       
-        // 4000 - 4999 Status codes in the range 4000-4999 MAY be used by application code. The interpretaion
+        // 3000 - 3999 Status codes in the range 3000-3999 MAY be used by libraries and frameworks. The
+        //             interpretation of these codes is undefined by this protocol. End applications MUST
+        //             NOT use status codes in this range.
+        // 4000 - 4999 Status codes in the range 4000-4999 MAY be used by application code. The interpretation
         //             of these codes is undefined by this protocol.
     }
 }

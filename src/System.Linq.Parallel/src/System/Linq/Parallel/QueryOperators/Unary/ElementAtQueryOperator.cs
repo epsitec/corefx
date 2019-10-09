@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -9,6 +10,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace System.Linq.Parallel
@@ -71,7 +73,7 @@ namespace System.Linq.Parallel
             if (_prematureMerge)
             {
                 intKeyStream = ExecuteAndCollectResults(inputStream, partitionCount, Child.OutputOrdered, preferStriping, settings).GetPartitionedStream();
-                Debug.Assert(intKeyStream.OrdinalIndexState == OrdinalIndexState.Indexible);
+                Debug.Assert(intKeyStream.OrdinalIndexState == OrdinalIndexState.Indexable);
             }
             else
             {
@@ -96,6 +98,7 @@ namespace System.Linq.Parallel
         // Returns an enumerable that represents the query executing sequentially.
         //
 
+        [ExcludeFromCodeCoverage]
         internal override IEnumerable<TSource> AsSequentialQuery(CancellationToken token)
         {
             Debug.Fail("This method should never be called as fallback to sequential is handled in Aggregate().");
@@ -162,12 +165,12 @@ namespace System.Linq.Parallel
         // This enumerator performs the search for the element at the specified index.
         //
 
-        class ElementAtQueryOperatorEnumerator : QueryOperatorEnumerator<TSource, int>
+        private class ElementAtQueryOperatorEnumerator : QueryOperatorEnumerator<TSource, int>
         {
-            private QueryOperatorEnumerator<TSource, int> _source; // The source data.
-            private int _index; // The index of the element to seek.
-            private Shared<bool> _resultFoundFlag; // Whether to cancel the operation.
-            private CancellationToken _cancellationToken;
+            private readonly QueryOperatorEnumerator<TSource, int> _source; // The source data.
+            private readonly int _index; // The index of the element to seek.
+            private readonly Shared<bool> _resultFoundFlag; // Whether to cancel the operation.
+            private readonly CancellationToken _cancellationToken;
 
             //---------------------------------------------------------------------------------------
             // Instantiates a new any/all search operator.

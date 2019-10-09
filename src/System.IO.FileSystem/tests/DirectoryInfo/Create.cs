@@ -1,9 +1,10 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
-namespace System.IO.FileSystem.Tests
+namespace System.IO.Tests
 {
     public class DirectoryInfo_Create : Directory_CreateDirectory
     {
@@ -16,10 +17,12 @@ namespace System.IO.FileSystem.Tests
             return result;
         }
 
+        public override bool IsDirectoryCreate => false;
+
         #endregion
 
         [Fact]
-        [PlatformSpecific(PlatformID.Windows)] // UNC shares for constructor
+        [PlatformSpecific(TestPlatforms.Windows)] // UNC shares for constructor
         public void NetworkShare()
         {
             string dirName = new string(Path.DirectorySeparatorChar, 2) + Path.Combine("contoso", "amusement", "device");
@@ -41,7 +44,7 @@ namespace System.IO.FileSystem.Tests
         [Theory]
         [InlineData(".")]
         [InlineData("............")]
-        [PlatformSpecific(PlatformID.Windows)]
+        [PlatformSpecific(TestPlatforms.Windows)]  // Windows-invalid extensions are removed
         public void WindowsInvalidExtensionsAreRemoved(string extension)
         {
             string testDir = GetTestFilePath();
@@ -52,7 +55,7 @@ namespace System.IO.FileSystem.Tests
         [Theory]
         [InlineData(".s", ".")]
         [InlineData(".s", ".s....")]
-        [PlatformSpecific(PlatformID.Windows)]
+        [PlatformSpecific(TestPlatforms.Windows)]  // Trailing dots in extension are removed
         public void WindowsCurtailTrailingDots(string extension, string trailing)
         {
             string testDir = GetTestFilePath();
@@ -64,12 +67,21 @@ namespace System.IO.FileSystem.Tests
         [Theory]
         [InlineData(".s", ".")]
         [InlineData(".s.s....", ".ls")]
-        [PlatformSpecific(PlatformID.AnyUnix)]
+        [PlatformSpecific(TestPlatforms.AnyUnix)]  // Last dot is extension
         public void UnixLastDotIsExtension(string extension, string trailing)
         {
             string testDir = GetTestFilePath();
             DirectoryInfo testInfo = new DirectoryInfo(testDir + extension + trailing);
             Assert.Equal(trailing, testInfo.Extension);
+        }
+
+        [Fact]
+        public void CreateDirectoryWithAttributes()
+        {
+            string testDir = Path.Combine(GetTestFilePath(), "CreateDirectoryWithAttributes");
+            DirectoryInfo testInfo = new DirectoryInfo(testDir);
+            testInfo.Create();
+            testInfo.Attributes = FileAttributes.Directory | FileAttributes.Normal;
         }
     }
 }

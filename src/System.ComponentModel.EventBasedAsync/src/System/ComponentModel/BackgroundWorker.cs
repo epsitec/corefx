@@ -1,13 +1,15 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace System.ComponentModel
 {
-    public class BackgroundWorker : IDisposable
+    public class BackgroundWorker : Component
     {
         // Private instance members
         private bool _canCancelWorker = false;
@@ -24,11 +26,6 @@ namespace System.ComponentModel
             _progressReporter = new SendOrPostCallback(ProgressReporter);
         }
 
-        ~BackgroundWorker() // exists for backwards compatibility
-        {
-            Dispose(false);
-        }
-
         private void AsyncOperationCompleted(object arg)
         {
             _isRunning = false;
@@ -38,9 +35,9 @@ namespace System.ComponentModel
 
         public bool CancellationPending
         {
-            get 
-            { 
-                return _cancellationPending; 
+            get
+            {
+                return _cancellationPending;
             }
         }
 
@@ -58,9 +55,9 @@ namespace System.ComponentModel
 
         public bool IsBusy
         {
-            get 
-            { 
-                return _isRunning; 
+            get
+            {
+                return _isRunning;
             }
         }
 
@@ -93,7 +90,7 @@ namespace System.ComponentModel
 
         public event ProgressChangedEventHandler ProgressChanged;
 
-        // Gets invoked through the AsyncOperation on the proper thread. 
+        // Gets invoked through the AsyncOperation on the proper thread.
         private void ProgressReporter(object arg)
         {
             OnProgressChanged((ProgressChangedEventArgs)arg);
@@ -154,27 +151,27 @@ namespace System.ComponentModel
 
         public bool WorkerReportsProgress
         {
-            get 
-            { 
-                return _workerReportsProgress; 
+            get
+            {
+                return _workerReportsProgress;
             }
-            
-            set 
-            { 
-                _workerReportsProgress = value; 
+
+            set
+            {
+                _workerReportsProgress = value;
             }
         }
 
         public bool WorkerSupportsCancellation
         {
-            get 
+            get
             {
-                return _canCancelWorker; 
+                return _canCancelWorker;
             }
-            
-            set 
-            { 
-                _canCancelWorker = value; 
+
+            set
+            {
+                _canCancelWorker = value;
             }
         }
 
@@ -208,13 +205,7 @@ namespace System.ComponentModel
             _asyncOperation.PostOperationCompleted(_operationCompleted, e);
         }
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
         }
     }

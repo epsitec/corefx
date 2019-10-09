@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -111,13 +112,13 @@ namespace System.Linq.Parallel
 
             // This provides cancellation-testing for the consumer-side of the buffers that appears in each scenario:
             //   Non-order-preserving (defaultMergeHelper)
-            //       - asynchronous channel (pipelining) 
+            //       - asynchronous channel (pipelining)
             //       - synchronous channel  (stop-and-go)
             //   Order-preserving (orderPreservingMergeHelper)
             //       - internal results buffer.
             // This moveNext is consuming data out of buffers, hence the inner moveNext is expected to be very fast.
             // => thus we only test for cancellation per-N-iterations.
-            // NOTE: the cancellation check occurs after performing moveNext in case the cancellation caused no data 
+            // NOTE: the cancellation check occurs after performing moveNext in case the cancellation caused no data
             //       to be produced.. We need to ensure that users sees an OCE rather than simply getting no data. (see Bug702254)
             if ((_moveNextIteration & CancellationState.POLL_INTERVAL) == 0)
             {

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Numerics;
@@ -16,9 +17,9 @@ namespace BigIntTools
 
             // Ensure that we have at least 1 digit
             int numDigits = random.Next() % maxdigits + 1;
-            
+
             StringBuilder randNum = new StringBuilder();
-            
+
             // We'll make some numbers negative
             while (randNum.Length < numDigits)
             {
@@ -34,15 +35,31 @@ namespace BigIntTools
             }
         }
 
-        private static readonly TypeInfo s_internalCalculator =
-            typeof(BigInteger).GetTypeInfo()
-                              .Assembly
-                              .GetType("System.Numerics.BigIntegerCalculator")
-                              .GetTypeInfo();
+        private static TypeInfo InternalCalculator
+        {
+            get
+            {
+                if (s_lazyInternalCalculator == null)
+                {
+                    Type t = typeof(BigInteger).Assembly.GetType("System.Numerics.BigIntegerCalculator");
+                    if (t != null)
+                    {
+                        s_lazyInternalCalculator = t.GetTypeInfo();
+                    }
+                }
+                return s_lazyInternalCalculator;
+            }
+        }
+
+        private static volatile TypeInfo s_lazyInternalCalculator;
 
         public static void RunWithFakeThreshold(string name, int value, Action action)
         {
-            FieldInfo field = s_internalCalculator.GetDeclaredField(name);
+            TypeInfo internalCalculator = InternalCalculator;
+            if (internalCalculator == null)
+                return; // Internal frame types are not reflectable on AoT platforms. Skip the test.
+
+            FieldInfo field = internalCalculator.GetDeclaredField(name);
             int lastValue = (int)field.GetValue(null);
             field.SetValue(null, value);
             try
@@ -56,4 +73,3 @@ namespace BigIntTools
         }
     }
 }
-

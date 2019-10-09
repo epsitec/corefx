@@ -1,12 +1,12 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace TestUtilities
+namespace System.Reflection.Metadata.Tests
 {
     public class DiffUtil
     {
@@ -214,23 +214,23 @@ namespace TestUtilities
             }
 
             /// <summary>
-            /// Calculates costs of all paths in an edit graph starting from vertex (0,0) and ending in vertex (lengthA, lengthB). 
+            /// Calculates costs of all paths in an edit graph starting from vertex (0,0) and ending in vertex (lengthA, lengthB).
             /// </summary>
             /// <remarks>
             /// The edit graph for A and B has a vertex at each point in the grid (i,j), i in [0, lengthA] and j in [0, lengthB].
-            /// 
+            ///
             /// The vertices of the edit graph are connected by horizontal, vertical, and diagonal directed edges to form a directed acyclic graph.
-            /// Horizontal edges connect each vertex to its right neighbor. 
+            /// Horizontal edges connect each vertex to its right neighbor.
             /// Vertical edges connect each vertex to the neighbor below it.
             /// Diagonal edges connect vertex (i,j) to vertex (i-1,j-1) if <see cref="ItemsEqual"/>(sequenceA[i-1],sequenceB[j-1]) is true.
-            /// 
-            /// Editing starts with S = []. 
+            ///
+            /// Editing starts with S = [].
             /// Move along horizontal edge (i-1,j)-(i,j) represents the fact that sequenceA[i-1] is not added to S.
             /// Move along vertical edge (i,j-1)-(i,j) represents an insert of sequenceB[j-1] to S.
-            /// Move along diagonal edge (i-1,j-1)-(i,j) represents an addition of sequenceB[j-1] to S via an acceptable 
+            /// Move along diagonal edge (i-1,j-1)-(i,j) represents an addition of sequenceB[j-1] to S via an acceptable
             /// change of sequenceA[i-1] to sequenceB[j-1].
-            /// 
-            /// In every vertex the cheapest outgoing edge is selected. 
+            ///
+            /// In every vertex the cheapest outgoing edge is selected.
             /// The number of diagonal edges on the path from (0,0) to (lengthA, lengthB) is the length of the longest common subsequence.
             /// </remarks>
             private int[,] ComputeCostMatrix(TSequence sequenceA, int lengthA, TSequence sequenceB, int lengthB)
@@ -239,7 +239,7 @@ namespace TestUtilities
                 var lb = lengthB + 1;
 
                 // TODO: Optimization possible: O(ND) time, O(N) space
-                // EUGENE W. MYERS: An O(ND) Difference Algorithm and Its Variations 
+                // EUGENE W. MYERS: An O(ND) Difference Algorithm and Its Variations
                 var d = new int[la, lb];
 
                 d[0, 0] = 0;

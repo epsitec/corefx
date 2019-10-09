@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -29,9 +30,9 @@ namespace System.Threading.Tasks.Dataflow.Internal.Collections
         /// <summary>
         /// Copies the elements of the <see cref="IProducerConsumerCollection{T}"/> to
         /// an
-        /// <see cref="T:System.Array"/>, starting at a specified index.
+        /// <see cref="System.Array"/>, starting at a specified index.
         /// </summary>
-        /// <param name="array">The one-dimensional <see cref="T:System.Array"/> that is the destination of
+        /// <param name="array">The one-dimensional <see cref="System.Array"/> that is the destination of
         /// the elements copied from the <see cref="IProducerConsumerCollection{T}"/>.
         /// The array must have zero-based indexing.</param>
         /// <param name="index">The zero-based index in <paramref name="array"/> at which copying
@@ -55,7 +56,7 @@ namespace System.Threading.Tasks.Dataflow.Internal.Collections
         /// <param name="item">The object to add to the <see
         /// cref="IProducerConsumerCollection{T}"/>.</param>
         /// <returns>true if the object was added successfully; otherwise, false.</returns>
-        /// <exception cref="T:System.ArgumentException">The <paramref name="item"/> was invalid for this collection.</exception>
+        /// <exception cref="System.ArgumentException">The <paramref name="item"/> was invalid for this collection.</exception>
         bool TryAdd(T item);
 
         /// <summary>
@@ -94,7 +95,7 @@ namespace System.Threading.Tasks.Dataflow.Internal.Collections
         {
             if (collection == null)
             {
-                throw new ArgumentNullException("collection");
+                throw new ArgumentNullException(nameof(collection));
             }
 
             _collection = collection;

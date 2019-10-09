@@ -1,7 +1,9 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -62,10 +64,7 @@ namespace System.ComponentModel.DataAnnotations
             {
                 result = false;
 
-                if (validationResults != null)
-                {
-                    validationResults.Add(err.ValidationResult);
-                }
+                validationResults?.Add(err.ValidationResult);
             }
 
             return result;
@@ -93,11 +92,9 @@ namespace System.ComponentModel.DataAnnotations
         ///     When <paramref name="instance" /> doesn't match the
         ///     <see cref="ValidationContext.ObjectInstance" />on <paramref name="validationContext" />.
         /// </exception>
-        public static bool TryValidateObject(object instance, ValidationContext validationContext,
-            ICollection<ValidationResult> validationResults)
-        {
-            return TryValidateObject(instance, validationContext, validationResults, false /*validateAllProperties*/);
-        }
+        public static bool TryValidateObject(
+            object instance, ValidationContext validationContext, ICollection<ValidationResult> validationResults) =>
+            TryValidateObject(instance, validationContext, validationResults, false /*validateAllProperties*/);
 
         /// <summary>
         ///     Tests whether the given object instance is valid.
@@ -137,28 +134,22 @@ namespace System.ComponentModel.DataAnnotations
         {
             if (instance == null)
             {
-                throw new ArgumentNullException("instance");
+                throw new ArgumentNullException(nameof(instance));
             }
 
             if (validationContext != null && instance != validationContext.ObjectInstance)
             {
-                throw new ArgumentException(
-                    SR.Validator_InstanceMustMatchValidationContextInstance, "instance");
+                throw new ArgumentException(SR.Validator_InstanceMustMatchValidationContextInstance, nameof(instance));
             }
 
             var result = true;
             var breakOnFirstError = (validationResults == null);
 
-            foreach (
-                var err in
-                    GetObjectValidationErrors(instance, validationContext, validateAllProperties, breakOnFirstError))
+            foreach (ValidationError err in GetObjectValidationErrors(instance, validationContext, validateAllProperties, breakOnFirstError))
             {
                 result = false;
 
-                if (validationResults != null)
-                {
-                    validationResults.Add(err.ValidationResult);
-                }
+                validationResults?.Add(err.ValidationResult);
             }
 
             return result;
@@ -168,7 +159,7 @@ namespace System.ComponentModel.DataAnnotations
         ///     Tests whether the given value is valid against a specified list of <see cref="ValidationAttribute" />s.
         /// </summary>
         /// <remarks>
-        ///     This method will test each <see cref="ValidationAttribute" />s specified .  If
+        ///     This method will test each <see cref="ValidationAttribute" />s specified.  If
         ///     <paramref name="validationResults" /> is non-null, this method will add a <see cref="ValidationResult" />
         ///     to it for each validation failure.
         ///     <para>
@@ -205,10 +196,7 @@ namespace System.ComponentModel.DataAnnotations
             {
                 result = false;
 
-                if (validationResults != null)
-                {
-                    validationResults.Add(err.ValidationResult);
-                }
+                validationResults?.Add(err.ValidationResult);
             }
 
             return result;
@@ -232,11 +220,8 @@ namespace System.ComponentModel.DataAnnotations
 
             var attributes = _store.GetPropertyValidationAttributes(validationContext);
 
-            var err = GetValidationErrors(value, validationContext, attributes, false).FirstOrDefault();
-            if (err != null)
-            {
-                err.ThrowValidationException();
-            }
+            GetValidationErrors(value, validationContext, attributes, false).FirstOrDefault()
+                ?.ThrowValidationException();
         }
 
         /// <summary>
@@ -287,24 +272,18 @@ namespace System.ComponentModel.DataAnnotations
         {
             if (instance == null)
             {
-                throw new ArgumentNullException("instance");
+                throw new ArgumentNullException(nameof(instance));
             }
             if (validationContext == null)
             {
-                throw new ArgumentNullException("validationContext");
+                throw new ArgumentNullException(nameof(validationContext));
             }
             if (instance != validationContext.ObjectInstance)
             {
-                throw new ArgumentException(
-                    SR.Validator_InstanceMustMatchValidationContextInstance, "instance");
+                throw new ArgumentException(SR.Validator_InstanceMustMatchValidationContextInstance, nameof(instance));
             }
 
-            var err =
-                GetObjectValidationErrors(instance, validationContext, validateAllProperties, false).FirstOrDefault();
-            if (err != null)
-            {
-                err.ThrowValidationException();
-            }
+            GetObjectValidationErrors(instance, validationContext, validateAllProperties, false).FirstOrDefault()?.ThrowValidationException();
         }
 
         /// <summary>
@@ -329,15 +308,10 @@ namespace System.ComponentModel.DataAnnotations
         {
             if (validationContext == null)
             {
-                throw new ArgumentNullException("validationContext");
+                throw new ArgumentNullException(nameof(validationContext));
             }
 
-            var err =
-                GetValidationErrors(value, validationContext, validationAttributes, false).FirstOrDefault();
-            if (err != null)
-            {
-                err.ThrowValidationException();
-            }
+            GetValidationErrors(value, validationContext, validationAttributes, false).FirstOrDefault()?.ThrowValidationException();
         }
 
         /// <summary>
@@ -351,12 +325,9 @@ namespace System.ComponentModel.DataAnnotations
         /// </param>
         /// <returns>A new <see cref="ValidationContext" /> for the <paramref name="instance" /> provided.</returns>
         /// <exception cref="ArgumentNullException">When <paramref name="validationContext" /> is null.</exception>
-        internal static ValidationContext CreateValidationContext(object instance, ValidationContext validationContext)
+        private static ValidationContext CreateValidationContext(object instance, ValidationContext validationContext)
         {
-            if (validationContext == null)
-            {
-                throw new ArgumentNullException("validationContext");
-            }
+            Debug.Assert(validationContext != null);
 
             // Create a new context using the existing ValidationContext that acts as an IServiceProvider and contains our existing items.
             var context = new ValidationContext(instance, validationContext, validationContext.Items);
@@ -375,21 +346,16 @@ namespace System.ComponentModel.DataAnnotations
         /// <exception cref="ArgumentNullException">When <paramref name="destinationType" /> is null.</exception>
         private static bool CanBeAssigned(Type destinationType, object value)
         {
-            if (destinationType == null)
-            {
-                throw new ArgumentNullException("destinationType");
-            }
-
             if (value == null)
             {
                 // Null can be assigned only to reference types or Nullable or Nullable<>
-                return !destinationType.GetTypeInfo().IsValueType ||
-                       (destinationType.GetTypeInfo().IsGenericType &&
+                return !destinationType.IsValueType ||
+                       (destinationType.IsGenericType &&
                         destinationType.GetGenericTypeDefinition() == typeof(Nullable<>));
             }
 
             // Not null -- be sure it can be cast to the right type
-            return destinationType.GetTypeInfo().IsAssignableFrom(value.GetType().GetTypeInfo());
+            return destinationType.IsInstanceOfType(value);
         }
 
         /// <summary>
@@ -403,10 +369,8 @@ namespace System.ComponentModel.DataAnnotations
         {
             if (!CanBeAssigned(propertyType, value))
             {
-                throw new ArgumentException(
-                    string.Format(CultureInfo.CurrentCulture,
-                        SR.Validator_Property_Value_Wrong_Type, propertyName, propertyType),
-                    "value");
+                throw new ArgumentException(SR.Format(SR.Validator_Property_Value_Wrong_Type, propertyName, propertyType),
+                                            nameof(value));
             }
         }
 
@@ -430,14 +394,11 @@ namespace System.ComponentModel.DataAnnotations
         private static IEnumerable<ValidationError> GetObjectValidationErrors(object instance,
             ValidationContext validationContext, bool validateAllProperties, bool breakOnFirstError)
         {
-            if (instance == null)
-            {
-                throw new ArgumentNullException("instance");
-            }
+            Debug.Assert(instance != null);
 
             if (validationContext == null)
             {
-                throw new ArgumentNullException("validationContext");
+                throw new ArgumentNullException(nameof(validationContext));
             }
 
             // Step 1: Validate the object properties' validation attributes
@@ -462,14 +423,16 @@ namespace System.ComponentModel.DataAnnotations
             }
 
             // Step 3: Test for IValidatableObject implementation
-            var validatable = instance as IValidatableObject;
-            if (validatable != null)
+            if (instance is IValidatableObject validatable)
             {
                 var results = validatable.Validate(validationContext);
 
-                foreach (var result in results.Where(r => r != ValidationResult.Success))
+                if (results != null)
                 {
-                    errors.Add(new ValidationError(null, instance, result));
+                    foreach (var result in results.Where(r => r != ValidationResult.Success))
+                    {
+                        errors.Add(new ValidationError(null, instance, result));
+                    }
                 }
             }
 
@@ -506,7 +469,7 @@ namespace System.ComponentModel.DataAnnotations
                 else
                 {
                     // only validate the Required attributes
-                    var reqAttr = attributes.FirstOrDefault(a => a is RequiredAttribute) as RequiredAttribute;
+                    var reqAttr = attributes.OfType<RequiredAttribute>().FirstOrDefault();
                     if (reqAttr != null)
                     {
                         // Note: we let the [Required] attribute do its own null testing,
@@ -580,14 +543,14 @@ namespace System.ComponentModel.DataAnnotations
         {
             if (validationContext == null)
             {
-                throw new ArgumentNullException("validationContext");
+                throw new ArgumentNullException(nameof(validationContext));
             }
 
             var errors = new List<ValidationError>();
             ValidationError validationError;
 
             // Get the required validator if there is one and test it first, aborting on failure
-            var required = attributes.FirstOrDefault(a => a is RequiredAttribute) as RequiredAttribute;
+            var required = attributes.OfType<RequiredAttribute>().FirstOrDefault();
             if (required != null)
             {
                 if (!TryValidate(value, validationContext, required, out validationError))
@@ -633,10 +596,7 @@ namespace System.ComponentModel.DataAnnotations
         private static bool TryValidate(object value, ValidationContext validationContext, ValidationAttribute attribute,
             out ValidationError validationError)
         {
-            if (validationContext == null)
-            {
-                throw new ArgumentNullException("validationContext");
-            }
+            Debug.Assert(validationContext != null);
 
             var validationResult = attribute.GetValidationResult(value, validationContext);
             if (validationResult != ValidationResult.Success)
@@ -655,24 +615,20 @@ namespace System.ComponentModel.DataAnnotations
         /// </summary>
         private class ValidationError
         {
+            private readonly object _value;
+            private readonly ValidationAttribute _validationAttribute;
+
             internal ValidationError(ValidationAttribute validationAttribute, object value,
                 ValidationResult validationResult)
             {
-                ValidationAttribute = validationAttribute;
+                _validationAttribute = validationAttribute;
                 ValidationResult = validationResult;
-                Value = value;
+                _value = value;
             }
 
-            internal object Value { get; set; }
+            internal ValidationResult ValidationResult { get; }
 
-            internal ValidationAttribute ValidationAttribute { get; set; }
-
-            internal ValidationResult ValidationResult { get; set; }
-
-            internal void ThrowValidationException()
-            {
-                throw new ValidationException(ValidationResult, ValidationAttribute, Value);
-            }
+            internal void ThrowValidationException() => throw new ValidationException(ValidationResult, _validationAttribute, _value);
         }
     }
 }

@@ -1,24 +1,22 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.IO;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Text;
 using System.Threading;
 using System.Globalization;
 using System.Security;
+using System.Runtime.CompilerServices;
 
 namespace System.Text
 {
-    // SBCSCodePageEncoding
     internal class SBCSCodePageEncoding : BaseCodePageEncoding
     {
         // Pointers to our memory section parts
-        [SecurityCritical]
         private unsafe char* _mapBytesToUnicode = null;      // char 256
-        [SecurityCritical]
         private unsafe byte* _mapUnicodeToBytes = null;      // byte 65536
 
         private const char UNKNOWN_CHAR = (char)0xFFFD;
@@ -27,36 +25,12 @@ namespace System.Text
         private byte _byteUnknown;
         private char _charUnknown;
 
-        [System.Security.SecurityCritical]  // auto-generated
         public SBCSCodePageEncoding(int codePage) : this(codePage, codePage)
         {
         }
 
-        [System.Security.SecurityCritical]  // auto-generated
         public SBCSCodePageEncoding(int codePage, int dataCodePage) : base(codePage, dataCodePage)
         {
-        }
-
-        // Method assumes that memory pointer is aligned
-        private static unsafe void ZeroMemAligned(byte* buffer, int count)
-        {
-            long* pLong = (long*)buffer;
-            long* pLongEnd = (long*)(buffer + count - sizeof(long));
-
-            while (pLong < pLongEnd)
-            {
-                *pLong = 0;
-                pLong++;
-            }
-
-            byte* pByte = (byte*)pLong;
-            byte* pEnd = buffer + count;
-
-            while (pByte < pEnd)
-            {
-                *pByte = 0;
-                pByte++;
-            }
         }
 
         // We have a managed code page entry, so load our tables
@@ -71,10 +45,11 @@ namespace System.Text
         //              byte < 0x20 means skip the next n positions.  (Where n is the byte #)
         //              byte == 1 means that next word is another unicode code point #
         //              byte == 0 is unknown.  (doesn't override initial WCHAR[256] table!
-        [System.Security.SecurityCritical]  // auto-generated
         protected override unsafe void LoadManagedCodePage()
         {
-            fixed (byte* pBytes = m_codePageHeader)
+            Debug.Assert(m_codePageHeader?.Length > 0);
+
+            fixed (byte* pBytes = &m_codePageHeader[0])
             {
                 CodePageHeader* pCodePage = (CodePageHeader*)pBytes;
                 // Should be loading OUR code page
@@ -96,7 +71,7 @@ namespace System.Text
                 const int CodePageNumberSize = 4;
                 int bytesToAllocate = UnicodeToBytesMappingSize + BytesToUnicodeMappingSize + CodePageNumberSize + iExtraBytes;
                 byte* pNativeMemory = GetNativeMemory(bytesToAllocate);
-                ZeroMemAligned(pNativeMemory, bytesToAllocate);
+                Unsafe.InitBlockUnaligned(pNativeMemory, 0, (uint)bytesToAllocate);
 
                 char* mapBytesToUnicode = (char*)pNativeMemory;
                 byte* mapUnicodeToBytes = (byte*)(pNativeMemory + 256 * 2);
@@ -115,7 +90,7 @@ namespace System.Text
                     s_codePagesEncodingDataStream.Read(buffer, 0, buffer.Length);
                 }
 
-                fixed (byte* pBuffer = buffer)
+                fixed (byte* pBuffer = &buffer[0])
                 {
                     char* pTemp = (char*)pBuffer;
                     for (int b = 0; b < 256; b++)
@@ -134,29 +109,28 @@ namespace System.Text
                         }
                     }
                 }
-                
+
                 _mapBytesToUnicode = mapBytesToUnicode;
                 _mapUnicodeToBytes = mapUnicodeToBytes;
             }
         }
 
         // Private object for locking instead of locking on a public type for SQL reliability work.
-        private static Object s_InternalSyncObject;
-        private static Object InternalSyncObject
+        private static object s_InternalSyncObject;
+        private static object InternalSyncObject
         {
             get
             {
                 if (s_InternalSyncObject == null)
                 {
-                    Object o = new Object();
-                    Interlocked.CompareExchange<Object>(ref s_InternalSyncObject, o, null);
+                    object o = new object();
+                    Interlocked.CompareExchange<object>(ref s_InternalSyncObject, o, null);
                 }
                 return s_InternalSyncObject;
             }
         }
 
         // Read in our best fit table
-        [System.Security.SecurityCritical]  // auto-generated
         protected unsafe override void ReadBestFitTable()
         {
             // Lock so we don't confuse ourselves.
@@ -191,9 +165,7 @@ namespace System.Text
                         ushort byteTemp;
                         while ((byteTemp = *((ushort*)pData)) != 0)
                         {
-                            Debug.Assert(arrayTemp[byteTemp] == UNKNOWN_CHAR, String.Format(CultureInfo.InvariantCulture,
-                                "[SBCSCodePageEncoding::ReadBestFitTable] Expected unallocated byte (not 0x{2:X2}) for best fit byte at 0x{0:X2} for code page {1}",
-                                byteTemp, CodePage, (int)arrayTemp[byteTemp]));
+                            Debug.Assert(arrayTemp[byteTemp] == UNKNOWN_CHAR, $"[SBCSCodePageEncoding::ReadBestFitTable] Expected unallocated byte (not 0x{(int)arrayTemp[byteTemp]:X2}) for best fit byte at 0x{byteTemp:X2} for code page {CodePage}");
                             pData += 2;
 
                             arrayTemp[byteTemp] = *((char*)pData);
@@ -293,9 +265,7 @@ namespace System.Text
 
                                     // This won't work if it won't round trip.
                                     Debug.Assert(arrayTemp[iBestFitCount - 1] != (char)0,
-                                        String.Format(CultureInfo.InvariantCulture,
-                                        "[SBCSCodePageEncoding.ReadBestFitTable] No valid Unicode value {0:X4} for round trip bytes {1:X4}, encoding {2}",
-                                        (int)_mapBytesToUnicode[input], (int)input, CodePage));
+                                        $"[SBCSCodePageEncoding.ReadBestFitTable] No valid Unicode value {(int)_mapBytesToUnicode[input]:X4} for round trip bytes {(int)input:X4}, encoding {CodePage}");
                                 }
                                 unicodePosition++;
                             }
@@ -311,7 +281,6 @@ namespace System.Text
         // GetByteCount
         // Note: We start by assuming that the output will be the same as count.  Having
         // an encoder or fallback may change that assumption
-        [System.Security.SecurityCritical]  // auto-generated
         public override unsafe int GetByteCount(char* chars, int count, EncoderNLS encoder)
         {
             // Just need to ASSERT, this is called by something else internal that checked parameters already
@@ -331,7 +300,7 @@ namespace System.Text
             if (encoder != null)
             {
                 charLeftOver = encoder.charLeftOver;
-                Debug.Assert(charLeftOver == 0 || Char.IsHighSurrogate(charLeftOver),
+                Debug.Assert(charLeftOver == 0 || char.IsHighSurrogate(charLeftOver),
                     "[SBCSCodePageEncoding.GetByteCount]leftover character should be high surrogate");
                 fallback = encoder.Fallback as EncoderReplacementFallback;
 
@@ -436,7 +405,6 @@ namespace System.Text
             return (int)byteCount;
         }
 
-        [System.Security.SecurityCritical]  // auto-generated
         public override unsafe int GetBytes(char* chars, int charCount,
                                                 byte* bytes, int byteCount, EncoderNLS encoder)
         {
@@ -459,7 +427,7 @@ namespace System.Text
             if (encoder != null)
             {
                 charLeftOver = encoder.charLeftOver;
-                Debug.Assert(charLeftOver == 0 || Char.IsHighSurrogate(charLeftOver),
+                Debug.Assert(charLeftOver == 0 || char.IsHighSurrogate(charLeftOver),
                     "[SBCSCodePageEncoding.GetBytes]leftover character should be high surrogate");
                 fallback = encoder.Fallback as EncoderReplacementFallback;
 
@@ -672,7 +640,6 @@ namespace System.Text
         }
 
         // This is internal and called by something else,
-        [System.Security.SecurityCritical]  // auto-generated
         public override unsafe int GetCharCount(byte* bytes, int count, DecoderNLS decoder)
         {
             // Just assert, we're called internally so these should be safe, checked already
@@ -760,7 +727,6 @@ namespace System.Text
             return charCount;
         }
 
-        [System.Security.SecurityCritical]  // auto-generated
         public override unsafe int GetChars(byte* bytes, int byteCount,
                                                 char* chars, int charCount, DecoderNLS decoder)
         {
@@ -851,7 +817,7 @@ namespace System.Text
             byte[] byteBuffer = new byte[1];
             char* charEnd = chars + charCount;
 
-            DecoderFallbackBufferHelper fallbackHelper = new DecoderFallbackBufferHelper(decoder.FallbackBuffer);
+            DecoderFallbackBufferHelper fallbackHelper = new DecoderFallbackBufferHelper(null);
 
             // Not quite so fast loop
             while (bytes < byteEnd)
@@ -921,8 +887,7 @@ namespace System.Text
         public override int GetMaxByteCount(int charCount)
         {
             if (charCount < 0)
-                throw new ArgumentOutOfRangeException("charCount", SR.ArgumentOutOfRange_NeedNonNegNum);
-            Contract.EndContractBlock();
+                throw new ArgumentOutOfRangeException(nameof(charCount), SR.ArgumentOutOfRange_NeedNonNegNum);
 
             // Characters would be # of characters + 1 in case high surrogate is ? * max fallback
             long byteCount = (long)charCount + 1;
@@ -933,15 +898,14 @@ namespace System.Text
             // 1 to 1 for most characters.  Only surrogates with fallbacks have less.
 
             if (byteCount > 0x7fffffff)
-                throw new ArgumentOutOfRangeException("charCount", SR.ArgumentOutOfRange_GetByteCountOverflow);
+                throw new ArgumentOutOfRangeException(nameof(charCount), SR.ArgumentOutOfRange_GetByteCountOverflow);
             return (int)byteCount;
         }
 
         public override int GetMaxCharCount(int byteCount)
         {
             if (byteCount < 0)
-                throw new ArgumentOutOfRangeException("byteCount", SR.ArgumentOutOfRange_NeedNonNegNum);
-            Contract.EndContractBlock();
+                throw new ArgumentOutOfRangeException(nameof(byteCount), SR.ArgumentOutOfRange_NeedNonNegNum);
 
             // Just return length, SBCS stay the same length because they don't map to surrogate
             long charCount = (long)byteCount;
@@ -951,12 +915,12 @@ namespace System.Text
                 charCount *= DecoderFallback.MaxCharCount;
 
             if (charCount > 0x7fffffff)
-                throw new ArgumentOutOfRangeException("byteCount", SR.ArgumentOutOfRange_GetCharCountOverflow);
+                throw new ArgumentOutOfRangeException(nameof(byteCount), SR.ArgumentOutOfRange_GetCharCountOverflow);
 
             return (int)charCount;
         }
 
-        // True if and only if the encoding only uses single byte code points.  (Ie, ASCII, 1252, etc)
+        // True if and only if the encoding only uses single byte code points.  (i.e. ASCII, 1252, etc)
         public override bool IsSingleByte
         {
             get

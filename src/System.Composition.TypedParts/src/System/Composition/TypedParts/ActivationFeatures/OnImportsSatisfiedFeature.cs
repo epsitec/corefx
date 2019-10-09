@@ -1,12 +1,11 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
 using System.Composition.Convention;
 using System.Composition.Hosting;
 using System.Composition.Hosting.Core;
-using System.Composition.Runtime;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -23,7 +22,7 @@ namespace System.Composition.TypedParts.ActivationFeatures
 
         public OnImportsSatisfiedFeature(AttributedModelProvider attributeContext)
         {
-            if (attributeContext == null) throw new ArgumentNullException("attributeContext");
+            if (attributeContext == null) throw new ArgumentNullException(nameof(attributeContext));
             _attributeContext = attributeContext;
         }
 
@@ -44,9 +43,7 @@ namespace System.Composition.TypedParts.ActivationFeatures
                 if (!(m.IsPublic || m.IsAssembly) | m.IsStatic || m.ReturnType != typeof(void) ||
                     m.IsGenericMethodDefinition || m.GetParameters().Length != 0)
                 {
-                    var message = string.Format(
-                        Properties.Resources.OnImportsSatisfiedFeature_AttributeError,
-                        partType, m.Name);
+                    string message = SR.Format(SR.OnImportsSatisfiedFeature_AttributeError, partType, m.Name);
                     throw new CompositionFailedException(message);
                 }
 

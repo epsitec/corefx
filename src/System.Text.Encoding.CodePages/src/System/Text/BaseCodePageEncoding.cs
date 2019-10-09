@@ -1,11 +1,13 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Reflection;
 using System.IO;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
+using System.Runtime.Serialization;
 
 namespace System.Text
 {
@@ -39,10 +41,9 @@ namespace System.Text
     //       WORD        byteReplace;    // 2 bytes = 48     // default replacement byte(s)
     //       BYTE[]      data;           // data section
     //   }
-
-    internal abstract class BaseCodePageEncoding : EncodingNLS
+    internal abstract class BaseCodePageEncoding : EncodingNLS, ISerializable
     {
-        internal const String CODE_PAGE_DATA_FILE_NAME = "codepages.nlp";
+        internal const string CODE_PAGE_DATA_FILE_NAME = "codepages.nlp";
 
         protected int dataTableCodePage;
 
@@ -53,18 +54,11 @@ namespace System.Text
         protected char[] arrayUnicodeBestFit = null;
         protected char[] arrayBytesBestFit = null;
 
-        [System.Security.SecuritySafeCritical] // static constructors should be safe to call
-        static BaseCodePageEncoding()
-        {
-        }
-
-        [System.Security.SecurityCritical]  // auto-generated
         internal BaseCodePageEncoding(int codepage)
             : this(codepage, codepage)
         {
         }
 
-        [System.Security.SecurityCritical]  // auto-generated
         internal BaseCodePageEncoding(int codepage, int dataCodePage)
             : base(codepage, new InternalEncoderBestFitFallback(null), new InternalDecoderBestFitFallback(null))
         {
@@ -82,7 +76,12 @@ namespace System.Text
             LoadCodePageTables();
         }
 
-        // Just a helper as we cannot use 'this' when calling 'base(...)' 
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            throw new PlatformNotSupportedException();
+        }
+
+        // Just a helper as we cannot use 'this' when calling 'base(...)'
         private void SetFallbackEncoding()
         {
             (EncoderFallback as InternalEncoderBestFitFallback).encoding = this;
@@ -130,7 +129,7 @@ namespace System.Text
             [FieldOffset(0x22)]
             internal ushort VersionMinor;   // WORD
             [FieldOffset(0x24)]
-            internal ushort VersionRevision;// WORD
+            internal ushort VersionRevision; // WORD
             [FieldOffset(0x26)]
             internal ushort VersionBuild;   // WORD
             [FieldOffset(0x28)]
@@ -145,9 +144,9 @@ namespace System.Text
         private const int CODEPAGE_HEADER_SIZE = 48;
 
         // Initialize our global stuff
-        private static byte[] s_codePagesDataHeader = new byte[CODEPAGE_DATA_FILE_HEADER_SIZE];
+        private static readonly byte[] s_codePagesDataHeader = new byte[CODEPAGE_DATA_FILE_HEADER_SIZE];
         protected static Stream s_codePagesEncodingDataStream = GetEncodingDataStream(CODE_PAGE_DATA_FILE_NAME);
-        protected static readonly Object s_streamLock = new Object(); // this lock used when reading from s_codePagesEncodingDataStream
+        protected static readonly object s_streamLock = new object(); // this lock used when reading from s_codePagesEncodingDataStream
 
         // Real variables
         protected byte[] m_codePageHeader = new byte[CODEPAGE_HEADER_SIZE];
@@ -155,10 +154,9 @@ namespace System.Text
         protected int m_dataSize;
 
         // Safe handle wrapper around section map view
-        [System.Security.SecurityCritical] // auto-generated
         protected SafeAllocHHandle safeNativeMemoryHandle = null;
 
-        internal static Stream GetEncodingDataStream(String tableName)
+        internal static Stream GetEncodingDataStream(string tableName)
         {
             Debug.Assert(tableName != null, "table name can not be null");
 
@@ -180,7 +178,6 @@ namespace System.Text
         }
 
         // We need to load tables for our code page
-        [System.Security.SecurityCritical]  // auto-generated
         private unsafe void LoadCodePageTables()
         {
             if (!FindCodePage(dataTableCodePage))
@@ -194,7 +191,6 @@ namespace System.Text
         }
 
         // Look up the code page pointer
-        [System.Security.SecurityCritical]  // auto-generated
         private unsafe bool FindCodePage(int codePage)
         {
             Debug.Assert(m_codePageHeader != null && m_codePageHeader.Length == CODEPAGE_HEADER_SIZE, "m_codePageHeader expected to match in size the struct CodePageHeader");
@@ -208,13 +204,13 @@ namespace System.Text
                 s_codePagesEncodingDataStream.Seek(CODEPAGE_DATA_FILE_HEADER_SIZE, SeekOrigin.Begin);
 
                 int codePagesCount;
-                fixed (byte* pBytes = s_codePagesDataHeader)
+                fixed (byte* pBytes = &s_codePagesDataHeader[0])
                 {
                     CodePageDataFileHeader* pDataHeader = (CodePageDataFileHeader*)pBytes;
                     codePagesCount = pDataHeader->CodePageCount;
                 }
 
-                fixed (byte* pBytes = codePageIndex)
+                fixed (byte* pBytes = &codePageIndex[0])
                 {
                     CodePageIndex* pCodePageIndex = (CodePageIndex*)pBytes;
                     for (int i = 0; i < codePagesCount; i++)
@@ -253,7 +249,6 @@ namespace System.Text
         }
 
         // Get our code page byte count
-        [System.Security.SecurityCritical]  // auto-generated
         internal static unsafe int GetCodePageByteSize(int codePage)
         {
             // Loop through all of the m_pCodePageIndex[] items to find our code page
@@ -265,13 +260,13 @@ namespace System.Text
                 s_codePagesEncodingDataStream.Seek(CODEPAGE_DATA_FILE_HEADER_SIZE, SeekOrigin.Begin);
 
                 int codePagesCount;
-                fixed (byte* pBytes = s_codePagesDataHeader)
+                fixed (byte* pBytes = &s_codePagesDataHeader[0])
                 {
                     CodePageDataFileHeader* pDataHeader = (CodePageDataFileHeader*)pBytes;
                     codePagesCount = pDataHeader->CodePageCount;
                 }
 
-                fixed (byte* pBytes = codePageIndex)
+                fixed (byte* pBytes = &codePageIndex[0])
                 {
                     CodePageIndex* pCodePageIndex = (CodePageIndex*)pBytes;
                     for (int i = 0; i < codePagesCount; i++)
@@ -294,11 +289,9 @@ namespace System.Text
         }
 
         // We have a managed code page entry, so load our tables
-        [System.Security.SecurityCritical]
         protected abstract unsafe void LoadManagedCodePage();
 
         // Allocate memory to load our code page
-        [System.Security.SecurityCritical]  // auto-generated
         protected unsafe byte* GetNativeMemory(int iSize)
         {
             if (safeNativeMemoryHandle == null)
@@ -312,10 +305,8 @@ namespace System.Text
             return (byte*)safeNativeMemoryHandle.DangerousGetHandle();
         }
 
-        [System.Security.SecurityCritical]
         protected abstract unsafe void ReadBestFitTable();
 
-        [System.Security.SecuritySafeCritical]
         internal char[] GetBestFitUnicodeToBytesData()
         {
             // Read in our best fit table if necessary
@@ -327,7 +318,6 @@ namespace System.Text
             return arrayUnicodeBestFit;
         }
 
-        [System.Security.SecuritySafeCritical]
         internal char[] GetBestFitBytesToUnicodeData()
         {
             // Read in our best fit table if necessary
@@ -339,11 +329,10 @@ namespace System.Text
             return arrayBytesBestFit;
         }
 
-        // During the AppDomain shutdown the Encoding class may have already finalized, making the memory section 
-        // invalid. We detect that by validating the memory section handle then re-initializing the memory 
+        // During the AppDomain shutdown the Encoding class may have already finalized, making the memory section
+        // invalid. We detect that by validating the memory section handle then re-initializing the memory
         // section by calling LoadManagedCodePage() method and eventually the mapped file handle and
         // the memory section pointer will get finalized one more time.
-        [System.Security.SecurityCritical]  // auto-generated
         internal unsafe void CheckMemorySection()
         {
             if (safeNativeMemoryHandle != null && safeNativeMemoryHandle.DangerousGetHandle() == IntPtr.Zero)

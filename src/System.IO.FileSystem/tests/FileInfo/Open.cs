@@ -1,15 +1,48 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
-namespace System.IO.FileSystem.Tests
+namespace System.IO.Tests
 {
     public class FileInfo_Open_fm : FileStream_ctor_str_fm
     {
         protected override FileStream CreateFileStream(string path, FileMode mode)
         {
             return new FileInfo(path).Open(mode);
+        }
+
+        [Theory, MemberData(nameof(StreamSpecifiers))]
+        public override void FileModeAppend(string streamSpecifier)
+        {
+            using (FileStream fs = CreateFileStream(GetTestFilePath() + streamSpecifier, FileMode.Append))
+            {
+                Assert.False(fs.CanRead);
+                Assert.True(fs.CanWrite);
+            }
+        }
+
+        [Theory, MemberData(nameof(StreamSpecifiers))]
+        public override void FileModeAppendExisting(string streamSpecifier)
+        {
+            string fileName = GetTestFilePath() + streamSpecifier;
+            using (FileStream fs = CreateFileStream(fileName, FileMode.Create))
+            {
+                fs.WriteByte(0);
+            }
+
+            using (FileStream fs = CreateFileStream(fileName, FileMode.Append))
+            {
+                // Ensure that the file was re-opened and position set to end
+                Assert.Equal(1L, fs.Length);
+                Assert.Equal(1L, fs.Position);
+                Assert.False(fs.CanRead);
+                Assert.True(fs.CanSeek);
+                Assert.True(fs.CanWrite);
+                Assert.Throws<IOException>(() => fs.Seek(-1, SeekOrigin.Current));
+                Assert.Throws<NotSupportedException>(() => fs.ReadByte());
+            }
         }
     }
 
@@ -30,12 +63,12 @@ namespace System.IO.FileSystem.Tests
     {
         protected override FileStream CreateFileStream(string path, FileMode mode)
         {
-            return new FileInfo(path).Open(mode, mode == FileMode.Append ? FileAccess.Write : FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete | FileShare.Inheritable);
+            return new FileInfo(path).Open(mode, mode == FileMode.Append ? FileAccess.Write : FileAccess.ReadWrite, FileShare.ReadWrite | FileShare.Delete);
         }
 
         protected override FileStream CreateFileStream(string path, FileMode mode, FileAccess access)
         {
-            return new FileInfo(path).Open(mode, access, FileShare.ReadWrite | FileShare.Delete | FileShare.Inheritable);
+            return new FileInfo(path).Open(mode, access, FileShare.ReadWrite | FileShare.Delete);
         }
 
         protected override FileStream CreateFileStream(string path, FileMode mode, FileAccess access, FileShare share)

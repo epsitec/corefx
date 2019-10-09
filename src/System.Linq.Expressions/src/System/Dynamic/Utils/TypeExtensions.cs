@@ -1,43 +1,47 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
+using System.Diagnostics;
 using System.Reflection;
-using System.Collections.Generic;
 
 namespace System.Dynamic.Utils
 {
     // Extensions on System.Type and friends
-    internal static partial class TypeExtensions
+    internal static class TypeExtensions
     {
-        // Returns the matching method if the parameter types are reference
-        // assignable from the provided type arguments, otherwise null. 
-        public static MethodInfo GetAnyStaticMethodValidated(
-            this Type type,
-            string name,
-            Type[] types)
-        {
-            var method = type.GetAnyStaticMethod(name);
+        private static readonly CacheDict<MethodBase, ParameterInfo[]> s_paramInfoCache = new CacheDict<MethodBase, ParameterInfo[]>(75);
 
+        /// <summary>
+        /// Returns the matching method if the parameter types are reference
+        /// assignable from the provided type arguments, otherwise null.
+        /// </summary>
+        public static MethodInfo GetAnyStaticMethodValidated(this Type type, string name, Type[] types)
+        {
+            Debug.Assert(types != null);
+            MethodInfo method = type.GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.DeclaredOnly, null, types, null);
             return method.MatchesArgumentTypes(types) ? method : null;
         }
 
         /// <summary>
         /// Returns true if the method's parameter types are reference assignable from
         /// the argument types, otherwise false.
-        /// 
-        /// An example that can make the method return false is that 
+        ///
+        /// An example that can make the method return false is that
         /// typeof(double).GetMethod("op_Equality", ..., new[] { typeof(double), typeof(int) })
         /// returns a method with two double parameters, which doesn't match the provided
         /// argument types.
         /// </summary>
-        /// <returns></returns>
         private static bool MatchesArgumentTypes(this MethodInfo mi, Type[] argTypes)
         {
-            if (mi == null || argTypes == null)
+            Debug.Assert(argTypes != null);
+
+            if (mi == null)
             {
                 return false;
             }
-            var ps = mi.GetParameters();
+
+            ParameterInfo[] ps = mi.GetParametersCached();
 
             if (ps.Length != argTypes.Length)
             {
@@ -51,86 +55,39 @@ namespace System.Dynamic.Utils
                     return false;
                 }
             }
+
             return true;
         }
 
-        public static TypeCode GetTypeCode(this Type type)
-        {
-            if (type == null)
-                return TypeCode.Empty;
-            else if (type == typeof(bool))
-                return TypeCode.Boolean;
-            else if (type == typeof(char))
-                return TypeCode.Char;
-            else if (type == typeof(sbyte))
-                return TypeCode.SByte;
-            else if (type == typeof(byte))
-                return TypeCode.Byte;
-            else if (type == typeof(short))
-                return TypeCode.Int16;
-            else if (type == typeof(ushort))
-                return TypeCode.UInt16;
-            else if (type == typeof(int))
-                return TypeCode.Int32;
-            else if (type == typeof(uint))
-                return TypeCode.UInt32;
-            else if (type == typeof(long))
-                return TypeCode.Int64;
-            else if (type == typeof(ulong))
-                return TypeCode.UInt64;
-            else if (type == typeof(float))
-                return TypeCode.Single;
-            else if (type == typeof(double))
-                return TypeCode.Double;
-            else if (type == typeof(decimal))
-                return TypeCode.Decimal;
-            else if (type == typeof(System.DateTime))
-                return TypeCode.DateTime;
-            else if (type == typeof(string))
-                return TypeCode.String;
-            else if (type.GetTypeInfo().IsEnum)
-                return GetTypeCode(Enum.GetUnderlyingType(type));
-            else
-                return TypeCode.Object;
-        }
+        public static Type GetReturnType(this MethodBase mi) => mi.IsConstructor ? mi.DeclaringType : ((MethodInfo)mi).ReturnType;
 
-        public static MethodInfo[] GetStaticMethods(this Type type)
+        public static TypeCode GetTypeCode(this Type type) => Type.GetTypeCode(type);
+        internal static ParameterInfo[] GetParametersCached(this MethodBase method)
         {
-            var list = new List<MethodInfo>();
-            foreach (var method in type.GetRuntimeMethods())
+            CacheDict<MethodBase, ParameterInfo[]> pic = s_paramInfoCache;
+            if (!pic.TryGetValue(method, out ParameterInfo[] pis))
             {
-                if (method.IsStatic)
+                pis = method.GetParameters();
+                if (method.DeclaringType?.IsCollectible == false)
                 {
-                    list.Add(method);
+                    pic[method] = pis;
                 }
             }
-            return list.ToArray();
+
+            return pis;
         }
 
-        public static MethodInfo GetAnyStaticMethod(this Type type, string name)
+#if FEATURE_COMPILE
+        // Expression trees/compiler just use IsByRef, why do we need this?
+        // (see LambdaCompiler.EmitArguments for usage in the compiler)
+        internal static bool IsByRefParameter(this ParameterInfo pi)
         {
-            foreach (var method in type.GetRuntimeMethods())
-            {
-                if (method.IsStatic && method.Name == name)
-                {
-                    return method;
-                }
-            }
-            return null;
-        }
+            // not using IsIn/IsOut properties as they are not available in Silverlight:
+            if (pi.ParameterType.IsByRef)
+                return true;
 
-        public static MethodInfo[] GetMethodsIgnoreCase(this Type type, BindingFlags flags, string name)
-        {
-            var list = new List<MethodInfo>();
-            foreach (var method in type.GetRuntimeMethods())
-            {
-                // TODO: Binding flags filter
-                if (method.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase))
-                {
-                    list.Add(method);
-                }
-            }
-            return list.ToArray();
+            return (pi.Attributes & ParameterAttributes.Out) == ParameterAttributes.Out;
         }
+#endif
     }
 }

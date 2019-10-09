@@ -1,17 +1,17 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Contracts;
 using System.Text;
 
 namespace System.Net.Http.Headers
 {
     // This type is used to store a collection of headers in 'headerStore':
-    // - A header can have multiple values. 
+    // - A header can have multiple values.
     // - A header can have an associated parser which is able to parse the raw string value into a strongly typed object.
     // - If a header has an associated parser and the provided raw value can't be parsed, the value is considered
     //   invalid. Invalid values are stored if added using TryAddWithoutValidation(). If the value was added using Add(),
@@ -21,8 +21,8 @@ namespace System.Net.Http.Headers
     //
     // Given the properties above, a header value can have three states:
     // - 'raw': The header value was added using TryAddWithoutValidation() and it wasn't parsed yet.
-    // - 'parsed': The header value was successfully parsed. It was either added using Add() where the value was parsed 
-    //   immediately, or if added using TryAddWithoutValidation() a user already accessed a property/method triggering the 
+    // - 'parsed': The header value was successfully parsed. It was either added using Add() where the value was parsed
+    //   immediately, or if added using TryAddWithoutValidation() a user already accessed a property/method triggering the
     //   value to be parsed.
     // - 'invalid': The header value was parsed, but parsing failed because the value is invalid. Storing invalid values
     //   allows users to still retrieve the value (by calling GetValues()), but it will not be exposed as strongly typed
@@ -33,9 +33,9 @@ namespace System.Net.Http.Headers
         Justification = "This is not a collection")]
     public abstract class HttpHeaders : IEnumerable<KeyValuePair<string, IEnumerable<string>>>
     {
-        private Dictionary<string, HeaderStoreItemInfo> _headerStore;
-        private Dictionary<string, HttpHeaderParser> _parserStore;
-        private HashSet<string> _invalidHeaders;
+        private Dictionary<HeaderDescriptor, HeaderStoreItemInfo> _headerStore;
+        private readonly HttpHeaderType _allowedHeaderTypes;
+        private readonly HttpHeaderType _treatAsCustomHeaderTypes;
 
         private enum StoreLocation
         {
@@ -45,41 +45,60 @@ namespace System.Net.Http.Headers
         }
 
         protected HttpHeaders()
+            : this(HttpHeaderType.All, HttpHeaderType.None)
         {
         }
 
+        internal HttpHeaders(HttpHeaderType allowedHeaderTypes, HttpHeaderType treatAsCustomHeaderTypes)
+        {
+            // Should be no overlap
+            Debug.Assert((allowedHeaderTypes & treatAsCustomHeaderTypes) == 0);
+
+            _allowedHeaderTypes = allowedHeaderTypes;
+            _treatAsCustomHeaderTypes = treatAsCustomHeaderTypes;
+        }
+
+        internal Dictionary<HeaderDescriptor, HeaderStoreItemInfo> HeaderStore => _headerStore;
+
         public void Add(string name, string value)
         {
-            CheckHeaderName(name);
+            Add(GetHeaderDescriptor(name), value);
+        }
 
+        internal void Add(HeaderDescriptor descriptor, string value)
+        {
             // We don't use GetOrCreateHeaderInfo() here, since this would create a new header in the store. If parsing
-            // the value then throws, we would have to remove the header from the store again. So just get a 
+            // the value then throws, we would have to remove the header from the store again. So just get a
             // HeaderStoreItemInfo object and try to parse the value. If it works, we'll add the header.
             HeaderStoreItemInfo info;
             bool addToStore;
-            PrepareHeaderInfoForAdd(name, out info, out addToStore);
+            PrepareHeaderInfoForAdd(descriptor, out info, out addToStore);
 
-            ParseAndAddValue(name, info, value);
+            ParseAndAddValue(descriptor, info, value);
 
             // If we get here, then the value could be parsed correctly. If we created a new HeaderStoreItemInfo, add
             // it to the store if we added at least one value.
             if (addToStore && (info.ParsedValue != null))
             {
-                AddHeaderToStore(name, info);
+                AddHeaderToStore(descriptor, info);
             }
         }
 
         public void Add(string name, IEnumerable<string> values)
         {
+            Add(GetHeaderDescriptor(name), values);
+        }
+
+        internal void Add(HeaderDescriptor descriptor, IEnumerable<string> values)
+        {
             if (values == null)
             {
-                throw new ArgumentNullException("values");
+                throw new ArgumentNullException(nameof(values));
             }
-            CheckHeaderName(name);
 
             HeaderStoreItemInfo info;
             bool addToStore;
-            PrepareHeaderInfoForAdd(name, out info, out addToStore);
+            PrepareHeaderInfoForAdd(descriptor, out info, out addToStore);
 
             try
             {
@@ -87,7 +106,7 @@ namespace System.Net.Http.Headers
                 // will be added to the store before the exception for the invalid value is thrown.
                 foreach (string value in values)
                 {
-                    ParseAndAddValue(name, info, value);
+                    ParseAndAddValue(descriptor, info, value);
                 }
             }
             finally
@@ -99,18 +118,17 @@ namespace System.Net.Http.Headers
                 // However, if all values for a _new_ header were invalid, then don't add the header.
                 if (addToStore && (info.ParsedValue != null))
                 {
-                    AddHeaderToStore(name, info);
+                    AddHeaderToStore(descriptor, info);
                 }
             }
         }
 
-        public bool TryAddWithoutValidation(string name, string value)
-        {
-            if (!TryCheckHeaderName(name))
-            {
-                return false;
-            }
+        public bool TryAddWithoutValidation(string name, string value) =>
+            TryGetHeaderDescriptor(name, out HeaderDescriptor descriptor) &&
+            TryAddWithoutValidation(descriptor, value);
 
+        internal bool TryAddWithoutValidation(HeaderDescriptor descriptor, string value)
+        {
             if (value == null)
             {
                 // We allow empty header values. (e.g. "My-Header: "). If the user adds multiple null/empty
@@ -119,24 +137,24 @@ namespace System.Net.Http.Headers
                 value = string.Empty;
             }
 
-            HeaderStoreItemInfo info = GetOrCreateHeaderInfo(name, false);
+            HeaderStoreItemInfo info = GetOrCreateHeaderInfo(descriptor, false);
             AddValue(info, value, StoreLocation.Raw);
 
             return true;
         }
 
-        public bool TryAddWithoutValidation(string name, IEnumerable<string> values)
+        public bool TryAddWithoutValidation(string name, IEnumerable<string> values) =>
+            TryGetHeaderDescriptor(name, out HeaderDescriptor descriptor) &&
+            TryAddWithoutValidation(descriptor, values);
+
+        internal bool TryAddWithoutValidation(HeaderDescriptor descriptor, IEnumerable<string> values)
         {
             if (values == null)
             {
-                throw new ArgumentNullException("values");
-            }
-            if (!TryCheckHeaderName(name))
-            {
-                return false;
+                throw new ArgumentNullException(nameof(values));
             }
 
-            HeaderStoreItemInfo info = GetOrCreateHeaderInfo(name, false);
+            HeaderStoreItemInfo info = GetOrCreateHeaderInfo(descriptor, false);
             foreach (string value in values)
             {
                 // We allow empty header values. (e.g. "My-Header: "). If the user adds multiple null/empty
@@ -158,22 +176,18 @@ namespace System.Net.Http.Headers
 
         public bool Remove(string name)
         {
-            CheckHeaderName(name);
-
-            if (_headerStore == null)
-            {
-                return false;
-            }
-
-            return _headerStore.Remove(name);
+            return Remove(GetHeaderDescriptor(name));
         }
 
         public IEnumerable<string> GetValues(string name)
         {
-            CheckHeaderName(name);
+            return GetValues(GetHeaderDescriptor(name));
+        }
 
+        internal IEnumerable<string> GetValues(HeaderDescriptor descriptor)
+        {
             IEnumerable<string> values;
-            if (!TryGetValues(name, out values))
+            if (!TryGetValues(descriptor, out values))
             {
                 throw new InvalidOperationException(SR.net_http_headers_not_found);
             }
@@ -183,12 +197,18 @@ namespace System.Net.Http.Headers
 
         public bool TryGetValues(string name, out IEnumerable<string> values)
         {
-            if (!TryCheckHeaderName(name))
+            HeaderDescriptor descriptor;
+            if (!TryGetHeaderDescriptor(name, out descriptor))
             {
                 values = null;
                 return false;
             }
 
+            return TryGetValues(descriptor, out values);
+        }
+
+        internal bool TryGetValues(HeaderDescriptor descriptor, out IEnumerable<string> values)
+        {
             if (_headerStore == null)
             {
                 values = null;
@@ -196,9 +216,9 @@ namespace System.Net.Http.Headers
             }
 
             HeaderStoreItemInfo info = null;
-            if (TryGetAndParseHeaderInfo(name, out info))
+            if (TryGetAndParseHeaderInfo(descriptor, out info))
             {
-                values = GetValuesAsStrings(info);
+                values = GetValuesAsStrings(descriptor, info);
                 return true;
             }
 
@@ -208,33 +228,38 @@ namespace System.Net.Http.Headers
 
         public bool Contains(string name)
         {
-            CheckHeaderName(name);
+            return Contains(GetHeaderDescriptor(name));
+        }
 
+        internal bool Contains(HeaderDescriptor descriptor)
+        {
             if (_headerStore == null)
             {
                 return false;
             }
 
             // We can't just call headerStore.ContainsKey() since after parsing the value the header may not exist
-            // anymore (if the value contains invalid newline chars, we remove the header). So try to parse the 
+            // anymore (if the value contains invalid newline chars, we remove the header). So try to parse the
             // header value.
             HeaderStoreItemInfo info = null;
-            return TryGetAndParseHeaderInfo(name, out info);
+            return TryGetAndParseHeaderInfo(descriptor, out info);
         }
 
         public override string ToString()
         {
-            // Return all headers as string similar to: 
+            if (_headerStore == null || _headerStore.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            // Return all headers as string similar to:
             // HeaderName1: Value1, Value2
             // HeaderName2: Value1
             // ...
-            StringBuilder sb = new StringBuilder();
-            foreach (var header in this)
+            var sb = new StringBuilder();
+            foreach (KeyValuePair<string, string> header in GetHeaderStrings())
             {
-                sb.Append(header.Key);
-                sb.Append(": ");
-                sb.Append(this.GetHeaderString(header.Key));
-                sb.Append("\r\n");
+                sb.Append(header.Key).Append(": ").AppendLine(header.Value);
             }
 
             return sb.ToString();
@@ -247,42 +272,40 @@ namespace System.Net.Http.Headers
                 yield break;
             }
 
-            foreach (var header in _headerStore)
+            foreach (KeyValuePair<HeaderDescriptor, HeaderStoreItemInfo> header in _headerStore)
             {
-                HeaderStoreItemInfo info = header.Value;
+                string stringValue = GetHeaderString(header.Key, header.Value);
 
-                string stringValue = GetHeaderString(info);
-
-                yield return new KeyValuePair<string, string>(header.Key, stringValue);
+                yield return new KeyValuePair<string, string>(header.Key.Name, stringValue);
             }
         }
 
-        internal string GetHeaderString(string headerName)
+        internal string GetHeaderString(string name)
         {
-            return GetHeaderString(headerName, null);
-        }
-
-        internal string GetHeaderString(string headerName, object exclude)
-        {
-            HeaderStoreItemInfo info;
-            if (!TryGetHeaderInfo(headerName, out info))
+            if (!TryGetHeaderDescriptor(name, out HeaderDescriptor descriptor))
             {
                 return string.Empty;
             }
 
-            return GetHeaderString(info, exclude);
+            return GetHeaderString(descriptor);
         }
 
-        private string GetHeaderString(HeaderStoreItemInfo info)
+        internal string GetHeaderString(HeaderDescriptor descriptor, object exclude = null)
         {
-            return GetHeaderString(info, null);
+            HeaderStoreItemInfo info;
+            if (!TryGetHeaderInfo(descriptor, out info))
+            {
+                return string.Empty;
+            }
+
+            return GetHeaderString(descriptor, info, exclude);
         }
 
-        private string GetHeaderString(HeaderStoreItemInfo info, object exclude)
+        private string GetHeaderString(HeaderDescriptor descriptor, HeaderStoreItemInfo info, object exclude = null)
         {
-            string stringValue = string.Empty; // returned if values.Length == 0
+            string stringValue;
 
-            string[] values = GetValuesAsStrings(info, exclude);
+            string[] values = GetValuesAsStrings(descriptor, info, exclude);
 
             if (values.Length == 1)
             {
@@ -293,9 +316,9 @@ namespace System.Net.Http.Headers
                 // Note that if we get multiple values for a header that doesn't support multiple values, we'll
                 // just separate the values using a comma (default separator).
                 string separator = HttpHeaderParser.DefaultSeparator;
-                if ((info.Parser != null) && (info.Parser.SupportsMultipleValues))
+                if ((descriptor.Parser != null) && (descriptor.Parser.SupportsMultipleValues))
                 {
-                    separator = info.Parser.Separator;
+                    separator = descriptor.Parser.Separator;
                 }
                 stringValue = string.Join(separator, values);
             }
@@ -303,50 +326,34 @@ namespace System.Net.Http.Headers
             return stringValue;
         }
 
-        #region IEnumerable<KeyValuePair<string, IEnumerable<string>>> Members
+#region IEnumerable<KeyValuePair<string, IEnumerable<string>>> Members
 
         public IEnumerator<KeyValuePair<string, IEnumerable<string>>> GetEnumerator()
         {
-            if (_headerStore == null)
-            {
-                yield break;
-            }
+            return _headerStore != null && _headerStore.Count > 0 ?
+                GetEnumeratorCore() :
+                ((IEnumerable<KeyValuePair<string, IEnumerable<string>>>)Array.Empty<KeyValuePair<string, IEnumerable<string>>>()).GetEnumerator();
+        }
 
-            List<string> invalidHeaders = null;
-
-            foreach (var header in _headerStore)
+        private IEnumerator<KeyValuePair<string, IEnumerable<string>>> GetEnumeratorCore()
+        {
+            foreach (KeyValuePair<HeaderDescriptor, HeaderStoreItemInfo> header in _headerStore)
             {
+                HeaderDescriptor descriptor = header.Key;
                 HeaderStoreItemInfo info = header.Value;
 
                 // Make sure we parse all raw values before returning the result. Note that this has to be
                 // done before we calculate the array length (next line): A raw value may contain a list of
                 // values.
-                if (!ParseRawHeaderValues(header.Key, info, false))
+                if (!ParseRawHeaderValues(descriptor, info, false))
                 {
-                    // We have an invalid header value (contains invalid newline chars). Mark it as "to-be-deleted"
-                    // and skip this header.
-                    if (invalidHeaders == null)
-                    {
-                        invalidHeaders = new List<string>();
-                    }
-                    invalidHeaders.Add(header.Key);
+                    // We have an invalid header value (contains invalid newline chars). Delete it.
+                    _headerStore.Remove(descriptor);
                 }
                 else
                 {
-                    string[] values = GetValuesAsStrings(info);
-                    yield return new KeyValuePair<string, IEnumerable<string>>(header.Key, values);
-                }
-            }
-
-            // While we were enumerating headers, we also parsed header values. If during parsing it turned out that
-            // the header value was invalid (contains invalid newline chars), remove the header from the store after
-            // completing the enumeration.
-            if (invalidHeaders != null)
-            {
-                Debug.Assert(_headerStore != null);
-                foreach (string invalidHeader in invalidHeaders)
-                {
-                    _headerStore.Remove(invalidHeader);
+                    string[] values = GetValuesAsStrings(descriptor, info);
+                    yield return new KeyValuePair<string, IEnumerable<string>>(descriptor.Name, values);
                 }
             }
         }
@@ -360,43 +367,30 @@ namespace System.Net.Http.Headers
             return GetEnumerator();
         }
 
-        #endregion
+#endregion
 
-        internal void SetConfiguration(Dictionary<string, HttpHeaderParser> parserStore,
-            HashSet<string> invalidHeaders)
+        internal void AddParsedValue(HeaderDescriptor descriptor, object value)
         {
-            Debug.Assert(_parserStore == null, "Parser store was already set.");
+            Debug.Assert(value != null);
+            Debug.Assert(descriptor.Parser != null, "Can't add parsed value if there is no parser available.");
 
-            _parserStore = parserStore;
-            _invalidHeaders = invalidHeaders;
-        }
-
-        internal void AddParsedValue(string name, object value)
-        {
-            Contract.Requires((name != null) && (name.Length > 0));
-            Contract.Requires(HttpRuleParser.GetTokenLength(name, 0) == name.Length);
-            Contract.Requires(value != null);
-
-            HeaderStoreItemInfo info = GetOrCreateHeaderInfo(name, true);
-            Debug.Assert(info.Parser != null, "Can't add parsed value if there is no parser available.");
+            HeaderStoreItemInfo info = GetOrCreateHeaderInfo(descriptor, true);
 
             // If the current header has only one value, we can't add another value. The strongly typed property
             // must not call AddParsedValue(), but SetParsedValue(). E.g. for headers like 'Date', 'Host'.
-            Debug.Assert(info.CanAddValue, "Header '" + name + "' doesn't support multiple values");
+            Debug.Assert(descriptor.Parser.SupportsMultipleValues, $"Header '{descriptor.Name}' doesn't support multiple values");
 
             AddValue(info, value, StoreLocation.Parsed);
         }
 
-        internal void SetParsedValue(string name, object value)
+        internal void SetParsedValue(HeaderDescriptor descriptor, object value)
         {
-            Contract.Requires((name != null) && (name.Length > 0));
-            Contract.Requires(HttpRuleParser.GetTokenLength(name, 0) == name.Length);
-            Contract.Requires(value != null);
+            Debug.Assert(value != null);
+            Debug.Assert(descriptor.Parser != null, "Can't add parsed value if there is no parser available.");
 
             // This method will first clear all values. This is used e.g. when setting the 'Date' or 'Host' header.
             // I.e. headers not supporting collections.
-            HeaderStoreItemInfo info = GetOrCreateHeaderInfo(name, true);
-            Debug.Assert(info.Parser != null, "Can't add parsed value if there is no parser available.");
+            HeaderStoreItemInfo info = GetOrCreateHeaderInfo(descriptor, true);
 
             info.InvalidValue = null;
             info.ParsedValue = null;
@@ -405,23 +399,31 @@ namespace System.Net.Http.Headers
             AddValue(info, value, StoreLocation.Parsed);
         }
 
-        internal void SetOrRemoveParsedValue(string name, object value)
+        internal void SetOrRemoveParsedValue(HeaderDescriptor descriptor, object value)
         {
             if (value == null)
             {
-                Remove(name);
+                Remove(descriptor);
             }
             else
             {
-                SetParsedValue(name, value);
+                SetParsedValue(descriptor, value);
             }
         }
 
-        internal bool RemoveParsedValue(string name, object value)
+        internal bool Remove(HeaderDescriptor descriptor)
         {
-            Contract.Requires((name != null) && (name.Length > 0));
-            Contract.Requires(HttpRuleParser.GetTokenLength(name, 0) == name.Length);
-            Contract.Requires(value != null);
+            if (_headerStore == null)
+            {
+                return false;
+            }
+
+            return _headerStore.Remove(descriptor);
+        }
+
+        internal bool RemoveParsedValue(HeaderDescriptor descriptor, object value)
+        {
+            Debug.Assert(value != null);
 
             if (_headerStore == null)
             {
@@ -431,10 +433,10 @@ namespace System.Net.Http.Headers
             // If we have a value for this header, then verify if we have a single value. If so, compare that
             // value with 'item'. If we have a list of values, then remove 'item' from the list.
             HeaderStoreItemInfo info = null;
-            if (TryGetAndParseHeaderInfo(name, out info))
+            if (TryGetAndParseHeaderInfo(descriptor, out info))
             {
-                Debug.Assert(info.Parser != null, "Can't add parsed value if there is no parser available.");
-                Debug.Assert(info.Parser.SupportsMultipleValues,
+                Debug.Assert(descriptor.Parser != null, "Can't add parsed value if there is no parser available.");
+                Debug.Assert(descriptor.Parser.SupportsMultipleValues,
                     "This method should not be used for single-value headers. Use Remove(string) instead.");
 
                 bool result = false;
@@ -445,7 +447,7 @@ namespace System.Net.Http.Headers
                     return false;
                 }
 
-                IEqualityComparer comparer = info.Parser.Comparer;
+                IEqualityComparer comparer = descriptor.Parser.Comparer;
 
                 List<object> parsedValues = info.ParsedValue as List<object>;
                 if (parsedValues == null)
@@ -470,7 +472,7 @@ namespace System.Net.Http.Headers
                         {
                             // Remove 'item' rather than 'value', since the 'comparer' may consider two values
                             // equal even though the default obj.Equals() may not (e.g. if 'comparer' does
-                            // case-insentive comparison for strings, but string.Equals() is case-sensitive).
+                            // case-insensitive comparison for strings, but string.Equals() is case-sensitive).
                             result = parsedValues.Remove(item);
                             break;
                         }
@@ -486,8 +488,8 @@ namespace System.Net.Http.Headers
                 // If there is no value for the header left, remove the header.
                 if (info.IsEmpty)
                 {
-                    bool headerRemoved = Remove(name);
-                    Debug.Assert(headerRemoved, "Existing header '" + name + "' couldn't be removed.");
+                    bool headerRemoved = Remove(descriptor);
+                    Debug.Assert(headerRemoved, "Existing header '" + descriptor.Name + "' couldn't be removed.");
                 }
 
                 return result;
@@ -495,11 +497,9 @@ namespace System.Net.Http.Headers
             return false;
         }
 
-        internal bool ContainsParsedValue(string name, object value)
+        internal bool ContainsParsedValue(HeaderDescriptor descriptor, object value)
         {
-            Contract.Requires((name != null) && (name.Length > 0));
-            Contract.Requires(HttpRuleParser.GetTokenLength(name, 0) == name.Length);
-            Contract.Requires(value != null);
+            Debug.Assert(value != null);
 
             if (_headerStore == null)
             {
@@ -509,10 +509,10 @@ namespace System.Net.Http.Headers
             // If we have a value for this header, then verify if we have a single value. If so, compare that
             // value with 'item'. If we have a list of values, then compare each item in the list with 'item'.
             HeaderStoreItemInfo info = null;
-            if (TryGetAndParseHeaderInfo(name, out info))
+            if (TryGetAndParseHeaderInfo(descriptor, out info))
             {
-                Debug.Assert(info.Parser != null, "Can't add parsed value if there is no parser available.");
-                Debug.Assert(info.Parser.SupportsMultipleValues,
+                Debug.Assert(descriptor.Parser != null, "Can't add parsed value if there is no parser available.");
+                Debug.Assert(descriptor.Parser.SupportsMultipleValues,
                     "This method should not be used for single-value headers. Use equality comparer instead.");
 
                 // If there is no entry, just return.
@@ -523,7 +523,7 @@ namespace System.Net.Http.Headers
 
                 List<object> parsedValues = info.ParsedValue as List<object>;
 
-                IEqualityComparer comparer = info.Parser.Comparer;
+                IEqualityComparer comparer = descriptor.Parser.Comparer;
 
                 if (parsedValues == null)
                 {
@@ -553,20 +553,17 @@ namespace System.Net.Http.Headers
 
         internal virtual void AddHeaders(HttpHeaders sourceHeaders)
         {
-            Contract.Requires(sourceHeaders != null);
-            Debug.Assert(_parserStore == sourceHeaders._parserStore,
-                "Can only copy headers from an instance with the same header parsers.");
+            Debug.Assert(sourceHeaders != null);
+            Debug.Assert(GetType() == sourceHeaders.GetType(), "Can only copy headers from an instance of the same type.");
 
             if (sourceHeaders._headerStore == null)
             {
                 return;
             }
 
-            List<string> invalidHeaders = null;
-
-            foreach (var header in sourceHeaders._headerStore)
+            foreach (KeyValuePair<HeaderDescriptor, HeaderStoreItemInfo> header in sourceHeaders._headerStore)
             {
-                // Only add header values if they're not already set on the message. Note that we don't merge 
+                // Only add header values if they're not already set on the message. Note that we don't merge
                 // collections: If both the default headers and the message have set some values for a certain
                 // header, then we don't try to merge the values.
                 if ((_headerStore == null) || (!_headerStore.ContainsKey(header.Key)))
@@ -574,18 +571,13 @@ namespace System.Net.Http.Headers
                     HeaderStoreItemInfo sourceInfo = header.Value;
 
                     // If DefaultRequestHeaders values are copied to multiple messages, it is useful to parse these
-                    // default header values only once. This is what we're doing here: By parsing raw headers in 
+                    // default header values only once. This is what we're doing here: By parsing raw headers in
                     // 'sourceHeaders' before copying values to our header store.
                     if (!sourceHeaders.ParseRawHeaderValues(header.Key, sourceInfo, false))
                     {
-                        // If after trying to parse source header values no value is left (i.e. all values contain 
-                        // invalid newline chars), mark this header as 'to-be-deleted' and skip to the next header.
-                        if (invalidHeaders == null)
-                        {
-                            invalidHeaders = new List<string>();
-                        }
-
-                        invalidHeaders.Add(header.Key);
+                        // If after trying to parse source header values no value is left (i.e. all values contain
+                        // invalid newline chars), delete it and skip to the next header.
+                        sourceHeaders._headerStore.Remove(header.Key);
                     }
                     else
                     {
@@ -593,26 +585,14 @@ namespace System.Net.Http.Headers
                     }
                 }
             }
-
-            if (invalidHeaders != null)
-            {
-                Debug.Assert(sourceHeaders._headerStore != null);
-                foreach (string invalidHeader in invalidHeaders)
-                {
-                    sourceHeaders._headerStore.Remove(invalidHeader);
-                }
-            }
         }
 
-        private void AddHeaderInfo(string headerName, HeaderStoreItemInfo sourceInfo)
+        private void AddHeaderInfo(HeaderDescriptor descriptor, HeaderStoreItemInfo sourceInfo)
         {
-            HeaderStoreItemInfo destinationInfo = CreateAndAddHeaderToStore(headerName);
-            Debug.Assert(sourceInfo.Parser == destinationInfo.Parser,
-                "Expected same parser on both source and destination header store for header '" + headerName +
-                "'.");
+            HeaderStoreItemInfo destinationInfo = CreateAndAddHeaderToStore(descriptor);
 
             // We have custom header values. The parsed values are strings.
-            if (destinationInfo.Parser == null)
+            if (descriptor.Parser == null)
             {
                 Debug.Assert((sourceInfo.RawValue == null) && (sourceInfo.InvalidValue == null),
                     "No raw or invalid values expected for custom headers.");
@@ -624,7 +604,7 @@ namespace System.Net.Http.Headers
             {
                 // We have a parser, so we have to copy invalid values and clone parsed values.
 
-                // Invalid values are always strings. Strings are immutable. So we only have to clone the 
+                // Invalid values are always strings. Strings are immutable. So we only have to clone the
                 // collection (if there is one).
                 destinationInfo.InvalidValue = CloneStringHeaderInfoValues(sourceInfo.InvalidValue);
 
@@ -658,7 +638,7 @@ namespace System.Net.Http.Headers
             }
             else
             {
-                // If it doesn't implement ICloneable, it's a value type or an immutable type like String/Uri. 
+                // If it doesn't implement ICloneable, it's a value type or an immutable type like String/Uri.
                 AddValue(destinationInfo, source, StoreLocation.Parsed);
             }
         }
@@ -684,52 +664,51 @@ namespace System.Net.Http.Headers
             }
         }
 
-        private HeaderStoreItemInfo GetOrCreateHeaderInfo(string name, bool parseRawValues)
+        private HeaderStoreItemInfo GetOrCreateHeaderInfo(HeaderDescriptor descriptor, bool parseRawValues)
         {
-            Contract.Requires((name != null) && (name.Length > 0));
-            Contract.Requires(HttpRuleParser.GetTokenLength(name, 0) == name.Length);
-            Contract.Ensures(Contract.Result<HeaderStoreItemInfo>() != null);
-
             HeaderStoreItemInfo result = null;
             bool found = false;
             if (parseRawValues)
             {
-                found = TryGetAndParseHeaderInfo(name, out result);
+                found = TryGetAndParseHeaderInfo(descriptor, out result);
             }
             else
             {
-                found = TryGetHeaderInfo(name, out result);
+                found = TryGetHeaderInfo(descriptor, out result);
             }
 
             if (!found)
             {
-                result = CreateAndAddHeaderToStore(name);
+                result = CreateAndAddHeaderToStore(descriptor);
             }
 
+            Debug.Assert(result != null);
             return result;
         }
 
-        private HeaderStoreItemInfo CreateAndAddHeaderToStore(string name)
+        private HeaderStoreItemInfo CreateAndAddHeaderToStore(HeaderDescriptor descriptor)
         {
             // If we don't have the header in the store yet, add it now.
-            HeaderStoreItemInfo result = new HeaderStoreItemInfo(GetParser(name));
+            HeaderStoreItemInfo result = new HeaderStoreItemInfo();
 
-            AddHeaderToStore(name, result);
+            // If the descriptor header type is in _treatAsCustomHeaderTypes, it must be converted to a custom header before calling this method
+            Debug.Assert((descriptor.HeaderType & _treatAsCustomHeaderTypes) == 0);
+
+            AddHeaderToStore(descriptor, result);
 
             return result;
         }
 
-        private void AddHeaderToStore(string name, HeaderStoreItemInfo info)
+        private void AddHeaderToStore(HeaderDescriptor descriptor, HeaderStoreItemInfo info)
         {
             if (_headerStore == null)
             {
-                _headerStore = new Dictionary<string, HeaderStoreItemInfo>(
-                    StringComparer.OrdinalIgnoreCase);
+                _headerStore = new Dictionary<HeaderDescriptor, HeaderStoreItemInfo>();
             }
-            _headerStore.Add(name, info);
+            _headerStore.Add(descriptor, info);
         }
 
-        private bool TryGetHeaderInfo(string name, out HeaderStoreItemInfo info)
+        private bool TryGetHeaderInfo(HeaderDescriptor descriptor, out HeaderStoreItemInfo info)
         {
             if (_headerStore == null)
             {
@@ -737,20 +716,20 @@ namespace System.Net.Http.Headers
                 return false;
             }
 
-            return _headerStore.TryGetValue(name, out info);
+            return _headerStore.TryGetValue(descriptor, out info);
         }
 
-        private bool TryGetAndParseHeaderInfo(string name, out HeaderStoreItemInfo info)
+        private bool TryGetAndParseHeaderInfo(HeaderDescriptor key, out HeaderStoreItemInfo info)
         {
-            if (TryGetHeaderInfo(name, out info))
+            if (TryGetHeaderInfo(key, out info))
             {
-                return ParseRawHeaderValues(name, info, true);
+                return ParseRawHeaderValues(key, info, true);
             }
 
             return false;
         }
 
-        private bool ParseRawHeaderValues(string name, HeaderStoreItemInfo info, bool removeEmptyHeader)
+        private bool ParseRawHeaderValues(HeaderDescriptor descriptor, HeaderStoreItemInfo info, bool removeEmptyHeader)
         {
             // Prevent multiple threads from parsing the raw value at the same time, or else we would get
             // false duplicates or false nulls.
@@ -764,28 +743,28 @@ namespace System.Net.Http.Headers
 
                     if (rawValues == null)
                     {
-                        ParseSingleRawHeaderValue(name, info);
+                        ParseSingleRawHeaderValue(descriptor, info);
                     }
                     else
                     {
-                        ParseMultipleRawHeaderValues(name, info, rawValues);
+                        ParseMultipleRawHeaderValues(descriptor, info, rawValues);
                     }
 
                     // At this point all values are either in info.ParsedValue, info.InvalidValue, or were removed since they
                     // contain invalid newline chars. Reset RawValue.
                     info.RawValue = null;
 
-                    // During parsing, we removed tha value since it contains invalid newline chars. Return false to indicate that
+                    // During parsing, we removed the value since it contains invalid newline chars. Return false to indicate that
                     // this is an empty header. If the caller specified to remove empty headers, we'll remove the header before
                     // returning.
                     if ((info.InvalidValue == null) && (info.ParsedValue == null))
                     {
                         if (removeEmptyHeader)
                         {
-                            // After parsing the raw value, no value is left because all values contain invalid newline 
+                            // After parsing the raw value, no value is left because all values contain invalid newline
                             // chars.
                             Debug.Assert(_headerStore != null);
-                            _headerStore.Remove(name);
+                            _headerStore.Remove(descriptor);
                         }
                         return false;
                     }
@@ -795,13 +774,13 @@ namespace System.Net.Http.Headers
             return true;
         }
 
-        private static void ParseMultipleRawHeaderValues(string name, HeaderStoreItemInfo info, List<string> rawValues)
+        private static void ParseMultipleRawHeaderValues(HeaderDescriptor descriptor, HeaderStoreItemInfo info, List<string> rawValues)
         {
-            if (info.Parser == null)
+            if (descriptor.Parser == null)
             {
                 foreach (string rawValue in rawValues)
                 {
-                    if (!ContainsInvalidNewLine(rawValue, name))
+                    if (!ContainsInvalidNewLine(rawValue, descriptor.Name))
                     {
                         AddValue(info, rawValue, StoreLocation.Parsed);
                     }
@@ -811,68 +790,68 @@ namespace System.Net.Http.Headers
             {
                 foreach (string rawValue in rawValues)
                 {
-                    if (!TryParseAndAddRawHeaderValue(name, info, rawValue, true))
+                    if (!TryParseAndAddRawHeaderValue(descriptor, info, rawValue, true))
                     {
-                        if (Logging.On) Logging.PrintWarning(Logging.Http, string.Format(System.Globalization.CultureInfo.InvariantCulture, SR.net_http_log_headers_invalid_value, name, rawValue));
+                        if (NetEventSource.IsEnabled) NetEventSource.Log.HeadersInvalidValue(descriptor.Name, rawValue);
                     }
                 }
             }
         }
 
-        private static void ParseSingleRawHeaderValue(string name, HeaderStoreItemInfo info)
+        private static void ParseSingleRawHeaderValue(HeaderDescriptor descriptor, HeaderStoreItemInfo info)
         {
             string rawValue = info.RawValue as string;
             Debug.Assert(rawValue != null, "RawValue must either be List<string> or string.");
 
-            if (info.Parser == null)
+            if (descriptor.Parser == null)
             {
-                if (!ContainsInvalidNewLine(rawValue, name))
+                if (!ContainsInvalidNewLine(rawValue, descriptor.Name))
                 {
                     AddValue(info, rawValue, StoreLocation.Parsed);
                 }
             }
             else
             {
-                if (!TryParseAndAddRawHeaderValue(name, info, rawValue, true))
+                if (!TryParseAndAddRawHeaderValue(descriptor, info, rawValue, true))
                 {
-                    if (Logging.On) Logging.PrintWarning(Logging.Http, string.Format(System.Globalization.CultureInfo.InvariantCulture, SR.net_http_log_headers_invalid_value, name, rawValue));
+                    if (NetEventSource.IsEnabled) NetEventSource.Log.HeadersInvalidValue(descriptor.Name, rawValue);
                 }
             }
         }
 
         // See Add(name, string)
-        internal bool TryParseAndAddValue(string name, string value)
+        internal bool TryParseAndAddValue(HeaderDescriptor descriptor, string value)
         {
             // We don't use GetOrCreateHeaderInfo() here, since this would create a new header in the store. If parsing
-            // the value then throws, we would have to remove the header from the store again. So just get a 
+            // the value then throws, we would have to remove the header from the store again. So just get a
             // HeaderStoreItemInfo object and try to parse the value. If it works, we'll add the header.
             HeaderStoreItemInfo info;
             bool addToStore;
-            PrepareHeaderInfoForAdd(name, out info, out addToStore);
+            PrepareHeaderInfoForAdd(descriptor, out info, out addToStore);
 
-            bool result = TryParseAndAddRawHeaderValue(name, info, value, false);
+            bool result = TryParseAndAddRawHeaderValue(descriptor, info, value, false);
 
             if (result && addToStore && (info.ParsedValue != null))
             {
                 // If we get here, then the value could be parsed correctly. If we created a new HeaderStoreItemInfo, add
                 // it to the store if we added at least one value.
-                AddHeaderToStore(name, info);
+                AddHeaderToStore(descriptor, info);
             }
 
             return result;
         }
 
         // See ParseAndAddValue
-        private static bool TryParseAndAddRawHeaderValue(string name, HeaderStoreItemInfo info, string value, bool addWhenInvalid)
+        private static bool TryParseAndAddRawHeaderValue(HeaderDescriptor descriptor, HeaderStoreItemInfo info, string value, bool addWhenInvalid)
         {
-            Contract.Requires(info != null);
-            Contract.Requires(info.Parser != null);
+            Debug.Assert(info != null);
+            Debug.Assert(descriptor.Parser != null);
 
             // Values are added as 'invalid' if we either can't parse the value OR if we already have a value
             // and the current header doesn't support multiple values: e.g. trying to add a date/time value
             // to the 'Date' header if we already have a date/time value will result in the second value being
             // added to the 'invalid' header values.
-            if (!info.CanAddValue)
+            if (!info.CanAddValue(descriptor.Parser))
             {
                 if (addWhenInvalid)
                 {
@@ -884,7 +863,7 @@ namespace System.Net.Http.Headers
             int index = 0;
             object parsedValue = null;
 
-            if (info.Parser.TryParseValue(value, info.ParsedValue, ref index, out parsedValue))
+            if (descriptor.Parser.TryParseValue(value, info.ParsedValue, ref index, out parsedValue))
             {
                 // The raw string only represented one value (which was successfully parsed). Add the value and return.
                 if ((value == null) || (index == value.Length))
@@ -907,7 +886,7 @@ namespace System.Net.Http.Headers
 
                 while (index < value.Length)
                 {
-                    if (info.Parser.TryParseValue(value, info.ParsedValue, ref index, out parsedValue))
+                    if (descriptor.Parser.TryParseValue(value, info.ParsedValue, ref index, out parsedValue))
                     {
                         if (parsedValue != null)
                         {
@@ -916,7 +895,7 @@ namespace System.Net.Http.Headers
                     }
                     else
                     {
-                        if (!ContainsInvalidNewLine(value, name) && addWhenInvalid)
+                        if (!ContainsInvalidNewLine(value, descriptor.Name) && addWhenInvalid)
                         {
                             AddValue(info, value, StoreLocation.Invalid);
                         }
@@ -932,7 +911,7 @@ namespace System.Net.Http.Headers
                 return true;
             }
 
-            if (!ContainsInvalidNewLine(value, name) && addWhenInvalid)
+            if (!ContainsInvalidNewLine(value, descriptor.Name) && addWhenInvalid)
             {
                 AddValue(info, value ?? string.Empty, StoreLocation.Invalid);
             }
@@ -948,21 +927,18 @@ namespace System.Net.Http.Headers
             // - if 'T', i.e. we have already a value stored (but no list), create a list, add the stored value
             //   to the list and append 'value' at the end of the newly created list.
 
-            Debug.Assert((info.Parser != null) || ((info.Parser == null) && (value.GetType() == typeof(string))),
-                "If no parser is defined, then the value must be string.");
-
             object currentStoreValue = null;
             switch (location)
             {
                 case StoreLocation.Raw:
                     currentStoreValue = info.RawValue;
-                    AddValueToStoreValue<string>(info, value, ref currentStoreValue);
+                    AddValueToStoreValue<string>(value, ref currentStoreValue);
                     info.RawValue = currentStoreValue;
                     break;
 
                 case StoreLocation.Invalid:
                     currentStoreValue = info.InvalidValue;
-                    AddValueToStoreValue<string>(info, value, ref currentStoreValue);
+                    AddValueToStoreValue<string>(value, ref currentStoreValue);
                     info.InvalidValue = currentStoreValue;
                     break;
 
@@ -971,18 +947,17 @@ namespace System.Net.Http.Headers
                         "Header value types must not derive from List<object> since this type is used internally to store " +
                         "lists of values. So we would not be able to distinguish between a single value and a list of values.");
                     currentStoreValue = info.ParsedValue;
-                    AddValueToStoreValue<object>(info, value, ref currentStoreValue);
+                    AddValueToStoreValue<object>(value, ref currentStoreValue);
                     info.ParsedValue = currentStoreValue;
                     break;
 
                 default:
-                    Debug.Assert(false, "Unknown StoreLocation value: " + location.ToString());
+                    Debug.Fail("Unknown StoreLocation value: " + location.ToString());
                     break;
             }
         }
 
-        private static void AddValueToStoreValue<T>(HeaderStoreItemInfo info, object value,
-            ref object currentStoreValue) where T : class
+        private static void AddValueToStoreValue<T>(object value, ref object currentStoreValue) where T : class
         {
             // If there is no value set yet, then add current item as value (we don't create a list
             // if not required). If 'info.Value' is already assigned then make sure 'info.Value' is a
@@ -998,7 +973,7 @@ namespace System.Net.Http.Headers
                 if (storeValues == null)
                 {
                     storeValues = new List<T>(2);
-                    Debug.Assert(value is T);
+                    Debug.Assert(currentStoreValue is T);
                     storeValues.Add(currentStoreValue as T);
                     currentStoreValue = storeValues;
                 }
@@ -1008,16 +983,13 @@ namespace System.Net.Http.Headers
         }
 
         // Since most of the time we just have 1 value, we don't create a List<object> for one value, but we change
-        // the return type to 'object'. The caller has to deal with the return type (object vs. List<object>). This 
+        // the return type to 'object'. The caller has to deal with the return type (object vs. List<object>). This
         // is to optimize the most common scenario where a header has only one value.
-        internal object GetParsedValues(string name)
+        internal object GetParsedValues(HeaderDescriptor descriptor)
         {
-            Contract.Requires((name != null) && (name.Length > 0));
-            Contract.Requires(HttpRuleParser.GetTokenLength(name, 0) == name.Length);
-
             HeaderStoreItemInfo info = null;
 
-            if (!TryGetAndParseHeaderInfo(name, out info))
+            if (!TryGetAndParseHeaderInfo(descriptor, out info))
             {
                 return null;
             }
@@ -1025,24 +997,24 @@ namespace System.Net.Http.Headers
             return info.ParsedValue;
         }
 
-        private void PrepareHeaderInfoForAdd(string name, out HeaderStoreItemInfo info, out bool addToStore)
+        private void PrepareHeaderInfoForAdd(HeaderDescriptor descriptor, out HeaderStoreItemInfo info, out bool addToStore)
         {
             info = null;
             addToStore = false;
-            if (!TryGetAndParseHeaderInfo(name, out info))
+            if (!TryGetAndParseHeaderInfo(descriptor, out info))
             {
-                info = new HeaderStoreItemInfo(GetParser(name));
+                info = new HeaderStoreItemInfo();
                 addToStore = true;
             }
         }
 
-        private void ParseAndAddValue(string name, HeaderStoreItemInfo info, string value)
+        private void ParseAndAddValue(HeaderDescriptor descriptor, HeaderStoreItemInfo info, string value)
         {
-            Contract.Requires(info != null);
+            Debug.Assert(info != null);
 
-            if (info.Parser == null)
+            if (descriptor.Parser == null)
             {
-                // If we don't have a parser for the header, we consider the value valid if it doesn't contains 
+                // If we don't have a parser for the header, we consider the value valid if it doesn't contains
                 // invalid newline characters. We add the values as "parsed value". Note that we allow empty values.
                 CheckInvalidNewLine(value);
                 AddValue(info, value ?? string.Empty, StoreLocation.Parsed);
@@ -1051,13 +1023,13 @@ namespace System.Net.Http.Headers
 
             // If the header only supports 1 value, we can add the current value only if there is no
             // value already set.
-            if (!info.CanAddValue)
+            if (!info.CanAddValue(descriptor.Parser))
             {
-                throw new FormatException(string.Format(System.Globalization.CultureInfo.InvariantCulture, SR.net_http_headers_single_value_header, name));
+                throw new FormatException(SR.Format(System.Globalization.CultureInfo.InvariantCulture, SR.net_http_headers_single_value_header, descriptor.Name));
             }
 
             int index = 0;
-            object parsedValue = info.Parser.ParseValue(value, info.ParsedValue, ref index);
+            object parsedValue = descriptor.Parser.ParseValue(value, info.ParsedValue, ref index);
 
             // The raw string only represented one value (which was successfully parsed). Add the value and return.
             // If value is null we still have to first call ParseValue() to allow the parser to decide whether null is
@@ -1084,7 +1056,7 @@ namespace System.Net.Http.Headers
 
             while (index < value.Length)
             {
-                parsedValue = info.Parser.ParseValue(value, info.ParsedValue, ref index);
+                parsedValue = descriptor.Parser.ParseValue(value, info.ParsedValue, ref index);
                 if (parsedValue != null)
                 {
                     parsedValues.Add(parsedValue);
@@ -1098,58 +1070,54 @@ namespace System.Net.Http.Headers
             }
         }
 
-        private HttpHeaderParser GetParser(string name)
-        {
-            if (_parserStore == null)
-            {
-                return null;
-            }
-
-            HttpHeaderParser parser = null;
-            if (_parserStore.TryGetValue(name, out parser))
-            {
-                return parser;
-            }
-
-            return null;
-        }
-
-        private void CheckHeaderName(string name)
+        private HeaderDescriptor GetHeaderDescriptor(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
-                throw new ArgumentException(SR.net_http_argument_empty_string, "name");
+                throw new ArgumentException(SR.net_http_argument_empty_string, nameof(name));
             }
 
-            if (HttpRuleParser.GetTokenLength(name, 0) != name.Length)
+            if (!HeaderDescriptor.TryGet(name, out HeaderDescriptor descriptor))
             {
                 throw new FormatException(SR.net_http_headers_invalid_header_name);
             }
 
-            if ((_invalidHeaders != null) && (_invalidHeaders.Contains(name)))
+            if ((descriptor.HeaderType & _allowedHeaderTypes) != 0)
             {
-                throw new InvalidOperationException(SR.net_http_headers_not_allowed_header_name);
+                return descriptor;
             }
+            else if ((descriptor.HeaderType & _treatAsCustomHeaderTypes) != 0)
+            {
+                return descriptor.AsCustomHeader();
+            }
+
+            throw new InvalidOperationException(SR.net_http_headers_not_allowed_header_name);
         }
 
-        private bool TryCheckHeaderName(string name)
+        private bool TryGetHeaderDescriptor(string name, out HeaderDescriptor descriptor)
         {
             if (string.IsNullOrEmpty(name))
             {
+                descriptor = default(HeaderDescriptor);
                 return false;
             }
 
-            if (HttpRuleParser.GetTokenLength(name, 0) != name.Length)
+            if (!HeaderDescriptor.TryGet(name, out descriptor))
             {
                 return false;
             }
 
-            if ((_invalidHeaders != null) && (_invalidHeaders.Contains(name)))
+            if ((descriptor.HeaderType & _allowedHeaderTypes) != 0)
             {
-                return false;
+                return true;
+            }
+            else if ((descriptor.HeaderType & _treatAsCustomHeaderTypes) != 0)
+            {
+                descriptor = descriptor.AsCustomHeader();
+                return true;
             }
 
-            return true;
+            return false;
         }
 
         private static void CheckInvalidNewLine(string value)
@@ -1169,81 +1137,85 @@ namespace System.Net.Http.Headers
         {
             if (HttpRuleParser.ContainsInvalidNewLine(value))
             {
-                if (Logging.On) Logging.PrintError(Logging.Http, string.Format(System.Globalization.CultureInfo.InvariantCulture, SR.net_http_log_headers_no_newlines, name, value));
+                if (NetEventSource.IsEnabled) NetEventSource.Error(null, SR.Format(SR.net_http_log_headers_no_newlines, name, value));
                 return true;
             }
             return false;
         }
 
-        private static string[] GetValuesAsStrings(HeaderStoreItemInfo info)
+        private static string[] GetValuesAsStrings(HeaderDescriptor descriptor, HeaderStoreItemInfo info, object exclude = null)
         {
-            return GetValuesAsStrings(info, null);
-        }
-
-        // When doing exclusion comparison, assume raw values have been parsed.
-        private static string[] GetValuesAsStrings(HeaderStoreItemInfo info, object exclude)
-        {
-            Contract.Ensures(Contract.Result<string[]>() != null);
-
             int length = GetValueCount(info);
-            string[] values = new string[length];
+            string[] values;
 
             if (length > 0)
             {
+                values = new string[length];
                 int currentIndex = 0;
 
                 ReadStoreValues<string>(values, info.RawValue, null, null, ref currentIndex);
-                ReadStoreValues<object>(values, info.ParsedValue, info.Parser, exclude, ref currentIndex);
+                ReadStoreValues<object>(values, info.ParsedValue, descriptor.Parser, exclude, ref currentIndex);
 
-                // Set parser parameter to 'null' for invalid values: The invalid values is always a string so we 
+                // Set parser parameter to 'null' for invalid values: The invalid values is always a string so we
                 // don't need the parser to "serialize" the value to a string.
                 ReadStoreValues<string>(values, info.InvalidValue, null, null, ref currentIndex);
 
                 // The values array may not be full because some values were excluded
                 if (currentIndex < length)
                 {
-                    string[] trimmedValues = new string[currentIndex];
-                    Array.Copy(values, trimmedValues, currentIndex);
-                    values = trimmedValues;
+                    values = values.AsSpan(0, currentIndex).ToArray();
                 }
             }
+            else
+            {
+                values = Array.Empty<string>();
+            }
+
+            Debug.Assert(values != null);
             return values;
+        }
+
+        internal static int GetValuesAsStrings(HeaderDescriptor descriptor, HeaderStoreItemInfo info, ref string[] values)
+        {
+            Debug.Assert(values != null);
+            int length = GetValueCount(info);
+
+            if (length > 0)
+            {
+                if (values.Length < length)
+                {
+                    values = new string[length];
+                }
+
+                int currentIndex = 0;
+                ReadStoreValues<string>(values, info.RawValue, null, null, ref currentIndex);
+                ReadStoreValues<object>(values, info.ParsedValue, descriptor.Parser, null, ref currentIndex);
+                ReadStoreValues<string>(values, info.InvalidValue, null, null, ref currentIndex);
+                Debug.Assert(currentIndex == length);
+            }
+
+            return length;
         }
 
         private static int GetValueCount(HeaderStoreItemInfo info)
         {
-            Contract.Requires(info != null);
+            Debug.Assert(info != null);
 
-            int valueCount = 0;
-            UpdateValueCount<string>(info.RawValue, ref valueCount);
-            UpdateValueCount<string>(info.InvalidValue, ref valueCount);
-            UpdateValueCount<object>(info.ParsedValue, ref valueCount);
-
+            int valueCount = Count<string>(info.RawValue);
+            valueCount += Count<string>(info.InvalidValue);
+            valueCount += Count<object>(info.ParsedValue);
             return valueCount;
-        }
 
-        private static void UpdateValueCount<T>(object valueStore, ref int valueCount)
-        {
-            if (valueStore == null)
-            {
-                return;
-            }
-
-            List<T> values = valueStore as List<T>;
-            if (values != null)
-            {
-                valueCount += values.Count;
-            }
-            else
-            {
-                valueCount++;
-            }
+            static int Count<T>(object valueStore) =>
+                valueStore is null ? 0 :
+                valueStore is List<T> list ? list.Count :
+                1;
         }
 
         private static void ReadStoreValues<T>(string[] values, object storeValue, HttpHeaderParser parser,
             T exclude, ref int currentIndex)
         {
-            Contract.Requires(values != null);
+            Debug.Assert(values != null);
 
             if (storeValue != null)
             {
@@ -1290,7 +1262,7 @@ namespace System.Net.Http.Headers
 
         private bool AreEqual(object value, object storeValue, IEqualityComparer comparer)
         {
-            Contract.Requires(value != null);
+            Debug.Assert(value != null);
 
             if (comparer != null)
             {
@@ -1301,69 +1273,34 @@ namespace System.Net.Http.Headers
             return value.Equals(storeValue);
         }
 
-        #region Private Classes
+#region Private Classes
 
-        private class HeaderStoreItemInfo
+        internal class HeaderStoreItemInfo
         {
-            private object _rawValue;
-            private object _invalidValue;
-            private object _parsedValue;
-            private HttpHeaderParser _parser;
+            internal HeaderStoreItemInfo() { }
 
-            internal object RawValue
+            internal object RawValue { get; set; }
+            internal object InvalidValue { get; set; }
+            internal object ParsedValue { get; set; }
+
+            internal bool CanAddValue(HttpHeaderParser parser)
             {
-                get { return _rawValue; }
-                set { _rawValue = value; }
+                Debug.Assert(parser != null, "There should be no reason to call CanAddValue if there is no parser for the current header.");
+
+                // If the header only supports one value, and we have already a value set, then we can't add
+                // another value. E.g. the 'Date' header only supports one value. We can't add multiple timestamps
+                // to 'Date'.
+                // So if this is a known header, ask the parser if it supports multiple values and check whether
+                // we already have a (valid or invalid) value.
+                // Note that we ignore the rawValue by purpose: E.g. we are parsing 2 raw values for a header only
+                // supporting 1 value. When the first value gets parsed, CanAddValue returns true and we add the
+                // parsed value to ParsedValue. When the second value is parsed, CanAddValue returns false, because
+                // we have already a parsed value.
+                return parser.SupportsMultipleValues || ((InvalidValue == null) && (ParsedValue == null));
             }
 
-            internal object InvalidValue
-            {
-                get { return _invalidValue; }
-                set { _invalidValue = value; }
-            }
-
-            internal object ParsedValue
-            {
-                get { return _parsedValue; }
-                set { _parsedValue = value; }
-            }
-
-            internal HttpHeaderParser Parser
-            {
-                get { return _parser; }
-            }
-
-            internal bool CanAddValue
-            {
-                get
-                {
-                    Debug.Assert(_parser != null,
-                        "There should be no reason to call CanAddValue if there is no parser for the current header.");
-
-                    // If the header only supports one value, and we have already a value set, then we can't add
-                    // another value. E.g. the 'Date' header only supports one value. We can't add multiple timestamps
-                    // to 'Date'.
-                    // So if this is a known header, ask the parser if it supports multiple values and check wheter
-                    // we already have a (valid or invalid) value.
-                    // Note that we ignore the rawValue by purpose: E.g. we are parsing 2 raw values for a header only 
-                    // supporting 1 value. When the first value gets parsed, CanAddValue returns true and we add the
-                    // parsed value to ParsedValue. When the second value is parsed, CanAddValue returns false, because
-                    // we have already a parsed value. 
-                    return ((_parser.SupportsMultipleValues) || ((_invalidValue == null) && (_parsedValue == null)));
-                }
-            }
-
-            internal bool IsEmpty
-            {
-                get { return ((_rawValue == null) && (_invalidValue == null) && (_parsedValue == null)); }
-            }
-
-            internal HeaderStoreItemInfo(HttpHeaderParser parser)
-            {
-                // Can be null.
-                _parser = parser;
-            }
+            internal bool IsEmpty => (RawValue == null) && (InvalidValue == null) && (ParsedValue == null);
         }
-        #endregion
+#endregion
     }
 }

@@ -1,20 +1,19 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compound.evnt.negative.neg001.neg001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compound.evnt.negative.neg001.neg001;
     // <Area> Dynamic -- compound operator</Area>
-    // <Title> compund operator +=/-= on event </Title>
+    // <Title> compound operator +=/-= on event </Title>
     // <Description>
-    // Negtive: The operator is *=, /=, %=, &=, |=, ^=, <<=, >>=
+    // Negative: The operator is *=, /=, %=, &=, |=, ^=, <<=, >>=
     // </Description>
     // <RelatedBugs></RelatedBugs>
     // <Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public delegate int Dele(int i);
     public class C
@@ -25,7 +24,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compoun
             return i;
         }
 
-        
+
         public static void DynamicCSharpRunTest()
         {
             Assert.Equal(0, MainMethod());
@@ -136,16 +135,14 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compoun
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compound.evnt.negative.neg002.neg002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compound.evnt.negative.neg002.neg002;
     // <Area> Dynamic -- compound operator</Area>
-    // <Title> compund operator +=/-= on event </Title>
+    // <Title> compound operator +=/-= on event </Title>
     // <Description>
-    // Negtive: rhs is dynamic expression with runtime non-delegate type
+    // Negative: rhs is dynamic expression with runtime non-delegate type
     // </Description>
     // <RelatedBugs></RelatedBugs>
     // <Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public delegate int Dele(int i);
     public class C
@@ -172,7 +169,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compoun
             catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException e)
             {
                 // incorrect error message
-                //  resolusion is 'By design' so this error message should be use again
+                //  resolution is 'By design' so this error message should be use again
                 // new error message
                 if (ErrorVerifier.Verify(ErrorMessageId.NoImplicitConv, e.Message, "C", "Dele"))
                     return 0;
@@ -193,11 +190,10 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compoun
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compound.evnt.negative.neg003.neg003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compound.evnt.negative.neg003.neg003;
     // <Area> Dynamic -- compound operator</Area>
-    // <Title> compund operator +=/-= on event </Title>
+    // <Title> compound operator +=/-= on event </Title>
     // <Description>
-    // Negtive: rhs is non-matched delegate
+    // Negative: rhs is non-matched delegate
     // </Description>
     // <RelatedBugs></RelatedBugs>
     // <Expects Status=success></Expects>
@@ -264,16 +260,14 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compoun
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compound.evnt.negative.neg004.neg004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compound.evnt.negative.neg004.neg004;
     // <Area> Dynamic -- compound operator</Area>
-    // <Title> compund operator +=/-= on event </Title>
+    // <Title> compound operator +=/-= on event </Title>
     // <Description>
-    // Negtive: rhs is compile time known type and it's non valid type
+    // Negative: rhs is compile time known type and it's non valid type
     // </Description>
     // <RelatedBugs></RelatedBugs>
     // <Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public delegate int Dele(int i);
     public class C
@@ -352,11 +346,10 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compoun
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compound.evnt.negative.neg005.neg005
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.context.operate.compound.evnt.negative.neg005.neg005;
     // <Area> Dynamic -- compound operator</Area>
-    // <Title> compund operator +=/-= on event </Title>
+    // <Title> compound operator +=/-= on event </Title>
     // <Description>
-    // Negtive: rhs is non-matched delegate and lhs is null
+    // Negative: rhs is non-matched delegate and lhs is null
     // </Description>
     // <RelatedBugs></RelatedBugs>
     // <Expects Status=success></Expects>

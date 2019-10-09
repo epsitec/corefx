@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Runtime.InteropServices;
 using Test.Cryptography;
@@ -10,7 +11,7 @@ namespace System.Security.Cryptography.X509Certificates.Tests
     public static class InteropTests
     {
         [Fact]
-        [PlatformSpecific(PlatformID.Windows)]
+        [PlatformSpecific(TestPlatforms.Windows)]  // Uses P/Invokes
         public static void TestHandle()
         {
             //
@@ -41,13 +42,13 @@ namespace System.Security.Cryptography.X509Certificates.Tests
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.Windows)]
+        [PlatformSpecific(TestPlatforms.Windows)]  // Uses P/Invokes
         public static void TestHandleCtor()
         {
             IntPtr pCertContext = IntPtr.Zero;
+            byte[] rawData = TestData.MsCertificate;
             unsafe
             {
-                byte[] rawData = TestData.MsCertificate;
                 fixed (byte* pRawData = rawData)
                 {
                     CRYPTOAPI_BLOB certBlob = new CRYPTOAPI_BLOB() { cbData = rawData.Length, pbData = pRawData };
@@ -83,6 +84,9 @@ namespace System.Security.Cryptography.X509Certificates.Tests
                 IntPtr h = c.Handle;
                 Assert.Equal(pCertContext, h);
                 pCertContext = IntPtr.Zero;
+
+                Assert.Equal(rawData, c.GetRawCertData());
+                Assert.Equal(rawData, c.GetRawCertDataString().HexToByteArray());
 
                 string issuer = c.Issuer;
                 Assert.Equal(
@@ -200,7 +204,7 @@ namespace System.Security.Cryptography.X509Certificates.Tests
         {
             //encoded single certificate
             CERT_QUERY_CONTENT_CERT = 1,
-            //encoded single CTL                   
+            //encoded single CTL
             CERT_QUERY_CONTENT_CTL = 2,
             //encoded single CRL
             CERT_QUERY_CONTENT_CRL = 3,
@@ -244,6 +248,11 @@ namespace System.Security.Cryptography.X509Certificates.Tests
 
             public byte[] ToByteArray()
             {
+                if (cbData == 0)
+                {
+                    return Array.Empty<byte>();
+                }
+
                 byte[] array = new byte[cbData];
                 Marshal.Copy((IntPtr)pbData, array, 0, cbData);
                 return array;
@@ -300,6 +309,11 @@ namespace System.Security.Cryptography.X509Certificates.Tests
 
             public byte[] ToByteArray()
             {
+                if (cbData == 0)
+                {
+                    return Array.Empty<byte>();
+                }
+
                 byte[] array = new byte[cbData];
                 Marshal.Copy((IntPtr)pbData, array, 0, cbData);
                 return array;

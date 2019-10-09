@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
 using System.Security;
@@ -20,13 +21,13 @@ namespace System.Numerics
             uint[] bits = new uint[left.Length + 1];
 
             long digit = (long)left[0] + right;
-            bits[0] = (uint)digit;
+            bits[0] = unchecked((uint)digit);
             long carry = digit >> 32;
 
             for (int i = 1; i < left.Length; i++)
             {
                 digit = left[i] + carry;
-                bits[i] = (uint)digit;
+                bits[i] = unchecked((uint)digit);
                 carry = digit >> 32;
             }
             bits[left.Length] = (uint)carry;
@@ -34,8 +35,7 @@ namespace System.Numerics
             return bits;
         }
 
-        [SecuritySafeCritical]
-        public unsafe static uint[] Add(uint[] left, uint[] right)
+        public static unsafe uint[] Add(uint[] left, uint[] right)
         {
             Debug.Assert(left != null);
             Debug.Assert(right != null);
@@ -46,7 +46,7 @@ namespace System.Numerics
 
             uint[] bits = new uint[left.Length + 1];
 
-            fixed (uint* l = left, r = right, b = bits)
+            fixed (uint* l = left, r = right, b = &bits[0])
             {
                 Add(l, left.Length,
                     r, right.Length,
@@ -56,8 +56,7 @@ namespace System.Numerics
             return bits;
         }
 
-        [SecuritySafeCritical]
-        private unsafe static void Add(uint* left, int leftLength,
+        private static unsafe void Add(uint* left, int leftLength,
                                        uint* right, int rightLength,
                                        uint* bits, int bitsLength)
         {
@@ -77,20 +76,19 @@ namespace System.Numerics
             for (; i < rightLength; i++)
             {
                 long digit = (left[i] + carry) + right[i];
-                bits[i] = (uint)digit;
+                bits[i] = unchecked((uint)digit);
                 carry = digit >> 32;
             }
             for (; i < leftLength; i++)
             {
                 long digit = left[i] + carry;
-                bits[i] = (uint)digit;
+                bits[i] = unchecked((uint)digit);
                 carry = digit >> 32;
             }
             bits[i] = (uint)carry;
         }
 
-        [SecuritySafeCritical]
-        private unsafe static void AddSelf(uint* left, int leftLength,
+        private static unsafe void AddSelf(uint* left, int leftLength,
                                            uint* right, int rightLength)
         {
             Debug.Assert(leftLength >= 0);
@@ -107,7 +105,7 @@ namespace System.Numerics
             for (; i < rightLength; i++)
             {
                 long digit = (left[i] + carry) + right[i];
-                left[i] = (uint)digit;
+                left[i] = unchecked((uint)digit);
                 carry = digit >> 32;
             }
             for (; carry != 0 && i < leftLength; i++)
@@ -133,21 +131,20 @@ namespace System.Numerics
             uint[] bits = new uint[left.Length];
 
             long digit = (long)left[0] - right;
-            bits[0] = (uint)digit;
+            bits[0] = unchecked((uint)digit);
             long carry = digit >> 32;
 
             for (int i = 1; i < left.Length; i++)
             {
                 digit = left[i] + carry;
-                bits[i] = (uint)digit;
+                bits[i] = unchecked((uint)digit);
                 carry = digit >> 32;
             }
 
             return bits;
         }
 
-        [SecuritySafeCritical]
-        public unsafe static uint[] Subtract(uint[] left, uint[] right)
+        public static unsafe uint[] Subtract(uint[] left, uint[] right)
         {
             Debug.Assert(left != null);
             Debug.Assert(right != null);
@@ -169,8 +166,7 @@ namespace System.Numerics
             return bits;
         }
 
-        [SecuritySafeCritical]
-        private unsafe static void Subtract(uint* left, int leftLength,
+        private static unsafe void Subtract(uint* left, int leftLength,
                                             uint* right, int rightLength,
                                             uint* bits, int bitsLength)
         {
@@ -191,7 +187,7 @@ namespace System.Numerics
             for (; i < rightLength; i++)
             {
                 long digit = (left[i] + carry) - right[i];
-                bits[i] = (uint)digit;
+                bits[i] = unchecked((uint)digit);
                 carry = digit >> 32;
             }
             for (; i < leftLength; i++)
@@ -204,8 +200,7 @@ namespace System.Numerics
             Debug.Assert(carry == 0);
         }
 
-        [SecuritySafeCritical]
-        private unsafe static void SubtractSelf(uint* left, int leftLength,
+        private static unsafe void SubtractSelf(uint* left, int leftLength,
                                                 uint* right, int rightLength)
         {
             Debug.Assert(leftLength >= 0);
@@ -223,7 +218,7 @@ namespace System.Numerics
             for (; i < rightLength; i++)
             {
                 long digit = (left[i] + carry) - right[i];
-                left[i] = (uint)digit;
+                left[i] = unchecked((uint)digit);
                 carry = digit >> 32;
             }
             for (; carry != 0 && i < leftLength; i++)
@@ -257,8 +252,7 @@ namespace System.Numerics
             return 0;
         }
 
-        [SecuritySafeCritical]
-        private unsafe static int Compare(uint* left, int leftLength,
+        private static unsafe int Compare(uint* left, int leftLength,
                                           uint* right, int rightLength)
         {
             Debug.Assert(leftLength >= 0);

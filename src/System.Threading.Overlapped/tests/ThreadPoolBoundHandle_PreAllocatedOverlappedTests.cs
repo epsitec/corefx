@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Runtime.InteropServices;
@@ -11,7 +12,7 @@ public partial class ThreadPoolBoundHandleTests
     [Fact]
     public unsafe void PreAllocatedOverlapped_NullAsCallback_ThrowsArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>("callback", () =>
+        AssertExtensions.Throws<ArgumentNullException>("callback", () =>
         {
             new PreAllocatedOverlapped(null, new object(), new byte[256]);
         });
@@ -42,7 +43,7 @@ public partial class ThreadPoolBoundHandleTests
     [Fact]
     public unsafe void PreAllocatedOverlapped_NonBlittableTypeAsPinData_Throws()
     {
-        Assert.Throws<ArgumentException>(() => new PreAllocatedOverlapped((_, __, ___) => { }, new object(), new NonBlittableType() { s = "foo" }));
+        AssertExtensions.Throws<ArgumentException>(null, () => new PreAllocatedOverlapped((_, __, ___) => { }, new object(), new NonBlittableType() { s = "foo" }));
 
         // Make sure the PreAllocatedOverlapped finalizer does the right thing in the case where the .ctor failed.
         GC.Collect();
@@ -74,7 +75,7 @@ public partial class ThreadPoolBoundHandleTests
             new NonBlittableType() { s = "foo" },
             new byte[5],
         };
-        Assert.Throws<ArgumentException>(() => new PreAllocatedOverlapped((_, __, ___) => { }, new object(), array));
+        AssertExtensions.Throws<ArgumentException>(null, () => new PreAllocatedOverlapped((_, __, ___) => { }, new object(), array));
 
         // Make sure the PreAllocatedOverlapped finalizer does the right thing in the case where the .ctor failed.
         GC.Collect();

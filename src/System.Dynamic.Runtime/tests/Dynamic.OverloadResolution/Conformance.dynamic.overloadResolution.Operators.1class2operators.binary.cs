@@ -1,20 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.errorverifier.errorverifier
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.errorverifier.errorverifier;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.negtwoprms002.negtwoprms002;
-    using System;
-    using System.Collections;
-    using System.IO;
-    using System.Globalization;
-    using System.Reflection;
-    using System.Resources;
-    using Microsoft.CSharp.RuntimeBinder;
-
     public enum ErrorElementId
     {
         None,
@@ -199,8 +190,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.negtwoprms002.negtwoprms002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.errorverifier.errorverifier;
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.negtwoprms002.negtwoprms002;
     // <Title> Tests overload resolution for 1 class and 2 methods</Title>
     // <Description>
     // This will have an ambiguity at runtime
@@ -208,7 +197,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    using System;
 
     public class Target
     {
@@ -255,8 +243,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.onedynamicparam001.onedynamicparam001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.onedynamicparam001.onedynamicparam001;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -306,8 +292,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.onedynamicparam003.onedynamicparam003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.onedynamicparam003.onedynamicparam003;
-
     // <Title> Tests overload resolution for 1 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -367,8 +351,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.onedynamicparam004.onedynamicparam004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.onedynamicparam004.onedynamicparam004;
-
     // <Title> Tests overload resolution for 1 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -418,8 +400,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparam013.oneparam013
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparam013.oneparam013;
-
     // <Title> Tests overload resolution for 1 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -464,8 +444,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparam015.oneparam015
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparam015.oneparam015;
-
     // <Title> Tests overload resolution for 1 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -510,8 +488,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparam016.oneparam016
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparam016.oneparam016;
-
     // <Title> Tests overload resolution for 1 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -561,8 +537,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv001.oneparamdifftypesconv001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv001.oneparamdifftypesconv001;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -608,8 +582,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv002.oneparamdifftypesconv002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv002.oneparamdifftypesconv002;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -654,8 +626,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv003.oneparamdifftypesconv003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv003.oneparamdifftypesconv003;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -700,8 +670,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv004.oneparamdifftypesconv004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv004.oneparamdifftypesconv004;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -745,8 +713,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv005.oneparamdifftypesconv005
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv005.oneparamdifftypesconv005;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -792,8 +758,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv006.oneparamdifftypesconv006
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv006.oneparamdifftypesconv006;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -845,8 +809,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv007.oneparamdifftypesconv007
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv007.oneparamdifftypesconv007;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -898,8 +860,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv008.oneparamdifftypesconv008
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv008.oneparamdifftypesconv008;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -950,7 +910,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv009.oneparamdifftypesconv009
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv009.oneparamdifftypesconv009;
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -1013,7 +972,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv010.oneparamdifftypesconv010
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv010.oneparamdifftypesconv010;
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -1076,8 +1034,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv011.oneparamdifftypesconv011
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv011.oneparamdifftypesconv011;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -1136,8 +1092,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv012.oneparamdifftypesconv012
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv012.oneparamdifftypesconv012;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -1192,8 +1146,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv013.oneparamdifftypesconv013
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv013.oneparamdifftypesconv013;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -1245,8 +1197,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv014.oneparamdifftypesconv014
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv014.oneparamdifftypesconv014;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -1299,8 +1249,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv015.oneparamdifftypesconv015
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv015.oneparamdifftypesconv015;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -1353,8 +1301,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv016.oneparamdifftypesconv016
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv016.oneparamdifftypesconv016;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -1417,8 +1363,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv017.oneparamdifftypesconv017
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv017.oneparamdifftypesconv017;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -1481,8 +1425,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv018.oneparamdifftypesconv018
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesconv018.oneparamdifftypesconv018;
-
     // <Title> Tests overload resolution for 1 class and 2 operators</Title>
     // <Description>
     // </Description>
@@ -1535,8 +1477,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesnoconv001.oneparamdifftypesnoconv001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesnoconv001.oneparamdifftypesnoconv001;
-
     // <Title> Tests overload resolution for 1 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -1580,8 +1520,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesnoconv002.oneparamdifftypesnoconv002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesnoconv002.oneparamdifftypesnoconv002;
-
     // <Title> Tests overload resolution for 1 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -1625,8 +1563,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesuserconv001.oneparamdifftypesuserconv001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesuserconv001.oneparamdifftypesuserconv001;
-
     // <Title> Tests overload resolution for 1 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -1679,8 +1615,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesuserconv002.oneparamdifftypesuserconv002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesuserconv002.oneparamdifftypesuserconv002;
-
     // <Title> Tests overload resolution for 1 class and 2 methods</Title>
     // <Description>
     // </Description>
@@ -1739,8 +1673,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Oper
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesuserconv003.oneparamdifftypesuserconv003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.overloadResolution.Operators.Oneclass2operates.binary.oneparamdifftypesuserconv003.oneparamdifftypesuserconv003;
-
     // <Title> Tests overload resolution for 1 class and 2 methods</Title>
     // <Description>
     // </Description>

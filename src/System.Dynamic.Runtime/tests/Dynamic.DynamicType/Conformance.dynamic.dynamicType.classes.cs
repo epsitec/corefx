@@ -1,19 +1,18 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abstract001.abstract001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abstract001.abstract001;
-
     // <Title>Classes</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    abstract public class Base
+    public abstract class Base
     {
         public abstract int Foo(dynamic o);
     }
@@ -52,15 +51,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abs
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abstract002.abstract002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abstract002.abstract002;
-
     // <Title>Classes</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    abstract public class Base
+    public abstract class Base
     {
         public abstract int Foo(dynamic o);
     }
@@ -99,8 +96,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abs
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abstract003.abstract003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abstract003.abstract003;
-
     // <Title>Classes</Title>
     // <Description>
     // </Description>
@@ -112,7 +107,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abs
         void Foo();
     }
 
-    abstract public class Base
+    public abstract class Base
     {
         public abstract int Foo(dynamic o);
     }
@@ -160,15 +155,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abs
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abstract004.abstract004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abstract004.abstract004;
-
     // <Title>Classes</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    abstract public class Base
+    public abstract class Base
     {
         public abstract int Foo(object o);
     }
@@ -207,15 +200,13 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abs
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abstract005.abstract005
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abstract005.abstract005;
-
     // <Title>Classes</Title>
     // <Description>
     // </Description>
     // <RelatedBugs></RelatedBugs>
     //<Expects Status=success></Expects>
     // <Code>
-    abstract public class Base
+    public abstract class Base
     {
         public abstract int Foo(dynamic o);
     }
@@ -254,8 +245,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.abs
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.virtual001.virtual001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.virtual001.virtual001;
-
     // <Title>Classes</Title>
     // <Description>
     // </Description>
@@ -305,8 +294,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.vir
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.virtual002.virtual002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.virtual002.virtual002;
-
     // <Title>Classes</Title>
     // <Description>
     // </Description>
@@ -356,8 +343,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.vir
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.virtual003.virtual003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.virtual003.virtual003;
-
     // <Title>Classes</Title>
     // <Description>
     // </Description>
@@ -407,8 +392,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.vir
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.virtual004.virtual004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.virtual004.virtual004;
-
     // <Title>Classes</Title>
     // <Description>
     // </Description>
@@ -467,8 +450,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.vir
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.virtual005.virtual005
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.virtual005.virtual005;
-
     // <Title>Classes</Title>
     // <Description>
     // </Description>
@@ -527,8 +508,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.vir
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.virtual006.virtual006
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.virtual006.virtual006;
-
     // <Title>Classes</Title>
     // <Description>
     // </Description>
@@ -584,8 +563,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.vir
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.simplename001.simplename001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.simplename001.simplename001;
-
     // <Title>Classes - Simple Name (Method) Calling</Title>
     // <Description> ICE </Description>
     // <RelatedBugs></RelatedBugs>
@@ -620,8 +597,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.sim
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.simplename003.simplename003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.simplename003.simplename003;
-
     // <Title>Classes - Simple Name (Method) Calling</Title>
     // <Description> </Description>
     // <RelatedBugs></RelatedBugs>
@@ -629,7 +604,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.sim
     // <Code>
     namespace NS
     {
-        abstract public class Base
+        public abstract class Base
         {
             protected static int result = 0;
             public static bool Bar(object o)
@@ -709,8 +684,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.sim
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.simplename004.simplename004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.simplename004.simplename004;
-
     // <Title>Classes - Simple Name (Method) Calling</Title>
     // <Description> </Description>
     // <RelatedBugs></RelatedBugs>
@@ -768,7 +741,7 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.sim
 
         public class Test
         {
-            
+
             public static void DynamicCSharpRunTest()
             {
                 Assert.Equal(0, MainMethod(null));
@@ -788,8 +761,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.sim
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.simplename005.simplename005
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.simplename005.simplename005;
-
     // <Title>Classes - Simple Name (Method) Calling</Title>
     // <Description> ICE </Description>
     // <RelatedBugs></RelatedBugs>
@@ -923,7 +894,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.sim
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.memberaccess002.memberaccess002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.dynamicType.classes.memberaccess002.memberaccess002;
     // <Title> Operator -.is, as</Title>
     // <Description>(By Design)</Description>
     // <RelatedBugs></RelatedBugs>

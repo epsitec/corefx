@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
@@ -9,9 +10,9 @@ namespace System.Diagnostics.TraceSourceTests
     {
         class TestSwitch : Switch
         {
-            public TestSwitch(String description = null) : base(null, description) { }
+            public TestSwitch(string description = null) : base(null, description) { }
 
-            public String SwitchValue
+            public string SwitchValue
             {
                 get { return this.Value; }
                 set { this.Value = value; }
@@ -36,12 +37,17 @@ namespace System.Diagnostics.TraceSourceTests
             Assert.Equal("", item.Description);
         }
 
-        [Fact]
+        [System.Runtime.CompilerServices.MethodImplAttribute(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        static WeakReference PruneMakeRef()
+        {
+            return new WeakReference(new TestSwitch());
+        }
+
+        [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsPreciseGcSupported))]
         public void PruneTest()
         {
             var strongSwitch = new TestSwitch();
-            var weakSwitch = new WeakReference(new TestSwitch());
-            Assert.True(weakSwitch.IsAlive);
+            var weakSwitch = PruneMakeRef();
             GC.Collect(2);
             Trace.Refresh();
             Assert.False(weakSwitch.IsAlive);

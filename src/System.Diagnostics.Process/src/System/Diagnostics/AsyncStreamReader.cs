@@ -1,11 +1,12 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 /*============================================================
 **
 ** Class:  AsyncStreamReader
 **
-** Purpose: For reading text from streams using a particular 
+** Purpose: For reading text from streams using a particular
 ** encoding in an asynchronous manner used by the process class
 **
 **
@@ -20,7 +21,7 @@ using System.Threading.Tasks;
 
 namespace System.Diagnostics
 {
-    internal sealed class AsyncStreamReader
+    internal sealed class AsyncStreamReader : IDisposable
     {
         private const int DefaultBufferSize = 1024;  // Byte buffer size
 
@@ -37,6 +38,7 @@ namespace System.Diagnostics
         private readonly Queue<string> _messageQueue;
         private StringBuilder _sb;
         private bool _bLastCarriageReturn;
+        private bool _cancelOperation;
 
         // Cache the last position scanned in sb when searching for lines.
         private int _currentLinePos;
@@ -66,6 +68,8 @@ namespace System.Diagnostics
         // User calls BeginRead to start the asynchronous read
         internal void BeginReadLine()
         {
+            _cancelOperation = false;
+
             if (_sb == null)
             {
                 _sb = new StringBuilder(DefaultBufferSize);
@@ -79,7 +83,7 @@ namespace System.Diagnostics
 
         internal void CancelOperation()
         {
-            _cts.Cancel();
+            _cancelOperation = true;
         }
 
         // This is the async callback function. Only one thread could/should call this.
@@ -89,7 +93,7 @@ namespace System.Diagnostics
             {
                 try
                 {
-                    int bytesRead = await _stream.ReadAsync(_byteBuffer, 0, _byteBuffer.Length, _cts.Token).ConfigureAwait(false);
+                    int bytesRead = await _stream.ReadAsync(new Memory<byte>(_byteBuffer), _cts.Token).ConfigureAwait(false);
                     if (bytesRead == 0)
                         break;
 
@@ -147,7 +151,7 @@ namespace System.Diagnostics
             int lineStart = 0;
             int len = _sb.Length;
 
-            // skip a beginning '\n' character of new block if last block ended 
+            // skip a beginning '\n' character of new block if last block ended
             // with '\r'
             if (_bLastCarriageReturn && (len > 0) && _sb[0] == '\n')
             {
@@ -212,10 +216,10 @@ namespace System.Diagnostics
         {
             try
             {
-                // Keep going until we're either canceled or we run out of data to process.
-                while (!_cts.Token.IsCancellationRequested)
+                // Keep going until we're out of data to process.
+                while (true)
                 {
-                    // Get the next line (if there isn't one, we're done) and 
+                    // Get the next line (if there isn't one, we're done) and
                     // invoke the user's callback with it.
                     string line;
                     lock (_messageQueue)
@@ -226,7 +230,11 @@ namespace System.Diagnostics
                         }
                         line = _messageQueue.Dequeue();
                     }
-                    _userCallBack(line); // invoked outside of the lock
+
+                    if (!_cancelOperation)
+                    {
+                        _userCallBack(line); // invoked outside of the lock
+                    }
                 }
                 return false;
             }
@@ -253,6 +261,11 @@ namespace System.Diagnostics
                 _readToBufferTask.GetAwaiter().GetResult();
                 _readToBufferTask = null;
             }
+        }
+
+        public void Dispose()
+        {
+            _cts.Cancel();
         }
     }
 }

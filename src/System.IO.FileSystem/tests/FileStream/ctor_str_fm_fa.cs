@@ -1,11 +1,12 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.IO;
 using Xunit;
 
-namespace System.IO.FileSystem.Tests
+namespace System.IO.Tests
 {
     public class FileStream_ctor_str_fm_fa : FileStream_ctor_str_fm
     {
@@ -23,7 +24,7 @@ namespace System.IO.FileSystem.Tests
         [Fact]
         public void InvalidAccessThrows()
         {
-            Assert.Throws<ArgumentOutOfRangeException>("access", () => CreateFileStream(GetTestFilePath(), FileMode.Create, ~FileAccess.Read));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("access", () => CreateFileStream(GetTestFilePath(), FileMode.Create, ~FileAccess.Read));
         }
 
         [Fact]
@@ -58,9 +59,9 @@ namespace System.IO.FileSystem.Tests
 
             using (FileStream fs = CreateFileStream(fileName, FileMode.Open, FileAccess.Read))
             {
-                Assert.Equal(false, fs.CanWrite);
+                Assert.False(fs.CanWrite);
                 Assert.Throws<NotSupportedException>(() => fs.WriteByte(0));
-                Assert.Equal(true, fs.CanRead);
+                Assert.True(fs.CanRead);
                 Assert.Equal(0, fs.ReadByte());
             }
         }
@@ -70,9 +71,9 @@ namespace System.IO.FileSystem.Tests
         {
             using (FileStream fs = CreateFileStream(GetTestFilePath(), FileMode.Create, FileAccess.Write))
             {
-                Assert.Equal(true, fs.CanWrite);
+                Assert.True(fs.CanWrite);
                 fs.WriteByte(0); // should not throw
-                Assert.Equal(false, fs.CanRead);
+                Assert.False(fs.CanRead);
                 Assert.Throws<NotSupportedException>(() => fs.ReadByte());
             }
         }
@@ -89,9 +90,9 @@ namespace System.IO.FileSystem.Tests
             // Reopen the file so that we can test read without taking a dependency on other API like seek
             using (FileStream fs = CreateFileStream(fileName, FileMode.Open, FileAccess.ReadWrite))
             {
-                Assert.Equal(true, fs.CanRead);
+                Assert.True(fs.CanRead);
                 Assert.Equal(0, fs.ReadByte());
-                Assert.Equal(true, fs.CanWrite);
+                Assert.True(fs.CanWrite);
                 fs.WriteByte(0); // should not throw
             }
         }

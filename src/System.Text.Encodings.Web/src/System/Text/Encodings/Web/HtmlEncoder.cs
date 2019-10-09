@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.ComponentModel;
 using System.Diagnostics;
@@ -9,16 +10,35 @@ using System.Text.Unicode;
 
 namespace System.Text.Encodings.Web
 {
+    /// <summary>
+    /// Represents a type used to do HTML encoding.
+    /// </summary>
     public abstract class HtmlEncoder : TextEncoder
     {
+        /// <summary>
+        /// Returns a default built-in instance of <see cref="HtmlEncoder"/>.
+        /// </summary>
         public static HtmlEncoder Default
         {
             get { return DefaultHtmlEncoder.Singleton; }
         }
+
+        /// <summary>
+        /// Creates a new instance of HtmlEncoder with provided settings.
+        /// </summary>
+        /// <param name="settings">Settings used to control how the created <see cref="HtmlEncoder"/> encodes, primarily which characters to encode.</param>
+        /// <returns>A new instance of the <see cref="HtmlEncoder"/>.</returns>
         public static HtmlEncoder Create(TextEncoderSettings settings)
         {
             return new DefaultHtmlEncoder(settings);
         }
+
+        /// <summary>
+        /// Creates a new instance of HtmlEncoder specifying character to be encoded.
+        /// </summary>
+        /// <param name="allowedRanges">Set of characters that the encoder is allowed to not encode.</param>
+        /// <returns>A new instance of the <see cref="HtmlEncoder"/></returns>
+        /// <remarks>Some characters in <paramref name="allowedRanges"/> might still get encoded, i.e. this parameter is just telling the encoder what ranges it is allowed to not encode, not what characters it must not encode.</remarks>
         public static HtmlEncoder Create(params UnicodeRange[] allowedRanges)
         {
             return new DefaultHtmlEncoder(allowedRanges);
@@ -27,17 +47,17 @@ namespace System.Text.Encodings.Web
 
     internal sealed class DefaultHtmlEncoder : HtmlEncoder
     {
-        private AllowedCharactersBitmap _allowedCharacters;
-        internal readonly static DefaultHtmlEncoder Singleton = new DefaultHtmlEncoder(new TextEncoderSettings(UnicodeRanges.BasicLatin));
+        private readonly AllowedCharactersBitmap _allowedCharacters;
+        internal static readonly DefaultHtmlEncoder Singleton = new DefaultHtmlEncoder(new TextEncoderSettings(UnicodeRanges.BasicLatin));
 
-        public DefaultHtmlEncoder(TextEncoderSettings filter)
+        public DefaultHtmlEncoder(TextEncoderSettings settings)
         {
-            if (filter == null)
+            if (settings == null)
             {
-                throw new ArgumentNullException("filter");
+                throw new ArgumentNullException(nameof(settings));
             }
 
-            _allowedCharacters = filter.GetAllowedCharacters();
+            _allowedCharacters = settings.GetAllowedCharacters();
 
             // Forbid codepoints which aren't mapped to characters or which are otherwise always disallowed
             // (includes categories Cc, Cs, Co, Cn, Zs [except U+0020 SPACE], Zl, Zp)
@@ -74,19 +94,19 @@ namespace System.Text.Encodings.Web
 
         public override int MaxOutputCharactersPerInputCharacter
         {
-            get { return 8; } // "&#xFFFF;" is the longest encoded form 
+            get { return 10; } // "&#x10FFFF;" is the longest encoded form
         }
 
-        static readonly char[] s_quote = "&quot;".ToCharArray();
-        static readonly char[] s_ampersand = "&amp;".ToCharArray();
-        static readonly char[] s_lessthan = "&lt;".ToCharArray();
-        static readonly char[] s_greaterthan = "&gt;".ToCharArray();
+        private static readonly char[] s_quote = "&quot;".ToCharArray();
+        private static readonly char[] s_ampersand = "&amp;".ToCharArray();
+        private static readonly char[] s_lessthan = "&lt;".ToCharArray();
+        private static readonly char[] s_greaterthan = "&gt;".ToCharArray();
 
         public unsafe override bool TryEncodeUnicodeScalar(int unicodeScalar, char* buffer, int bufferLength, out int numberOfCharactersWritten)
         {
             if (buffer == null)
             {
-                throw new ArgumentNullException("buffer");
+                throw new ArgumentNullException(nameof(buffer));
             }
 
             if (!WillEncode(unicodeScalar)) { return TryWriteScalarAsChar(unicodeScalar, buffer, bufferLength, out numberOfCharactersWritten); }
@@ -97,7 +117,7 @@ namespace System.Text.Encodings.Web
             else { return TryWriteEncodedScalarAsNumericEntity(unicodeScalar, buffer, bufferLength, out numberOfCharactersWritten); }
         }
 
-        private unsafe static bool TryWriteEncodedScalarAsNumericEntity(int unicodeScalar, char* buffer, int bufferLength, out int numberOfCharactersWritten)
+        private static unsafe bool TryWriteEncodedScalarAsNumericEntity(int unicodeScalar, char* buffer, int bufferLength, out int numberOfCharactersWritten)
         {
             Debug.Assert(buffer != null && bufferLength >= 0);
 

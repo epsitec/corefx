@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -11,41 +12,39 @@
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Threading.Tasks.Dataflow.Internal;
 
 namespace System.Threading.Tasks.Dataflow
 {
     /// <summary>Provides a container of data attributes for passing between dataflow blocks.</summary>
     [DebuggerDisplay("Id = {Id}")]
-    public struct DataflowMessageHeader : IEquatable<DataflowMessageHeader>
+    public readonly struct DataflowMessageHeader : IEquatable<DataflowMessageHeader>
     {
         /// <summary>The message ID. Needs to be unique within the source.</summary>
         private readonly long _id;
 
         /// <summary>Initializes the <see cref="DataflowMessageHeader"/> with the specified attributes.</summary>
         /// <param name="id">The ID of the message. Must be unique within the originating source block. Need not be globally unique.</param>
-        public DataflowMessageHeader(Int64 id)
+        public DataflowMessageHeader(long id)
         {
-            if (id == default(long)) throw new ArgumentException(SR.Argument_InvalidMessageId, "id");
-            Contract.EndContractBlock();
+            if (id == default(long)) throw new ArgumentException(SR.Argument_InvalidMessageId, nameof(id));
 
             _id = id;
         }
 
         /// <summary>Gets the validity of the message.</summary>
         /// <returns>True if the ID of the message is different from 0. False if the ID of the message is 0</returns>
-        public Boolean IsValid { get { return _id != default(long); } }
+        public bool IsValid { get { return _id != default(long); } }
 
         /// <summary>Gets the ID of the message within the source.</summary>
         /// <returns>The ID contained in the <see cref="DataflowMessageHeader"/> instance.</returns>
-        public Int64 Id { get { return _id; } }
+        public long Id { get { return _id; } }
 
         // These overrides are required by the FX API Guidelines.
-        // NOTE: When these overrides are present, the compiler doesn't complain about statements 
+        // NOTE: When these overrides are present, the compiler doesn't complain about statements
         // like 'if (struct == null) ...' which will result in incorrect behavior at runtime.
         // The product code should not use them. Instead, it should compare the Id properties.
-        // To verify that, every once in a while, comment out this region and build the product. 
+        // To verify that, every once in a while, comment out this region and build the product.
         #region Comparison Operators
         /// <summary>Checks two <see cref="DataflowMessageHeader"/> instances for equality by ID without boxing.</summary>
         /// <param name="other">Another <see cref="DataflowMessageHeader"/> instance.</param>

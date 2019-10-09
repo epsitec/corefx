@@ -1,71 +1,46 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Globalization;
 
 namespace System.ComponentModel
 {
-    /// <devdoc>
-    ///    <para> Provides a type
-    ///       converter to convert single-precision, floating point number objects to and from various other
-    ///       representations.</para>
-    /// </devdoc>
+    /// <summary>
+    /// Provides a type converter to convert single-precision, floating point number objects to and
+    /// from various other representations.
+    /// </summary>
     public class SingleConverter : BaseNumberConverter
     {
-        /// <devdoc>
+        /// <summary>
         /// Determines whether this editor will attempt to convert hex (0x or #) strings
-        /// </devdoc>
-        internal override bool AllowHex
-        {
-            get
-            {
-                return false;
-            }
-        }
+        /// </summary>
+        internal override bool AllowHex => false;
 
-        /// <devdoc>
+        /// <summary>
         /// The Type this converter is targeting (e.g. Int16, UInt32, etc.)
-        /// </devdoc>
-        internal override Type TargetType
-        {
-            get
-            {
-                return typeof(Single);
-            }
-        }
+        /// </summary>
+        internal override Type TargetType => typeof(float);
 
-        /// <devdoc>
+        /// <summary>
         /// Convert the given value to a string using the given radix
-        /// </devdoc>
-        internal override object FromString(string value, int radix)
-        {
-            return Convert.ToSingle(value, CultureInfo.CurrentCulture);
-        }
+        /// </summary>
+        internal override object FromString(string value, int radix) => Convert.ToSingle(value, CultureInfo.CurrentCulture);
 
-        /// <devdoc>
+        /// <summary>
         /// Convert the given value to a string using the given formatInfo
-        /// </devdoc>
+        /// </summary>
         internal override object FromString(string value, NumberFormatInfo formatInfo)
         {
-            return Single.Parse(value, NumberStyles.Float, formatInfo);
+            return float.Parse(value, NumberStyles.Float, formatInfo);
         }
 
-
-        /// <devdoc>
-        /// Convert the given value to a string using the given CultureInfo
-        /// </devdoc>
-        internal override object FromString(string value, CultureInfo culture)
-        {
-            return Single.Parse(value, culture);
-        }
-
-        /// <devdoc>
+        /// <summary>
         /// Convert the given value from a string using the given formatInfo
-        /// </devdoc>
+        /// </summary>
         internal override string ToString(object value, NumberFormatInfo formatInfo)
         {
-            return ((Single)value).ToString("R", formatInfo);
+            return ((float)value).ToString("R", formatInfo);
         }
     }
 }
-

@@ -1,9 +1,12 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Contracts;
+using System.IO;
 using System.Net.Http.Headers;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace System.Net.Http
 {
@@ -28,9 +31,8 @@ namespace System.Net.Http
         {
             if (content == null)
             {
-                throw new ArgumentNullException("content");
+                throw new ArgumentNullException(nameof(content));
             }
-            Contract.EndContractBlock();
 
             if (content.Headers.ContentDisposition == null)
             {
@@ -44,13 +46,12 @@ namespace System.Net.Http
         {
             if (content == null)
             {
-                throw new ArgumentNullException("content");
+                throw new ArgumentNullException(nameof(content));
             }
             if (string.IsNullOrWhiteSpace(name))
             {
-                throw new ArgumentException(SR.net_http_argument_empty_string, "name");
+                throw new ArgumentException(SR.net_http_argument_empty_string, nameof(name));
             }
-            Contract.EndContractBlock();
 
             AddInternal(content, name, null);
         }
@@ -59,17 +60,16 @@ namespace System.Net.Http
         {
             if (content == null)
             {
-                throw new ArgumentNullException("content");
+                throw new ArgumentNullException(nameof(content));
             }
             if (string.IsNullOrWhiteSpace(name))
             {
-                throw new ArgumentException(SR.net_http_argument_empty_string, "name");
+                throw new ArgumentException(SR.net_http_argument_empty_string, nameof(name));
             }
             if (string.IsNullOrWhiteSpace(fileName))
             {
-                throw new ArgumentException(SR.net_http_argument_empty_string, "fileName");
+                throw new ArgumentException(SR.net_http_argument_empty_string, nameof(fileName));
             }
-            Contract.EndContractBlock();
 
             AddInternal(content, name, fileName);
         }
@@ -87,5 +87,11 @@ namespace System.Net.Http
             }
             base.Add(content);
         }
+
+        internal override Task SerializeToStreamAsync(Stream stream, TransportContext context, CancellationToken cancellationToken) =>
+            // Only skip the original protected virtual SerializeToStreamAsync if this
+            // isn't a derived type that may have overridden the behavior.
+            GetType() == typeof(MultipartFormDataContent) ? SerializeToStreamAsyncCore(stream, context, cancellationToken) :
+            base.SerializeToStreamAsync(stream, context, cancellationToken);
     }
 }

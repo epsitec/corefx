@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Linq;
@@ -232,7 +233,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
             foreach (int boundedCapacity in new[] { DataflowBlockOptions.Unbounded, 1, 2 })
             {
                 const int Messages = 100;
-                var bb = new BufferBlock<int>(new DataflowBlockOptions 
+                var bb = new BufferBlock<int>(new DataflowBlockOptions
                 {
                     BoundedCapacity = boundedCapacity,
                     MaxMessagesPerTask = maxMessagesPerTask,
@@ -266,7 +267,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
                 var b = new BufferBlock<int>(new DataflowBlockOptions { BoundedCapacity = boundedCapacity });
 
                 var sendAsync = new Task<bool>[boundedCapacity + Excess];
-                for (int i = 0; i < boundedCapacity + Excess; i++) 
+                for (int i = 0; i < boundedCapacity + Excess; i++)
                     sendAsync[i] = b.SendAsync(i);
                 b.Complete();
 
@@ -308,13 +309,12 @@ namespace System.Threading.Tasks.Dataflow.Tests
             ((ISourceBlock<int>)block).ReleaseReservation(messageHeader, target);
 
             ((ISourceBlock<int>)block).ConsumeMessage(messageHeader, DataflowBlock.NullTarget<int>(), out consumed);
-            
+
             Assert.True(consumed);
             Assert.Equal(expected: 0, actual: block.Count);
         }
 
         [Fact]
-        [OuterLoop] // has a timeout
         public async Task TestOutputAvailableAsyncAfterTryReceiveAll()
         {
             Func<Task<bool>> generator = () => {
@@ -331,11 +331,8 @@ namespace System.Threading.Tasks.Dataflow.Tests
                 return outputAvailableAsync;
             };
 
-            var multipleConcurrentTestsTask = Task.WhenAll(Enumerable.Repeat(0, 1000).Select(_ => generator()));
-            var timeoutTask = Task.Delay(2000);
-            var completedTask = await Task.WhenAny(multipleConcurrentTestsTask, timeoutTask).ConfigureAwait(false);
-
-            Assert.True(completedTask != timeoutTask);
+            bool[] results = await Task.WhenAll(Enumerable.Repeat(0, 10).Select(_ => generator()));
+            Assert.All(results, Assert.True);
         }
 
         [Fact]
@@ -480,7 +477,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
         [Fact]
         public async Task TestFaultyScheduler()
         {
-            var bb = new BufferBlock<int>(new DataflowBlockOptions 
+            var bb = new BufferBlock<int>(new DataflowBlockOptions
             {
                 TaskScheduler = new DelegateTaskScheduler
                 {

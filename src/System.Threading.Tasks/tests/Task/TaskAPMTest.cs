@@ -1,11 +1,12 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
 // Test class that verifies the integration with APM (Task => APM) section 2.5.11 in the TPL spec
 // "Asynchronous Programming Model", or the "Begin/End" pattern
-// 
+//
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 using Xunit;
@@ -17,7 +18,7 @@ using System.Diagnostics;
 namespace System.Threading.Tasks.Tests
 {
     /// <summary>
-    /// A class that implements the APM pattern to ensure that TPL can support APM patttern
+    /// A class that implements the APM pattern to ensure that TPL can support APM pattern
     /// </summary>
     public sealed class TaskAPMTests : IDisposable
     {
@@ -27,7 +28,7 @@ namespace System.Threading.Tasks.Tests
         private bool _hasReturnType;
 
         /// <summary>
-        /// Used to synchornize between Main thread and async thread, by blocking the main thread until
+        /// Used to synchronize between Main thread and async thread, by blocking the main thread until
         /// the thread that invokes the TaskCompleted method via AsyncCallback finishes
         /// </summary>
         private ManualResetEvent _mre = new ManualResetEvent(false);
@@ -45,7 +46,7 @@ namespace System.Threading.Tasks.Tests
         [Theory]
         [OuterLoop]
         [InlineData(true)]
-        [InlineData(false)]        
+        [InlineData(false)]
         public void WaitUntilCompleteTechnique(bool hasReturnType)
         {
             _hasReturnType = hasReturnType;
@@ -79,9 +80,10 @@ namespace System.Threading.Tasks.Tests
                 longTask = new LongTask(LongTaskMilliseconds);
 
             IAsyncResult asyncResult = longTask.BeginDoTask(null, null);
+            var mres = new ManualResetEventSlim();
             while (!asyncResult.IsCompleted)
             {
-                Task.Delay(300).Wait();
+                mres.Wait(1);
             }
 
             AssertTaskCompleted(asyncResult);
@@ -178,9 +180,9 @@ namespace System.Threading.Tasks.Tests
     public class LongTask
     {
         // Amount of time to SpinWait, in milliseconds.
-        protected readonly Int32 _msWaitDuration;
+        protected readonly int _msWaitDuration;
 
-        public LongTask(Int32 milliseconds)
+        public LongTask(int milliseconds)
         {
             _msWaitDuration = milliseconds;
         }
@@ -193,7 +195,7 @@ namespace System.Threading.Tasks.Tests
         }
 
         // Asynchronous version of time-consuming method (Begin part)
-        public IAsyncResult BeginDoTask(AsyncCallback callback, Object state)
+        public IAsyncResult BeginDoTask(AsyncCallback callback, object state)
         {
             // Create IAsyncResult object identifying the asynchronous operation
             Task task = Task.Factory.StartNew(
@@ -229,7 +231,7 @@ namespace System.Threading.Tasks.Tests
     /// </summary>
     public sealed class LongTask<T> : LongTask
     {
-        public LongTask(Int32 milliseconds)
+        public LongTask(int milliseconds)
             : base(milliseconds)
         {
         }
@@ -241,7 +243,7 @@ namespace System.Threading.Tasks.Tests
             return input; // Return some result, for now, just return the input
         }
 
-        public IAsyncResult BeginDoTask(T input, AsyncCallback callback, Object state)
+        public IAsyncResult BeginDoTask(T input, AsyncCallback callback, object state)
         {
             // Create IAsyncResult object identifying the asynchronous operation
             Task<T> task = Task<T>.Factory.StartNew(
@@ -260,7 +262,7 @@ namespace System.Threading.Tasks.Tests
         }
 
         // Asynchronous version of time-consuming method (End part)
-        new public T EndDoTask(IAsyncResult asyncResult)
+        public new T EndDoTask(IAsyncResult asyncResult)
         {
             // We know that the IAsyncResult is really a Task object
             Task<T> task = (Task<T>)asyncResult;

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -7,13 +8,13 @@ using Xunit;
 
 namespace System.Linq.Tests
 {
-    public class CastTests
+    public class CastTests : EnumerableTests
     {
         [Fact]
         public void CastIntToLongThrows()
         {
             var q = from x in new[] { 9999, 0, 888, -1, 66, -777, 1, 2, -12345 }
-                    where x > Int32.MinValue
+                    where x > int.MinValue
                     select x;
 
             var rst = q.Cast<long>();
@@ -35,10 +36,7 @@ namespace System.Linq.Tests
         public void EmptySource()
         {
             object[] source = { };
-            int[] expected = { };
-
-            Assert.Equal(expected, source.Cast<int>());
-
+            Assert.Empty(source.Cast<int>());
         }
 
         [Fact]
@@ -50,7 +48,17 @@ namespace System.Linq.Tests
 
             Assert.Equal(expected, source.Cast<int?>());
         }
-        
+
+        [Fact]
+        public void NullableIntFromAppropriateObjectsRunOnce()
+        {
+            int? i = 10;
+            object[] source = { -4, 1, 2, 3, 9, i };
+            int?[] expected = { -4, 1, 2, 3, 9, i };
+
+            Assert.Equal(expected, source.RunOnce().Cast<int?>());
+        }
+
         [Fact]
         public void LongFromNullableIntInObjectsThrows()
         {
@@ -101,7 +109,7 @@ namespace System.Linq.Tests
             IEnumerable<double> cast = source.Cast<double>();
             Assert.Throws<InvalidCastException>(() => cast.ToList());
         }
-        
+
         private static void TestCastThrow<T>(object o)
         {
             byte? i = 10;
@@ -126,6 +134,15 @@ namespace System.Linq.Tests
             string[] expected = { "Test1", "4.5", null, "Test2" };
 
             Assert.Equal(expected, source.Cast<string>());
+        }
+
+        [Fact]
+        public void CastToStringRunOnce()
+        {
+            object[] source = { "Test1", "4.5", null, "Test2" };
+            string[] expected = { "Test1", "4.5", null, "Test2" };
+
+            Assert.Equal(expected, source.RunOnce().Cast<string>());
         }
 
         [Fact]
@@ -195,6 +212,29 @@ namespace System.Linq.Tests
 
             IEnumerable<long?> cast = source.Cast<long?>();
             Assert.Throws<InvalidCastException>(() => cast.ToList());
+        }
+
+        [Fact]
+        public void CastingNullToNonnullableIsNullReferenceException()
+        {
+            int?[] source = new int?[] { -4, 1, null, 3 };
+            IEnumerable<int> cast = source.Cast<int>();
+            Assert.Throws<NullReferenceException>(() => cast.ToList());
+        }
+
+        [Fact]
+        public void NullSource()
+        {
+            AssertExtensions.Throws<ArgumentNullException>("source", () => ((IEnumerable<object>)null).Cast<string>());
+        }
+
+        [Fact]
+        public void ForcedToEnumeratorDoesntEnumerate()
+        {
+            var iterator = new object[0].Where(i => i != null).Cast<string>();
+            // Don't insist on this behaviour, but check it's correct if it happens
+            var en = iterator as IEnumerator<string>;
+            Assert.False(en != null && en.MoveNext());
         }
     }
 }

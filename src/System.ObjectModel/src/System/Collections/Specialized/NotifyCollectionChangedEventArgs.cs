@@ -1,31 +1,12 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Collections;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 namespace System.Collections.Specialized
 {
-    /// <summary>
-    /// This enum describes the action that caused a CollectionChanged event.
-    /// </summary>
-    public enum NotifyCollectionChangedAction
-    {
-        /// <summary> One or more items were added to the collection. </summary>
-        Add,
-        /// <summary> One or more items were removed from the collection. </summary>
-        Remove,
-        /// <summary> One or more items were replaced in the collection. </summary>
-        Replace,
-        /// <summary> One or more items were moved within the collection. </summary>
-        Move,
-        /// <summary> The contents of the collection changed dramatically. </summary>
-        Reset,
-    }
-
     /// <summary>
     /// Arguments for the CollectionChanged event.
     /// A collection that supports INotifyCollectionChangedThis raises this event
@@ -34,11 +15,11 @@ namespace System.Collections.Specialized
     /// </summary>
     public class NotifyCollectionChangedEventArgs : EventArgs
     {
-        //------------------------------------------------------
-        //
-        //  Constructors
-        //
-        //------------------------------------------------------
+        private NotifyCollectionChangedAction _action;
+        private IList _newItems;
+        private IList _oldItems;
+        private int _newStartingIndex = -1;
+        private int _oldStartingIndex = -1;
 
         /// <summary>
         /// Construct a NotifyCollectionChangedEventArgs that describes a reset change.
@@ -47,7 +28,9 @@ namespace System.Collections.Specialized
         public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action)
         {
             if (action != NotifyCollectionChangedAction.Reset)
-                throw new ArgumentException(SR.Format(SR.WrongActionForCtor, NotifyCollectionChangedAction.Reset), "action");
+            {
+                throw new ArgumentException(SR.Format(SR.WrongActionForCtor, NotifyCollectionChangedAction.Reset), nameof(action));
+            }
 
             InitializeAdd(action, null, -1);
         }
@@ -61,12 +44,16 @@ namespace System.Collections.Specialized
         {
             if ((action != NotifyCollectionChangedAction.Add) && (action != NotifyCollectionChangedAction.Remove)
                     && (action != NotifyCollectionChangedAction.Reset))
-                throw new ArgumentException(SR.MustBeResetAddOrRemoveActionForCtor, "action");
+            {
+                throw new ArgumentException(SR.MustBeResetAddOrRemoveActionForCtor, nameof(action));
+            }
 
             if (action == NotifyCollectionChangedAction.Reset)
             {
                 if (changedItem != null)
-                    throw new ArgumentException(SR.ResetActionRequiresNullItem, "action");
+                {
+                    throw new ArgumentException(SR.ResetActionRequiresNullItem, nameof(action));
+                }
 
                 InitializeAdd(action, null, -1);
             }
@@ -86,14 +73,20 @@ namespace System.Collections.Specialized
         {
             if ((action != NotifyCollectionChangedAction.Add) && (action != NotifyCollectionChangedAction.Remove)
                     && (action != NotifyCollectionChangedAction.Reset))
-                throw new ArgumentException(SR.MustBeResetAddOrRemoveActionForCtor, "action");
+            {
+                throw new ArgumentException(SR.MustBeResetAddOrRemoveActionForCtor, nameof(action));
+            }
 
             if (action == NotifyCollectionChangedAction.Reset)
             {
                 if (changedItem != null)
-                    throw new ArgumentException(SR.ResetActionRequiresNullItem, "action");
+                {
+                    throw new ArgumentException(SR.ResetActionRequiresNullItem, nameof(action));
+                }
                 if (index != -1)
-                    throw new ArgumentException(SR.ResetActionRequiresIndexMinus1, "action");
+                {
+                    throw new ArgumentException(SR.ResetActionRequiresIndexMinus1, nameof(action));
+                }
 
                 InitializeAdd(action, null, -1);
             }
@@ -112,19 +105,25 @@ namespace System.Collections.Specialized
         {
             if ((action != NotifyCollectionChangedAction.Add) && (action != NotifyCollectionChangedAction.Remove)
                     && (action != NotifyCollectionChangedAction.Reset))
-                throw new ArgumentException(SR.MustBeResetAddOrRemoveActionForCtor, "action");
+            {
+                throw new ArgumentException(SR.MustBeResetAddOrRemoveActionForCtor, nameof(action));
+            }
 
             if (action == NotifyCollectionChangedAction.Reset)
             {
                 if (changedItems != null)
-                    throw new ArgumentException(SR.ResetActionRequiresNullItem, "action");
+                {
+                    throw new ArgumentException(SR.ResetActionRequiresNullItem, nameof(action));
+                }
 
                 InitializeAdd(action, null, -1);
             }
             else
             {
                 if (changedItems == null)
-                    throw new ArgumentNullException("changedItems");
+                {
+                    throw new ArgumentNullException(nameof(changedItems));
+                }
 
                 InitializeAddOrRemove(action, changedItems, -1);
             }
@@ -140,23 +139,33 @@ namespace System.Collections.Specialized
         {
             if ((action != NotifyCollectionChangedAction.Add) && (action != NotifyCollectionChangedAction.Remove)
                     && (action != NotifyCollectionChangedAction.Reset))
-                throw new ArgumentException(SR.MustBeResetAddOrRemoveActionForCtor, "action");
+            {
+                throw new ArgumentException(SR.MustBeResetAddOrRemoveActionForCtor, nameof(action));
+            }
 
             if (action == NotifyCollectionChangedAction.Reset)
             {
                 if (changedItems != null)
-                    throw new ArgumentException(SR.ResetActionRequiresNullItem, "action");
+                {
+                    throw new ArgumentException(SR.ResetActionRequiresNullItem, nameof(action));
+                }
                 if (startingIndex != -1)
-                    throw new ArgumentException(SR.ResetActionRequiresIndexMinus1, "action");
+                {
+                    throw new ArgumentException(SR.ResetActionRequiresIndexMinus1, nameof(action));
+                }
 
                 InitializeAdd(action, null, -1);
             }
             else
             {
                 if (changedItems == null)
-                    throw new ArgumentNullException("changedItems");
+                {
+                    throw new ArgumentNullException(nameof(changedItems));
+                }
                 if (startingIndex < -1)
-                    throw new ArgumentException(SR.IndexCannotBeNegative, "startingIndex");
+                {
+                    throw new ArgumentException(SR.IndexCannotBeNegative, nameof(startingIndex));
+                }
 
                 InitializeAddOrRemove(action, changedItems, startingIndex);
             }
@@ -171,7 +180,9 @@ namespace System.Collections.Specialized
         public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, object newItem, object oldItem)
         {
             if (action != NotifyCollectionChangedAction.Replace)
-                throw new ArgumentException(SR.Format(SR.WrongActionForCtor, NotifyCollectionChangedAction.Replace), "action");
+            {
+                throw new ArgumentException(SR.Format(SR.WrongActionForCtor, NotifyCollectionChangedAction.Replace), nameof(action));
+            }
 
             InitializeMoveOrReplace(action, new object[] { newItem }, new object[] { oldItem }, -1, -1);
         }
@@ -186,7 +197,9 @@ namespace System.Collections.Specialized
         public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, object newItem, object oldItem, int index)
         {
             if (action != NotifyCollectionChangedAction.Replace)
-                throw new ArgumentException(SR.Format(SR.WrongActionForCtor, NotifyCollectionChangedAction.Replace), "action");
+            {
+                throw new ArgumentException(SR.Format(SR.WrongActionForCtor, NotifyCollectionChangedAction.Replace), nameof(action));
+            }
 
             InitializeMoveOrReplace(action, new object[] { newItem }, new object[] { oldItem }, index, index);
         }
@@ -200,11 +213,17 @@ namespace System.Collections.Specialized
         public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, IList newItems, IList oldItems)
         {
             if (action != NotifyCollectionChangedAction.Replace)
-                throw new ArgumentException(SR.Format(SR.WrongActionForCtor, NotifyCollectionChangedAction.Replace), "action");
+            {
+                throw new ArgumentException(SR.Format(SR.WrongActionForCtor, NotifyCollectionChangedAction.Replace), nameof(action));
+            }
             if (newItems == null)
-                throw new ArgumentNullException("newItems");
+            {
+                throw new ArgumentNullException(nameof(newItems));
+            }
             if (oldItems == null)
-                throw new ArgumentNullException("oldItems");
+            {
+                throw new ArgumentNullException(nameof(oldItems));
+            }
 
             InitializeMoveOrReplace(action, newItems, oldItems, -1, -1);
         }
@@ -219,11 +238,17 @@ namespace System.Collections.Specialized
         public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, IList newItems, IList oldItems, int startingIndex)
         {
             if (action != NotifyCollectionChangedAction.Replace)
-                throw new ArgumentException(SR.Format(SR.WrongActionForCtor, NotifyCollectionChangedAction.Replace), "action");
+            {
+                throw new ArgumentException(SR.Format(SR.WrongActionForCtor, NotifyCollectionChangedAction.Replace), nameof(action));
+            }
             if (newItems == null)
-                throw new ArgumentNullException("newItems");
+            {
+                throw new ArgumentNullException(nameof(newItems));
+            }
             if (oldItems == null)
-                throw new ArgumentNullException("oldItems");
+            {
+                throw new ArgumentNullException(nameof(oldItems));
+            }
 
             InitializeMoveOrReplace(action, newItems, oldItems, startingIndex, startingIndex);
         }
@@ -238,9 +263,13 @@ namespace System.Collections.Specialized
         public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, object changedItem, int index, int oldIndex)
         {
             if (action != NotifyCollectionChangedAction.Move)
-                throw new ArgumentException(SR.Format(SR.WrongActionForCtor, NotifyCollectionChangedAction.Move), "action");
+            {
+                throw new ArgumentException(SR.Format(SR.WrongActionForCtor, NotifyCollectionChangedAction.Move), nameof(action));
+            }
             if (index < 0)
-                throw new ArgumentException(SR.IndexCannotBeNegative, "index");
+            {
+                throw new ArgumentException(SR.IndexCannotBeNegative, nameof(index));
+            }
 
             object[] changedItems = new object[] { changedItem };
             InitializeMoveOrReplace(action, changedItems, changedItems, index, oldIndex);
@@ -256,9 +285,13 @@ namespace System.Collections.Specialized
         public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, IList changedItems, int index, int oldIndex)
         {
             if (action != NotifyCollectionChangedAction.Move)
-                throw new ArgumentException(SR.Format(SR.WrongActionForCtor, NotifyCollectionChangedAction.Move), "action");
+            {
+                throw new ArgumentException(SR.Format(SR.WrongActionForCtor, NotifyCollectionChangedAction.Move), nameof(action));
+            }
             if (index < 0)
-                throw new ArgumentException(SR.IndexCannotBeNegative, "index");
+            {
+                throw new ArgumentException(SR.IndexCannotBeNegative, nameof(index));
+            }
 
             InitializeMoveOrReplace(action, changedItems, changedItems, index, oldIndex);
         }
@@ -278,11 +311,14 @@ namespace System.Collections.Specialized
         private void InitializeAddOrRemove(NotifyCollectionChangedAction action, IList changedItems, int startingIndex)
         {
             if (action == NotifyCollectionChangedAction.Add)
+            {
                 InitializeAdd(action, changedItems, startingIndex);
-            else if (action == NotifyCollectionChangedAction.Remove)
-                InitializeRemove(action, changedItems, startingIndex);
+            }
             else
-                Debug.Assert(false, String.Format("Unsupported action: {0}", action.ToString()));
+            {
+                Debug.Assert(action == NotifyCollectionChangedAction.Remove, $"Unsupported action: {action}");
+                InitializeRemove(action, changedItems, startingIndex);
+            }
         }
 
         private void InitializeAdd(NotifyCollectionChangedAction action, IList newItems, int newStartingIndex)
@@ -305,161 +341,97 @@ namespace System.Collections.Specialized
             InitializeRemove(action, oldItems, oldStartingIndex);
         }
 
-        //------------------------------------------------------
-        //
-        //  Public Properties
-        //
-        //------------------------------------------------------
-
         /// <summary>
         /// The action that caused the event.
         /// </summary>
-        public NotifyCollectionChangedAction Action
-        {
-            get { return _action; }
-        }
+        public NotifyCollectionChangedAction Action => _action;
 
         /// <summary>
         /// The items affected by the change.
         /// </summary>
-        public IList NewItems
-        {
-            get { return _newItems; }
-        }
+        public IList NewItems => _newItems;
 
         /// <summary>
         /// The old items affected by the change (for Replace events).
         /// </summary>
-        public IList OldItems
-        {
-            get { return _oldItems; }
-        }
+        public IList OldItems => _oldItems;
 
         /// <summary>
         /// The index where the change occurred.
         /// </summary>
-        public int NewStartingIndex
-        {
-            get { return _newStartingIndex; }
-        }
+        public int NewStartingIndex => _newStartingIndex;
 
         /// <summary>
         /// The old index where the change occurred (for Move events).
         /// </summary>
-        public int OldStartingIndex
-        {
-            get { return _oldStartingIndex; }
-        }
-
-        //------------------------------------------------------
-        //
-        //  Private Fields
-        //
-        //------------------------------------------------------
-
-        private NotifyCollectionChangedAction _action;
-        private IList _newItems, _oldItems;
-        private int _newStartingIndex = -1;
-        private int _oldStartingIndex = -1;
+        public int OldStartingIndex => _oldStartingIndex;
     }
 
     /// <summary>
-    ///     The delegate to use for handlers that receive the CollectionChanged event.
+    /// The delegate to use for handlers that receive the CollectionChanged event.
     /// </summary>
     public delegate void NotifyCollectionChangedEventHandler(object sender, NotifyCollectionChangedEventArgs e);
 
-
-    internal class ReadOnlyList : IList
+    internal sealed class ReadOnlyList : IList
     {
         private readonly IList _list;
 
-        internal ReadOnlyList(IList l)
+        internal ReadOnlyList(IList list)
         {
-            _list = l;
+            Debug.Assert(list != null);
+            _list = list;
         }
 
-        public virtual int Count
+        public int Count => _list.Count;
+
+        public bool IsReadOnly => true;
+
+        public bool IsFixedSize => true;
+
+        public bool IsSynchronized => _list.IsSynchronized;
+
+        public object this[int index]
         {
-            get { return _list.Count; }
+            get => _list[index];
+            set => throw new NotSupportedException(SR.NotSupported_ReadOnlyCollection);
         }
 
-        public virtual bool IsReadOnly
-        {
-            get { return true; }
-        }
+        public object SyncRoot => _list.SyncRoot;
 
-        public virtual bool IsFixedSize
-        {
-            get { return true; }
-        }
-
-        public virtual bool IsSynchronized
-        {
-            get { return _list.IsSynchronized; }
-        }
-
-        public virtual Object this[int index]
-        {
-            get
-            {
-                return _list[index];
-            }
-            set
-            {
-                throw new NotSupportedException(SR.NotSupported_ReadOnlyCollection);
-            }
-        }
-
-        public virtual Object SyncRoot
-        {
-            get { return _list.SyncRoot; }
-        }
-
-        public virtual int Add(Object obj)
+        public int Add(object value)
         {
             throw new NotSupportedException(SR.NotSupported_ReadOnlyCollection);
         }
 
-        public virtual void Clear()
+        public void Clear()
         {
             throw new NotSupportedException(SR.NotSupported_ReadOnlyCollection);
         }
 
-        public virtual bool Contains(Object obj)
-        {
-            return _list.Contains(obj);
-        }
+        public bool Contains(object value) => _list.Contains(value);
 
-        public virtual void CopyTo(Array array, int index)
+        public void CopyTo(Array array, int index)
         {
             _list.CopyTo(array, index);
         }
 
-        public virtual IEnumerator GetEnumerator()
-        {
-            return _list.GetEnumerator();
-        }
+        public IEnumerator GetEnumerator() => _list.GetEnumerator();
 
-        public virtual int IndexOf(Object value)
-        {
-            return _list.IndexOf(value);
-        }
+        public int IndexOf(object value) => _list.IndexOf(value);
 
-        public virtual void Insert(int index, Object obj)
+        public void Insert(int index, object value)
         {
             throw new NotSupportedException(SR.NotSupported_ReadOnlyCollection);
         }
 
-        public virtual void Remove(Object value)
+        public void Remove(object value)
         {
             throw new NotSupportedException(SR.NotSupported_ReadOnlyCollection);
         }
 
-        public virtual void RemoveAt(int index)
+        public void RemoveAt(int index)
         {
             throw new NotSupportedException(SR.NotSupported_ReadOnlyCollection);
         }
     }
 }
-
-

@@ -1,100 +1,80 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Globalization;
+using System.Collections.Generic;
 using Xunit;
 
 namespace System.Globalization.Tests
 {
     public class DateTimeFormatInfoShortestDayNames
     {
-        // PosTest1: Call ShortestDayNames getter method should return correct value for InvariantInfo
         [Fact]
-        public void TestGetter()
+        public void ShortestDayNames_InvariantInfo()
         {
-            VerificationHelper(DateTimeFormatInfo.InvariantInfo,
-                    new string[] {
-                    "Su",
-                    "Mo",
-                    "Tu",
-                    "We",
-                    "Th",
-                    "Fr",
-                    "Sa"
-                    },
-                    false);
+            Assert.Equal(new string[] { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa" }, DateTimeFormatInfo.InvariantInfo.ShortestDayNames);
         }
 
-        // PosTest2: Call ShortestDayNames setter method should return correct value
         [Fact]
-        public void TestSetter()
+        public void ShortestDayNames_Get_ReturnsClone()
         {
-            VerificationHelper(new DateTimeFormatInfo(),
-                    new string[] {
-                    "1",
-                    "2",
-                    "3",
-                    "4",
-                    "5",
-                    "6",
-                    "7"
-                    },
-                    true);
+            var format = new DateTimeFormatInfo();
+            Assert.Equal(format.ShortestDayNames, format.ShortestDayNames);
+            Assert.NotSame(format.ShortestDayNames, format.ShortestDayNames);
         }
 
-        // NegTest1: ArgumentNullException should be thrown when The property is being set to a null reference
-        [Fact]
-        public void TestNull()
+        public static IEnumerable<object[]> ShortestDayNames_Set_TestData()
         {
-            Assert.Throws<ArgumentNullException>(() =>
-            {
-                new DateTimeFormatInfo().ShortestDayNames = null;
-            });
-            Assert.Throws<ArgumentNullException>(() =>
-            {
-                new DateTimeFormatInfo().ShortestDayNames = new string[] {
-                    "1",
-                    "2",
-                    "3",
-                    null,
-                    "5",
-                    "6",
-                    "7"
-                    };
-            });
+            yield return new object[] { new string[] { "1", "2", "3", "4", "5", "6", "7" } };
+            yield return new object[] { new string[] { "", "", "", "", "", "", "" } };
         }
 
-        // NegTest2: ArgumentException should be thrown when The property is being set to an array that is multidimensional or whose length is not exactly 7
-        [Fact]
-        public void TestInvalidArray()
+        [Theory]
+        [MemberData(nameof(ShortestDayNames_Set_TestData))]
+        public void ShortestDayNames_Set_GetReturnsExpected(string[] value)
         {
-            Assert.Throws<ArgumentException>(() =>
-            {
-                new DateTimeFormatInfo().ShortestDayNames = new string[] { "su" };
-            });
+            var format = new DateTimeFormatInfo();
+            format.ShortestDayNames = value;
+            Assert.Equal(value, format.ShortestDayNames);
+
+            // Does not clone in setter, only in getter.
+            value[0] = null;
+            Assert.NotSame(value, format.ShortestDayNames);
+            Assert.Equal(value, format.ShortestDayNames);
         }
 
-        // NegTest3: InvalidOperationException should be thrown when The property is being set and the DateTimeFormatInfo is read-only
         [Fact]
-        public void TestReadOnly()
+        public void ShortestDayNames_SetNulValue_ThrowsArgumentNullException()
         {
-            Assert.Throws<InvalidOperationException>(() =>
-            {
-                DateTimeFormatInfo.InvariantInfo.ShortestDayNames = new string[] { "1", "2", "3", "4", "5", "6", "7" };
-            });
+            var format = new DateTimeFormatInfo();
+            AssertExtensions.Throws<ArgumentNullException>("value", () => format.ShortestDayNames = null);
         }
 
-        private void VerificationHelper(DateTimeFormatInfo info, string[] expected, bool setter)
+        [Fact]
+        public void ShortestDayNames_SetNulValueInValue_ThrowsArgumentNullException()
         {
-            if (setter)
-            {
-                info.ShortestDayNames = expected;
-            }
+            var format = new DateTimeFormatInfo();
+            AssertExtensions.Throws<ArgumentNullException>("value", () => format.ShortestDayNames = new string[] { "1", "2", "3", null, "5", "6", "7" });
+        }
 
-            string[] actual = info.ShortestDayNames;
-            Assert.Equal(expected.Length, actual.Length);
-            Assert.Equal(expected, actual);
+        public static IEnumerable<object[]> ShortestDayNames_SetInvalidLength_TestData()
+        {
+            yield return new object[] { new string[] { "Sun" } };
+            yield return new object[] { new string[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Additional" } };
+        }
+
+        [Theory]
+        [MemberData(nameof(ShortestDayNames_SetInvalidLength_TestData))]
+        public void ShortestDayNames_SetInvalidLength_ThrowsArgumentException(string[] value)
+        {
+            var format = new DateTimeFormatInfo();
+            AssertExtensions.Throws<ArgumentException>("value", (() => format.ShortestDayNames = value));
+        }
+
+        [Fact]
+        public void ShortestDayNames_SetReadOnly_ThrowsInvalidOperationException()
+        {
+            Assert.Throws<InvalidOperationException>(() => DateTimeFormatInfo.InvariantInfo.ShortestDayNames = new string[] { "1", "2", "3", "4", "5", "6", "7" });
         }
     }
 }

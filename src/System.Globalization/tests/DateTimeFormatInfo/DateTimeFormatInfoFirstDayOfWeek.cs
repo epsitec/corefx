@@ -1,76 +1,56 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Globalization;
+using System.Collections.Generic;
 using Xunit;
 
 namespace System.Globalization.Tests
 {
     public class DateTimeFormatInfoFirstDayOfWeek
     {
-        // PosTest1: Call FirstDayOfWeek getter method should return correct value for InvariantInfo
-        [Fact]
-        public void TestGetter()
+        public static IEnumerable<object[]> FirstDayOfWeek_Get_TestData()
         {
-            VerificationHelper(DateTimeFormatInfo.InvariantInfo,
-                    DayOfWeek.Sunday,
-                    false);
+            yield return new object[] { DateTimeFormatInfo.InvariantInfo, DayOfWeek.Sunday };
+            yield return new object[] { new CultureInfo("en-US", false).DateTimeFormat, DayOfWeek.Sunday };
+            yield return new object[] { new CultureInfo("fr-FR", false).DateTimeFormat, DayOfWeek.Monday };
         }
 
-        // PosTest2: Call FirstDayOfWeek setter method should return correct value
-        [Fact]
-        public void TestSetter()
+        [Theory]
+        [MemberData(nameof(FirstDayOfWeek_Get_TestData))]
+        public void FirstDayOfWeek(DateTimeFormatInfo format, DayOfWeek expected)
         {
-            DayOfWeek[] days = new DayOfWeek[] {
-                DayOfWeek.Friday,
-                DayOfWeek.Monday,
-                DayOfWeek.Saturday,
-                DayOfWeek.Sunday,
-                DayOfWeek.Thursday,
-                DayOfWeek.Tuesday,
-                DayOfWeek.Wednesday,
-            };
-
-            for (int i = 0; i < days.Length; ++i)
-            {
-                VerificationHelper(new DateTimeFormatInfo(),
-                    days[i],
-                    true);
-            }
+            Assert.Equal(expected, format.FirstDayOfWeek);
         }
 
-        // NegTest1: ArgumentOutOfRangeException should be thrown when The property is being set to a 
-        // value that is not a valid FirstDayOfWeek value
-        [Fact]
-        public void NegTest1()
+        [Theory]
+        [InlineData(DayOfWeek.Sunday)]
+        [InlineData(DayOfWeek.Monday)]
+        [InlineData(DayOfWeek.Tuesday)]
+        [InlineData(DayOfWeek.Wednesday)]
+        [InlineData(DayOfWeek.Thursday)]
+        [InlineData(DayOfWeek.Friday)]
+        [InlineData(DayOfWeek.Saturday)]
+        public void FirstDayOfWeek_Set_GetReturnsExpected(DayOfWeek value)
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() =>
-            {
-                new DateTimeFormatInfo().FirstDayOfWeek = (DayOfWeek)(-1);
-            });
+            var format = new DateTimeFormatInfo();
+            format.FirstDayOfWeek = value;
+            Assert.Equal(value, format.FirstDayOfWeek);
         }
 
-        // NegTest2: InvalidOperationException should be thrown when The property is being set and 
-        // the DateTimeFormatInfo is read-only
-        [Fact]
-        public void NegTest2()
+        [Theory]
+        [InlineData(DayOfWeek.Sunday - 1)]
+        [InlineData(DayOfWeek.Saturday + 1)]
+        public void FirstDayOfWeek_SetInvalid_ThrowsArgumentOutOfRangeException(DayOfWeek value)
         {
-            Assert.Throws<InvalidOperationException>(() =>
-            {
-                DateTimeFormatInfo.InvariantInfo.FirstDayOfWeek = DayOfWeek.Wednesday;
-            });
+            var format = new DateTimeFormatInfo();
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("value", () => format.FirstDayOfWeek = value);
         }
 
-        private void VerificationHelper(DateTimeFormatInfo info, DayOfWeek expected, bool setter)
+        [Fact]
+        public void FirstDayOfWeek_SetReadOnly_ThrowsInvalidOperationException()
         {
-            if (setter)
-            {
-                info.FirstDayOfWeek = expected;
-            }
-
-            DayOfWeek actual = info.FirstDayOfWeek;
-            Assert.Equal(expected, actual);
+            Assert.Throws<InvalidOperationException>(() => DateTimeFormatInfo.InvariantInfo.FirstDayOfWeek = DayOfWeek.Wednesday);
         }
     }
 }

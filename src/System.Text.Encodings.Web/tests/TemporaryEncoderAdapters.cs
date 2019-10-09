@@ -1,17 +1,17 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.IO;
-using System.Text.Encodings.Web;
 using System.Text.Unicode;
 
-namespace Microsoft.Framework.WebEncoders
+namespace System.Text.Encodings.Web.Tests
 {
     // These implement ASP.NET interfaces. They will be removed once we transition ASP.NET
     internal sealed class HtmlEncoder : IHtmlEncoder
     {
-        System.Text.Encodings.Web.DefaultHtmlEncoder _encoder;
+        System.Text.Encodings.Web.HtmlEncoder _encoder;
         static HtmlEncoder s_default;
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace Microsoft.Framework.WebEncoders
             {
                 if (value == null)
                 {
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 }
                 s_default = value;
             }
@@ -43,11 +43,11 @@ namespace Microsoft.Framework.WebEncoders
 
         public HtmlEncoder()
         {
-            _encoder = System.Text.Encodings.Web.DefaultHtmlEncoder.Singleton;
+            _encoder = System.Text.Encodings.Web.HtmlEncoder.Default;
         }
         public HtmlEncoder(TextEncoderSettings filter)
         {
-            _encoder = new System.Text.Encodings.Web.DefaultHtmlEncoder(filter);
+            _encoder = System.Text.Encodings.Web.HtmlEncoder.Create(filter);
         }
 
         public HtmlEncoder(UnicodeRange allowedRange) : this(new TextEncoderSettings(allowedRange))
@@ -74,8 +74,9 @@ namespace Microsoft.Framework.WebEncoders
 
     internal sealed class JavaScriptStringEncoder : IJavaScriptStringEncoder
     {
-        System.Text.Encodings.Web.DefaultJavaScriptEncoder _encoder;
+        System.Text.Encodings.Web.JavaScriptEncoder _encoder;
         static JavaScriptStringEncoder s_default;
+        static JavaScriptStringEncoder s_relaxed;
 
         /// <summary>
         /// A default instance of <see cref="JavaScriptEncoder"/>.
@@ -98,19 +99,46 @@ namespace Microsoft.Framework.WebEncoders
             {
                 if (value == null)
                 {
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 }
                 s_default = value;
             }
         }
 
-        public JavaScriptStringEncoder()
+        /// <summary>
+        /// A relaxed instance of <see cref="JavaScriptEncoder"/>.
+        /// </summary>
+        /// <remarks>
+        /// This normally corresponds to <see cref="UnicodeRanges.All"/>. However, this property is
+        /// settable so that a developer can change the default implementation application-wide.
+        /// </remarks>
+        public static JavaScriptStringEncoder UnsafeRelaxedJsonEscaping
         {
-            _encoder = System.Text.Encodings.Web.DefaultJavaScriptEncoder.Singleton;
+            get
+            {
+                if (s_relaxed == null)
+                {
+                    s_relaxed = new JavaScriptStringEncoder(relaxed: true);
+                }
+                return s_relaxed;
+            }
+            set
+            {
+                if (value == null)
+                {
+                    throw new ArgumentNullException(nameof(value));
+                }
+                s_relaxed = value;
+            }
+        }
+
+        public JavaScriptStringEncoder(bool relaxed = false)
+        {
+            _encoder = relaxed ? JavaScriptEncoder.UnsafeRelaxedJsonEscaping : JavaScriptEncoder.Default;
         }
         public JavaScriptStringEncoder(TextEncoderSettings filter)
         {
-            _encoder = new System.Text.Encodings.Web.DefaultJavaScriptEncoder(filter);
+            _encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(filter);
         }
 
         public JavaScriptStringEncoder(UnicodeRange allowedRange) : this(new TextEncoderSettings(allowedRange))
@@ -137,7 +165,7 @@ namespace Microsoft.Framework.WebEncoders
 
     internal sealed class UrlEncoder : IUrlEncoder
     {
-        System.Text.Encodings.Web.DefaultUrlEncoder _encoder;
+        System.Text.Encodings.Web.UrlEncoder _encoder;
         static UrlEncoder s_default;
 
         /// <summary>
@@ -161,7 +189,7 @@ namespace Microsoft.Framework.WebEncoders
             {
                 if (value == null)
                 {
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 }
                 s_default = value;
             }
@@ -169,11 +197,11 @@ namespace Microsoft.Framework.WebEncoders
 
         public UrlEncoder()
         {
-            _encoder = System.Text.Encodings.Web.DefaultUrlEncoder.Singleton;
+            _encoder = System.Text.Encodings.Web.UrlEncoder.Default;
         }
         public UrlEncoder(TextEncoderSettings filter)
         {
-            _encoder = new System.Text.Encodings.Web.DefaultUrlEncoder(filter);
+            _encoder = System.Text.Encodings.Web.UrlEncoder.Create(filter);
         }
 
         public UrlEncoder(UnicodeRange allowedRange) : this(new TextEncoderSettings(allowedRange))

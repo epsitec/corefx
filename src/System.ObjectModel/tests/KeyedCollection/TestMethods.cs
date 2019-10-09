@@ -1,17 +1,15 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using Tests.Collections;
 using Xunit;
 
-namespace System.ObjectModel.Tests
+namespace System.Collections.ObjectModel.Tests
 {
-    public abstract class KeyedCollectionTests<TKey, TValue>
+    public abstract partial class KeyedCollectionTests<TKey, TValue>
         where TValue : IComparable<TValue> where TKey : IEquatable<TKey>
     {
         private static readonly bool s_keyNullable = default(TKey)
@@ -295,7 +293,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData")]
+        [MemberData(nameof(ClassData))]
         public void AddNullKey(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -336,7 +334,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData")]
+        [MemberData(nameof(ClassData))]
         public void AddExistingKey(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -370,14 +368,14 @@ namespace System.ObjectModel.Tests
 
             collection.Add(keyedItem1);
 
-            Assert.Throws<ArgumentException>(
-                () => { collection.Add(tmpKeyedItem); });
+            string expectedParamName = collectionSize < 32 || generateKeyedItem.Name != KeyedCollectionTests<TKey, TValue>.GetNeverNullKeyMethod.Name ? "key" : null;
+            AssertExtensions.Throws<ArgumentException>(expectedParamName, null, () => collection.Add(tmpKeyedItem));
 
             collection.Verify(keys, items, itemsWithKeys);
         }
 
         [Theory]
-        [MemberData("ClassData")]
+        [MemberData(nameof(ClassData))]
         public void AddUniqueKey(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -417,7 +415,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData")]
+        [MemberData(nameof(ClassData))]
         public void NonGenericAddNullKey(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -456,7 +454,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData")]
+        [MemberData(nameof(ClassData))]
         public void NonGenericAddExistingKey(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -488,13 +486,13 @@ namespace System.ObjectModel.Tests
 
             collection.Add(keyedItem1);
 
-            Assert.Throws<ArgumentException>(
-                () => { nonGenericCollection.Add(tmpKeyedItem); });
+            string expectedParamName = collectionSize < 32 || generateKeyedItem.Name != KeyedCollectionTests<TKey, TValue>.GetNeverNullKeyMethod.Name ? "key" : null;
+            AssertExtensions.Throws<ArgumentException>(expectedParamName, null, () => nonGenericCollection.Add(tmpKeyedItem));
             collection.Verify(keys, items, itemsWithKeys);
         }
 
         [Theory]
-        [MemberData("ClassData")]
+        [MemberData(nameof(ClassData))]
         public void NonGenericAddUniqueKey(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -531,7 +529,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData")]
+        [MemberData(nameof(ClassData))]
         public void ChangeItemKey(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -577,7 +575,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData")]
+        [MemberData(nameof(ClassData))]
         public void ChangeItemKeyThrowsPreexistingKey(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -614,13 +612,13 @@ namespace System.ObjectModel.Tests
                                                   .ToArray
                         <IKeyedItem<TKey, TValue>>());
 
-            Assert.Throws<ArgumentException>(
-                () => collection.MyChangeItemKey(keyedItem2, key1));
+            string expectedParamName = collectionSize < 32 || generateKeyedItem.Name != KeyedCollectionTests<TKey, TValue>.GetNeverNullKeyMethod.Name ? "key" : null;
+            AssertExtensions.Throws<ArgumentException>(expectedParamName, null, () => collection.MyChangeItemKey(keyedItem2, key1));
             collection.Verify(keys, items, itemsWithKeys);
         }
 
         [Theory]
-        [MemberData("ClassData")]
+        [MemberData(nameof(ClassData))]
         public void ChangeItemKeySameKey(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -663,7 +661,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData")]
+        [MemberData(nameof(ClassData))]
         public void ChangeItemDoesNotExistThrows(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -702,18 +700,15 @@ namespace System.ObjectModel.Tests
                         ki => ki.Key != null)
                                                   .ToArray
                         <IKeyedItem<TKey, TValue>>());
-            Assert.Throws<ArgumentException>(
-                () => collection.MyChangeItemKey(keyedItem3, key3));
-            Assert.Throws<ArgumentException>(
-                () => collection.MyChangeItemKey(keyedItem3, key2));
+            AssertExtensions.Throws<ArgumentException>("item", null, () => collection.MyChangeItemKey(keyedItem3, key3));
+            AssertExtensions.Throws<ArgumentException>("item", null, () => collection.MyChangeItemKey(keyedItem3, key2));
             var tempKeyedItem = new KeyedItem<TKey, TValue>(key1, item2);
-            Assert.Throws<ArgumentException>(
-                () => collection.MyChangeItemKey(tempKeyedItem, key2));
+            AssertExtensions.Throws<ArgumentException>("item", null, () => collection.MyChangeItemKey(tempKeyedItem, key2));
             collection.Verify(keys, items, itemsWithKeys);
         }
 
         [Theory]
-        [MemberData("ClassData")]
+        [MemberData(nameof(ClassData))]
         public void ChangeItemKeyNullToNull(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -759,7 +754,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData")]
+        [MemberData(nameof(ClassData))]
         public void ChangeItemKeyNullToNonNull(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -808,7 +803,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData")]
+        [MemberData(nameof(ClassData))]
         public void ChangeItemKeyNonNullToNull(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -856,7 +851,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("CollectionSizes")]
+        [MemberData(nameof(CollectionSizes))]
         public void ChangeItemKeyNullItemNotPresent(int collectionSize)
         {
             if (default(TKey) == null)
@@ -878,9 +873,7 @@ namespace System.ObjectModel.Tests
                     out items,
                     out itemsWithKeys);
                 collection.Add(item1);
-                Assert.Throws<ArgumentException>(
-                    () =>
-                    collection.MyChangeItemKey(default(TValue), key2));
+                AssertExtensions.Throws<ArgumentException>("item", null, () => collection.MyChangeItemKey(default(TValue), key2));
                 collection.Verify(
                     keys.Push(key1),
                     items.Push(item1),
@@ -889,7 +882,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("CollectionSizes")]
+        [MemberData(nameof(CollectionSizes))]
         public void ChangeItemKeyNullItemPresent(int collectionSize)
         {
             if (default(TKey) == null)
@@ -921,7 +914,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("CollectionSizes")]
+        [MemberData(nameof(CollectionSizes))]
         public void ChangeItemKeyNullKeyNotPresent(int collectionSize)
         {
             if (default(TKey) == null)
@@ -949,7 +942,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("CollectionSizes")]
+        [MemberData(nameof(CollectionSizes))]
         public void ChangeItemKeyNullKeyPresent(int collectionSize)
         {
             if (default(TKey) == null)
@@ -978,7 +971,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("CollectionSizes")]
+        [MemberData(nameof(CollectionSizes))]
         public void ChangeItemKeyNullItemNullKeyPresent(
             int collectionSize)
         {
@@ -1010,7 +1003,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData2")]
+        [MemberData(nameof(ClassData2))]
         public void ChangeItemKeyKeyAlreadyChanged(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -1047,8 +1040,7 @@ namespace System.ObjectModel.Tests
             keyedItem2.Key = key3;
             if (collectionSize >= 32)
             {
-                Assert.Throws<ArgumentException>(
-                    () => collection.MyChangeItemKey(keyedItem2, key3));
+                AssertExtensions.Throws<ArgumentException>("item", null, () => collection.MyChangeItemKey(keyedItem2, key3));
             }
             else
             {
@@ -1058,7 +1050,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData2")]
+        [MemberData(nameof(ClassData2))]
         public void ChangeItemKeyKeyAlreadyChangedNewKeyIsOldKey(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -1095,8 +1087,7 @@ namespace System.ObjectModel.Tests
             keyedItem2.Key = key3;
             if (collectionSize >= 32)
             {
-                Assert.Throws<ArgumentException>(
-                    () => collection.MyChangeItemKey(keyedItem2, key2));
+                AssertExtensions.Throws<ArgumentException>("item", null, () => collection.MyChangeItemKey(keyedItem2, key2));
             }
             else
             {
@@ -1106,7 +1097,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData2")]
+        [MemberData(nameof(ClassData2))]
         public void ChangeItemKeyKeyAlreadyChangedNewKeyIsDifferent(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -1145,8 +1136,7 @@ namespace System.ObjectModel.Tests
             keyedItem2.Key = key3;
             if (collectionSize >= 32)
             {
-                Assert.Throws<ArgumentException>(
-                    () => collection.MyChangeItemKey(keyedItem2, key4));
+                AssertExtensions.Throws<ArgumentException>("item", null, () => collection.MyChangeItemKey(keyedItem2, key4));
             }
             else
             {
@@ -1156,7 +1146,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData2")]
+        [MemberData(nameof(ClassData2))]
         public void ChangeItemKeyNullToNewKey(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -1205,9 +1195,7 @@ namespace System.ObjectModel.Tests
                 tempKeyedItem.Key = key3;
                 if (collectionSize >= 32)
                 {
-                    Assert.Throws<ArgumentException>(
-                        () =>
-                        collection.MyChangeItemKey(tempKeyedItem, key3));
+                    AssertExtensions.Throws<ArgumentException>("item", null, () => collection.MyChangeItemKey(tempKeyedItem, key3));
                 }
                 else
                 {
@@ -1218,7 +1206,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData2")]
+        [MemberData(nameof(ClassData2))]
         public void ChangeItemKeyNullToOldKey(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -1267,11 +1255,7 @@ namespace System.ObjectModel.Tests
                 tempKeyedItem.Key = key3;
                 if (collectionSize >= 32)
                 {
-                    Assert.Throws<ArgumentException>(
-                        () =>
-                        collection.MyChangeItemKey(
-                            tempKeyedItem,
-                            default(TKey)));
+                    AssertExtensions.Throws<ArgumentException>("item", null, () => collection.MyChangeItemKey(tempKeyedItem, default(TKey)));
                 }
                 else
                 {
@@ -1284,7 +1268,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData2")]
+        [MemberData(nameof(ClassData2))]
         public void ChangeItemKeyNullToOtherKey(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -1335,9 +1319,7 @@ namespace System.ObjectModel.Tests
                 tempKeyedItem.Key = key3;
                 if (collectionSize >= 32)
                 {
-                    Assert.Throws<ArgumentException>(
-                        () =>
-                        collection.MyChangeItemKey(tempKeyedItem, key4));
+                    AssertExtensions.Throws<ArgumentException>("item", null, () => collection.MyChangeItemKey(tempKeyedItem, key4));
                 }
                 else
                 {
@@ -1348,7 +1330,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData2")]
+        [MemberData(nameof(ClassData2))]
         public void ChangeItemKeySetKeyNonNullToNull(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -1393,7 +1375,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData2")]
+        [MemberData(nameof(ClassData2))]
         public void ChangeItemKeySetKeyNonNullToNullChangeKeyNonNull(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -1434,9 +1416,7 @@ namespace System.ObjectModel.Tests
                 keyedItem2.Key = default(TKey);
                 if (collectionSize >= 32)
                 {
-                    Assert.Throws<ArgumentException>(
-                        () =>
-                        collection.MyChangeItemKey(keyedItem2, key2));
+                    AssertExtensions.Throws<ArgumentException>(null, () => collection.MyChangeItemKey(keyedItem2, key2));
                 }
                 else
                 {
@@ -1447,7 +1427,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData2")]
+        [MemberData(nameof(ClassData2))]
         public void
             ChangeItemKeySetKeyNonNullToNullChangeKeySomethingElse(
             int collectionSize,
@@ -1491,9 +1471,7 @@ namespace System.ObjectModel.Tests
                 keyedItem2.Key = default(TKey);
                 if (collectionSize >= 32 && keyedItem2.Key != null)
                 {
-                    Assert.Throws<ArgumentException>(
-                        () =>
-                        collection.MyChangeItemKey(keyedItem2, key4));
+                    AssertExtensions.Throws<ArgumentException>("item", null, () => collection.MyChangeItemKey(keyedItem2, key4));
                 }
                 else
                 {
@@ -1534,7 +1512,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData")]
+        [MemberData(nameof(ClassData))]
         public void Contains(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -1556,8 +1534,7 @@ namespace System.ObjectModel.Tests
                 out itemsWithKeys);
             if (s_keyNullable)
             {
-                Assert.Throws<ArgumentNullException>(
-                    () => collection.Contains(default(TKey)));
+                AssertExtensions.Throws<ArgumentNullException>("key", () => collection.Contains(default(TKey)));
             }
             else
             {
@@ -1572,7 +1549,7 @@ namespace System.ObjectModel.Tests
         {
             if (dictionary == null)
             {
-                throw new ArgumentNullException("dictionary");
+                throw new ArgumentNullException(nameof(dictionary));
             }
             if (expectedKeys.Length != expectedItems.Length)
             {
@@ -1590,7 +1567,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ThresholdData")]
+        [MemberData(nameof(ThresholdData))]
         public void Threshold(
             int collectionDictionaryThreshold,
             Named<AddItemsFunc<TKey, IKeyedItem<TKey, TValue>>> addItems)
@@ -1668,7 +1645,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ContainsKeyData")]
+        [MemberData(nameof(ContainsKeyData))]
         public void ContainsKey(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -1694,8 +1671,7 @@ namespace System.ObjectModel.Tests
             TKey keyNotIn = itemNotIn.Key;
             if (keyNotIn == null)
             {
-                Assert.Throws<ArgumentNullException>(
-                    () => collection.Contains(keyNotIn));
+                AssertExtensions.Throws<ArgumentNullException>("key", () => collection.Contains(keyNotIn));
             }
             else
             {
@@ -1706,8 +1682,7 @@ namespace System.ObjectModel.Tests
                 TKey key = k;
                 if (key == null)
                 {
-                    Assert.Throws<ArgumentNullException>(
-                        () => collection.Contains(key));
+                    AssertExtensions.Throws<ArgumentNullException>("key", () => collection.Contains(key));
                     continue;
                 }
                 Assert.True(collection.Contains(key));
@@ -1715,7 +1690,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ContainsKeyData")]
+        [MemberData(nameof(ContainsKeyData))]
         public void RemoveKey(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -1743,8 +1718,7 @@ namespace System.ObjectModel.Tests
             TKey keyNotIn = itemNotIn.Key;
             if (keyNotIn == null)
             {
-                Assert.Throws<ArgumentNullException>(
-                    () => collection.Remove(keyNotIn));
+                AssertExtensions.Throws<ArgumentNullException>("key", () => collection.Remove(keyNotIn));
             }
             else
             {
@@ -1761,8 +1735,7 @@ namespace System.ObjectModel.Tests
                 TKey key = keys[i];
                 if (key == null)
                 {
-                    Assert.Throws<ArgumentNullException>(
-                        () => collection.Remove(key));
+                    AssertExtensions.Throws<ArgumentNullException>("key", () => collection.Remove(key));
                 }
                 else
                 {
@@ -1783,7 +1756,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ContainsKeyData")]
+        [MemberData(nameof(ContainsKeyData))]
         public void KeyIndexer(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -1809,8 +1782,7 @@ namespace System.ObjectModel.Tests
             TKey keyNotIn = itemNotIn.Key;
             if (keyNotIn == null)
             {
-                Assert.Throws<ArgumentNullException>(
-                    () => collection[keyNotIn]);
+                AssertExtensions.Throws<ArgumentNullException>("key", () => collection[keyNotIn]);
             }
             else
             {
@@ -1822,8 +1794,7 @@ namespace System.ObjectModel.Tests
                 TKey key = k;
                 if (key == null)
                 {
-                    Assert.Throws<ArgumentNullException>(
-                        () => collection[key]);
+                    AssertExtensions.Throws<ArgumentNullException>("key", () => collection[key]);
                     continue;
                 }
                 IKeyedItem<TKey, TValue> tmp = collection[key];
@@ -1831,7 +1802,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("CollectionSizes")]
+        [MemberData(nameof(CollectionSizes))]
         public void KeyIndexerSet(int collectionSize)
         {
             TKey[] keys;
@@ -1853,7 +1824,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("DictionaryData")]
+        [MemberData(nameof(DictionaryData))]
         public void Dictionary(
             int addCount,
             int insertCount,
@@ -1930,7 +1901,7 @@ namespace System.ObjectModel.Tests
         }
 
         [Theory]
-        [MemberData("ClassData")]
+        [MemberData(nameof(ClassData))]
         public void Insert(
             int collectionSize,
             Named<KeyedCollectionGetKeyedValue<TKey, TValue>>
@@ -2012,12 +1983,8 @@ namespace System.ObjectModel.Tests
                     items = items.Push(keyedItem1);
                     itemsWithKeys = itemsWithKeys.Push(keyedItem1);
                     insert(collection, collection.Count, keyedItem1);
-                    Assert.Throws<ArgumentException>(
-                        () =>
-                        insert(
-                            collection,
-                            collection.Count,
-                            tempKeyedItem));
+                    string expectedParamName = collectionSize < 32 || generateKeyedItem.Name != KeyedCollectionTests<TKey, TValue>.GetNeverNullKeyMethod.Name ? "key" : null;
+                    AssertExtensions.Throws<ArgumentException>(expectedParamName, null, () => insert(collection, collection.Count, tempKeyedItem));
                     collection.Verify(keys, items, itemsWithKeys);
                 }
 

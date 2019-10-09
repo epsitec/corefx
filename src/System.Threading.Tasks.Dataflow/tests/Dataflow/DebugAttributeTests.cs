@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
 using Xunit;
@@ -24,31 +25,32 @@ namespace System.Threading.Tasks.Dataflow.Tests
                 var dboGroupGreedy = new GroupingDataflowBlockOptions();
                 var dboGroupNonGreedy = new GroupingDataflowBlockOptions { Greedy = false };
 
-                // Item1 == test Debuggerdisplay, Item2 == test DebuggerTypeProxy, Item3 == object
+                // Item1 == test DebuggerDisplay, Item2 == test DebuggerTypeProxy, Item3 == object
                 var objectsToTest = new Tuple<bool, bool, object>[]
                 {
                     // Primary Blocks
+                    // (Don't test DebuggerTypeProxy on instances that may internally have async operations in progress)
                     Tuple.Create<bool,bool,object>(true, true, new ActionBlock<int>(i => {})),
                     Tuple.Create<bool,bool,object>(true, true, new ActionBlock<int>(i => {}, dboExBuffering)),
                     Tuple.Create<bool,bool,object>(true, true, new ActionBlock<int>(i => {}, dboExSpsc)),
-                    Tuple.Create<bool,bool,object>(true, true, SendAsyncMessages(new ActionBlock<int>(i => {}, dboExNoBuffering), 2)),
+                    Tuple.Create<bool,bool,object>(true, false, SendAsyncMessages(new ActionBlock<int>(i => {}, dboExNoBuffering), 2)),
                     Tuple.Create<bool,bool,object>(true, true, new TransformBlock<int,int>(i => i)),
                     Tuple.Create<bool,bool,object>(true, true, new TransformBlock<int,int>(i => i, dboExBuffering)),
-                    Tuple.Create<bool,bool,object>(true, true, SendAsyncMessages(new TransformBlock<int,int>(i => i, dboExNoBuffering),2)),
+                    Tuple.Create<bool,bool,object>(true, false, SendAsyncMessages(new TransformBlock<int,int>(i => i, dboExNoBuffering),2)),
                     Tuple.Create<bool,bool,object>(true, true, new TransformManyBlock<int,int>(i => new [] { i })),
                     Tuple.Create<bool,bool,object>(true, true, new TransformManyBlock<int,int>(i => new [] { i }, dboExBuffering)),
-                    Tuple.Create<bool,bool,object>(true, true, SendAsyncMessages(new TransformManyBlock<int,int>(i => new [] { i }, dboExNoBuffering),2)),
+                    Tuple.Create<bool,bool,object>(true, false, SendAsyncMessages(new TransformManyBlock<int,int>(i => new [] { i }, dboExNoBuffering),2)),
                     Tuple.Create<bool,bool,object>(true, true, new BufferBlock<int>()),
                     Tuple.Create<bool,bool,object>(true, true, new BufferBlock<int>(new DataflowBlockOptions() { NameFormat = "none" })),
                     Tuple.Create<bool,bool,object>(true, true, new BufferBlock<int>(new DataflowBlockOptions() { NameFormat = "foo={0}, bar={1}" })),
                     Tuple.Create<bool,bool,object>(true, true, new BufferBlock<int>(new DataflowBlockOptions() { NameFormat = "foo={0}, bar={1}, kaboom={2}" })),
                     Tuple.Create<bool,bool,object>(true, true, new BufferBlock<int>(dboBuffering)),
-                    Tuple.Create<bool,bool,object>(true, true, SendAsyncMessages(new BufferBlock<int>(new DataflowBlockOptions { BoundedCapacity = 10 }), 20)),
+                    Tuple.Create<bool,bool,object>(true, false, SendAsyncMessages(new BufferBlock<int>(new DataflowBlockOptions { BoundedCapacity = 10 }), 20)),
                     Tuple.Create<bool,bool,object>(true, true, new BroadcastBlock<int>(i => i)),
                     Tuple.Create<bool,bool,object>(true, true, new BroadcastBlock<int>(i => i, dboBuffering)),
-                    Tuple.Create<bool,bool,object>(true, true, SendAsyncMessages(new BroadcastBlock<int>(i => i, dboNoBuffering), 20)),
+                    Tuple.Create<bool,bool,object>(true, false, SendAsyncMessages(new BroadcastBlock<int>(i => i, dboNoBuffering), 20)),
                     Tuple.Create<bool,bool,object>(true, true, new WriteOnceBlock<int>(i => i)),
-                    Tuple.Create<bool,bool,object>(true, true, SendAsyncMessages(new WriteOnceBlock<int>(i => i), 1)),
+                    Tuple.Create<bool,bool,object>(true, false, SendAsyncMessages(new WriteOnceBlock<int>(i => i), 1)),
                     Tuple.Create<bool,bool,object>(true, true, new WriteOnceBlock<int>(i => i, dboBuffering)),
                     Tuple.Create<bool,bool,object>(true, true, new JoinBlock<int,int>()),
                     Tuple.Create<bool,bool,object>(true, true, new JoinBlock<int,int>(dboGroupGreedy)),
@@ -208,7 +210,7 @@ namespace System.Threading.Tasks.Dataflow.Tests
 
             public bool TryReceive(Predicate<T> filter, out T item) { item = default(T); return false; }
             public bool TryReceiveAll(out System.Collections.Generic.IList<T> items) { items = default(System.Collections.Generic.IList<T>); return false; }
-            public T ConsumeMessage(DataflowMessageHeader messageHeader, ITargetBlock<T> target, out Boolean messageConsumed) { messageConsumed = true; return default(T); }
+            public T ConsumeMessage(DataflowMessageHeader messageHeader, ITargetBlock<T> target, out bool messageConsumed) { messageConsumed = true; return default(T); }
             public bool ReserveMessage(DataflowMessageHeader messageHeader, ITargetBlock<T> target) { return false; }
             public void ReleaseReservation(DataflowMessageHeader messageHeader, ITargetBlock<T> target) { }
             public Task Completion { get { return null; } }

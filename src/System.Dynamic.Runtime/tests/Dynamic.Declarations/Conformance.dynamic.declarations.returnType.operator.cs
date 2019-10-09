@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.operate.binary001.binary001
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.operate.binary001.binary001;
-
     public class Test
     {
         private class MyClass
@@ -39,8 +38,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.operate.binary002.binary002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.operate.binary002.binary002;
-
     public class Test
     {
         public class MyClass
@@ -73,8 +70,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.operate.binary003.binary003
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.operate.binary003.binary003;
-
     public class Test
     {
         public class MyClass
@@ -107,8 +102,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.operate.binary004.binary004
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.operate.binary004.binary004;
-
     public class Test
     {
         private class MyClass
@@ -141,8 +134,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.operate.unary002.unary002
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.declarations.returnType.operate.unary002.unary002;
-
     public class Test
     {
         public class MyClass

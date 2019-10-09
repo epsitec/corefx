@@ -1,22 +1,22 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 // ------------------------------------------------------------------------------
 // Changes to this file must follow the http://aka.ms/api-review process.
 // ------------------------------------------------------------------------------
-
 
 namespace System.IO.Compression
 {
     public enum CompressionLevel
     {
+        Optimal = 0,
         Fastest = 1,
         NoCompression = 2,
-        Optimal = 0,
     }
     public enum CompressionMode
     {
-        Compress = 1,
         Decompress = 0,
+        Compress = 1,
     }
     public partial class DeflateStream : System.IO.Stream
     {
@@ -24,20 +24,33 @@ namespace System.IO.Compression
         public DeflateStream(System.IO.Stream stream, System.IO.Compression.CompressionLevel compressionLevel, bool leaveOpen) { }
         public DeflateStream(System.IO.Stream stream, System.IO.Compression.CompressionMode mode) { }
         public DeflateStream(System.IO.Stream stream, System.IO.Compression.CompressionMode mode, bool leaveOpen) { }
-        public System.IO.Stream BaseStream { get { return default(System.IO.Stream); } }
-        public override bool CanRead { get { return default(bool); } }
-        public override bool CanSeek { get { return default(bool); } }
-        public override bool CanWrite { get { return default(bool); } }
-        public override long Length { get { return default(long); } }
-        public override long Position { get { return default(long); } set { } }
+        public System.IO.Stream BaseStream { get { throw null; } }
+        public override bool CanRead { get { throw null; } }
+        public override bool CanSeek { get { throw null; } }
+        public override bool CanWrite { get { throw null; } }
+        public override long Length { get { throw null; } }
+        public override long Position { get { throw null; } set { } }
+        public override System.IAsyncResult BeginRead(byte[] buffer, int offset, int count, System.AsyncCallback? asyncCallback, object? asyncState) { throw null; }
+        public override System.IAsyncResult BeginWrite(byte[] array, int offset, int count, System.AsyncCallback? asyncCallback, object? asyncState) { throw null; }
+        public override void CopyTo(System.IO.Stream destination, int bufferSize) { }
+        public override System.Threading.Tasks.Task CopyToAsync(System.IO.Stream destination, int bufferSize, System.Threading.CancellationToken cancellationToken) { throw null; }
         protected override void Dispose(bool disposing) { }
+        public override System.Threading.Tasks.ValueTask DisposeAsync() { throw null; }
+        public override int EndRead(System.IAsyncResult asyncResult) { throw null; }
+        public override void EndWrite(System.IAsyncResult asyncResult) { }
         public override void Flush() { }
-        public override int Read(byte[] array, int offset, int count) { return default(int); }
-        public override System.Threading.Tasks.Task<int> ReadAsync(byte[] array, int offset, int count, System.Threading.CancellationToken cancellationToken) { return default(System.Threading.Tasks.Task<int>); }
-        public override long Seek(long offset, System.IO.SeekOrigin origin) { return default(long); }
+        public override System.Threading.Tasks.Task FlushAsync(System.Threading.CancellationToken cancellationToken) { throw null; }
+        public override int Read(byte[] array, int offset, int count) { throw null; }
+        public override int Read(System.Span<byte> buffer) { throw null; }
+        public override System.Threading.Tasks.Task<int> ReadAsync(byte[] array, int offset, int count, System.Threading.CancellationToken cancellationToken) { throw null; }
+        public override System.Threading.Tasks.ValueTask<int> ReadAsync(System.Memory<byte> buffer, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) { throw null; }
+        public override int ReadByte() { throw null; }
+        public override long Seek(long offset, System.IO.SeekOrigin origin) { throw null; }
         public override void SetLength(long value) { }
         public override void Write(byte[] array, int offset, int count) { }
-        public override System.Threading.Tasks.Task WriteAsync(byte[] array, int offset, int count, System.Threading.CancellationToken cancellationToken) { return default(System.Threading.Tasks.Task); }
+        public override void Write(System.ReadOnlySpan<byte> buffer) { }
+        public override System.Threading.Tasks.Task WriteAsync(byte[] array, int offset, int count, System.Threading.CancellationToken cancellationToken) { throw null; }
+        public override System.Threading.Tasks.ValueTask WriteAsync(System.ReadOnlyMemory<byte> buffer, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) { throw null; }
     }
     public partial class GZipStream : System.IO.Stream
     {
@@ -45,52 +58,68 @@ namespace System.IO.Compression
         public GZipStream(System.IO.Stream stream, System.IO.Compression.CompressionLevel compressionLevel, bool leaveOpen) { }
         public GZipStream(System.IO.Stream stream, System.IO.Compression.CompressionMode mode) { }
         public GZipStream(System.IO.Stream stream, System.IO.Compression.CompressionMode mode, bool leaveOpen) { }
-        public System.IO.Stream BaseStream { get { return default(System.IO.Stream); } }
-        public override bool CanRead { get { return default(bool); } }
-        public override bool CanSeek { get { return default(bool); } }
-        public override bool CanWrite { get { return default(bool); } }
-        public override long Length { get { return default(long); } }
-        public override long Position { get { return default(long); } set { } }
+        public System.IO.Stream BaseStream { get { throw null; } }
+        public override bool CanRead { get { throw null; } }
+        public override bool CanSeek { get { throw null; } }
+        public override bool CanWrite { get { throw null; } }
+        public override long Length { get { throw null; } }
+        public override long Position { get { throw null; } set { } }
+        public override System.IAsyncResult BeginRead(byte[] array, int offset, int count, System.AsyncCallback? asyncCallback, object? asyncState) { throw null; }
+        public override System.IAsyncResult BeginWrite(byte[] array, int offset, int count, System.AsyncCallback? asyncCallback, object? asyncState) { throw null; }
+        public override void CopyTo(System.IO.Stream destination, int bufferSize) { }
+        public override System.Threading.Tasks.Task CopyToAsync(System.IO.Stream destination, int bufferSize, System.Threading.CancellationToken cancellationToken) { throw null; }
         protected override void Dispose(bool disposing) { }
+        public override System.Threading.Tasks.ValueTask DisposeAsync() { throw null; }
+        public override int EndRead(System.IAsyncResult asyncResult) { throw null; }
+        public override void EndWrite(System.IAsyncResult asyncResult) { }
         public override void Flush() { }
-        public override int Read(byte[] array, int offset, int count) { return default(int); }
-        public override System.Threading.Tasks.Task<int> ReadAsync(byte[] array, int offset, int count, System.Threading.CancellationToken cancellationToken) { return default(System.Threading.Tasks.Task<int>); }
-        public override long Seek(long offset, System.IO.SeekOrigin origin) { return default(long); }
+        public override System.Threading.Tasks.Task FlushAsync(System.Threading.CancellationToken cancellationToken) { throw null; }
+        public override int Read(byte[] array, int offset, int count) { throw null; }
+        public override int Read(System.Span<byte> buffer) { throw null; }
+        public override System.Threading.Tasks.Task<int> ReadAsync(byte[] array, int offset, int count, System.Threading.CancellationToken cancellationToken) { throw null; }
+        public override System.Threading.Tasks.ValueTask<int> ReadAsync(System.Memory<byte> buffer, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) { throw null; }
+        public override int ReadByte() { throw null; }
+        public override long Seek(long offset, System.IO.SeekOrigin origin) { throw null; }
         public override void SetLength(long value) { }
         public override void Write(byte[] array, int offset, int count) { }
-        public override System.Threading.Tasks.Task WriteAsync(byte[] array, int offset, int count, System.Threading.CancellationToken cancellationToken) { return default(System.Threading.Tasks.Task); }
+        public override void Write(System.ReadOnlySpan<byte> buffer) { }
+        public override System.Threading.Tasks.Task WriteAsync(byte[] array, int offset, int count, System.Threading.CancellationToken cancellationToken) { throw null; }
+        public override System.Threading.Tasks.ValueTask WriteAsync(System.ReadOnlyMemory<byte> buffer, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) { throw null; }
     }
     public partial class ZipArchive : System.IDisposable
     {
         public ZipArchive(System.IO.Stream stream) { }
         public ZipArchive(System.IO.Stream stream, System.IO.Compression.ZipArchiveMode mode) { }
         public ZipArchive(System.IO.Stream stream, System.IO.Compression.ZipArchiveMode mode, bool leaveOpen) { }
-        public ZipArchive(System.IO.Stream stream, System.IO.Compression.ZipArchiveMode mode, bool leaveOpen, System.Text.Encoding entryNameEncoding) { }
-        public System.Collections.ObjectModel.ReadOnlyCollection<System.IO.Compression.ZipArchiveEntry> Entries { get { return default(System.Collections.ObjectModel.ReadOnlyCollection<System.IO.Compression.ZipArchiveEntry>); } }
-        public System.IO.Compression.ZipArchiveMode Mode { get { return default(System.IO.Compression.ZipArchiveMode); } }
-        public System.IO.Compression.ZipArchiveEntry CreateEntry(string entryName) { return default(System.IO.Compression.ZipArchiveEntry); }
-        public System.IO.Compression.ZipArchiveEntry CreateEntry(string entryName, System.IO.Compression.CompressionLevel compressionLevel) { return default(System.IO.Compression.ZipArchiveEntry); }
+        public ZipArchive(System.IO.Stream stream, System.IO.Compression.ZipArchiveMode mode, bool leaveOpen, System.Text.Encoding? entryNameEncoding) { }
+        public System.Collections.ObjectModel.ReadOnlyCollection<System.IO.Compression.ZipArchiveEntry> Entries { get { throw null; } }
+        public System.IO.Compression.ZipArchiveMode Mode { get { throw null; } }
+        public System.IO.Compression.ZipArchiveEntry CreateEntry(string entryName) { throw null; }
+        public System.IO.Compression.ZipArchiveEntry CreateEntry(string entryName, System.IO.Compression.CompressionLevel compressionLevel) { throw null; }
         public void Dispose() { }
         protected virtual void Dispose(bool disposing) { }
-        public System.IO.Compression.ZipArchiveEntry GetEntry(string entryName) { return default(System.IO.Compression.ZipArchiveEntry); }
+        public System.IO.Compression.ZipArchiveEntry? GetEntry(string entryName) { throw null; }
     }
     public partial class ZipArchiveEntry
     {
         internal ZipArchiveEntry() { }
-        public System.IO.Compression.ZipArchive Archive { get { return default(System.IO.Compression.ZipArchive); } }
-        public long CompressedLength { get { return default(long); } }
-        public string FullName { get { return default(string); } }
-        public System.DateTimeOffset LastWriteTime { get { return default(System.DateTimeOffset); } set { } }
-        public long Length { get { return default(long); } }
-        public string Name { get { return default(string); } }
+        public System.IO.Compression.ZipArchive Archive { get { throw null; } }
+        public long CompressedLength { get { throw null; } }
+        [System.CLSCompliantAttribute(false)]
+        public uint Crc32 { get { throw null; } }
+        public int ExternalAttributes { get { throw null; } set { } }
+        public string FullName { get { throw null; } }
+        public System.DateTimeOffset LastWriteTime { get { throw null; } set { } }
+        public long Length { get { throw null; } }
+        public string Name { get { throw null; } }
         public void Delete() { }
-        public System.IO.Stream Open() { return default(System.IO.Stream); }
-        public override string ToString() { return default(string); }
+        public System.IO.Stream Open() { throw null; }
+        public override string ToString() { throw null; }
     }
     public enum ZipArchiveMode
     {
-        Create = 1,
         Read = 0,
+        Create = 1,
         Update = 2,
     }
 }

@@ -1,66 +1,60 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Text;
 using Xunit;
 
-namespace System.Text.EncodingTests
+namespace System.Text.Tests
 {
-    // Calculates the maximum number of characters produced by decoding the specified number of bytes.  
-    // ASCIIEncoding.GetMaxCharCount(int)
     public class ASCIIEncodingGetMaxCharCount
     {
-        private readonly RandomDataGenerator _generator = new RandomDataGenerator();
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(int.MaxValue)]
+        public void GetMaxCharCount(int byteCount)
+        {
+            Assert.Equal(byteCount, new ASCIIEncoding().GetMaxCharCount(byteCount));
 
-        // PosTest1: The specified number of bytes is zero.
+            // Now test the input for an Encoding which has a zero or negative-length DecoderFallback.MaxCharCount.
+
+            Assert.Equal(byteCount, Encoding.GetEncoding("ascii", EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback).GetMaxCharCount(byteCount));
+            Assert.Equal(byteCount, Encoding.GetEncoding("ascii", EncoderFallback.ExceptionFallback, new CustomLengthDecoderFallback(-5)).GetMaxCharCount(byteCount));
+        }
+
+        [Theory]
+        [InlineData(0, 0)]
+        [InlineData(10, 50)]
+        [InlineData(10_000, 50_000)]
+        public void GetMaxCharCount_WithLongDecoderFallback(int byteCount, int expectedMaxCharCount)
+        {
+            Encoding asciiEncoding = Encoding.GetEncoding("ascii", EncoderFallback.ExceptionFallback, new DecoderReplacementFallback("abcde"));
+            Assert.Equal(expectedMaxCharCount, asciiEncoding.GetMaxCharCount(byteCount));
+        }
+
         [Fact]
-        public void PosTest1()
+        public void GetMaxCharCount_WithDefaultDecoder_InvalidArg()
         {
-            DoPosTest(new ASCIIEncoding(), 0, 0);
+            Assert.Throws<ArgumentOutOfRangeException>("byteCount", () => Encoding.ASCII.GetMaxCharCount(-1));
         }
 
-        // PosTest2: The specified number of bytes is a random non-negative Int32 value.
         [Fact]
-        public void PosTest2()
+        public void GetMaxCharCount_Overflow_WithLongDecoderFallbackMaxCharCount()
         {
-            ASCIIEncoding ascii;
-            int byteCount;
-            int expectedValue;
-
-            ascii = new ASCIIEncoding();
-            byteCount = _generator.GetInt32(-55);
-            expectedValue = byteCount;
-            DoPosTest(ascii, byteCount, expectedValue);
+            Encoding asciiEncoding = Encoding.GetEncoding("ascii", EncoderFallback.ExceptionFallback, new CustomLengthDecoderFallback(1_000_000));
+            Assert.Throws<ArgumentOutOfRangeException>("byteCount", () => asciiEncoding.GetMaxCharCount(5_000_000));
         }
 
-        private void DoPosTest(ASCIIEncoding ascii, int byteCount, int expectedValue)
+        private class CustomLengthDecoderFallback : DecoderFallback
         {
-            int actualValue;
-            ascii = new ASCIIEncoding();
-            actualValue = ascii.GetMaxCharCount(byteCount);
-            Assert.Equal(expectedValue, actualValue);
-        }
+            public CustomLengthDecoderFallback(int maxCharCount) { MaxCharCount = maxCharCount; }
 
-        // NegTest1: count of characters is less than zero.
-        [Fact]
-        public void NegTest1()
-        {
-            ASCIIEncoding ascii;
-            int byteCount;
+            public override int MaxCharCount { get; }
 
-            ascii = new ASCIIEncoding();
-            byteCount = -1 * _generator.GetInt32(-55) - 1;
-
-            DoNegAOORTest(ascii, byteCount);
-        }
-
-        private void DoNegAOORTest(ASCIIEncoding ascii, int byteCount)
-        {
-            Assert.Throws<ArgumentOutOfRangeException>(() =>
+            public override DecoderFallbackBuffer CreateFallbackBuffer()
             {
-                ascii.GetMaxCharCount(byteCount);
-            });
+                throw new NotImplementedException();
+            }
         }
     }
 }

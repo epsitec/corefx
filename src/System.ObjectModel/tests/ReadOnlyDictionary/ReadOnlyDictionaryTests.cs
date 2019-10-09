@@ -1,19 +1,16 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using Xunit;
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
+using Xunit;
+using Tests.Collections;
+using System.Reflection;
+using System.Linq;
 
-namespace Collections
+namespace System.Collections.ObjectModel.Tests
 {
-    /// <summary>
-    /// Tests the public methods in ReadOnlyDictionary<TKey, Value>.
-    /// properly.
-    /// </summary>
     public class ReadOnlyDictionaryTests
     {
         /// <summary>
@@ -52,6 +49,10 @@ namespace Collections
 
             IDictionary<int, string> dictAsIDictionary = dictionary;
             Assert.True(dictAsIDictionary.IsReadOnly, "ReadonlyDictionary Should be readonly");
+
+            IDictionary dictAsNonGenericIDictionary = dictionary;
+            Assert.True(dictAsNonGenericIDictionary.IsFixedSize);
+            Assert.True(dictAsNonGenericIDictionary.IsReadOnly);
         }
 
         /// <summary>
@@ -61,7 +62,7 @@ namespace Collections
         [Fact]
         public static void CtorTests_Negative()
         {
-            Assert.Throws<ArgumentNullException>(() => { ReadOnlyDictionary<int, string> dict = new ReadOnlyDictionary<int, string>(null); });
+            AssertExtensions.Throws<ArgumentNullException>("dictionary", () => new ReadOnlyDictionary<int, string>(null));
         }
 
         /// <summary>
@@ -181,7 +182,7 @@ namespace Collections
             helper.Item_get_Tests_Negative();
         }
 
-        /// <summary> 
+        /// <summary>
         /// Tests that a ReadOnlyDictionary cannot be modified. That is, that
         /// Add, Remove, Clear does not work.
         /// </summary>
@@ -212,11 +213,220 @@ namespace Collections
         [Fact]
         public static void DebuggerAttributeTests()
         {
-            DebuggerAttributes.ValidateDebuggerDisplayReferences(new ReadOnlyDictionary<int, int>(new Dictionary<int, int>()));
-            DebuggerAttributes.ValidateDebuggerTypeProxyProperties(new ReadOnlyDictionary<int, int>(new Dictionary<int, int>()));
+            ReadOnlyDictionary<int, int> dict = new ReadOnlyDictionary<int, int>(new Dictionary<int, int>{{1, 2}, {2, 4}, {3, 6}});
+            DebuggerAttributes.ValidateDebuggerDisplayReferences(dict);
+            DebuggerAttributeInfo info = DebuggerAttributes.ValidateDebuggerTypeProxyProperties(dict);
+            PropertyInfo itemProperty = info.Properties.Single(pr => pr.GetCustomAttribute<DebuggerBrowsableAttribute>().State == DebuggerBrowsableState.RootHidden);
+            KeyValuePair<int, int>[] pairs = itemProperty.GetValue(info.Instance) as KeyValuePair<int, int>[];
+            Assert.Equal(dict, pairs);
 
-            DebuggerAttributes.ValidateDebuggerDisplayReferences(new ReadOnlyDictionary<int, int>(new Dictionary<int, int>()).Keys);
-            DebuggerAttributes.ValidateDebuggerDisplayReferences(new ReadOnlyDictionary<int, int>(new Dictionary<int, int>()).Values);
+            DebuggerAttributes.ValidateDebuggerDisplayReferences(dict.Keys);
+            info = DebuggerAttributes.ValidateDebuggerTypeProxyProperties(typeof(ReadOnlyDictionary<int, int>.KeyCollection), new Type[] { typeof(int) }, dict.Keys);
+            itemProperty = info.Properties.Single(pr => pr.GetCustomAttribute<DebuggerBrowsableAttribute>().State == DebuggerBrowsableState.RootHidden);
+            int[] items = itemProperty.GetValue(info.Instance) as int[];
+            Assert.Equal(dict.Keys, items);
+
+            DebuggerAttributes.ValidateDebuggerDisplayReferences(dict.Values);
+            info = DebuggerAttributes.ValidateDebuggerTypeProxyProperties(typeof(ReadOnlyDictionary<int, int>.KeyCollection), new Type[] { typeof(int) }, dict.Values);
+            itemProperty = info.Properties.Single(pr => pr.GetCustomAttribute<DebuggerBrowsableAttribute>().State == DebuggerBrowsableState.RootHidden);
+            items = itemProperty.GetValue(info.Instance) as int[];
+            Assert.Equal(dict.Values, items);
+        }
+
+        [Fact]
+        public static void DebuggerAttribute_NullDictionary_ThrowsArgumentNullException()
+        {
+            TargetInvocationException ex = Assert.Throws<TargetInvocationException>(() =>   DebuggerAttributes.ValidateDebuggerTypeProxyProperties(typeof(ReadOnlyDictionary<int, int>), null));
+            ArgumentNullException argumentNullException = Assert.IsType<ArgumentNullException>(ex.InnerException);
+            Assert.Equal("dictionary", argumentNullException.ParamName);
+        }
+
+        [Fact]
+        public static void DebuggerAttribute_NullDictionaryKeys_ThrowsArgumentNullException()
+        {
+            TargetInvocationException ex = Assert.Throws<TargetInvocationException>(() => DebuggerAttributes.ValidateDebuggerTypeProxyProperties(typeof(ReadOnlyDictionary<int, int>.KeyCollection), new Type[] { typeof(int) }, null));
+            ArgumentNullException argumentNullException = Assert.IsType<ArgumentNullException>(ex.InnerException);
+            Assert.Equal("collection", argumentNullException.ParamName);
+        }
+    }
+
+    public class TestReadOnlyDictionary<TKey, TValue> : ReadOnlyDictionary<TKey, TValue>
+    {
+        public TestReadOnlyDictionary(IDictionary<TKey, TValue> dict)
+            : base(dict)
+        {
+        }
+
+        public IDictionary<TKey, TValue> GetDictionary()
+        {
+            return Dictionary;
+        }
+    }
+
+    public class DictionaryThatDoesntImplementNonGeneric<TKey, TValue> : IDictionary<TKey, TValue>
+    {
+        private readonly IDictionary<TKey, TValue> _inner;
+
+        public DictionaryThatDoesntImplementNonGeneric(IDictionary<TKey, TValue> inner)
+        {
+            _inner = inner;
+        }
+
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+        {
+            return _inner.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable) _inner).GetEnumerator();
+        }
+
+        public void Add(KeyValuePair<TKey, TValue> item)
+        {
+            _inner.Add(item);
+        }
+
+        public void Clear()
+        {
+            _inner.Clear();
+        }
+
+        public bool Contains(KeyValuePair<TKey, TValue> item)
+        {
+            return _inner.Contains(item);
+        }
+
+        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+        {
+            _inner.CopyTo(array, arrayIndex);
+        }
+
+        public bool Remove(KeyValuePair<TKey, TValue> item)
+        {
+            return _inner.Remove(item);
+        }
+
+        public int Count
+        {
+            get { return _inner.Count; }
+        }
+
+        public bool IsReadOnly
+        {
+            get { return _inner.IsReadOnly; }
+        }
+
+        public void Add(TKey key, TValue value)
+        {
+            _inner.Add(key, value);
+        }
+
+        public bool ContainsKey(TKey key)
+        {
+            return _inner.ContainsKey(key);
+        }
+
+        public bool Remove(TKey key)
+        {
+            return _inner.Remove(key);
+        }
+
+        public bool TryGetValue(TKey key, out TValue value)
+        {
+            return _inner.TryGetValue(key, out value);
+        }
+
+        public TValue this[TKey key]
+        {
+            get { return _inner[key]; }
+            set { _inner[key] = value; }
+        }
+
+        public ICollection<TKey> Keys
+        {
+            get { return _inner.Keys; }
+        }
+
+        public ICollection<TValue> Values
+        {
+            get { return _inner.Values; }
+        }
+    }
+
+    public class ReadOnlyDictionaryOverNonGenericTests
+        : IDictionaryTest<string, int>
+    {
+        public ReadOnlyDictionaryOverNonGenericTests()
+            : base(false)
+        {
+        }
+
+        private int m_next_item = 1;
+        protected override bool IsResetNotSupported { get { return false; } }
+        protected override bool IsGenericCompatibility { get { return false; } }
+        protected override bool ItemsMustBeUnique { get { return true; } }
+        protected override bool ItemsMustBeNonNull { get { return true; } }
+        protected override object GenerateItem()
+        {
+            return new KeyValuePair<string, int>(m_next_item.ToString(), m_next_item++);
+        }
+
+        protected override IEnumerable GetEnumerable(object[] items)
+        {
+            var dict = new DictionaryThatDoesntImplementNonGeneric<string, int>(new Dictionary<string, int>());
+            foreach (KeyValuePair<string, int> p in items)
+                dict[p.Key] = p.Value;
+            return new TestReadOnlyDictionary<string, int>(dict);
+        }
+
+        protected override object[] InvalidateEnumerator(IEnumerable enumerable)
+        {
+            var roDict = (TestReadOnlyDictionary<string, int>)enumerable;
+            var dict = roDict.GetDictionary();
+            var item = (KeyValuePair<string, int>)GenerateItem();
+            dict.Add(item.Key, item.Value);
+            var arr = new object[dict.Count];
+            ((ICollection)roDict).CopyTo(arr, 0);
+            return arr;
+        }
+    }
+
+    public class ReadOnlyDictionaryTestsStringInt
+        : IDictionaryTest<string, int>
+    {
+        public ReadOnlyDictionaryTestsStringInt()
+            : base(false)
+        {
+        }
+
+        private int m_next_item = 1;
+        protected override bool IsResetNotSupported { get { return false; } }
+        protected override bool IsGenericCompatibility { get { return false; } }
+        protected override bool ItemsMustBeUnique { get { return true; } }
+        protected override bool ItemsMustBeNonNull { get { return true; } }
+        protected override object GenerateItem()
+        {
+            return new KeyValuePair<string, int>(m_next_item.ToString(), m_next_item++);
+        }
+
+        protected override IEnumerable GetEnumerable(object[] items)
+        {
+            var dict = new Dictionary<string, int>();
+            foreach (KeyValuePair<string, int> p in items)
+                dict[p.Key] = p.Value;
+            return new TestReadOnlyDictionary<string, int>(dict);
+        }
+
+        protected override object[] InvalidateEnumerator(IEnumerable enumerable)
+        {
+            var roDict = (TestReadOnlyDictionary<string, int>)enumerable;
+            var dict = roDict.GetDictionary();
+            var item = (KeyValuePair<string, int>)GenerateItem();
+            dict.Add(item.Key, item.Value);
+            var arr = new object[dict.Count];
+            ((ICollection)roDict).CopyTo(arr, 0);
+            return arr;
         }
     }
 
@@ -273,7 +483,7 @@ namespace Collections
                     "Err_5983muqjl Verifying ContainsKey the item in the collection and the expected existing items(" + _expectedItems[i].Key + ")");
             }
 
-            //Verify that the collection was not mutated 
+            //Verify that the collection was not mutated
             VerifyCollection(_collection, _expectedItems);
 
             KeyValuePair<TKey, TValue> nonExistingItem = _generateItem();
@@ -284,7 +494,7 @@ namespace Collections
             TKey nonExistingKey = nonExistingItem.Key;
             Assert.False(_collection.ContainsKey(nonExistingKey), "Err_4713ebda Verifying ContainsKey the non-existing item in the collection and the expected non-existing items key:" + nonExistingKey);
 
-            //Verify that the collection was not mutated 
+            //Verify that the collection was not mutated
             VerifyCollection(_collection, _expectedItems);
         }
 
@@ -304,7 +514,7 @@ namespace Collections
                 Assert.Equal(_expectedItems[i].Value, itemValue);
             }
 
-            //Verify that the collection was not mutated 
+            //Verify that the collection was not mutated
             VerifyCollection(_collection, _expectedItems);
 
             KeyValuePair<TKey, TValue> nonExistingItem = _generateItem();
@@ -316,7 +526,7 @@ namespace Collections
             Assert.False(_collection.TryGetValue(nonExistingItem.Key, out nonExistingItemValue),
                 "Err_4561rtio Verifying TryGetValue returns false when looking for a non-existing item in the collection (" + nonExistingItem.Key + ")");
 
-            //Verify that the collection was not mutated 
+            //Verify that the collection was not mutated
             VerifyCollection(_collection, _expectedItems);
         }
 
@@ -370,7 +580,7 @@ namespace Collections
                 TValue actualValue = _collection[expectedKey];
                 Assert.Equal(expectedValue, actualValue);
             }
-            //Verify that the collection was not mutated 
+            //Verify that the collection was not mutated
             VerifyCollection(_collection, _expectedItems);
         }
 
@@ -384,7 +594,7 @@ namespace Collections
             TKey nonExistingKey = _generateItem().Key;
             Assert.Throws<KeyNotFoundException>(() => { TValue itemValue = _collection[nonExistingKey]; });
 
-            //Verify that the collection was not mutated 
+            //Verify that the collection was not mutated
             VerifyCollection(_collection, _expectedItems);
         }
 
@@ -425,9 +635,9 @@ namespace Collections
                 KeyValuePair<TKey, TValue> currentItem = enumerator.Current;
                 KeyValuePair<TKey, TValue> tempItem;
 
-                // Verify we have not gotten more items then we expected                
+                // Verify we have not gotten more items then we expected
                 Assert.True(iterations < expectedCount,
-                    "Err_9844awpa More items have been returned fromt the enumerator(" + iterations + " items) then are in the expectedElements(" + expectedCount + " items)");
+                    "Err_9844awpa More items have been returned from the enumerator(" + iterations + " items) then are in the expectedElements(" + expectedCount + " items)");
 
                 // Verify Current returned the correct value
                 itemFound = false;
@@ -476,7 +686,7 @@ namespace Collections
             IEnumerator enumerator = collection.GetEnumerator();
             int iterations = 0;
             int expectedCount = expectedItems.Length;
-            
+
             // There is no sequential order to the collection, so we're testing that all the items
             // in the readonlydictionary exist in the array.
             bool[] itemsVisited = new bool[expectedCount];
@@ -486,9 +696,9 @@ namespace Collections
                 object currentItem = enumerator.Current;
                 object tempItem;
 
-                // Verify we have not gotten more items then we expected                
+                // Verify we have not gotten more items then we expected
                 Assert.True(iterations < expectedCount,
-                    "Err_9844awpa More items have been returned fromt the enumerator(" + iterations + " items) then are in the expectedElements(" + expectedCount + " items)");
+                    "Err_9844awpa More items have been returned from the enumerator(" + iterations + " items) then are in the expectedElements(" + expectedCount + " items)");
 
                 // Verify Current returned the correct value
                 itemFound = false;
@@ -528,7 +738,7 @@ namespace Collections
         }
 
         /// <summary>
-        /// tests whether the given item's key is unique in a collection.  
+        /// tests whether the given item's key is unique in a collection.
         /// returns true if it is and false otherwise.
         /// </summary>
         private bool IsUniqueKey(KeyValuePair<TKey, TValue>[] items, KeyValuePair<TKey, TValue> item)

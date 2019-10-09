@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Globalization;
 
@@ -11,17 +12,17 @@ namespace System.ComponentModel.DataAnnotations
     ///     <see cref="ResourceType" />
     /// </summary>
     [AttributeUsage(
-        AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Method,
+        AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Method | AttributeTargets.Class,
         AllowMultiple = false)]
     public sealed class DisplayAttribute : Attribute
     {
         #region Member Fields
 
-        private readonly LocalizableString _description = new LocalizableString("Description");
-        private readonly LocalizableString _groupName = new LocalizableString("GroupName");
-        private readonly LocalizableString _name = new LocalizableString("Name");
-        private readonly LocalizableString _prompt = new LocalizableString("Prompt");
-        private readonly LocalizableString _shortName = new LocalizableString("ShortName");
+        private readonly LocalizableString _description = new LocalizableString(nameof(Description));
+        private readonly LocalizableString _groupName = new LocalizableString(nameof(GroupName));
+        private readonly LocalizableString _name = new LocalizableString(nameof(Name));
+        private readonly LocalizableString _prompt = new LocalizableString(nameof(Prompt));
+        private readonly LocalizableString _shortName = new LocalizableString(nameof(ShortName));
         private bool? _autoGenerateField;
         private bool? _autoGenerateFilter;
         private int? _order;
@@ -56,14 +57,8 @@ namespace System.ComponentModel.DataAnnotations
         /// </value>
         public string ShortName
         {
-            get { return _shortName.Value; }
-            set
-            {
-                if (_shortName.Value != value)
-                {
-                    _shortName.Value = value;
-                }
-            }
+            get => _shortName.Value;
+            set => _shortName.Value = value;
         }
 
         /// <summary>
@@ -87,14 +82,8 @@ namespace System.ComponentModel.DataAnnotations
         /// </value>
         public string Name
         {
-            get { return _name.Value; }
-            set
-            {
-                if (_name.Value != value)
-                {
-                    _name.Value = value;
-                }
-            }
+            get => _name.Value;
+            set => _name.Value = value;
         }
 
         /// <summary>
@@ -118,14 +107,8 @@ namespace System.ComponentModel.DataAnnotations
         /// </value>
         public string Description
         {
-            get { return _description.Value; }
-            set
-            {
-                if (_description.Value != value)
-                {
-                    _description.Value = value;
-                }
-            }
+            get => _description.Value;
+            set => _description.Value = value;
         }
 
         /// <summary>
@@ -149,14 +132,8 @@ namespace System.ComponentModel.DataAnnotations
         /// </value>
         public string Prompt
         {
-            get { return _prompt.Value; }
-            set
-            {
-                if (_prompt.Value != value)
-                {
-                    _prompt.Value = value;
-                }
-            }
+            get => _prompt.Value;
+            set => _prompt.Value = value;
         }
 
         /// <summary>
@@ -180,14 +157,8 @@ namespace System.ComponentModel.DataAnnotations
         /// </value>
         public string GroupName
         {
-            get { return _groupName.Value; }
-            set
-            {
-                if (_groupName.Value != value)
-                {
-                    _groupName.Value = value;
-                }
-            }
+            get => _groupName.Value;
+            set => _groupName.Value = value;
         }
 
         /// <summary>
@@ -199,7 +170,7 @@ namespace System.ComponentModel.DataAnnotations
         /// </summary>
         public Type ResourceType
         {
-            get { return _resourceType; }
+            get => _resourceType;
             set
             {
                 if (_resourceType != value)
@@ -221,8 +192,7 @@ namespace System.ComponentModel.DataAnnotations
         ///     property allows an override of the default behavior of the presentation layer.
         ///     <para>
         ///         Consumers must use the <see cref="GetAutoGenerateField" /> method to retrieve the value, as this property
-        ///         getter will throw
-        ///         an exception if the value has not been set.
+        ///         getter will throw an exception if the value has not been set.
         ///     </para>
         /// </summary>
         /// <exception cref="System.InvalidOperationException">
@@ -234,20 +204,19 @@ namespace System.ComponentModel.DataAnnotations
             {
                 if (!_autoGenerateField.HasValue)
                 {
-                    throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture,
-                        SR.DisplayAttribute_PropertyNotSet, "AutoGenerateField",
-                        "GetAutoGenerateField"));
+                    throw new InvalidOperationException(SR.Format(SR.DisplayAttribute_PropertyNotSet,
+                                                        nameof(AutoGenerateField),
+                                                        nameof(GetAutoGenerateField)));
                 }
 
-                return _autoGenerateField.Value;
+                return _autoGenerateField.GetValueOrDefault();
             }
-            set { _autoGenerateField = value; }
+            set => _autoGenerateField = value;
         }
 
         /// <summary>
         ///     Gets or sets whether UI should be generated automatically to display filtering for this field. If this property is
-        ///     not
-        ///     set then the presentation layer will automatically determine whether filtering UI should be generated. Setting this
+        ///     not set then the presentation layer will automatically determine whether filtering UI should be generated. Setting this
         ///     property allows an override of the default behavior of the presentation layer.
         ///     <para>
         ///         Consumers must use the <see cref="GetAutoGenerateFilter" /> method to retrieve the value, as this property
@@ -264,14 +233,14 @@ namespace System.ComponentModel.DataAnnotations
             {
                 if (!_autoGenerateFilter.HasValue)
                 {
-                    throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture,
-                        SR.DisplayAttribute_PropertyNotSet, "AutoGenerateFilter",
-                        "GetAutoGenerateFilter"));
+                    throw new InvalidOperationException(SR.Format(SR.DisplayAttribute_PropertyNotSet,
+                                                        nameof(AutoGenerateFilter),
+                                                        nameof(GetAutoGenerateFilter)));
                 }
 
-                return _autoGenerateFilter.Value;
+                return _autoGenerateFilter.GetValueOrDefault();
             }
-            set { _autoGenerateFilter = value; }
+            set => _autoGenerateFilter = value;
         }
 
         /// <summary>
@@ -292,13 +261,14 @@ namespace System.ComponentModel.DataAnnotations
             {
                 if (!_order.HasValue)
                 {
-                    throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture,
-                        SR.DisplayAttribute_PropertyNotSet, "Order", "GetOrder"));
+                    throw new InvalidOperationException(SR.Format(SR.DisplayAttribute_PropertyNotSet,
+                                                        nameof(Order),
+                                                        nameof(GetOrder)));
                 }
 
-                return _order.Value;
+                return _order.GetValueOrDefault();
             }
-            set { _order = value; }
+            set => _order = value;
         }
 
         #endregion
@@ -329,10 +299,7 @@ namespace System.ComponentModel.DataAnnotations
         ///     but a public static property with a name matching the <see cref="ShortName" /> value couldn't be found
         ///     on the <see cref="ResourceType" />.
         /// </exception>
-        public string GetShortName()
-        {
-            return _shortName.GetLocalizableValue() ?? GetName();
-        }
+        public string GetShortName() => _shortName.GetLocalizableValue() ?? GetName();
 
         /// <summary>
         ///     Gets the UI display string for Name.
@@ -359,10 +326,7 @@ namespace System.ComponentModel.DataAnnotations
         ///     but a public static property with a name matching the <see cref="Name" /> value couldn't be found
         ///     on the <see cref="ResourceType" />.
         /// </exception>
-        public string GetName()
-        {
-            return _name.GetLocalizableValue();
-        }
+        public string GetName() => _name.GetLocalizableValue();
 
         /// <summary>
         ///     Gets the UI display string for Description.
@@ -385,10 +349,7 @@ namespace System.ComponentModel.DataAnnotations
         ///     but a public static property with a name matching the <see cref="Description" /> value couldn't be found
         ///     on the <see cref="ResourceType" />.
         /// </exception>
-        public string GetDescription()
-        {
-            return _description.GetLocalizableValue();
-        }
+        public string GetDescription() => _description.GetLocalizableValue();
 
         /// <summary>
         ///     Gets the UI display string for Prompt.
@@ -411,10 +372,7 @@ namespace System.ComponentModel.DataAnnotations
         ///     but a public static property with a name matching the <see cref="Prompt" /> value couldn't be found
         ///     on the <see cref="ResourceType" />.
         /// </exception>
-        public string GetPrompt()
-        {
-            return _prompt.GetLocalizableValue();
-        }
+        public string GetPrompt() => _prompt.GetLocalizableValue();
 
         /// <summary>
         ///     Gets the UI display string for GroupName.
@@ -437,10 +395,7 @@ namespace System.ComponentModel.DataAnnotations
         ///     but a public static property with a name matching the <see cref="GroupName" /> value couldn't be found
         ///     on the <see cref="ResourceType" />.
         /// </exception>
-        public string GetGroupName()
-        {
-            return _groupName.GetLocalizableValue();
-        }
+        public string GetGroupName() => _groupName.GetLocalizableValue();
 
         /// <summary>
         ///     Gets the value of <see cref="AutoGenerateField" /> if it has been set, or <c>null</c>.
@@ -451,10 +406,7 @@ namespace System.ComponentModel.DataAnnotations
         ///         When <see cref="AutoGenerateField" /> has not been set returns <c>null</c>.
         ///     </para>
         /// </returns>
-        public bool? GetAutoGenerateField()
-        {
-            return _autoGenerateField;
-        }
+        public bool? GetAutoGenerateField() => _autoGenerateField;
 
         /// <summary>
         ///     Gets the value of <see cref="AutoGenerateFilter" /> if it has been set, or <c>null</c>.
@@ -465,10 +417,7 @@ namespace System.ComponentModel.DataAnnotations
         ///         When <see cref="AutoGenerateFilter" /> has not been set returns <c>null</c>.
         ///     </para>
         /// </returns>
-        public bool? GetAutoGenerateFilter()
-        {
-            return _autoGenerateFilter;
-        }
+        public bool? GetAutoGenerateFilter() => _autoGenerateFilter;
 
         /// <summary>
         ///     Gets the value of <see cref="Order" /> if it has been set, or <c>null</c>.
@@ -484,10 +433,8 @@ namespace System.ComponentModel.DataAnnotations
         ///     of 10000.  This value allows for explicitly-ordered fields to be displayed before
         ///     and after the fields that don't specify an order.
         /// </remarks>
-        public int? GetOrder()
-        {
-            return _order;
-        }
+        public int? GetOrder() => _order;
+
         #endregion
     }
 }

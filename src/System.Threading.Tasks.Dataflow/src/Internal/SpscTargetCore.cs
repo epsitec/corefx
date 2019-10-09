@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -13,12 +14,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security;
 
-#pragma warning disable 0420 // turn off warning for passing volatiles to interlocked operations
 namespace System.Threading.Tasks.Dataflow.Internal
 {
     // SpscTargetCore provides a fast target core for use in blocks that will only have single-producer-single-consumer
@@ -53,14 +52,14 @@ namespace System.Threading.Tasks.Dataflow.Internal
         /// <summary>An action to invoke for every accepted message.</summary>
         private readonly Action<TInput> _action;
 
-        /// <summary>Exceptions that may have occured and gone unhandled during processing.  This field is lazily initialized.</summary>
+        /// <summary>Exceptions that may have occurred and gone unhandled during processing.  This field is lazily initialized.</summary>
         private volatile List<Exception> _exceptions;
         /// <summary>Whether to stop accepting new messages.</summary>
         private volatile bool _decliningPermanently;
         /// <summary>A task has reserved the right to run the completion routine.</summary>
         private volatile bool _completionReserved;
         /// <summary>
-        /// The Task currently active to process the block. This field is used to synchronize between producer and consumer, 
+        /// The Task currently active to process the block. This field is used to synchronize between producer and consumer,
         /// and it should not be set to null once the block completes, as doing so would allow for races where the producer
         /// gets another consumer task queued even though the block has completed.
         /// </summary>
@@ -75,9 +74,9 @@ namespace System.Threading.Tasks.Dataflow.Internal
         internal SpscTargetCore(
             ITargetBlock<TInput> owningTarget, Action<TInput> action, ExecutionDataflowBlockOptions dataflowBlockOptions)
         {
-            Contract.Requires(owningTarget != null, "Expected non-null owningTarget");
-            Contract.Requires(action != null, "Expected non-null action");
-            Contract.Requires(dataflowBlockOptions != null, "Expected non-null dataflowBlockOptions");
+            Debug.Assert(owningTarget != null, "Expected non-null owningTarget");
+            Debug.Assert(action != null, "Expected non-null action");
+            Debug.Assert(dataflowBlockOptions != null, "Expected non-null dataflowBlockOptions");
 
             _owningTarget = owningTarget;
             _action = action;
@@ -112,7 +111,7 @@ namespace System.Threading.Tasks.Dataflow.Internal
         internal DataflowMessageStatus OfferMessage(DataflowMessageHeader messageHeader, TInput messageValue, ISourceBlock<TInput> source, bool consumeToAccept)
         {
             // If we're not required to go back to the source to consume the offered message, try fast path.
-            return !consumeToAccept && Post(messageValue) ? 
+            return !consumeToAccept && Post(messageValue) ?
                 DataflowMessageStatus.Accepted :
                 OfferMessage_Slow(messageHeader, messageValue, source, consumeToAccept);
         }
@@ -134,13 +133,13 @@ namespace System.Threading.Tasks.Dataflow.Internal
             // If the message header is invalid, throw.
             if (!messageHeader.IsValid)
             {
-                throw new ArgumentException(SR.Argument_InvalidMessageHeader, "messageHeader");
+                throw new ArgumentException(SR.Argument_InvalidMessageHeader, nameof(messageHeader));
             }
 
             // If the caller has requested we consume the message using ConsumeMessage, do so.
             if (consumeToAccept)
             {
-                if (source == null) throw new ArgumentException(SR.Argument_CantConsumeFromANullSource, "consumeToAccept");
+                if (source == null) throw new ArgumentException(SR.Argument_CantConsumeFromANullSource, nameof(consumeToAccept));
                 bool consumed;
                 messageValue = source.ConsumeMessage(messageHeader, _owningTarget, out consumed);
                 if (!consumed) return DataflowMessageStatus.NotAvailable;
@@ -181,10 +180,10 @@ namespace System.Threading.Tasks.Dataflow.Internal
                     }
 #endif
 
-                    // Start the task.  In the erroneous case where the scheduler throws an exception, 
-                    // just allow it to propagate. Our other option would be to fault the block with 
+                    // Start the task.  In the erroneous case where the scheduler throws an exception,
+                    // just allow it to propagate. Our other option would be to fault the block with
                     // that exception, but in order for the block to complete we need to schedule a consumer
-                    // task to do so, and it's very likely that if the scheduler is throwing an exception 
+                    // task to do so, and it's very likely that if the scheduler is throwing an exception
                     // now, it would do so again.
                     newConsumer.Start(_dataflowBlockOptions.TaskScheduler);
                 }
@@ -311,9 +310,11 @@ namespace System.Threading.Tasks.Dataflow.Internal
             // Ensure that the _exceptions field has been initialized.
             // We need to synchronize the initialization and storing of
             // the exception because this method could be accessed concurrently
-            // by the producer and consumer, a producer calling Fault and the 
+            // by the producer and consumer, a producer calling Fault and the
             // processing task processing the user delegate which might throw.
+#pragma warning disable 0420
             lock (LazyInitializer.EnsureInitialized(ref _exceptions, () => new List<Exception>()))
+#pragma warning restore 0420
             {
                 _exceptions.Add(exception);
             }
@@ -395,13 +396,11 @@ namespace System.Threading.Tasks.Dataflow.Internal
             /// <param name="target">The target being viewed.</param>
             internal DebuggingInformation(SpscTargetCore<TInput> target) { _target = target; }
 
-            /// <summary>Gets the number of messages waiting to be processed.</summary>
-            internal int InputCount { get { return _target.InputCount; } }
             /// <summary>Gets the messages waiting to be processed.</summary>
             internal IEnumerable<TInput> InputQueue { get { return _target._messages.ToList(); } }
 
             /// <summary>Gets the current number of outstanding input processing operations.</summary>
-            internal Int32 CurrentDegreeOfParallelism { get { return _target._activeConsumer != null && !_target.Completion.IsCompleted ? 1 : 0; } }
+            internal int CurrentDegreeOfParallelism { get { return _target._activeConsumer != null && !_target.Completion.IsCompleted ? 1 : 0; } }
             /// <summary>Gets the DataflowBlockOptions used to configure this block.</summary>
             internal ExecutionDataflowBlockOptions DataflowBlockOptions { get { return _target._dataflowBlockOptions; } }
             /// <summary>Gets whether the block is declining further messages.</summary>

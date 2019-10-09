@@ -1,13 +1,21 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace Microsoft.CSharp.RuntimeBinder.Semantics
 {
     // ----------------------------------------------------------------------------
-    // MethodGroupType - a placeholder typesym used only as the type of an method 
-    // groupe expression.  There is exactly one of these.
+    // MethodGroupType - a placeholder typesym used only as the type of an method
+    // group expression.  There is exactly one of these.
     // ----------------------------------------------------------------------------
 
-    internal class MethodGroupType : CType
-    { };
+    internal sealed class MethodGroupType : CType
+    {
+        public static readonly MethodGroupType Instance = new MethodGroupType();
+
+        private MethodGroupType()
+            : base(TypeKind.TK_MethodGroupType)
+        {
+        }
+    }
 }

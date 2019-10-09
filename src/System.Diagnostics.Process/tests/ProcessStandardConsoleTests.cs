@@ -1,22 +1,25 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using Xunit;
 
-namespace System.Diagnostics.ProcessTests
+namespace System.Diagnostics.Tests
 {
     public class ProcessStandardConsoleTests : ProcessTestBase
     {
         private const int s_ConsoleEncoding = 437;
 
         [Fact]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap, "Get/SetConsoleOutputCP not supported yet https://github.com/dotnet/corefx/issues/21483")]
         public void TestChangesInConsoleEncoding()
         {
             Action<int> run = expectedCodePage =>
             {
-                Process p = CreateProcessInfinite();
+                Process p = CreateProcessLong();
                 p.StartInfo.RedirectStandardInput = true;
                 p.StartInfo.RedirectStandardOutput = true;
                 p.StartInfo.RedirectStandardError = true;
@@ -41,19 +44,11 @@ namespace System.Diagnostics.ProcessTests
 
             try
             {
+                // Don't test this on Windows Nano, Windows Nano only supports UTF8.
+                if (File.Exists(Path.Combine(Environment.GetEnvironmentVariable("windir"), "regedit.exe")))
                 {
                     Interop.SetConsoleCP(s_ConsoleEncoding);
                     Interop.SetConsoleOutputCP(s_ConsoleEncoding);
-
-                    run(Encoding.UTF8.CodePage);
-                }
-
-                {
-                    Interop.SetConsoleCP(s_ConsoleEncoding);
-                    Interop.SetConsoleOutputCP(s_ConsoleEncoding);
-
-                    // Register the codeprovider which will ensure 437 is enabled.
-                    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
                     run(s_ConsoleEncoding);
                 }

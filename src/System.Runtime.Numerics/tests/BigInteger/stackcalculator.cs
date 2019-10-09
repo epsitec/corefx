@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
-using System.Numerics;
 using Xunit;
 
-namespace Tools
+namespace System.Numerics.Tests
 {
     public class StackCalc
     {
@@ -66,11 +65,11 @@ namespace Tools
 
                 snnum1 = snCalc.Pop();
                 snnum2 = snCalc.Pop();
-                snCalc.Push(DoBinaryOperatorSN(snnum1, snnum2, op));
+                snCalc.Push(DoBinaryOperatorSN(snnum1, snnum2, op, out _snOut));
 
                 mynum1 = myCalc.Pop();
                 mynum2 = myCalc.Pop();
-                myCalc.Push(MyBigIntImp.DoBinaryOperatorMine(mynum1, mynum2, op));
+                myCalc.Push(MyBigIntImp.DoBinaryOperatorMine(mynum1, mynum2, op, out _myOut));
 
                 ret = true;
             }
@@ -133,23 +132,13 @@ namespace Tools
             BigInteger ret = new BigInteger(0);
             string op = operators.Dequeue();
 
-            while (String.CompareOrdinal(op, "endmake") != 0)
+            while (string.CompareOrdinal(op, "endmake") != 0)
             {
                 bytes.Add(byte.Parse(op));
                 op = operators.Dequeue();
             }
 
-            try
-            {
-                ret = new BigInteger(bytes.ToArray());
-            }
-            catch (IndexOutOfRangeException)
-            {
-                Assert.True(false, Print(bytes.ToArray()));
-                throw;
-            }
-
-            return ret;
+            return new BigInteger(bytes.ToArray());
         }
 
         private BigInteger DoUnaryOperatorSN(BigInteger num1, string op)
@@ -181,14 +170,20 @@ namespace Tools
                 case "u*":
                     return num1 * num1;
                 default:
-                    Assert.True(false, String.Format("Invalid operation found: {0}", op));
-                    break;
+                    throw new ArgumentException(string.Format("Invalid operation found: {0}", op));
             }
-            return new BigInteger();
         }
 
         private BigInteger DoBinaryOperatorSN(BigInteger num1, BigInteger num2, string op)
         {
+            BigInteger num3;
+
+            return DoBinaryOperatorSN(num1, num2, op, out num3);
+        }
+
+        private BigInteger DoBinaryOperatorSN(BigInteger num1, BigInteger num2, string op, out BigInteger num3)
+        {
+            num3 = 0;
             switch (op)
             {
                 case "bMin":
@@ -223,10 +218,7 @@ namespace Tools
                     int arg2 = (int)num2;
                     return BigInteger.Pow(num1, arg2);
                 case "bDivRem":
-                    BigInteger num3;
-                    BigInteger ret = BigInteger.DivRem(num1, num2, out num3);
-                    SetSNOutCheck(num3);
-                    return ret;
+                    return BigInteger.DivRem(num1, num2, out num3);
                 case "bRemainder":
                     return BigInteger.Remainder(num1, num2);
                 case "bDivide":
@@ -238,10 +230,8 @@ namespace Tools
                 case "bAdd":
                     return BigInteger.Add(num1, num2);
                 default:
-                    Assert.True(false, String.Format("Invalid operation found: {0}", op));
-                    break;
+                    throw new ArgumentException(string.Format("Invalid operation found: {0}", op));
             }
-            return new BigInteger();
         }
 
         private BigInteger DoTertanaryOperatorSN(BigInteger num1, BigInteger num2, BigInteger num3, string op)
@@ -251,26 +241,19 @@ namespace Tools
                 case "tModPow":
                     return BigInteger.ModPow(num1, num2, num3);
                 default:
-                    Assert.True(false, String.Format("Invalid operation found: {0}", op));
-                    break;
+                    throw new ArgumentException(string.Format("Invalid operation found: {0}", op));
             }
-            return new BigInteger();
-        }
-        
-        private void SetSNOutCheck(BigInteger value)
-        {
-            _snOut = value;
         }
 
         public void VerifyOutParameter()
         {
-            Assert.True(_snOut == MyBigIntImp.outParam, "Out parameters not matching");
+            Assert.Equal(_snOut, _myOut);
 
             _snOut = 0;
-            MyBigIntImp.outParam = 0;
+            _myOut = 0;
         }
 
-        private static String Print(byte[] bytes)
+        private static string Print(byte[] bytes)
         {
            return MyBigIntImp.PrintFormatX(bytes);
         }

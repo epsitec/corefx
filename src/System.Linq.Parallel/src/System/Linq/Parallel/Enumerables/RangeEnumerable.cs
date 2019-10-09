@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -17,8 +18,8 @@ namespace System.Linq.Parallel
     /// </summary>
     internal class RangeEnumerable : ParallelQuery<int>, IParallelPartitionable<int>
     {
-        private int _from; // Lowest index to include.
-        private int _count; // Number of indices to include.
+        private readonly int _from; // Lowest index to include.
+        private readonly int _count; // Number of indices to include.
 
         //-----------------------------------------------------------------------------------
         // Constructs a new range enumerable object for the specified range.
@@ -49,7 +50,7 @@ namespace System.Linq.Parallel
             {
                 int partitionSize = (i < biggerPartitionCount) ? stride + 1 : stride;
                 partitions[i] = new RangeEnumerator(
-                    _from + doneCount,
+                    unchecked(_from + doneCount),
                     partitionSize,
                     doneCount);
                 doneCount += partitionSize;
@@ -71,7 +72,7 @@ namespace System.Linq.Parallel
         // The actual enumerator that walks over the specified range.
         //
 
-        class RangeEnumerator : QueryOperatorEnumerator<int, int>
+        private class RangeEnumerator : QueryOperatorEnumerator<int, int>
         {
             private readonly int _from; // The initial value.
             private readonly int _count; // How many values to yield.

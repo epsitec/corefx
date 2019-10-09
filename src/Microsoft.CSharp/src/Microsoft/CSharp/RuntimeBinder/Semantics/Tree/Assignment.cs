@@ -1,16 +1,27 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace Microsoft.CSharp.RuntimeBinder.Semantics
 {
-    internal class EXPRASSIGNMENT : EXPR
+    internal sealed class ExprAssignment : Expr
     {
-        private EXPR _LHS;
-        public EXPR GetLHS() { return _LHS; }
-        public void SetLHS(EXPR value) { _LHS = value; }
+        private Expr _lhs;
 
-        private EXPR _RHS;
-        public EXPR GetRHS() { return _RHS; }
-        public void SetRHS(EXPR value) { _RHS = value; }
+        public ExprAssignment(Expr lhs, Expr rhs)
+            : base(ExpressionKind.Assignment)
+        {
+            LHS = lhs;
+            RHS = rhs;
+            Flags = EXPRFLAG.EXF_ASSGOP;
+        }
+
+        public Expr LHS
+        {
+            get => _lhs;
+            set => Type = (_lhs = value).Type;
+        }
+
+        public Expr RHS { get; set; }
     }
 }

@@ -1,27 +1,28 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
+using System.Runtime.InteropServices;
 using Xunit;
+using Microsoft.DotNet.XUnitExtensions;
 
-namespace System.IO.FileSystem.Tests
+namespace System.IO.Tests
 {
     public class File_Delete : FileSystemTest
     {
-        #region Utilities
+        static bool IsBindMountSupported => RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && !PlatformDetection.IsInContainer && !PlatformDetection.IsRedHatFamily6;
 
-        public virtual void Delete(string path)
+        protected virtual void Delete(string path)
         {
             File.Delete(path);
         }
 
-        public virtual FileInfo Create(string path)
+        protected virtual FileInfo Create(string path)
         {
             var ret = new FileInfo(path);
             ret.Create().Dispose();
             return ret;
         }
-
-        #endregion
 
         #region UniversalTests
 
@@ -72,6 +73,7 @@ namespace System.IO.FileSystem.Tests
         [Fact]
         public void NonExistentFile()
         {
+            Delete(Path.Combine(Path.GetPathRoot(TestDirectory), Path.GetRandomFileName()));
             Delete(GetTestFilePath());
         }
 
@@ -81,26 +83,65 @@ namespace System.IO.FileSystem.Tests
             Assert.Throws<UnauthorizedAccessException>(() => Delete(TestDirectory));
         }
 
+        [ConditionalFact(nameof(CanCreateSymbolicLinks))]
+        public void DeletingSymLinkDoesntDeleteTarget()
+        {
+            var path = GetTestFilePath();
+            var linkPath = GetTestFilePath();
+
+            File.Create(path).Dispose();
+            Assert.True(MountHelper.CreateSymbolicLink(linkPath, path, isDirectory: false));
+
+            // Both the symlink and the target exist
+            Assert.True(File.Exists(path), "path should exist");
+            Assert.True(File.Exists(linkPath), "linkPath should exist");
+
+            // Delete the symlink
+            File.Delete(linkPath);
+
+            // Target should still exist
+            Assert.True(File.Exists(path), "path should still exist");
+            Assert.False(File.Exists(linkPath), "linkPath should no longer exist");
+        }
+
+        [Fact]
+        public void NonExistentPath_Throws_DirectoryNotFoundException()
+        {
+            Assert.Throws<DirectoryNotFoundException>(() => Delete(Path.Combine(Path.GetRandomFileName(), "C")));
+            Assert.Throws<DirectoryNotFoundException>(() => Delete(Path.Combine(Path.GetPathRoot(TestDirectory), Path.GetRandomFileName(), "C")));
+            Assert.Throws<DirectoryNotFoundException>(() => Delete(Path.Combine(TestDirectory, GetTestFileName(), "C")));
+        }
+
         #endregion
 
         #region PlatformSpecific
 
-        [Fact]
-        [PlatformSpecific(PlatformID.Windows)]
-        public void Windows_NonExistentPath_Throws_DirectoryNotFoundException()
+        [ConditionalFact(nameof(IsBindMountSupported))]
+        [OuterLoop("Needs sudo access")]
+        [PlatformSpecific(TestPlatforms.Linux)]
+        [Trait(XunitConstants.Category, XunitConstants.RequiresElevation)]
+        public void Unix_NonExistentPath_ReadOnlyVolume()
         {
-            Assert.Throws<DirectoryNotFoundException>(() => Delete(Path.Combine(TestDirectory, GetTestFileName(), "C")));
+            ReadOnly_FileSystemHelper(readOnlyDirectory =>
+            {
+                Delete(Path.Combine(readOnlyDirectory, "DoesNotExist"));
+            });
+        }
+
+        [ConditionalFact(nameof(IsBindMountSupported))]
+        [OuterLoop("Needs sudo access")]
+        [PlatformSpecific(TestPlatforms.Linux)]
+        [Trait(XunitConstants.Category, XunitConstants.RequiresElevation)]
+        public void Unix_ExistingDirectory_ReadOnlyVolume()
+        {
+            ReadOnly_FileSystemHelper(readOnlyDirectory =>
+            {
+                Assert.Throws<IOException>(() => Delete(Path.Combine(readOnlyDirectory, "subdir")));
+            }, subDirectoryName: "subdir");
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.AnyUnix)]
-        public void Unix_NonExistentPath_Nop()
-        {
-            Delete(Path.Combine(TestDirectory, GetTestFileName(), "C"));
-        }
-
-        [Fact]
-        [PlatformSpecific(PlatformID.Windows)]
+        [PlatformSpecific(TestPlatforms.Windows)]  // Deleting already-open file throws
         public void Windows_File_Already_Open_Throws_IOException()
         {
             string path = GetTestFilePath();
@@ -111,7 +152,7 @@ namespace System.IO.FileSystem.Tests
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.AnyUnix)]
+        [PlatformSpecific(TestPlatforms.AnyUnix)]  // Deleting already-open file allowed
         public void Unix_File_Already_Open_Allowed()
         {
             string path = GetTestFilePath();
@@ -124,7 +165,7 @@ namespace System.IO.FileSystem.Tests
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.Windows)]
+        [PlatformSpecific(TestPlatforms.Windows)]  // Deleting readonly file throws
         public void WindowsDeleteReadOnlyFile()
         {
             string path = GetTestFilePath();
@@ -136,13 +177,30 @@ namespace System.IO.FileSystem.Tests
         }
 
         [Fact]
-        [PlatformSpecific(PlatformID.AnyUnix)]
+        [PlatformSpecific(TestPlatforms.AnyUnix)]  // Deleting readonly file allowed
         public void UnixDeleteReadOnlyFile()
         {
             FileInfo testFile = Create(GetTestFilePath());
             testFile.Attributes = FileAttributes.ReadOnly;
             Delete(testFile.FullName);
             Assert.False(testFile.Exists);
+        }
+
+        [Theory,
+            InlineData(":bar"),
+            InlineData(":bar:$DATA")]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public void WindowsDeleteAlternateDataStream(string streamName)
+        {
+            FileInfo testFile = Create(GetTestFilePath());
+            testFile.Create().Dispose();
+            streamName = testFile.FullName + streamName;
+            File.Create(streamName).Dispose();
+            Assert.True(File.Exists(streamName));
+            Delete(streamName);
+            Assert.False(File.Exists(streamName));
+            testFile.Refresh();
+            Assert.True(testFile.Exists);
         }
 
         #endregion

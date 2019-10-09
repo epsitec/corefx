@@ -1,22 +1,24 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using Xunit;
 
 namespace System.IO.MemoryMappedFiles.Tests
 {
     /// <summary>Base class from which all of the memory mapped files test classes derive.</summary>
-    public abstract class MemoryMappedFilesTestBase : FileCleanupTestBase
+    public abstract partial class MemoryMappedFilesTestBase : FileCleanupTestBase
     {
         /// <summary>Gets whether named maps are supported by the current platform.</summary>
         protected static bool MapNamesSupported { get { return RuntimeInformation.IsOSPlatform(OSPlatform.Windows); } }
 
         /// <summary>Creates a map name guaranteed to be unique.</summary>
         protected static string CreateUniqueMapName() { return Guid.NewGuid().ToString("N"); }
-        
+
         /// <summary>Creates a map name guaranteed to be unique and contain only whitespace characters.</summary>
         protected static string CreateUniqueWhitespaceMapName()
         {
@@ -75,8 +77,8 @@ namespace System.IO.MemoryMappedFiles.Tests
         /// <param name="expectedCapacity">The capacity that was specified to create the map.</param>
         /// <param name="expectedAccess">The access specified to create the map.</param>
         /// <param name="expectedInheritability">The inheritability specified to create the map.</param>
-        protected static void ValidateMemoryMappedFile(MemoryMappedFile mmf, 
-            long expectedCapacity, 
+        protected static void ValidateMemoryMappedFile(MemoryMappedFile mmf,
+            long expectedCapacity,
             MemoryMappedFileAccess expectedAccess = MemoryMappedFileAccess.ReadWrite,
             HandleInheritability expectedInheritability = HandleInheritability.None)
         {
@@ -283,70 +285,5 @@ namespace System.IO.MemoryMappedFiles.Tests
                     return false;
             }
         }
-
-        /// <summary>Gets the system's page size.</summary>
-        protected static Lazy<int> s_pageSize = new Lazy<int>(() => 
-        {
-            int pageSize;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                SYSTEM_INFO info;
-                GetSystemInfo(out info);
-                pageSize = (int)info.dwPageSize;
-            }
-            else
-            {
-                const int _SC_PAGESIZE_OSX = 29;
-                const int _SC_PAGESIZE_FreeBSD = 47;
-                const int _SC_PAGESIZE_Linux = 30;
-                pageSize = sysconf(
-                    RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? _SC_PAGESIZE_OSX :
-                    RuntimeInformation.IsOSPlatform(OSPlatform.Create("FREEBSD")) ? _SC_PAGESIZE_FreeBSD :
-                    _SC_PAGESIZE_Linux);
-            }
-            Assert.InRange(pageSize, 1, Int32.MaxValue);
-            return pageSize;
-        });
-
-        /// <summary>Asserts that the handle's inheritability matches the specified value.</summary>
-        protected static void AssertInheritability(SafeHandle handle, HandleInheritability inheritability)
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                uint flags;
-                Assert.True(GetHandleInformation(handle.DangerousGetHandle(), out flags));
-                Assert.Equal(inheritability == HandleInheritability.Inheritable, (flags & HANDLE_FLAG_INHERIT) != 0);
-            }
-        }
-
-        #region Windows
-        [DllImport("kernel32.dll")]
-        private static extern bool GetHandleInformation(IntPtr hObject, out uint lpdwFlags);
-
-        private const uint HANDLE_FLAG_INHERIT = 0x00000001;
-
-        [DllImport("api-ms-win-core-sysinfo-l1-1-0.dll")]
-        private static extern void GetSystemInfo(out SYSTEM_INFO input);
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct SYSTEM_INFO
-        {
-            internal uint dwOemId;
-            internal uint dwPageSize;
-            internal IntPtr lpMinimumApplicationAddress;
-            internal IntPtr lpMaximumApplicationAddress;
-            internal IntPtr dwActiveProcessorMask;
-            internal uint dwNumberOfProcessors;
-            internal uint dwProcessorType;
-            internal uint dwAllocationGranularity;
-            internal short wProcessorLevel;
-            internal short wProcessorRevision;
-        }
-        #endregion
-
-        #region Unix
-        [DllImport("libc", SetLastError = true)]
-        private static extern int sysconf(int name);
-        #endregion
     }
 }

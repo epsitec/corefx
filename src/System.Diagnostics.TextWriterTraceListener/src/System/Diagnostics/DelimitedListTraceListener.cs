@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Text;
@@ -30,6 +31,14 @@ namespace System.Diagnostics
         {
         }
 
+        public DelimitedListTraceListener(string fileName) : base(fileName)
+        {
+        }
+
+        public DelimitedListTraceListener(string fileName, string name) : base(fileName, name)
+        {
+        }
+
         public string Delimiter
         {
             get
@@ -39,10 +48,10 @@ namespace System.Diagnostics
             set
             {
                 if (value == null)
-                    throw new ArgumentNullException("Delimiter");
+                    throw new ArgumentNullException(nameof(Delimiter));
 
                 if (value.Length == 0)
-                    throw new ArgumentException(SR.Format(SR.Generic_ArgCantBeEmptyString, "Delimiter"));
+                    throw new ArgumentException(SR.Format(SR.Generic_ArgCantBeEmptyString, nameof(Delimiter)));
 
                 lock (this)
                 {
@@ -56,8 +65,11 @@ namespace System.Diagnostics
             }
         }
 
+        // base class method is protected internal but since its base class is in another assembly can't override it as protected internal because a CS0507
+        // warning would be hitted.
+        protected override string[] GetSupportedAttributes() => new string[] { "delimiter" };
 
-        public override void TraceEvent(TraceEventCache eventCache, String source, TraceEventType eventType, int id, string format, params object[] args)
+        public override void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, string format, params object[] args)
         {
             if (Filter != null && !Filter.ShouldTrace(eventCache, source, eventType, id, format, args, null, null))
                 return;
@@ -65,7 +77,7 @@ namespace System.Diagnostics
             WriteHeader(source, eventType, id);
 
             if (args != null)
-                WriteEscaped(String.Format(CultureInfo.InvariantCulture, format, args));
+                WriteEscaped(string.Format(CultureInfo.InvariantCulture, format, args));
             else
                 WriteEscaped(format);
             Write(Delimiter); // Use get_Delimiter
@@ -76,7 +88,7 @@ namespace System.Diagnostics
             WriteFooter(eventCache);
         }
 
-        public override void TraceEvent(TraceEventCache eventCache, String source, TraceEventType eventType, int id, string message)
+        public override void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, string message)
         {
             if (Filter != null && !Filter.ShouldTrace(eventCache, source, eventType, id, message, null, null, null))
                 return;
@@ -92,7 +104,7 @@ namespace System.Diagnostics
             WriteFooter(eventCache);
         }
 
-        public override void TraceData(TraceEventCache eventCache, String source, TraceEventType eventType, int id, object data)
+        public override void TraceData(TraceEventCache eventCache, string source, TraceEventType eventType, int id, object data)
         {
             if (Filter != null && !Filter.ShouldTrace(eventCache, source, eventType, id, null, null, data, null))
                 return;
@@ -108,7 +120,7 @@ namespace System.Diagnostics
             WriteFooter(eventCache);
         }
 
-        public override void TraceData(TraceEventCache eventCache, String source, TraceEventType eventType, int id, params object[] data)
+        public override void TraceData(TraceEventCache eventCache, string source, TraceEventType eventType, int id, params object[] data)
         {
             if (Filter != null && !Filter.ShouldTrace(eventCache, source, eventType, id, null, null, null, data))
                 return;
@@ -132,7 +144,7 @@ namespace System.Diagnostics
             WriteFooter(eventCache);
         }
 
-        private void WriteHeader(String source, TraceEventType eventType, int id)
+        private void WriteHeader(string source, TraceEventType eventType, int id)
         {
             WriteEscaped(source);
             Write(Delimiter); // Use get_Delimiter
@@ -152,6 +164,10 @@ namespace System.Diagnostics
                     Write(eventCache.ProcessId.ToString(CultureInfo.InvariantCulture));
                 Write(Delimiter); // Use get_Delimiter
 
+                if (IsEnabled(TraceOptions.LogicalOperationStack))
+                    WriteStackEscaped(eventCache.LogicalOperationStack);
+                Write(Delimiter); // Use get_Delimiter
+
                 if (IsEnabled(TraceOptions.ThreadId))
                     WriteEscaped(eventCache.ThreadId);
                 Write(Delimiter); // Use get_Delimiter
@@ -167,7 +183,7 @@ namespace System.Diagnostics
             else
             {
                 for (int i = 0; i < 5; i++)
-                    Write(Delimiter); // Use get_Delimiter 
+                    Write(Delimiter); // Use get_Delimiter
             }
 
             WriteLine("");
@@ -175,27 +191,50 @@ namespace System.Diagnostics
 
         private void WriteEscaped(string message)
         {
-            if (!String.IsNullOrEmpty(message))
+            if (!string.IsNullOrEmpty(message))
             {
                 StringBuilder sb = new StringBuilder("\"");
-                int index;
-                int lastindex = 0;
-                while ((index = message.IndexOf('"', lastindex)) != -1)
-                {
-                    sb.Append(message, lastindex, index - lastindex);
-                    sb.Append("\"\"");
-                    lastindex = index + 1;
-                }
-
-                sb.Append(message, lastindex, message.Length - lastindex);
+                EscapeMessage(message, sb);
                 sb.Append("\"");
                 Write(sb.ToString());
             }
         }
 
-        private bool IsEnabled(TraceOptions opts)
+        private void WriteStackEscaped(Stack stack)
         {
-            return (opts & TraceOutputOptions) != 0;
+            StringBuilder sb = new StringBuilder("\"");
+            bool first = true;
+            foreach (object obj in stack)
+            {
+                if (!first)
+                {
+                    sb.Append(", ");
+                }
+                else
+                {
+                    first = false;
+                }
+
+                string operation = obj.ToString();
+                EscapeMessage(operation, sb);
+            }
+
+            sb.Append("\"");
+            Write(sb.ToString());
+        }
+
+        private void EscapeMessage(string message, StringBuilder sb)
+        {
+            int index;
+            int lastindex = 0;
+            while ((index = message.IndexOf('"', lastindex)) != -1)
+            {
+                sb.Append(message, lastindex, index - lastindex);
+                sb.Append("\"\"");
+                lastindex = index + 1;
+            }
+
+            sb.Append(message, lastindex, message.Length - lastindex);
         }
     }
 }

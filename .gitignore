@@ -2,6 +2,11 @@ syntax: glob
 
 ### VisualStudio ###
 
+# Tool Runtime Dir
+.dotnet/
+.packages/
+.tools/
+
 # User-specific files
 *.suo
 *.user
@@ -9,24 +14,35 @@ syntax: glob
 *.sln.docstates
 
 # Build results
+artifacts/
+.idea/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
-x64/
-x86/
 build/
 bld/
 [Bb]in/
 [Oo]bj/
 msbuild.log
+msbuild.err
+msbuild.wrn
+msbuild.binlog
+.deps/
+.dirstamp
+.libs/
+*.lo
+*.o
 
-# Visual Studio 2015
+# Cross building rootfs
+cross/rootfs/
+cross/android-rootfs/
+
+# Visual Studio
 .vs/
 
-# Visual Studio 2015 Pre-CTP6
-*.sln.ide
-*.ide/
+# Ionide
+.ionide/
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
@@ -73,9 +89,11 @@ _Chutzpah*
 ipch/
 *.aps
 *.ncb
+*.opendb
 *.opensdf
 *.sdf
 *.cachefile
+*.VC.db
 
 # Visual Studio profiler
 *.psess
@@ -136,8 +154,13 @@ publish/
 *.publishproj
 
 # NuGet Packages
+*.nuget.props
+*.nuget.targets
 *.nupkg
 **/packages/*
+
+# NuGet package restore lockfiles
+project.lock.json
 
 # Windows Azure Build Output
 csx/
@@ -147,7 +170,6 @@ csx/
 AppPackages/
 
 # Others
-sql/
 *.Cache
 ClientBin/
 [Ss]tyle[Cc]op.*
@@ -159,6 +181,7 @@ ClientBin/
 node_modules/
 *.metaproj
 *.metaproj.tmp
+bin.localpkg/
 
 # RIA/Silverlight projects
 Generated_Code/
@@ -246,3 +269,13 @@ Temporary Items
 Session.vim
 .netrwhist
 *~
+
+# Visual Studio Code
+.vscode/
+
+# Private test configuration and binaries.
+config.ps1
+**/IISApplications
+
+# VS debug support files
+launchSettings.json

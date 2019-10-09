@@ -1,52 +1,72 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-
-
-//------------------------------------------------------------------------------
-
-using System;
-using System.Data;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace System.Data.Common
 {
-    public abstract class DbTransaction :
-        IDisposable
+    public abstract class DbTransaction : MarshalByRefObject, IDbTransaction
     {
-        protected DbTransaction() : base()
-        {
-        }
+        protected DbTransaction() : base() { }
 
-        public DbConnection Connection
+        public DbConnection Connection => DbConnection;
+
+        IDbConnection IDbTransaction.Connection => DbConnection;
+
+        protected abstract DbConnection DbConnection { get; }
+
+        public abstract IsolationLevel IsolationLevel { get; }
+
+        public abstract void Commit();
+
+        public virtual Task CommitAsync(CancellationToken cancellationToken = default)
         {
-            get
+            if (cancellationToken.IsCancellationRequested)
             {
-                return DbConnection;
+                return Task.FromCanceled(cancellationToken);
+            }
+
+            try
+            {
+                Commit();
+                return Task.CompletedTask;
+            }
+            catch (Exception e)
+            {
+                return Task.FromException(e);
             }
         }
 
+        public void Dispose() => Dispose(true);
 
-        abstract protected DbConnection DbConnection
+        protected virtual void Dispose(bool disposing) { }
+
+        public virtual ValueTask DisposeAsync()
         {
-            get;
+            Dispose();
+            return default;
         }
 
-        abstract public IsolationLevel IsolationLevel
+        public abstract void Rollback();
+
+        public virtual Task RollbackAsync(CancellationToken cancellationToken = default)
         {
-            get;
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Task.FromCanceled(cancellationToken);
+            }
+
+            try
+            {
+                Rollback();
+                return Task.CompletedTask;
+            }
+            catch (Exception e)
+            {
+                return Task.FromException(e);
+            }
         }
-
-        abstract public void Commit();
-
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-        }
-
-        abstract public void Rollback();
     }
 }

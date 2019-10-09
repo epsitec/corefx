@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 
@@ -29,9 +30,7 @@ namespace System.ComponentModel.DataAnnotations
         #region Member Fields
 
         private readonly Dictionary<object, object> _items;
-        private readonly object _objectInstance;
         private string _displayName;
-        private string _memberName;
         private Func<Type, object> _serviceProvider;
 
         #endregion
@@ -84,7 +83,7 @@ namespace System.ComponentModel.DataAnnotations
         {
             if (instance == null)
             {
-                throw new ArgumentNullException("instance");
+                throw new ArgumentNullException(nameof(instance));
             }
 
             if (serviceProvider != null)
@@ -92,16 +91,8 @@ namespace System.ComponentModel.DataAnnotations
                 InitializeServiceProvider(serviceType => serviceProvider.GetService(serviceType));
             }
 
-            if (items != null)
-            {
-                _items = new Dictionary<object, object>(items);
-            }
-            else
-            {
-                _items = new Dictionary<object, object>();
-            }
-
-            _objectInstance = instance;
+            _items = items != null ? new Dictionary<object, object>(items) : new Dictionary<object, object>();
+            ObjectInstance = instance;
         }
 
         #endregion
@@ -118,18 +109,12 @@ namespace System.ComponentModel.DataAnnotations
         ///     For example, the property being validated, as well as other properties on the instance might not have been
         ///     updated to their new values.
         /// </remarks>
-        public object ObjectInstance
-        {
-            get { return _objectInstance; }
-        }
+        public object ObjectInstance { get; }
 
         /// <summary>
         ///     Gets the type of the object being validated.  It will not be null.
         /// </summary>
-        public Type ObjectType
-        {
-            get { return ObjectInstance.GetType(); }
-        }
+        public Type ObjectType => ObjectInstance.GetType();
 
         /// <summary>
         ///     Gets or sets the user-visible name of the type or property being validated.
@@ -158,7 +143,7 @@ namespace System.ComponentModel.DataAnnotations
             {
                 if (string.IsNullOrEmpty(value))
                 {
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 }
                 _displayName = value;
             }
@@ -171,11 +156,7 @@ namespace System.ComponentModel.DataAnnotations
         ///     This name reflects the API name of the member being validated, not a localized name.  It should be set
         ///     only for property or parameter contexts.
         /// </value>
-        public string MemberName
-        {
-            get { return _memberName; }
-            set { _memberName = value; }
-        }
+        public string MemberName { get; set; }
 
         /// <summary>
         ///     Gets the dictionary of key/value pairs associated with this context.
@@ -184,10 +165,7 @@ namespace System.ComponentModel.DataAnnotations
         ///     This property will never be null, but the dictionary may be empty.  Changes made
         ///     to items in this dictionary will never affect the original dictionary specified in the constructor.
         /// </value>
-        public IDictionary<object, object> Items
-        {
-            get { return _items; }
-        }
+        public IDictionary<object, object> Items => _items;
 
         #endregion
 
@@ -203,7 +181,7 @@ namespace System.ComponentModel.DataAnnotations
             ValidationAttributeStore store = ValidationAttributeStore.Instance;
             DisplayAttribute displayAttribute = null;
 
-            if (string.IsNullOrEmpty(_memberName))
+            if (string.IsNullOrEmpty(MemberName))
             {
                 displayAttribute = store.GetTypeDisplayAttribute(this);
             }
@@ -243,15 +221,8 @@ namespace System.ComponentModel.DataAnnotations
         /// </summary>
         /// <param name="serviceType">The type of the service needed.</param>
         /// <returns>An instance of that service or null if it is not available.</returns>
-        public object GetService(Type serviceType)
-        {
-            if (_serviceProvider != null)
-            {
-                return _serviceProvider(serviceType);
-            }
+        public object GetService(Type serviceType) => _serviceProvider?.Invoke(serviceType);
 
-            return null;
-        }
         #endregion
     }
 }

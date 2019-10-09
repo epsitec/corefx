@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.IO;
 using System.Text;
@@ -264,6 +265,12 @@ namespace System.Diagnostics
         /// </summary>
         public static FileVersionInfo GetVersionInfo(string fileName)
         {
+            // Check if fileName is a full path. Relative paths can cause confusion if the local file has the .dll extension,
+            // as .dll search paths can take over & look for system .dll's in that case.
+            if (!Path.IsPathFullyQualified(fileName))
+            {
+                fileName = Path.GetFullPath(fileName);
+            }
             // Check for the existence of the file. File.Exists returns false if Read permission is denied.
             if (!File.Exists(fileName))
             {

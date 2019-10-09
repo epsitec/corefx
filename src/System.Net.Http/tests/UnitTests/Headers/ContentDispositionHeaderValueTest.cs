@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -16,27 +17,27 @@ namespace System.Net.Http.Tests
         [Fact]
         public void Ctor_ContentDispositionNull_Throw()
         {
-            Assert.Throws<ArgumentException>(() => { new ContentDispositionHeaderValue(null); });
+            AssertExtensions.Throws<ArgumentException>("dispositionType", () => { new ContentDispositionHeaderValue(null); });
         }
 
         [Fact]
         public void Ctor_ContentDispositionEmpty_Throw()
         {
             // null and empty should be treated the same. So we also throw for empty strings.
-            Assert.Throws<ArgumentException>(() => { new ContentDispositionHeaderValue(string.Empty); });
+            AssertExtensions.Throws<ArgumentException>("dispositionType", () => { new ContentDispositionHeaderValue(string.Empty); });
         }
 
         [Fact]
         public void Ctor_ContentDispositionInvalidFormat_ThrowFormatException()
         {
-            // When adding values using strongly typed objects, no leading/trailing LWS (whitespaces) are allowed.
+            // When adding values using strongly typed objects, no leading/trailing LWS (whitespace) are allowed.
             AssertFormatException(" inline ");
             AssertFormatException(" inline");
             AssertFormatException("inline ");
             AssertFormatException("\"inline\"");
             AssertFormatException("te xt");
             AssertFormatException("te=xt");
-            AssertFormatException("teäxt");
+            AssertFormatException("te\u00E4xt");
             AssertFormatException("text;");
             AssertFormatException("te/xt;");
             AssertFormatException("inline; name=someName; ");
@@ -188,6 +189,22 @@ namespace System.Net.Http.Tests
             Assert.Null(contentDisposition.FileNameStar);
         }
 
+        [Theory]
+        [InlineData("no_quotes")]
+        [InlineData("one'quote")]
+        [InlineData("'triple'quotes'")]
+        public void FileNameStar_NotTwoQuotes_IsNull(string value)
+        {
+            ContentDispositionHeaderValue contentDisposition = new ContentDispositionHeaderValue("inline");
+
+            // Note that uppercase letters are used. Comparison should happen case-insensitive.
+            NameValueHeaderValue fileNameStar = new NameValueHeaderValue("FILENAME*", value);
+            contentDisposition.Parameters.Add(fileNameStar);
+            Assert.Equal(1, contentDisposition.Parameters.Count);
+            Assert.Same(fileNameStar, contentDisposition.Parameters.First());
+            Assert.Null(contentDisposition.FileNameStar); // Decode failure
+        }
+
         [Fact]
         public void FileNameStar_NeedsEncoding_EncodedAndDecodedCorrectly()
         {
@@ -203,7 +220,6 @@ namespace System.Net.Http.Tests
             Assert.Null(contentDisposition.FileNameStar);
         }
 
-        [ActiveIssue(846, PlatformID.AnyUnix)]
         [Fact]
         public void FileNameStar_UnknownOrBadEncoding_PropertyFails()
         {
@@ -213,8 +229,7 @@ namespace System.Net.Http.Tests
             NameValueHeaderValue fileNameStar = new NameValueHeaderValue("FILENAME*", "utf-99'lang'File%CZName.bat");
             contentDisposition.Parameters.Add(fileNameStar);
             Assert.Equal(1, contentDisposition.Parameters.Count);
-            Assert.Equal("FILENAME*", contentDisposition.Parameters.First().Name);
-            Assert.Equal("utf-99'lang'File%CZName.bat", contentDisposition.Parameters.First().Value);
+            Assert.Same(fileNameStar, contentDisposition.Parameters.First());
             Assert.Null(contentDisposition.FileNameStar); // Decode failure
 
             contentDisposition.FileNameStar = "new_name";
@@ -308,13 +323,22 @@ namespace System.Net.Http.Tests
 
             // Negatives not allowed
             Assert.Throws<ArgumentOutOfRangeException>(() => { contentDisposition.Size = -279172874240; });
-            
+
             Assert.Null(contentDisposition.Size);
             Assert.Equal(1, contentDisposition.Parameters.Count);
             Assert.Equal("SIZE", contentDisposition.Parameters.First().Name);
 
             contentDisposition.Parameters.Remove(sizeParameter);
             Assert.Null(contentDisposition.Size);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData(66)]
+        public void Size_ValueSetGet_RoundtripsSuccessfully(int? value)
+        {
+            var contentDisposition = new ContentDispositionHeaderValue("inline") { Size = value };
+            Assert.Equal(value, contentDisposition.Size);
         }
 
         [Fact]
@@ -516,7 +540,7 @@ namespace System.Net.Http.Tests
             CheckValidParse("inline", expected);
 
             // We don't have to test all possible input strings, since most of the pieces are handled by other parsers.
-            // The purpose of this test is to verify that these other parsers are combined correctly to build a 
+            // The purpose of this test is to verify that these other parsers are combined correctly to build a
             // Content-Disposition parser.
             expected.Name = "myName";
             CheckValidParse("\r\n inline  ;  name =   myName ", expected);
@@ -552,7 +576,7 @@ namespace System.Net.Http.Tests
             CheckValidTryParse("inline", expected);
 
             // We don't have to test all possible input strings, since most of the pieces are handled by other parsers.
-            // The purpose of this test is to verify that these other parsers are combined correctly to build a 
+            // The purpose of this test is to verify that these other parsers are combined correctly to build a
             // Content-Disposition parser.
             expected.Name = "myName";
             CheckValidTryParse("\r\n inline  ;  name =   myName ", expected);
@@ -594,14 +618,14 @@ namespace System.Net.Http.Tests
             { "valid13", new ContentDispositionValue(@"attachment; FILENAME=""foo.html""", @"'attachment', specifying a filename of foo.html", true) },
             { "valid14", new ContentDispositionValue(@"attachment; filename=foo.html", @"'attachment', specifying a filename of foo.html using a token instead of a quoted-string.", true) },
             { "valid15", new ContentDispositionValue(@"attachment; filename='foo.bar'", @"'attachment', specifying a filename of 'foo.bar' using single quotes. ", true) },
-            { "valid16", new ContentDispositionValue(@"attachment; filename=""foo-ä.html""", @"'attachment', specifying a filename of foo-ä.html, using plain ISO-8859-1", true) },
-            { "valid17", new ContentDispositionValue(@"attachment; filename=""foo-&#xc3;&#xa4;.html""", @"'attachment', specifying a filename of foo-&#xc3;&#xa4;.html, which happens to be foo-ä.html using UTF-8 encoding.", true) },
+            { "valid16", new ContentDispositionValue(@"attachment; filename=""foo-\u00E4.html""", @"'attachment', specifying a filename of foo-\u00E4.html, using plain ISO-8859-1", true) },
+            { "valid17", new ContentDispositionValue(@"attachment; filename=""foo-&#xc3;&#xa4;.html""", @"'attachment', specifying a filename of foo-&#xc3;&#xa4;.html, which happens to be foo-\u00E4.html using UTF-8 encoding.", true) },
             { "valid18", new ContentDispositionValue(@"attachment; filename=""foo-%41.html""", @"'attachment', specifying a filename of foo-%41.html", true) },
             { "valid19", new ContentDispositionValue(@"attachment; filename=""50%.html""", @"'attachment', specifying a filename of 50%.html", true) },
             { "valid20", new ContentDispositionValue(@"attachment; filename=""foo-%\41.html""", @"'attachment', specifying a filename of foo-%41.html, using an escape character (this tests whether adding an escape character inside a %xx sequence can be used to disable the non-conformant %xx-unescaping).", true) },
             { "valid21", new ContentDispositionValue(@"attachment; name=""foo-%41.html""", @"'attachment', specifying a <i>name</i> parameter of foo-%41.html. (this test was added to observe the behavior of the (unspecified) treatment of ""name"" as synonym for ""filename""; see <a href=""http://www.imc.org/ietf-smtp/mail-archive/msg05023.html"">Ned Freed's summary</a> where this comes from in MIME messages)", true) },
-            { "valid22", new ContentDispositionValue(@"attachment; filename=""ä-%41.html""", @"'attachment', specifying a filename parameter of ä-%41.html. (this test was added to observe the behavior when non-ASCII characters and percent-hexdig sequences are combined)", true) },
-            { "valid23", new ContentDispositionValue(@"attachment; filename=""foo-%c3%a4-%e2%82%ac.html""", @"'attachment', specifying a filename of foo-%c3%a4-%e2%82%ac.html, using raw percent encoded UTF-8 to represent foo-ä-&#x20ac;.html", true) },
+            { "valid22", new ContentDispositionValue(@"attachment; filename=""\u00E4-%41.html""", @"'attachment', specifying a filename parameter of \u00E4-%41.html. (this test was added to observe the behavior when non-ASCII characters and percent-hexdig sequences are combined)", true) },
+            { "valid23", new ContentDispositionValue(@"attachment; filename=""foo-%c3%a4-%e2%82%ac.html""", @"'attachment', specifying a filename of foo-%c3%a4-%e2%82%ac.html, using raw percent encoded UTF-8 to represent foo-\u00E4-&#x20ac;.html", true) },
             { "valid24", new ContentDispositionValue(@"attachment; filename =""foo.html""", @"'attachment', specifying a filename of foo.html, with one blank space <em>before</em> the equals character.", true) },
             { "valid25", new ContentDispositionValue(@"attachment; xfilename=foo.html", @"'attachment', specifying an ""xfilename"" parameter.", true) },
             { "valid26", new ContentDispositionValue(@"attachment; filename=""/foo.html""", @"'attachment', specifying an absolute filename in the filesystem root.", true) },
@@ -610,22 +634,22 @@ namespace System.Net.Http.Tests
             { "valid29", new ContentDispositionValue(@"attachment; modification-date=""Wed, 12 Feb 1997 16:29:51 -0500""", @"'attachment', plus modification-date (see <a href=""http://greenbytes.de/tech/webdav/rfc2183.html#rfc.section.2.5"">Section 2.5 of RFC 2183</a>)", true) },
             { "valid30", new ContentDispositionValue(@"foobar", @"This should be equivalent to using ""attachment"".", true) },
             { "valid31", new ContentDispositionValue(@"attachment; example=""filename=example.txt""", @"'attachment', with no filename parameter", true) },
-            { "valid32", new ContentDispositionValue(@"attachment; filename*=iso-8859-1''foo-%E4.html", @"'attachment', specifying a filename of foo-ä.html, using RFC2231 encoded ISO-8859-1", true) },
-            { "valid33", new ContentDispositionValue(@"attachment; filename*=UTF-8''foo-%c3%a4-%e2%82%ac.html", @"'attachment', specifying a filename of foo-ä-&#x20ac;.html, using RFC2231 encoded UTF-8", true) },
+            { "valid32", new ContentDispositionValue(@"attachment; filename*=iso-8859-1''foo-%E4.html", @"'attachment', specifying a filename of foo-\u00E4.html, using RFC2231 encoded ISO-8859-1", true) },
+            { "valid33", new ContentDispositionValue(@"attachment; filename*=UTF-8''foo-%c3%a4-%e2%82%ac.html", @"'attachment', specifying a filename of foo-\u00E4-&#x20ac;.html, using RFC2231 encoded UTF-8", true) },
             { "valid34", new ContentDispositionValue(@"attachment; filename*=''foo-%c3%a4-%e2%82%ac.html", @"Behavior is undefined in RFC 2231, the charset part is missing, although UTF-8 was used.", true) },
-            { "valid35", new ContentDispositionValue(@"attachment; filename*=UTF-8''foo-a%cc%88.html", @"'attachment', specifying a filename of foo-ä.html, using RFC2231 encoded UTF-8, but choosing the decomposed form (lowercase a plus COMBINING DIAERESIS) -- on a Windows target system, this should be translated to the preferred Unicode normal form (composed).", true) },
-            { "valid36", new ContentDispositionValue(@"attachment; filename*= UTF-8''foo-%c3%a4.html", @"'attachment', specifying a filename of foo-ä.html, using RFC2231 encoded UTF-8, with whitespace after ""*=""", true) },
-            { "valid37", new ContentDispositionValue(@"attachment; filename* =UTF-8''foo-%c3%a4.html", @"'attachment', specifying a filename of foo-ä.html, using RFC2231 encoded UTF-8, with whitespace inside ""* =""", true) },
+            { "valid35", new ContentDispositionValue(@"attachment; filename*=UTF-8''foo-a%cc%88.html", @"'attachment', specifying a filename of foo-\u00E4.html, using RFC2231 encoded UTF-8, but choosing the decomposed form (lowercase a plus COMBINING DIAERESIS) -- on a Windows target system, this should be translated to the preferred Unicode normal form (composed).", true) },
+            { "valid36", new ContentDispositionValue(@"attachment; filename*= UTF-8''foo-%c3%a4.html", @"'attachment', specifying a filename of foo-\u00E4.html, using RFC2231 encoded UTF-8, with whitespace after ""*=""", true) },
+            { "valid37", new ContentDispositionValue(@"attachment; filename* =UTF-8''foo-%c3%a4.html", @"'attachment', specifying a filename of foo-\u00E4.html, using RFC2231 encoded UTF-8, with whitespace inside ""* =""", true) },
             { "valid38", new ContentDispositionValue(@"attachment; filename*=UTF-8''A-%2541.html", @"'attachment', specifying a filename of A-%41.html, using RFC2231 encoded UTF-8.", true) },
             { "valid39", new ContentDispositionValue(@"attachment; filename*=UTF-8''%5cfoo.html", @"'attachment', specifying a filename of /foo.html, using RFC2231 encoded UTF-8.", true) },
             { "valid40", new ContentDispositionValue(@"attachment; filename*0=""foo.""; filename*1=""html""", @"'attachment', specifying a filename of foo.html, using RFC2231-style parameter continuations.", true) },
-            { "valid41", new ContentDispositionValue(@"attachment; filename*0*=UTF-8''foo-%c3%a4; filename*1="".html""", @"'attachment', specifying a filename of foo-ä.html, using both RFC2231-style parameter continuations and UTF-8 encoding.", true) },
+            { "valid41", new ContentDispositionValue(@"attachment; filename*0*=UTF-8''foo-%c3%a4; filename*1="".html""", @"'attachment', specifying a filename of foo-\u00E4.html, using both RFC2231-style parameter continuations and UTF-8 encoding.", true) },
             { "valid42", new ContentDispositionValue(@"attachment; filename*0=""foo""; filename*01=""bar""", @"'attachment', specifying a filename of foo (the parameter filename*01 should be ignored because of the leading zero)", true) },
             { "valid43", new ContentDispositionValue(@"attachment; filename*0=""foo""; filename*2=""bar""", @"'attachment', specifying a filename of foo (the parameter filename*2 should be ignored because there's no filename*1 parameter)", true) },
             { "valid44", new ContentDispositionValue(@"attachment; filename*1=""foo.""; filename*2=""html""", @"'attachment' (the filename* parameters should be ignored because filename*0 is missing)", true) },
             { "valid45", new ContentDispositionValue(@"attachment; filename*1=""bar""; filename*0=""foo""", "'attachment', specifying a filename of foobar", true) },
-            { "valid46", new ContentDispositionValue(@"attachment; filename=""foo-ae.html""; filename*=UTF-8''foo-%c3%a4.html", @"'attachment', specifying a filename of foo-ae.html in the traditional format, and foo-ä.html in RFC2231 format.", true) },
-            { "valid47", new ContentDispositionValue(@"attachment; filename*=UTF-8''foo-%c3%a4.html; filename=""foo-ae.html""", @"'attachment', specifying a filename of foo-ae.html in the traditional format, and foo-ä.html in RFC2231 format.", true) },
+            { "valid46", new ContentDispositionValue(@"attachment; filename=""foo-ae.html""; filename*=UTF-8''foo-%c3%a4.html", @"'attachment', specifying a filename of foo-ae.html in the traditional format, and foo-\u00E4.html in RFC2231 format.", true) },
+            { "valid47", new ContentDispositionValue(@"attachment; filename*=UTF-8''foo-%c3%a4.html; filename=""foo-ae.html""", @"'attachment', specifying a filename of foo-ae.html in the traditional format, and foo-\u00E4.html in RFC2231 format.", true) },
             { "valid48", new ContentDispositionValue(@"attachment; foobar=x; filename=""foo.html""", @"'attachment', specifying a new parameter ""foobar"", plus a filename of foo.html in the traditional format.", true) },
             { "valid49", new ContentDispositionValue(@"attachment; filename=""=?ISO-8859-1?Q?foo-=E4.html?=""", @"attachment; filename=""=?ISO-8859-1?Q?foo-=E4.html?=""", true) },
             { "valid50", new ContentDispositionValue(@"attachment; filename=""=?utf-8?B?Zm9vLeQuaHRtbA==?=""", @"attachment; filename=""=?utf-8?B?Zm9vLeQuaHRtbA==?=""", true) },
@@ -636,7 +660,7 @@ namespace System.Net.Http.Tests
             { "invalid3", new ContentDispositionValue(@"attachment; filename=foo.html ;", @"'attachment', specifying a filename of foo.html using a token instead of a quoted-string, and adding a trailing semicolon.", false) },
             { "invalid4", new ContentDispositionValue(@"attachment; filename=foo bar.html", @"'attachment', specifying a filename of foo bar.html without using quoting.", false) },
             { "invalid6", new ContentDispositionValue(@"attachment; filename=foo[1](2).html", @"'attachment', specifying a filename of foo[1](2).html, but missing the quotes. Also, ""["", ""]"", ""("" and "")"" are not allowed in the HTTP <a href=""http://greenbytes.de/tech/webdav/draft-ietf-httpbis-p1-messaging-latest.html#rfc.section.1.2.2"">token</a> production.", false) },
-            { "invalid7", new ContentDispositionValue(@"attachment; filename=foo-ä.html", @"'attachment', specifying a filename of foo-ä.html, but missing the quotes.", false) },
+            { "invalid7", new ContentDispositionValue(@"attachment; filename=foo-\u00E4.html", @"'attachment', specifying a filename of foo-\u00E4.html, but missing the quotes.", false) },
             { "invalid9", new ContentDispositionValue(@"filename=foo.html", @"Disposition type missing, filename specified.", false) },
             { "invalid10", new ContentDispositionValue(@"x=y; filename=foo.html", @"Disposition type missing, filename specified after extension parameter.", false) },
             { "invalid11", new ContentDispositionValue(@"""foo; filename=bar;baz""; filename=qux", @"Disposition type missing, filename ""qux"". Can it be more broken? (Probably)", false) },
@@ -646,7 +670,7 @@ namespace System.Net.Http.Tests
             { "invalid17", new ContentDispositionValue(@"attachment; filename=""bar", @"'attachment', specifying a filename parameter that is broken (missing ending double quote). This is invalid syntax.", false) },
             { "invalid18", new ContentDispositionValue(@"attachment; filename=foo""bar;baz""qux", @"'attachment', specifying a filename parameter that is broken (disallowed characters in token syntax). This is invalid syntax.", false) },
             { "invalid19", new ContentDispositionValue(@"attachment; filename=foo.html, attachment; filename=bar.html", @"'attachment', two comma-separated instances of the header field. As Content-Disposition doesn't use a list-style syntax, this is invalid syntax and, according to <a href=""http://greenbytes.de/tech/webdav/rfc2616.html#rfc.section.4.2.p.5"">RFC 2616, Section 4.2</a>, roughly equivalent to having two separate header field instances.", false) },
-            { "invalid20", new ContentDispositionValue(@"filename=foo.html; attachment", @"filename parameter and disposion type reversed.", false) },
+            { "invalid20", new ContentDispositionValue(@"filename=foo.html; attachment", @"filename parameter and disposition type reversed.", false) },
             { "invalid24", new ContentDispositionValue(@"attachment; filename==?ISO-8859-1?Q?foo-=E4.html?=", @"Uses RFC 2047 style encoded word. ""="" is invalid inside the token production, so this is invalid.", false) },
             { "invalid25", new ContentDispositionValue(@"attachment; filename==?utf-8?B?Zm9vLeQuaHRtbA==?=", @"Uses RFC 2047 style encoded word. ""="" is invalid inside the token production, so this is invalid.", false) },
         };
@@ -798,7 +822,7 @@ namespace System.Net.Http.Tests
         {
             ContentDispositionValue cd = ContentDispositionTestCases["valid16"];
             ContentDispositionHeaderValue header = TryParse(cd);
-            ValidateHeaderValues(header, "attachment", @"""foo-ä.html""");
+            ValidateHeaderValues(header, "attachment", @"""foo-\u00E4.html""");
         }
 
         [Fact]
@@ -847,7 +871,7 @@ namespace System.Net.Http.Tests
         {
             ContentDispositionValue cd = ContentDispositionTestCases["valid22"];
             ContentDispositionHeaderValue header = TryParse(cd);
-            ValidateHeaderValues(header, "attachment", @"""ä-%41.html""");
+            ValidateHeaderValues(header, "attachment", @"""\u00E4-%41.html""");
         }
 
         [Fact]

@@ -1,10 +1,9 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Diagnostics;
-using System.Security.Cryptography;
-
 using Microsoft.Win32.SafeHandles;
 using NTSTATUS = Interop.BCrypt.NTSTATUS;
 using BCryptOpenAlgorithmProviderFlags = Interop.BCrypt.BCryptOpenAlgorithmProviderFlags;
@@ -13,7 +12,7 @@ using BCryptCreateHashFlags = Interop.BCrypt.BCryptCreateHashFlags;
 namespace Internal.Cryptography
 {
     //
-    // Provides hash services via the native provider (CNG). 
+    // Provides hash services via the native provider (CNG).
     //
     internal sealed class HashProviderCng : HashProvider
     {
@@ -40,7 +39,7 @@ namespace Internal.Cryptography
                 NTSTATUS ntStatus = Interop.BCrypt.BCryptCreateHash(_hAlgorithm, out hHash, IntPtr.Zero, 0, key, key == null ? 0 : key.Length, BCryptCreateHashFlags.BCRYPT_HASH_REUSABLE_FLAG);
                 if (ntStatus == NTSTATUS.STATUS_INVALID_PARAMETER)
                 {
-                    // If we got here, we're running on a downlevel OS (pre-Win8) that doesn't support reusable CNG hash objects. Fall back to creating a 
+                    // If we got here, we're running on a downlevel OS (pre-Win8) that doesn't support reusable CNG hash objects. Fall back to creating a
                     // new HASH object each time.
                     ResetHashObject();
                 }
@@ -67,28 +66,41 @@ namespace Internal.Cryptography
             return;
         }
 
-        public sealed override void AppendHashDataCore(byte[] data, int offset, int count)
+        public sealed override unsafe void AppendHashData(ReadOnlySpan<byte> source)
         {
-            unsafe
+            NTSTATUS ntStatus = Interop.BCrypt.BCryptHashData(_hHash, source, source.Length, 0);
+            if (ntStatus != NTSTATUS.STATUS_SUCCESS)
             {
-                fixed (byte* pRgb = data)
-                {
-                    NTSTATUS ntStatus = Interop.BCrypt.BCryptHashData(_hHash, pRgb + offset, count, 0);
-                    if (ntStatus != NTSTATUS.STATUS_SUCCESS)
-                        throw Interop.BCrypt.CreateCryptographicException(ntStatus);
-                }
+                throw Interop.BCrypt.CreateCryptographicException(ntStatus);
             }
         }
 
         public sealed override byte[] FinalizeHashAndReset()
         {
-            byte[] hash = new byte[_hashSize];
-            NTSTATUS ntStatus = Interop.BCrypt.BCryptFinishHash(_hHash, hash, hash.Length, 0);
-            if (ntStatus != NTSTATUS.STATUS_SUCCESS)
-                throw Interop.BCrypt.CreateCryptographicException(ntStatus);
-
-            ResetHashObject();
+            var hash = new byte[_hashSize];
+            bool success = TryFinalizeHashAndReset(hash, out int bytesWritten);
+            Debug.Assert(success);
+            Debug.Assert(hash.Length == bytesWritten);
             return hash;
+        }
+
+        public override bool TryFinalizeHashAndReset(Span<byte> destination, out int bytesWritten)
+        {
+            if (destination.Length < _hashSize)
+            {
+                bytesWritten = 0;
+                return false;
+            }
+
+            NTSTATUS ntStatus = Interop.BCrypt.BCryptFinishHash(_hHash, destination, _hashSize, 0);
+            if (ntStatus != NTSTATUS.STATUS_SUCCESS)
+            {
+                throw Interop.BCrypt.CreateCryptographicException(ntStatus);
+            }
+
+            bytesWritten = _hashSize;
+            ResetHashObject();
+            return true;
         }
 
         public sealed override void Dispose(bool disposing)
@@ -105,13 +117,7 @@ namespace Internal.Cryptography
             }
         }
 
-        public sealed override int HashSizeInBytes
-        {
-            get
-            {
-                return _hashSize;
-            }
-        }
+        public sealed override int HashSizeInBytes => _hashSize;
 
         private void ResetHashObject()
         {
@@ -147,5 +153,3 @@ namespace Internal.Cryptography
         private readonly int _hashSize;
     }
 }
-
-

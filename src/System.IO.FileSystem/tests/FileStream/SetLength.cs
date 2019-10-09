@@ -1,11 +1,12 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.IO;
 using Xunit;
 
-namespace System.IO.FileSystem.Tests
+namespace System.IO.Tests
 {
     public class FileStream_SetLength : FileSystemTest
     {
@@ -14,8 +15,8 @@ namespace System.IO.FileSystem.Tests
         {
             using (FileStream fs = new FileStream(GetTestFilePath(), FileMode.Create))
             {
-                Assert.Throws<ArgumentOutOfRangeException>("value", () => fs.SetLength(-1));
-                Assert.Throws<ArgumentOutOfRangeException>("value", () => fs.SetLength(long.MinValue));
+                AssertExtensions.Throws<ArgumentOutOfRangeException>("value", () => fs.SetLength(-1));
+                AssertExtensions.Throws<ArgumentOutOfRangeException>("value", () => fs.SetLength(long.MinValue));
             }
         }
 
@@ -28,7 +29,7 @@ namespace System.IO.FileSystem.Tests
                 fs.Dispose();
                 Assert.Throws<ObjectDisposedException>(() => fs.SetLength(0));
                 // parameter checking happens first
-                Assert.Throws<ArgumentOutOfRangeException>("value", () => fs.SetLength(-1));
+                AssertExtensions.Throws<ArgumentOutOfRangeException>("value", () => fs.SetLength(-1));
             }
         }
 
@@ -48,7 +49,7 @@ namespace System.IO.FileSystem.Tests
                 // no change should still throw
                 Assert.Throws<NotSupportedException>(() => fs.SetLength(fs.Length));
                 // parameter checking happens first
-                Assert.Throws<ArgumentOutOfRangeException>("value", () => fs.SetLength(-1));
+                AssertExtensions.Throws<ArgumentOutOfRangeException>("value", () => fs.SetLength(-1));
                 // disposed check happens first
                 fs.Dispose();
                 Assert.Throws<ObjectDisposedException>(() => fs.SetLength(0));
@@ -64,7 +65,7 @@ namespace System.IO.FileSystem.Tests
                 // no fast path
                 Assert.Throws<NotSupportedException>(() => fs.Seek(fs.Position, SeekOrigin.Begin));
                 // parameter checking happens first
-                Assert.Throws<ArgumentException>("origin", () => fs.Seek(0, ~SeekOrigin.Begin));
+                AssertExtensions.Throws<ArgumentException>("origin", null, () => fs.Seek(0, ~SeekOrigin.Begin));
                 // dispose checking happens first
                 fs.Dispose();
                 Assert.Throws<ObjectDisposedException>(() => fs.Seek(fs.Position, SeekOrigin.Begin));

@@ -1,80 +1,19 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.Net
 {
-    // Host information
-    /// <devdoc>
-    ///    <para>Provides a container class for Internet host address information..</para>
-    /// </devdoc>
+    /// <summary>Provides a container class for Internet host address information.</summary>
     public class IPHostEntry
     {
-        private string _hostName;
-        private string[] _aliases;
-        private IPAddress[] _addressList;
-        // CBT: When doing a DNS resolve, can the resulting host name trusted as an SPN?
-        // Only used on Win7Sp1+.  Assume trusted by default.
-        internal bool isTrustedHost = true;
+        /// <summary>Gets or sets the DNS name of the host.</summary>
+        public string HostName { get; set; }
 
-        /// <devdoc>
-        ///    <para>
-        ///       Contains the DNS
-        ///       name of the host.
-        ///    </para>
-        /// </devdoc>
-        /// <devdoc>
-        /// </devdoc>
-        public string HostName
-        {
-            get
-            {
-                return _hostName;
-            }
-            set
-            {
-                _hostName = value;
-            }
-        }
+        /// <summary>Gets or sets a list of aliases that are associated with a host.</summary>
+        public string[] Aliases { get; set; }
 
-        /// <devdoc>
-        ///    <para>
-        ///       Provides an
-        ///       array of strings containing other DNS names that resolve to the IP addresses
-        ///       in <paramref name='AddressList'/>.
-        ///    </para>
-        /// </devdoc>
-        /// <devdoc>
-        /// </devdoc>
-        public string[] Aliases
-        {
-            get
-            {
-                return _aliases;
-            }
-            set
-            {
-                _aliases = value;
-            }
-        }
-
-        /// <devdoc>
-        ///    <para>
-        ///       Provides an
-        ///       array of <paramref name='IPAddress'/> objects.
-        ///    </para>
-        /// </devdoc>
-        /// <devdoc>
-        /// </devdoc>
-        public IPAddress[] AddressList
-        {
-            get
-            {
-                return _addressList;
-            }
-            set
-            {
-                _addressList = value;
-            }
-        }
-    } // class IPHostEntry
-} // namespace System.Net
+        /// <summary>Gets or sets a list of IP addresses that are associated with a host.</summary>
+        public IPAddress[] AddressList { get; set; }
+    }
+}

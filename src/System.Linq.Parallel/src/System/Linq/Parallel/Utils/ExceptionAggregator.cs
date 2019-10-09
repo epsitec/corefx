@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -18,7 +19,7 @@ namespace System.Linq.Parallel
         /// <summary>
         /// WrapEnumerable.ExceptionAggregator wraps the enumerable with another enumerator that will
         /// catch exceptions, and wrap each with an AggregateException.
-        /// 
+        ///
         /// If PLINQ decides to execute a query sequentially, we will reuse LINQ-to-objects
         /// implementations for the different operators. However, we still need to throw
         /// AggregateException in the cases when parallel execution would have thrown an
@@ -104,7 +105,7 @@ namespace System.Linq.Parallel
         /// Accepts an exception, wraps it as if it was crossing the parallel->sequential boundary, and throws the
         /// wrapped exception. In sequential fallback cases, we use this method to throw exceptions that are consistent
         /// with exceptions thrown by PLINQ when the query is executed by worker tasks.
-        /// 
+        ///
         /// The exception will be wrapped into an AggregateException, except for the case when the query is being
         /// legitimately cancelled, in which case we will propagate the CancellationException with the appropriate
         /// token.
@@ -160,7 +161,7 @@ namespace System.Linq.Parallel
         private static bool ThrowAnOCE(Exception ex, CancellationState cancellationState)
         {
             // if the query has been canceled and the exception represents this, we want to throw OCE
-            // but otherwise we want to throw an AggregateException to mimic normal Plinq operation 
+            // but otherwise we want to throw an AggregateException to mimic normal Plinq operation
             // See QueryTaskGroupState.WaitAll for the main plinq exception handling logic.
 
             // check for co-operative cancellation.

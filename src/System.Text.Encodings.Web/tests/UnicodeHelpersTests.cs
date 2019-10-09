@@ -1,67 +1,83 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using Xunit;
 
-namespace Microsoft.Framework.WebEncoders
+namespace System.Text.Encodings.Web.Tests
 {
     public unsafe class UnicodeHelpersTests
     {
+        // If updating the version of UnicodeData.txt, update the below string with the new file name.
+        private const string UnicodeDataFileName = "UnicodeData.12.1.txt";
+
         private const int UnicodeReplacementChar = '\uFFFD';
 
         private static readonly UTF8Encoding _utf8EncodingThrowOnInvalidBytes = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
-        [Fact]
-        public void GetScalarValueFromUtf16()
-        {
-            // TODO: [ActiveIssue(846, PlatformID.AnyUnix)]
-            // This loop should instead be implemented as a [Theory] with multiple [InlineData]s.
-            // However, until globalization support is implemented on Unix, this causes failures when
-            // the xunit runner is configured with -xml to trace out results.  When it does so with 
-            // [InlineData], the parameters get written out to the results xml file, and with our
-            // current temporary globalization implementation on Unix, this causes exceptions like
-            // "The surrogate pair (0xD800, 0x22) is invalid. A high surrogate character 
-            // (0xD800 - 0xDBFF) must always be paired with a low surrogate character (0xDC00 - 0xDFFF)."
-            foreach (var input in new[] {
-                Tuple.Create(1, "a", (int)'a'), // normal BMP char, end of string
-                Tuple.Create(2, "ab", (int)'a'), // normal BMP char, not end of string
-                Tuple.Create(3, "\uDFFF", UnicodeReplacementChar), // trailing surrogate, end of string
-                Tuple.Create(4, "\uDFFFx", UnicodeReplacementChar), // trailing surrogate, not end of string
-                Tuple.Create(5, "\uD800", UnicodeReplacementChar), // leading surrogate, end of string
-                Tuple.Create(6, "\uD800x", UnicodeReplacementChar), // leading surrogate, not end of string, followed by non-surrogate
-                Tuple.Create(7, "\uD800\uD800", UnicodeReplacementChar), // leading surrogate, not end of string, followed by leading surrogate
-                Tuple.Create(8, "\uD800\uDFFF", 0x103FF) // leading surrogate, not end of string, followed by trailing surrogate
-            })
-            {
-                GetScalarValueFromUtf16(input.Item1, input.Item2, input.Item3);
-            }
-        }
-        
-        //[Theory]
-        //[InlineData(1, "a", (int)'a')] // normal BMP char, end of string
-        //[InlineData(2, "ab", (int)'a')] // normal BMP char, not end of string
-        //[InlineData(3, "\uDFFF", UnicodeReplacementChar)] // trailing surrogate, end of string
-        //[InlineData(4, "\uDFFFx", UnicodeReplacementChar)] // trailing surrogate, not end of string
-        //[InlineData(5, "\uD800", UnicodeReplacementChar)] // leading surrogate, end of string
-        //[InlineData(6, "\uD800x", UnicodeReplacementChar)] // leading surrogate, not end of string, followed by non-surrogate
-        //[InlineData(7, "\uD800\uD800", UnicodeReplacementChar)] // leading surrogate, not end of string, followed by leading surrogate
-        //[InlineData(8, "\uD800\uDFFF", 0x103FF)] // leading surrogate, not end of string, followed by trailing surrogate
-        //public
-        private void GetScalarValueFromUtf16(int unused, string input, int expectedResult)
-        {
-            // The 'unused' parameter exists because the xunit runner can't distinguish
-            // the individual malformed data test cases from each other without this
-            // additional identifier.
+        // To future refactorers:
+        // The following GetScalarValueFromUtf16_* tests must not be done as a [Theory].  If done via [InlineData], the invalid
+        // code points will get sanitized with replacement characters before they even reach the test, as the strings are parsed
+        // from the attributes in reflection.  And if done via [MemberData], the XmlWriter used by xunit will throw exceptions
+        // when it attempts to write out the test arguments, due to the invalid text.
 
+        [Fact]
+        public void GetScalarValueFromUtf16_NormalBMPChar_EndOfString()
+        {
+            GetScalarValueFromUtf16("a", 'a');
+        }
+
+        [Fact]
+        public void GetScalarValueFromUtf16_NormalBMPChar_NotEndOfString()
+        {
+            GetScalarValueFromUtf16("ab", 'a');
+        }
+
+        [Fact]
+        public void GetScalarValueFromUtf16_TrailingSurrogate_EndOfString()
+        {
+            GetScalarValueFromUtf16("\uDFFF", UnicodeReplacementChar);
+        }
+
+        [Fact]
+        public void GetScalarValueFromUtf16_TrailingSurrogate_NotEndOfString()
+        {
+            GetScalarValueFromUtf16("\uDFFFx", UnicodeReplacementChar);
+        }
+
+        [Fact]
+        public void GetScalarValueFromUtf16_LeadingSurrogate_EndOfString()
+        {
+            GetScalarValueFromUtf16("\uD800", UnicodeReplacementChar);
+        }
+
+        [Fact]
+        public void GetScalarValueFromUtf16_LeadingSurrogate_NotEndOfString()
+        {
+            GetScalarValueFromUtf16("\uD800x", UnicodeReplacementChar);
+        }
+
+        [Fact]
+        public void GetScalarValueFromUtf16_LeadingSurrogate_NotEndOfString_FollowedByLeadingSurrogate()
+        {
+            GetScalarValueFromUtf16("\uD800\uD800", UnicodeReplacementChar);
+        }
+
+        [Fact]
+        public void GetScalarValueFromUtf16_LeadingSurrogate_NotEndOfString_FollowedByTrailingSurrogate()
+        {
+            GetScalarValueFromUtf16("\uD800\uDFFF", 0x103FF);
+        }
+
+        private void GetScalarValueFromUtf16(string input, int expectedResult)
+        {
             fixed (char* pInput = input)
             {
                 Assert.Equal(expectedResult, UnicodeHelpers.GetScalarValueFromUtf16(pInput, endOfString: (input.Length == 1)));
@@ -73,20 +89,20 @@ namespace Microsoft.Framework.WebEncoders
         {
             for (int i = 0; i <= 0x10FFFF; i++)
             {
-                if (i <= 0xFFFF && Char.IsSurrogate((char)i))
+                if (i <= 0xFFFF && char.IsSurrogate((char)i))
                 {
                     continue; // no surrogates
                 }
 
                 // Arrange
-                byte[] expectedUtf8Bytes = _utf8EncodingThrowOnInvalidBytes.GetBytes(Char.ConvertFromUtf32(i));
+                byte[] expectedUtf8Bytes = _utf8EncodingThrowOnInvalidBytes.GetBytes(char.ConvertFromUtf32(i));
 
                 // Act
                 List<byte> actualUtf8Bytes = new List<byte>(4);
-                uint asUtf8 = (uint)UnicodeHelpers.GetUtf8RepresentationForScalarValue((uint)i);
+                uint asUtf8 = unchecked((uint)UnicodeHelpers.GetUtf8RepresentationForScalarValue((uint)i));
                 do
                 {
-                    actualUtf8Bytes.Add((byte)asUtf8);
+                    actualUtf8Bytes.Add(unchecked((byte)asUtf8));
                 } while ((asUtf8 >>= 8) != 0);
 
                 // Assert
@@ -97,26 +113,7 @@ namespace Microsoft.Framework.WebEncoders
         [Fact]
         public void IsCharacterDefined()
         {
-            // Arrange
-            bool[] definedChars = ReadListOfDefinedCharacters();
-            List<string> errors = new List<string>();
-
-            // Act & assert
-            for (int i = 0; i <= Char.MaxValue; i++)
-            {
-                bool expected = definedChars[i];
-                bool actual = UnicodeHelpers.IsCharacterDefined((char)i);
-                if (expected != actual)
-                {
-                    string message = String.Format(CultureInfo.InvariantCulture, "Character U+{0:X4}: expected = {1}, actual = {2}", i, expected, actual);
-                    errors.Add(message);
-                }
-            }
-
-            if (errors.Count > 0)
-            {
-                Assert.True(false, String.Join(Environment.NewLine, errors));
-            }
+            Assert.All(ReadListOfDefinedCharacters().Select((defined, idx) => new { defined, idx }), c => Assert.Equal(c.defined, UnicodeHelpers.IsCharacterDefined((char)c.idx)));
         }
 
         private static bool[] ReadListOfDefinedCharacters()
@@ -165,12 +162,13 @@ namespace Microsoft.Framework.WebEncoders
             HashSet<string> seenCategories = new HashSet<string>();
 
             bool[] retVal = new bool[0x10000];
-            string[] allLines = new StreamReader(typeof(UnicodeHelpersTests).GetTypeInfo().Assembly.GetManifestResourceStream("System.Text.Encodings.Web.Tests.UnicodeData.txt")).ReadAllLines();
+            string[] allLines = new StreamReader(typeof(UnicodeHelpersTests).GetTypeInfo().Assembly.GetManifestResourceStream(UnicodeDataFileName)).ReadAllLines();
 
+            uint startSpanCodepoint = 0;
             foreach (string line in allLines)
             {
                 string[] splitLine = line.Split(';');
-                uint codePoint = UInt32.Parse(splitLine[0], NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture);
+                uint codePoint = uint.Parse(splitLine[0], NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture);
                 if (codePoint >= retVal.Length)
                 {
                     continue; // don't care about supplementary chars
@@ -180,13 +178,31 @@ namespace Microsoft.Framework.WebEncoders
                 {
                     retVal[codePoint] = true; // we allow U+0020 SPACE as our only valid Zs (whitespace) char
                 }
+                else if (codePoint == 0xFEFF)
+                {
+                    retVal[codePoint] = false; // we explicitly forbid U+FEFF ZERO WIDTH NO-BREAK SPACE because it's also the byte order mark (BOM)
+                }
                 else
                 {
                     string category = splitLine[2];
+
                     if (allowedCategories.Contains(category))
                     {
                         retVal[codePoint] = true; // chars in this category are allowable
                         seenCategories.Add(category);
+
+                        if (splitLine[1].EndsWith("First>"))
+                        {
+                            startSpanCodepoint = codePoint;
+                        }
+                        else if (splitLine[1].EndsWith("Last>"))
+                        {
+                            for (uint spanCounter = startSpanCodepoint; spanCounter < codePoint; spanCounter++)
+                            {
+                                retVal[spanCounter] = true; // chars in this category are allowable
+                            }
+                        }
+
                     }
                 }
             }

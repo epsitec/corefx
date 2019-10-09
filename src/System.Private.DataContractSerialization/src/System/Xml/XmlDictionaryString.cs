@@ -1,7 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-//------------------------------------------------------------
-//------------------------------------------------------------
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Xml;
@@ -17,33 +16,33 @@ namespace System.Xml
         internal const int MinKey = 0;
         internal const int MaxKey = int.MaxValue / 4;
 
-        private IXmlDictionary _dictionary;
-        private string _value;
-        private int _key;
+        private readonly IXmlDictionary _dictionary;
+        private readonly string _value;
+        private readonly int _key;
         private byte[] _buffer;
-        private static EmptyStringDictionary s_emptyStringDictionary = new EmptyStringDictionary();
+        private static readonly EmptyStringDictionary s_emptyStringDictionary = new EmptyStringDictionary();
 
         public XmlDictionaryString(IXmlDictionary dictionary, string value, int key)
         {
             if (dictionary == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("dictionary"));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(dictionary)));
             if (value == null)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("value"));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(value)));
             if (key < MinKey || key > MaxKey)
-                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("key", SR.Format(SR.ValueMustBeInRange, MinKey, MaxKey)));
+                throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(key), SR.Format(SR.ValueMustBeInRange, MinKey, MaxKey)));
             _dictionary = dictionary;
             _value = value;
             _key = key;
         }
 
-        static internal string GetString(XmlDictionaryString s)
+        internal static string GetString(XmlDictionaryString s)
         {
             if (s == null)
                 return null;
             return s.Value;
         }
 
-        static public XmlDictionaryString Empty
+        public static XmlDictionaryString Empty
         {
             get
             {
@@ -89,7 +88,7 @@ namespace System.Xml
 
         private class EmptyStringDictionary : IXmlDictionary
         {
-            private XmlDictionaryString _empty;
+            private readonly XmlDictionaryString _empty;
 
             public EmptyStringDictionary()
             {
@@ -107,7 +106,7 @@ namespace System.Xml
             public bool TryLookup(string value, out XmlDictionaryString result)
             {
                 if (value == null)
-                    throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull("value");
+                    throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(value));
                 if (value.Length == 0)
                 {
                     result = _empty;
@@ -131,7 +130,7 @@ namespace System.Xml
             public bool TryLookup(XmlDictionaryString value, out XmlDictionaryString result)
             {
                 if (value == null)
-                    throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("value"));
+                    throw System.Runtime.Serialization.DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(value)));
                 if (value.Dictionary != this)
                 {
                     result = null;

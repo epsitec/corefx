@@ -1,12 +1,13 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.IO;
 using System.Linq;
 using Xunit;
 
-namespace System.IO.FileSystem.Tests
+namespace System.IO.Tests
 {
     public class FileStream_Write : FileSystemTest
     {
@@ -15,7 +16,7 @@ namespace System.IO.FileSystem.Tests
         {
             using (FileStream fs = new FileStream(GetTestFilePath(), FileMode.Create))
             {
-                Assert.Throws<ArgumentNullException>("array", () => fs.Write(null, 0, 1));
+                AssertExtensions.Throws<ArgumentNullException>("array", () => fs.Write(null, 0, 1));
             }
         }
 
@@ -24,10 +25,10 @@ namespace System.IO.FileSystem.Tests
         {
             using (FileStream fs = new FileStream(GetTestFilePath(), FileMode.Create))
             {
-                Assert.Throws<ArgumentOutOfRangeException>("offset", () => fs.Write(new byte[1], -1, 1));
+                AssertExtensions.Throws<ArgumentOutOfRangeException>("offset", () => fs.Write(new byte[1], -1, 1));
 
                 // array is checked first
-                Assert.Throws<ArgumentNullException>("array", () => fs.Write(null, -1, 1));
+                AssertExtensions.Throws<ArgumentNullException>("array", () => fs.Write(null, -1, 1));
             }
         }
 
@@ -36,13 +37,13 @@ namespace System.IO.FileSystem.Tests
         {
             using (FileStream fs = new FileStream(GetTestFilePath(), FileMode.Create))
             {
-                Assert.Throws<ArgumentOutOfRangeException>("count", () => fs.Write(new byte[1], 0, -1));
+                AssertExtensions.Throws<ArgumentOutOfRangeException>("count", () => fs.Write(new byte[1], 0, -1));
 
                 // offset is checked before count
-                Assert.Throws<ArgumentOutOfRangeException>("offset", () => fs.Write(new byte[1], -1, -1));
+                AssertExtensions.Throws<ArgumentOutOfRangeException>("offset", () => fs.Write(new byte[1], -1, -1));
 
                 // array is checked first
-                Assert.Throws<ArgumentNullException>("array", () => fs.Write(null, -1, -1));
+                AssertExtensions.Throws<ArgumentNullException>("array", () => fs.Write(null, -1, -1));
             }
         }
 
@@ -83,13 +84,13 @@ namespace System.IO.FileSystem.Tests
                 Assert.Throws<ArgumentException>(null, () => fs.Write(new byte[2], 1, 2));
 
                 // count is checked prior
-                Assert.Throws<ArgumentOutOfRangeException>("count", () => fs.Write(new byte[1], 0, -1));
+                AssertExtensions.Throws<ArgumentOutOfRangeException>("count", () => fs.Write(new byte[1], 0, -1));
 
                 // offset is checked prior
-                Assert.Throws<ArgumentOutOfRangeException>("offset", () => fs.Write(new byte[1], -1, -1));
+                AssertExtensions.Throws<ArgumentOutOfRangeException>("offset", () => fs.Write(new byte[1], -1, -1));
 
                 // array is checked first
-                Assert.Throws<ArgumentNullException>("array", () => fs.Write(null, -1, -1));
+                AssertExtensions.Throws<ArgumentNullException>("array", () => fs.Write(null, -1, -1));
             }
         }
 
@@ -114,13 +115,13 @@ namespace System.IO.FileSystem.Tests
                 Assert.Throws<ArgumentException>(null, () => fs.Write(new byte[2], 1, 2));
 
                 // count is checked prior
-                Assert.Throws<ArgumentOutOfRangeException>("count", () => fs.Write(new byte[1], 0, -1));
+                AssertExtensions.Throws<ArgumentOutOfRangeException>("count", () => fs.Write(new byte[1], 0, -1));
 
                 // offset is checked prior
-                Assert.Throws<ArgumentOutOfRangeException>("offset", () => fs.Write(new byte[1], -1, -1));
+                AssertExtensions.Throws<ArgumentOutOfRangeException>("offset", () => fs.Write(new byte[1], -1, -1));
 
                 // array is checked first
-                Assert.Throws<ArgumentNullException>("array", () => fs.Write(null, -1, -1));
+                AssertExtensions.Throws<ArgumentNullException>("array", () => fs.Write(null, -1, -1));
             }
         }
 

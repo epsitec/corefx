@@ -1,10 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-namespace System 
+namespace System
 {
 
-    public delegate void ConsoleCancelEventHandler(Object sender, ConsoleCancelEventArgs e);
+    public delegate void ConsoleCancelEventHandler(object? sender, ConsoleCancelEventArgs e);
 
     public sealed class ConsoleCancelEventArgs : EventArgs
     {
@@ -17,12 +18,12 @@ namespace System
 
         // Whether to cancel the break event.  By setting this to true, the
         // Control-C will not kill the process.
-        public bool Cancel 
+        public bool Cancel
         {
             get; set;
         }
 
-        public ConsoleSpecialKey SpecialKey 
+        public ConsoleSpecialKey SpecialKey
         {
             get { return _type; }
         }

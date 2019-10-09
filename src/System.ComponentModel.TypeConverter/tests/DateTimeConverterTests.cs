@@ -1,67 +1,95 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
+using System.Collections.Generic;
+using System.ComponentModel.Design.Serialization;
 using System.Globalization;
+using System.Reflection;
+using Microsoft.DotNet.RemoteExecutor;
 using Xunit;
 
 namespace System.ComponentModel.Tests
 {
-    public class DateTimeConverterTests : ConverterTestBase
+    public class DateTimeConverterTests : TypeConverterTestBase
     {
-        private static TypeConverter s_converter = new DateTimeConverter();
-        private static DateTime s_testDate = new DateTime(1998, 12, 5);
+        public override TypeConverter Converter => new DateTimeConverter();
 
-        [Fact]
-        public static void CanConvertFrom_WithContext()
+        public override IEnumerable<ConvertTest> ConvertFromTestData()
         {
-            CanConvertFrom_WithContext(new object[2, 2]
-                {
-                    { typeof(string), true },
-                    { typeof(int), false }
-                },
-                DateTimeConverterTests.s_converter);
+            DateTime date = new DateTime(1998, 12, 5);
+            yield return ConvertTest.Valid("", DateTime.MinValue);
+            yield return ConvertTest.Valid("    ", DateTime.MinValue);
+            yield return ConvertTest.Valid(date.ToString(), date);
+            yield return ConvertTest.Valid(date.ToString(CultureInfo.InvariantCulture.DateTimeFormat), date, CultureInfo.InvariantCulture);
+            yield return ConvertTest.Valid(" " + date.ToString(CultureInfo.InvariantCulture.DateTimeFormat) + " ", date, CultureInfo.InvariantCulture);
+
+            yield return ConvertTest.Throws<FormatException>("invalid");
+
+            yield return ConvertTest.CantConvertFrom(new object());
+            yield return ConvertTest.CantConvertFrom(1);
         }
 
-        [Fact]
-        public static void ConvertFrom_WithContext()
+        public override IEnumerable<ConvertTest> ConvertToTestData()
         {
-            ConvertFrom_WithContext(new object[3, 3]
-                {
-                    { "  ", DateTime.MinValue, null },
-                    { DateTimeConverterTests.s_testDate.ToString(), DateTimeConverterTests.s_testDate, null },
-                    { DateTimeConverterTests.s_testDate.ToString(CultureInfo.InvariantCulture.DateTimeFormat), DateTimeConverterTests.s_testDate, CultureInfo.InvariantCulture }
-                },
-                DateTimeConverterTests.s_converter);
+            CultureInfo polandCulture = new CultureInfo("pl-PL");
+            DateTimeFormatInfo formatInfo = CultureInfo.CurrentCulture.DateTimeFormat;
+            DateTime date = new DateTime(1998, 12, 5);
+            yield return ConvertTest.Valid(date, date.ToString(formatInfo.ShortDatePattern));
+            yield return ConvertTest.Valid(date, date.ToString(polandCulture.DateTimeFormat.ShortDatePattern, polandCulture.DateTimeFormat))
+                .WithRemoteInvokeCulture(polandCulture);
+            yield return ConvertTest.Valid(date, "1998-12-05", CultureInfo.InvariantCulture)
+                .WithRemoteInvokeCulture(polandCulture);
+
+            DateTime dateWithTime = new DateTime(1998, 12, 5, 22, 30, 30);
+            yield return ConvertTest.Valid(dateWithTime, dateWithTime.ToString(formatInfo.ShortDatePattern + " " + formatInfo.ShortTimePattern));
+            yield return ConvertTest.Valid(dateWithTime, dateWithTime.ToString(polandCulture.DateTimeFormat.ShortDatePattern + " " + polandCulture.DateTimeFormat.ShortTimePattern, polandCulture.DateTimeFormat))
+                .WithRemoteInvokeCulture(polandCulture);
+            yield return ConvertTest.Valid(dateWithTime, "12/05/1998 22:30:30", CultureInfo.InvariantCulture)
+                .WithRemoteInvokeCulture(polandCulture);
+
+            yield return ConvertTest.Valid(DateTime.MinValue, string.Empty);
+
+            yield return ConvertTest.Valid(
+                new DateTime(),
+                new InstanceDescriptor(
+                    typeof(DateTime).GetConstructor(new Type[] { typeof(long) }),
+                    new object[] { (long)0 }
+                )
+            );
+            yield return ConvertTest.Valid(
+                date,
+                new InstanceDescriptor(
+                    typeof(DateTime).GetConstructor(new Type[] { typeof(int), typeof(int), typeof(int), typeof(int),  typeof(int), typeof(int), typeof(int) }),
+                    new object[] { 1998, 12, 5, 0, 0, 0, 0 }
+                )
+            );
+            yield return ConvertTest.Valid(
+                dateWithTime,
+                new InstanceDescriptor(
+                    typeof(DateTime).GetConstructor(new Type[] { typeof(int), typeof(int), typeof(int), typeof(int),  typeof(int), typeof(int), typeof(int) }),
+                    new object[] { 1998, 12, 5, 22, 30, 30, 0 }
+                )
+            );
+            yield return ConvertTest.Valid(
+                dateWithTime,
+                new InstanceDescriptor(
+                    typeof(DateTime).GetConstructor(new Type[] { typeof(int), typeof(int), typeof(int), typeof(int),  typeof(int), typeof(int), typeof(int) }),
+                    new object[] { 1998, 12, 5, 22, 30, 30, 0 }
+                ),
+                CultureInfo.InvariantCulture
+            );
+
+            yield return ConvertTest.CantConvertTo(new DateTime(), typeof(DateTime));
+            yield return ConvertTest.CantConvertTo(new DateTime(), typeof(int));
         }
 
-        [Fact]
-        public static void ConvertFrom_WithContext_Negative()
+        [Theory]
+        [InlineData(typeof(InstanceDescriptor))]
+        [InlineData(typeof(int))]
+        public void ConvertTo_InvalidValue_ThrowsNotSupportedException(Type destinationType)
         {
-            Assert.Throws<NotSupportedException>(
-                () => DateTimeConverterTests.s_converter.ConvertFrom(TypeConverterTests.s_context, null, 1));
-
-            Assert.Throws<FormatException>(
-                () => DateTimeConverterTests.s_converter.ConvertFrom(TypeConverterTests.s_context, null, "aaa"));
-        }
-
-        [Fact]
-        [ActiveIssue(846, PlatformID.AnyUnix)]
-        public static void ConvertTo_WithContext()
-        {
-            DateTimeFormatInfo formatInfo = (DateTimeFormatInfo)CultureInfo.CurrentCulture.GetFormat(typeof(DateTimeFormatInfo));
-            string formatWithTime = formatInfo.ShortDatePattern + " " + formatInfo.ShortTimePattern;
-            string format = formatInfo.ShortDatePattern;
-            DateTime testDateAndTime = new DateTime(1998, 12, 5, 22, 30, 30);
-
-            ConvertTo_WithContext(new object[5, 3]
-                {
-                    { DateTimeConverterTests.s_testDate, DateTimeConverterTests.s_testDate.ToString(format, CultureInfo.CurrentCulture), null },
-                    { testDateAndTime, testDateAndTime.ToString(formatWithTime, CultureInfo.CurrentCulture), null },
-                    { DateTime.MinValue, string.Empty, null },
-                    { DateTimeConverterTests.s_testDate, "1998-12-05", CultureInfo.InvariantCulture },
-                    { testDateAndTime, "12/05/1998 22:30:30", CultureInfo.InvariantCulture }
-                },
-                DateTimeConverterTests.s_converter);
+            Assert.Throws<NotSupportedException>(() => Converter.ConvertTo(new object(), destinationType));
         }
     }
 }

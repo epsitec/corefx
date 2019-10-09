@@ -1,8 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using Microsoft.CSharp.RuntimeBinder.Syntax;
 
 namespace Microsoft.CSharp.RuntimeBinder.Semantics
 {
@@ -24,51 +26,24 @@ namespace Microsoft.CSharp.RuntimeBinder.Semantics
     // declaration it is contained in.
     //
     //
-    // NamespaceSymbol - a symbol representing a name space. 
+    // NamespaceSymbol - a symbol representing a name space.
     // parent is the containing namespace.
     // ----------------------------------------------------------------------------
 
-    internal class NamespaceSymbol : NamespaceOrAggregateSymbol
+    internal sealed class NamespaceSymbol : NamespaceOrAggregateSymbol
     {
-        // Which assemblies and extern aliases contain this namespace.
-        private HashSet<KAID> _bsetFilter;
+        /// <summary>The "root" (unnamed) namespace.</summary>
+        public static readonly NamespaceSymbol Root = GetRootNamespaceSymbol();
 
-        public NamespaceSymbol()
+        private static NamespaceSymbol GetRootNamespaceSymbol()
         {
-            _bsetFilter = new HashSet<KAID>();
-        }
-
-        public bool InAlias(KAID aid)
-        {
-            Debug.Assert(0 <= aid);
-            return _bsetFilter.Contains(aid);
-        }
-
-        public void DeclAdded(NamespaceDeclaration decl)
-        {
-            Debug.Assert(decl.Bag() == this);
-            //Debug.Assert(this.pdeclAttach == &decl.declNext);
-
-            InputFile infile = decl.getInputFile();
-
-            if (infile.isSource)
+            NamespaceSymbol root = new NamespaceSymbol
             {
-                _bsetFilter.Add(KAID.kaidGlobal);
-                _bsetFilter.Add(KAID.kaidThisAssembly);
-            }
-            else
-            {
-                infile.UnionAliasFilter(ref _bsetFilter);
-            }
-        }
+                name = NameManager.GetPredefinedName(PredefinedName.PN_VOID)
+            };
 
-        public void AddAid(KAID aid)
-        {
-            if (aid == KAID.kaidThisAssembly)
-            {
-                _bsetFilter.Add(KAID.kaidGlobal);
-            }
-            _bsetFilter.Add(aid);
+            root.setKind(SYMKIND.SK_NamespaceSymbol);
+            return root;
         }
     }
 }

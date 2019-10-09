@@ -1,7 +1,7 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using Tools;
 using Xunit;
 
 namespace System.Numerics.Tests
@@ -128,7 +128,7 @@ namespace System.Numerics.Tests
                 Assert.Equal(sc.snCalc.Peek().ToString(), sc.myCalc.Peek().ToString());
             }
         }
-        
+
         private static byte[] GetRandomByteArray(Random random)
         {
             return GetRandomByteArray(random, random.Next(0, 100));
@@ -139,7 +139,7 @@ namespace System.Numerics.Tests
             return MyBigIntImp.GetRandomByteArray(random, size);
         }
 
-        private static String Print(byte[] bytes)
+        private static string Print(byte[] bytes)
         {
             return MyBigIntImp.Print(bytes);
         }

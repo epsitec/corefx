@@ -1,7 +1,7 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using Tools;
 using Xunit;
 
 namespace System.Numerics.Tests
@@ -17,16 +17,52 @@ namespace System.Numerics.Tests
             byte[] tempByteArray1;
             byte[] tempByteArray2;
 
-            tempByteArray1 = new byte[] { (byte)0, (byte)0, (byte)0, (byte)0, (byte)1 };
-            tempByteArray2 = new byte[] { (byte)0 };
+            tempByteArray1 = new byte[] { 0, 0, 0, 0, 1 };
+            tempByteArray2 = new byte[] { 0 };
             VerifyGCDString(Print(tempByteArray1) + Print(tempByteArray2) + "bGCD");
 
-            tempByteArray1 = new byte[] { (byte)0, (byte)0, (byte)0, (byte)0, (byte)41 };
-            tempByteArray2 = new byte[] { (byte)0 };
+            tempByteArray1 = new byte[] { 0, 0, 0, 0, 41 };
+            tempByteArray2 = new byte[] { 0 };
             VerifyGCDString(Print(tempByteArray1) + Print(tempByteArray2) + "bGCD");
 
-            tempByteArray1 = new byte[] { (byte)0, (byte)0, (byte)0, (byte)0, (byte)2 };
-            tempByteArray2 = new byte[] { (byte)0 };
+            tempByteArray1 = new byte[] { 0, 0, 0, 0, 2 };
+            tempByteArray2 = new byte[] { 0 };
+            VerifyGCDString(Print(tempByteArray1) + Print(tempByteArray2) + "bGCD");
+
+            tempByteArray1 = new byte[] { 0, 0, 0, 0, 2 };
+            tempByteArray2 = new byte[] { 0 };
+            VerifyGCDString(Print(tempByteArray1) + Print(tempByteArray2) + "bGCD");
+
+            tempByteArray1 = new byte[] { 255, 255, 255, 255, 1 };
+            tempByteArray2 = new byte[] { 255, 255, 255, 255, 0 };
+            VerifyGCDString(Print(tempByteArray1) + Print(tempByteArray2) + "bGCD");
+
+            tempByteArray1 = new byte[] { 255, 255, 255, 255, 1 };
+            tempByteArray2 = new byte[] { 255, 255, 255, 255, 1 };
+            VerifyGCDString(Print(tempByteArray1) + Print(tempByteArray2) + "bGCD");
+
+            tempByteArray1 = new byte[] { 255, 255, 255, 255, 255, 255, 255, 255, 1 };
+            tempByteArray2 = new byte[] { 255, 255, 255, 255, 255, 255, 255, 255, 0 };
+            VerifyGCDString(Print(tempByteArray1) + Print(tempByteArray2) + "bGCD");
+
+            tempByteArray1 = new byte[] { 255, 255, 255, 255, 255, 255, 255, 255, 1 };
+            tempByteArray2 = new byte[] { 255, 255, 255, 255, 255, 255, 255, 255, 1 };
+            VerifyGCDString(Print(tempByteArray1) + Print(tempByteArray2) + "bGCD");
+
+            tempByteArray1 = new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
+            tempByteArray2 = new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
+            VerifyGCDString(Print(tempByteArray1) + Print(tempByteArray2) + "bGCD");
+
+            tempByteArray1 = new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
+            tempByteArray2 = new byte[] { 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 254 };
+            VerifyGCDString(Print(tempByteArray1) + Print(tempByteArray2) + "bGCD");
+
+            tempByteArray1 = new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
+            tempByteArray2 = new byte[] { 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 0 };
+            VerifyGCDString(Print(tempByteArray1) + Print(tempByteArray2) + "bGCD");
+
+            tempByteArray1 = new byte[] { 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 0 };
+            tempByteArray2 = new byte[] { 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 254 };
             VerifyGCDString(Print(tempByteArray1) + Print(tempByteArray2) + "bGCD");
         }
 
@@ -92,7 +128,7 @@ namespace System.Numerics.Tests
             // Check some identities
             // (x+y)+z = (y+z)+x
 
-            VerifyIdentityString( 
+            VerifyIdentityString(
                 Int64.MaxValue.ToString() + " " + Int32.MaxValue.ToString() + " bGCD " + Int16.MaxValue.ToString() + " bGCD",
                 Int32.MaxValue.ToString() + " " + Int16.MaxValue.ToString() + " bGCD " + Int64.MaxValue.ToString() + " bGCD"
             );
@@ -124,7 +160,7 @@ namespace System.Numerics.Tests
 
             StackCalc sc2 = new StackCalc(opstring2);
             while (sc2.DoNextOperation())
-            {	
+            {
                 //Run the full calculation
                 sc2.DoNextOperation();
             }
@@ -142,7 +178,7 @@ namespace System.Numerics.Tests
             return MyBigIntImp.GetRandomByteArray(random, size);
         }
 
-        private static String Print(byte[] bytes)
+        private static string Print(byte[] bytes)
         {
             return MyBigIntImp.Print(bytes);
         }

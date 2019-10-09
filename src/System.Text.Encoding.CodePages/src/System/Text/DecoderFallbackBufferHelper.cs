@@ -1,8 +1,8 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
-using System.Globalization;
 
 namespace System.Text
 {
@@ -11,7 +11,7 @@ namespace System.Text
         // Internal items to help us figure out what we're doing as far as error messages, etc.
         // These help us with our performance and messages internally
         internal unsafe byte* byteStart;
-        internal unsafe char* charEnd; private DecoderFallbackBuffer _fallbackBuffer;
+        internal unsafe char* charEnd; private readonly DecoderFallbackBuffer _fallbackBuffer;
 
         public DecoderFallbackBufferHelper(DecoderFallbackBuffer fallbackBuffer)
         {
@@ -54,9 +54,9 @@ namespace System.Text
                 while ((ch = _fallbackBuffer.GetNextChar()) != 0)
                 {
                     // Make sure no mixed up surrogates
-                    if (Char.IsSurrogate(ch))
+                    if (char.IsSurrogate(ch))
                     {
-                        if (Char.IsHighSurrogate(ch))
+                        if (char.IsHighSurrogate(ch))
                         {
                             // High Surrogate
                             if (bHighSurrogate)
@@ -93,7 +93,6 @@ namespace System.Text
         }
 
         // This version just counts the fallback and doesn't actually copy anything.
-        [System.Security.SecurityCritical]  // auto-generated
         internal unsafe int InternalFallback(byte[] bytes, byte* pBytes)
         // Right now this has both bytes and bytes[], since we might have extra bytes, hence the
         // array, and we might need the index, hence the byte*
@@ -110,9 +109,9 @@ namespace System.Text
                 while ((ch = _fallbackBuffer.GetNextChar()) != 0)
                 {
                     // Make sure no mixed up surrogates
-                    if (Char.IsSurrogate(ch))
+                    if (char.IsSurrogate(ch))
                     {
-                        if (Char.IsHighSurrogate(ch))
+                        if (char.IsHighSurrogate(ch))
                         {
                             // High Surrogate
                             if (bHighSurrogate)
@@ -141,27 +140,5 @@ namespace System.Text
             // If no fallback return 0
             return 0;
         }
-
-        // private helper methods
-        internal void ThrowLastBytesRecursive(byte[] bytesUnknown)
-        {
-            // Create a string representation of our bytes.
-            StringBuilder strBytes = new StringBuilder(bytesUnknown.Length * 3);
-            int i;
-            for (i = 0; i < bytesUnknown.Length && i < 20; i++)
-            {
-                if (strBytes.Length > 0)
-                    strBytes.Append(" ");
-                strBytes.AppendFormat(CultureInfo.InvariantCulture, "\\x{0:X2}", bytesUnknown[i]);
-            }
-            // In case the string's really long
-            if (i == 20)
-                strBytes.Append(" ...");
-
-            // Throw it, using our complete bytes
-            throw new ArgumentException(
-                SR.Format(SR.Argument_RecursiveFallbackBytes, strBytes.ToString()), "bytesUnknown");
-        }
     }
 }
-

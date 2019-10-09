@@ -1,7 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.Linq.Expressions.Interpreter
 {
@@ -16,12 +15,9 @@ namespace System.Linq.Expressions.Interpreter
             _elementCount = elementCount;
         }
 
-        public override int ConsumedStack { get { return _elementCount; } }
-        public override int ProducedStack { get { return 1; } }
-        public override string InstructionName
-        {
-            get { return "NewArrayInit"; }
-        }
+        public override int ConsumedStack => _elementCount;
+        public override int ProducedStack => 1;
+        public override string InstructionName => "NewArrayInit";
 
         public override int Run(InterpretedFrame frame)
         {
@@ -31,7 +27,7 @@ namespace System.Linq.Expressions.Interpreter
                 array.SetValue(frame.Pop(), i);
             }
             frame.Push(array);
-            return +1;
+            return 1;
         }
     }
 
@@ -44,23 +40,18 @@ namespace System.Linq.Expressions.Interpreter
             _elementType = elementType;
         }
 
-        public override int ConsumedStack { get { return 1; } }
-        public override int ProducedStack { get { return 1; } }
-        public override string InstructionName
-        {
-            get { return "NewArray"; }
-        }
+        public override int ConsumedStack => 1;
+        public override int ProducedStack => 1;
+        public override string InstructionName => "NewArray";
 
         public override int Run(InterpretedFrame frame)
         {
             int length = ConvertHelper.ToInt32NoNull(frame.Pop());
-            if (length < 0)
-            {
-                // to make behavior aligned with array creation emitted by C# compiler
-                throw new OverflowException();
-            }
-            frame.Push(Array.CreateInstance(_elementType, length));
-            return +1;
+            // To make behavior aligned with array creation emitted by C# compiler if length is less than
+            // zero we try to use it to create an array, which will throw an OverflowException with the
+            // correct localized error message.
+            frame.Push(length < 0 ? new int[length] : Array.CreateInstance(_elementType, length));
+            return 1;
         }
     }
 
@@ -75,60 +66,58 @@ namespace System.Linq.Expressions.Interpreter
             _rank = rank;
         }
 
-        public override int ConsumedStack { get { return _rank; } }
-        public override int ProducedStack { get { return 1; } }
-        public override string InstructionName
-        {
-            get { return "NewArrayBounds"; }
-        }
+        public override int ConsumedStack => _rank;
+        public override int ProducedStack => 1;
+        public override string InstructionName => "NewArrayBounds";
 
         public override int Run(InterpretedFrame frame)
         {
             var lengths = new int[_rank];
             for (int i = _rank - 1; i >= 0; i--)
             {
-                lengths[i] = ConvertHelper.ToInt32NoNull(frame.Pop());
+                int length = ConvertHelper.ToInt32NoNull(frame.Pop());
+
+                if (length < 0)
+                {
+                    // to make behavior aligned with array creation emitted by C# compiler
+                    throw new OverflowException();
+                }
+
+                lengths[i] = length;
             }
-            var array = Array.CreateInstance(_elementType, lengths);
+            Array array = Array.CreateInstance(_elementType, lengths);
             frame.Push(array);
-            return +1;
+            return 1;
         }
     }
 
     internal sealed class GetArrayItemInstruction : Instruction
     {
-        internal static readonly GetArrayItemInstruction Instruction = new GetArrayItemInstruction();
+        internal static readonly GetArrayItemInstruction Instance = new GetArrayItemInstruction();
 
-        internal GetArrayItemInstruction() { }
+        private GetArrayItemInstruction() { }
 
-        public override int ConsumedStack { get { return 2; } }
-        public override int ProducedStack { get { return 1; } }
-        public override string InstructionName
-        {
-            get { return "GetArrayItem"; }
-        }
+        public override int ConsumedStack => 2;
+        public override int ProducedStack => 1;
+        public override string InstructionName => "GetArrayItem";
 
         public override int Run(InterpretedFrame frame)
         {
             int index = ConvertHelper.ToInt32NoNull(frame.Pop());
             Array array = (Array)frame.Pop();
             frame.Push(array.GetValue(index));
-            return +1;
+            return 1;
         }
     }
 
     internal sealed class SetArrayItemInstruction : Instruction
     {
-        internal static readonly SetArrayItemInstruction Instruction = new SetArrayItemInstruction();
+        internal static readonly SetArrayItemInstruction Instance = new SetArrayItemInstruction();
 
-        internal SetArrayItemInstruction() { }
+        private SetArrayItemInstruction() { }
 
-        public override int ConsumedStack { get { return 3; } }
-        public override int ProducedStack { get { return 0; } }
-        public override string InstructionName
-        {
-            get { return "SetArrayItem"; }
-        }
+        public override int ConsumedStack => 3;
+        public override string InstructionName => "SetArrayItem";
 
         public override int Run(InterpretedFrame frame)
         {
@@ -136,11 +125,29 @@ namespace System.Linq.Expressions.Interpreter
             int index = ConvertHelper.ToInt32NoNull(frame.Pop());
             Array array = (Array)frame.Pop();
             array.SetValue(value, index);
-            return +1;
+            return 1;
         }
     }
 
-    internal sealed class ConvertHelper
+    internal sealed class ArrayLengthInstruction : Instruction
+    {
+        public static readonly ArrayLengthInstruction Instance = new ArrayLengthInstruction();
+
+        public override int ConsumedStack => 1;
+        public override int ProducedStack => 1;
+        public override string InstructionName => "ArrayLength";
+
+        private ArrayLengthInstruction() { }
+
+        public override int Run(InterpretedFrame frame)
+        {
+            object obj = frame.Pop();
+            frame.Push(((Array)obj).Length);
+            return 1;
+        }
+    }
+
+    internal static class ConvertHelper
     {
         public static int ToInt32NoNull(object val)
         {

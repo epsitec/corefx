@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using Xunit;
-using System;
-using System.Threading;
 using System.Threading.Tasks;
+using Xunit;
 
-namespace Test
+namespace System.Threading.Tests
 {
     public static class BarrierCancellationTests
     {
@@ -23,14 +22,11 @@ namespace Test
             TimeSpan timeSpan = new TimeSpan(100);
 
             EnsureOperationCanceledExceptionThrown(
-               () => barrier.SignalAndWait(ct), ct,
-               "CancelBeforeWait:  An OCE should have been thrown.");
+                () => barrier.SignalAndWait(ct), ct);
             EnsureOperationCanceledExceptionThrown(
-               () => barrier.SignalAndWait(millisec, ct), ct,
-               "CancelBeforeWait:  An OCE should have been thrown.");
+                () => barrier.SignalAndWait(millisec, ct), ct);
             EnsureOperationCanceledExceptionThrown(
-               () => barrier.SignalAndWait(timeSpan, ct), ct,
-               "CancelBeforeWait:  An OCE should have been thrown.");
+                () => barrier.SignalAndWait(timeSpan, ct), ct);
 
             barrier.Dispose();
         }
@@ -49,8 +45,7 @@ namespace Test
             //Now wait.. the wait should abort and an exception should be thrown
             EnsureOperationCanceledExceptionThrown(
                () => barrier.SignalAndWait(cancellationToken),
-               cancellationToken,
-               "CancelAfterWait:  An OCE(null) should have been thrown that references the cancellationToken.");
+               cancellationToken);
 
             // the token should not have any listeners.
             // currently we don't expose this.. but it was verified manually
@@ -67,23 +62,18 @@ namespace Test
 
             Task.Run(() => cancellationTokenSource.Cancel());
 
-            //Test that backout occured.
+            //Test that backout occurred.
             Assert.Equal(numberParticipants, barrier.ParticipantsRemaining);
 
             // the token should not have any listeners.
             // currently we don't expose this.. but it was verified manually
         }
 
-        private static void EnsureOperationCanceledExceptionThrown(Action action, CancellationToken token, string message)
+        private static void EnsureOperationCanceledExceptionThrown(Action action, CancellationToken token)
         {
             OperationCanceledException operationCanceledEx =
                 Assert.Throws<OperationCanceledException>(action);
-
-            if (operationCanceledEx.CancellationToken != token)
-            {
-                Assert.True(false, string.Format("BarrierCancellationTests: Failed.  " + message));
-            }
+            Assert.Equal(token, operationCanceledEx.CancellationToken);
         }
     }
 }
-

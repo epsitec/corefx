@@ -1,54 +1,48 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Globalization;
 
 namespace System.ComponentModel
 {
-    /// <devdoc>
-    ///    <para>Provides
-    ///       a type converter to convert Unicode
-    ///       character objects to and from various other representations.</para>
-    /// </devdoc>
+    /// <summary>
+    /// Provides a type converter to convert Unicode character objects to and from various
+    /// other representations.
+    /// </summary>
     public class CharConverter : TypeConverter
     {
-        /// <devdoc>
-        ///    <para>Gets a value indicating whether this converter can
-        ///       convert an object in the given source type to a Unicode character object using
-        ///       the specified context.</para>
-        /// </devdoc>
+        /// <summary>
+        /// Gets a value indicating whether this converter can convert an object in the given
+        /// source type to a Unicode character object using the specified context.
+        /// </summary>
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
         {
-            if (sourceType == typeof(string))
-            {
-                return true;
-            }
-            return base.CanConvertFrom(context, sourceType);
+            return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
         }
 
-        /// <devdoc>
-        ///      Converts the given object to another type.
-        /// </devdoc>
+        /// <summary>
+        /// Converts the given object to another type.
+        /// </summary>
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
-            if (destinationType == typeof(string) && value is char)
+            if (destinationType == typeof(string) && value is char charValue)
             {
-                if ((char)value == (char)0)
+                if (charValue == '\0')
                 {
-                    return "";
+                    return string.Empty;
                 }
             }
 
             return base.ConvertTo(context, culture, value, destinationType);
         }
 
-        /// <devdoc>
-        ///    <para>Converts the given object to a Unicode character object.</para>
-        /// </devdoc>
+        /// <summary>
+        /// Converts the given object to a Unicode character object.
+        /// </summary>
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
-            string text = value as string;
-            if (text != null)
+            if (value is string text)
             {
                 if (text.Length > 1)
                 {
@@ -59,8 +53,9 @@ namespace System.ComponentModel
                 {
                     if (text.Length != 1)
                     {
-                        throw new FormatException(SR.Format(SR.ConvertInvalidPrimitive, text, "Char"));
+                        throw new FormatException(SR.Format(SR.ConvertInvalidPrimitive, text, nameof(Char)));
                     }
+
                     return text[0];
                 }
 

@@ -1,13 +1,15 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using Xunit;
 
-namespace System.Collections.Immutable.Test
+namespace System.Collections.Immutable.Tests
 {
     public class ImmutableStackTest : SimpleElementImmutablesTestBase
     {
@@ -26,7 +28,7 @@ namespace System.Collections.Immutable.Test
 
         private ImmutableStack<T> InitStackHelper<T>(params T[] values)
         {
-            Contract.Requires(values != null);
+            Assert.NotNull(values);
 
             var result = ImmutableStack<T>.Empty;
             foreach (var value in values)
@@ -51,8 +53,8 @@ namespace System.Collections.Immutable.Test
 
         private void PopTestHelper<T>(params T[] values)
         {
-            Contract.Requires(values != null);
-            Contract.Requires(values.Length > 0);
+            Assert.NotNull(values);
+            Assert.InRange(values.Length, 1, int.MaxValue);
 
             var full = this.InitStackHelper(values);
             var currentStack = full;
@@ -66,15 +68,15 @@ namespace System.Collections.Immutable.Test
                 var nextStack = currentStack.Pop();
                 Assert.Equal(expectedCount, currentStack.Count());
                 Assert.NotSame(currentStack, nextStack);
-                AssertAreSame(currentStack.Pop(), currentStack.Pop(), "Popping the stack 2X should yield the same shorter stack.");
+                AssertAreSame(currentStack.Pop(), currentStack.Pop());
                 currentStack = nextStack;
             }
         }
 
         private void PeekTestHelper<T>(params T[] values)
         {
-            Contract.Requires(values != null);
-            Contract.Requires(values.Length > 0);
+            Assert.NotNull(values);
+            Assert.InRange(values.Length, 1, int.MaxValue);
 
             var current = this.InitStackHelper(values);
             for (int i = values.Length - 1; i >= 0; i--)
@@ -84,7 +86,7 @@ namespace System.Collections.Immutable.Test
                 current.Pop(out element);
                 AssertAreSame(current.Peek(), element);
                 var next = current.Pop();
-                AssertAreSame(values[i], current.Peek(), "Pop mutated the stack instance.");
+                AssertAreSame(values[i], current.Peek());
                 current = next;
             }
         }
@@ -177,6 +179,7 @@ namespace System.Collections.Immutable.Test
             Assert.Equal(5, enumeratorStruct.Current);
             Assert.False(enumeratorStruct.MoveNext());
             Assert.Throws<InvalidOperationException>(() => enumeratorStruct.Current);
+            Assert.False(enumeratorStruct.MoveNext());
 
             var enumerator = ((IEnumerable<int>)stack).GetEnumerator();
             Assert.Throws<InvalidOperationException>(() => enumerator.Current);
@@ -184,6 +187,7 @@ namespace System.Collections.Immutable.Test
             Assert.Equal(5, enumerator.Current);
             Assert.False(enumerator.MoveNext());
             Assert.Throws<InvalidOperationException>(() => enumerator.Current);
+            Assert.False(enumerator.MoveNext());
 
             enumerator.Reset();
             Assert.Throws<InvalidOperationException>(() => enumerator.Current);
@@ -210,6 +214,13 @@ namespace System.Collections.Immutable.Test
         }
 
         [Fact]
+        public void GetEnumerator_EmptyStackMoveNext_ReturnsFalse()
+        {
+            ImmutableStack<int> stack = ImmutableStack<int>.Empty;
+            Assert.False(stack.GetEnumerator().MoveNext());
+        }
+
+        [Fact]
         public void EmptyPeekThrows()
         {
             Assert.Throws<InvalidOperationException>(() => ImmutableStack<GenericParameterHelper>.Empty.Peek());
@@ -224,30 +235,68 @@ namespace System.Collections.Immutable.Test
         [Fact]
         public void Create()
         {
-            ImmutableStack<int> queue = ImmutableStack.Create<int>();
-            Assert.True(queue.IsEmpty);
+            ImmutableStack<int> stack = ImmutableStack.Create<int>();
+            Assert.True(stack.IsEmpty);
 
-            queue = ImmutableStack.Create(1);
-            Assert.False(queue.IsEmpty);
-            Assert.Equal(new[] { 1 }, queue);
+            stack = ImmutableStack.Create(1);
+            Assert.False(stack.IsEmpty);
+            Assert.Equal(new[] { 1 }, stack);
 
-            queue = ImmutableStack.Create(1, 2);
-            Assert.False(queue.IsEmpty);
-            Assert.Equal(new[] { 2, 1 }, queue);
+            stack = ImmutableStack.Create(1, 2);
+            Assert.False(stack.IsEmpty);
+            Assert.Equal(new[] { 2, 1 }, stack);
 
-            queue = ImmutableStack.CreateRange((IEnumerable<int>)new[] { 1, 2 });
-            Assert.False(queue.IsEmpty);
-            Assert.Equal(new[] { 2, 1 }, queue);
+            stack = ImmutableStack.CreateRange((IEnumerable<int>)new[] { 1, 2 });
+            Assert.False(stack.IsEmpty);
+            Assert.Equal(new[] { 2, 1 }, stack);
 
-            Assert.Throws<ArgumentNullException>(() => ImmutableStack.CreateRange((IEnumerable<int>)null));
-            Assert.Throws<ArgumentNullException>(() => ImmutableStack.Create((int[])null));
+            AssertExtensions.Throws<ArgumentNullException>("items", () => ImmutableStack.CreateRange((IEnumerable<int>)null));
+            AssertExtensions.Throws<ArgumentNullException>("items", () => ImmutableStack.Create((int[])null));
         }
 
         [Fact]
         public void DebuggerAttributesValid()
         {
             DebuggerAttributes.ValidateDebuggerDisplayReferences(ImmutableStack.Create<int>());
-            DebuggerAttributes.ValidateDebuggerTypeProxyProperties(ImmutableStack.Create<string>("1", "2", "3"));
+            ImmutableStack<string> stack = ImmutableStack.Create<string>("1", "2", "3");
+            DebuggerAttributeInfo info = DebuggerAttributes.ValidateDebuggerTypeProxyProperties(stack);
+            PropertyInfo itemProperty = info.Properties.Single(pr => pr.GetCustomAttribute<DebuggerBrowsableAttribute>().State == DebuggerBrowsableState.RootHidden);
+            string[] items = itemProperty.GetValue(info.Instance) as string[];
+            Assert.Equal(stack, items);
+        }
+
+        [Fact]
+        public static void TestDebuggerAttributes_Null()
+        {
+            Type proxyType = DebuggerAttributes.GetProxyType(ImmutableStack.Create<string>("1", "2", "3"));
+            TargetInvocationException tie = Assert.Throws<TargetInvocationException>(() => Activator.CreateInstance(proxyType, (object)null));
+            Assert.IsType<ArgumentNullException>(tie.InnerException);
+        }
+
+        [Fact]
+        public void PeekRef()
+        {
+            var stack = ImmutableStack<int>.Empty
+                .Push(1)
+                .Push(2)
+                .Push(3);
+
+            ref readonly var safeRef = ref stack.PeekRef();
+            ref var unsafeRef = ref Unsafe.AsRef(safeRef);
+
+            Assert.Equal(3, stack.PeekRef());
+
+            unsafeRef = 4;
+
+            Assert.Equal(4, stack.PeekRef());
+        }
+
+        [Fact]
+        public void PeekRef_Empty()
+        {
+            var stack = ImmutableStack<int>.Empty;
+
+            Assert.Throws<InvalidOperationException>(() => stack.PeekRef());
         }
 
         protected override IEnumerable<T> GetEnumerableOf<T>(params T[] contents)

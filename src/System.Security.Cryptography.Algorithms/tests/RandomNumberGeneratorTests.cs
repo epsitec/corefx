@@ -1,52 +1,19 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
+using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace System.Security.Cryptography.RNG.Tests
 {
-    public class RandomNumberGeneratorTests
+    public partial class RandomNumberGeneratorTests
     {
         [Fact]
-        public static void DifferentSequential_10()
-        {
-            DifferentSequential(10);
-        }
-
-        [Fact]
-        public static void DifferentSequential_256()
-        {
-            DifferentSequential(256);
-        }
-
-        [Fact]
-        public static void DifferentSequential_65536()
-        {
-            DifferentSequential(65536);
-        }
-
-        [Fact]
-        public static void DifferentParallel_10()
-        {
-            DifferentParallel(10);
-        }
-
-        [Fact]
-        public static void DifferentParallel_256()
-        {
-            DifferentParallel(256);
-        }
-
-        [Fact]
-        public static void DifferentParallel_65536()
-        {
-            DifferentParallel(65536);
-        }
-
-        [Fact]
-        public static void NeutralParity()
+        public static void RandomDistribution()
         {
             byte[] random = new byte[2048];
 
@@ -55,7 +22,7 @@ namespace System.Security.Cryptography.RNG.Tests
                 rng.GetBytes(random);
             }
 
-            AssertNeutralParity(random);
+            RandomDataGenerator.VerifyRandomDistribution(random);
         }
 
         [Fact]
@@ -127,12 +94,73 @@ namespace System.Security.Cryptography.RNG.Tests
             {
                 // The Real test would be to ensure independence of data, but that's difficult.
                 // The other end of the spectrum is to test that they aren't all just new byte[RandomSize].
-                // Middle ground is to assert that each of the chunks has neutral(ish) bit parity.
-                AssertNeutralParity(taskArrays[i]);
+                // Middle ground is to assert that each of the chunks has random data.
+                RandomDataGenerator.VerifyRandomDistribution(taskArrays[i]);
             }
         }
 
-        private static void DifferentSequential(int arraySize)
+        [Fact]
+        public static void GetNonZeroBytes_Array()
+        {
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                AssertExtensions.Throws<ArgumentNullException>("data", () => rng.GetNonZeroBytes(null));
+
+                // Array should not have any zeros
+                byte[] rand = new byte[65536];
+                rng.GetNonZeroBytes(rand);
+                Assert.Equal(-1, Array.IndexOf<byte>(rand, 0));
+            }
+        }
+
+        [Fact]
+        public static void GetBytes_Offset()
+        {
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                byte[] rand = new byte[400];
+
+                // Set canary bytes
+                rand[99] = 77;
+                rand[399] = 77;
+
+                rng.GetBytes(rand, 100, 200);
+
+                // Array should not have been touched outside of 100-299
+                Assert.Equal(99, Array.IndexOf<byte>(rand, 77, 0));
+                Assert.Equal(399, Array.IndexOf<byte>(rand, 77, 300));
+
+                // Ensure 100-300 has random bytes; not likely to ever fail here by chance (256^200)
+                Assert.True(rand.Skip(100).Take(200).Sum(b => b) > 0);
+            }
+        }
+
+        [Fact]
+        public static void GetBytes_Array_Offset_ZeroCount()
+        {
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                byte[] rand = new byte[1] { 1 };
+
+                // A count of 0 should not do anything
+                rng.GetBytes(rand, 0, 0);
+                Assert.Equal(1, rand[0]);
+
+                // Having an offset of Length is allowed if count is 0
+                rng.GetBytes(rand, rand.Length, 0);
+                Assert.Equal(1, rand[0]);
+
+                // Zero-length array should not throw
+                rand = Array.Empty<byte>();
+                rng.GetBytes(rand, 0, 0);
+            }
+        }
+
+        [Theory]
+        [InlineData(10)]
+        [InlineData(256)]
+        [InlineData(65536)]
+        public static void DifferentSequential_Array(int arraySize)
         {
             // Ensure that the RNG doesn't produce a stable set of data.
             byte[] first = new byte[arraySize];
@@ -154,7 +182,11 @@ namespace System.Security.Cryptography.RNG.Tests
             Assert.NotEqual(first, second);
         }
 
-        private static void DifferentParallel(int arraySize)
+        [Theory]
+        [InlineData(10)]
+        [InlineData(256)]
+        [InlineData(65536)]
+        public static void DifferentParallel(int arraySize)
         {
             // Ensure that two RNGs don't produce the same data series (such as being implemented via new Random(1)).
             byte[] first = new byte[arraySize];
@@ -177,35 +209,41 @@ namespace System.Security.Cryptography.RNG.Tests
             Assert.NotEqual(first, second);
         }
 
-        private static void AssertNeutralParity(byte[] random)
+        [Fact]
+        public static void GetBytes_InvalidArgs()
         {
-            int oneCount = 0;
-            int zeroCount = 0;
-
-            for (int i = 0; i < random.Length; i++)
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
             {
-                for (int j = 0; j < 8; j++)
-                {
-                    if (((random[i] >> j) & 1) == 1)
-                    {
-                        oneCount++;
-                    }
-                    else
-                    {
-                        zeroCount++;
-                    }
-                }
+                AssertExtensions.Throws<ArgumentNullException>("data", () => rng.GetNonZeroBytes(null));
+                GetBytes_InvalidArgs(rng);
             }
+        }
 
-            int totalCount = zeroCount + oneCount;
-            float bitDifference = (float)Math.Abs(zeroCount - oneCount) / totalCount;
+        [Fact]
+        public static void GetBytes_InvalidArgs_Base()
+        {
+            using (var rng = new RandomNumberGeneratorMininal())
+            {
+                Assert.Throws<NotImplementedException>(() => rng.GetNonZeroBytes(null));
+                GetBytes_InvalidArgs(rng);
+            }
+        }
 
-            // Over the long run there should be about as many 1s as 0s.
-            // This isn't a guarantee, just a statistical observation.
-            // Allow a 7% tolerance band before considering it to have gotten out of hand.
-            const double AllowedTolerance = 0.07;
-            Assert.True(bitDifference < AllowedTolerance, 
-                "Expected bitDifference < " + AllowedTolerance + ", got " + bitDifference + ".");
+        private static void GetBytes_InvalidArgs(RandomNumberGenerator rng)
+        {
+            AssertExtensions.Throws<ArgumentNullException>("data", () => rng.GetBytes(null, 0, 0));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("offset", () => rng.GetBytes(Array.Empty<byte>(), -1, 0));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("count", () => rng.GetBytes(Array.Empty<byte>(), 0, -1));
+            AssertExtensions.Throws<ArgumentException>(null, () => rng.GetBytes(Array.Empty<byte>(), 0, 1));
+            // GetBytes(null) covered in test NullInput()
+        }
+
+        private class RandomNumberGeneratorMininal : RandomNumberGenerator
+        {
+            public override void GetBytes(byte[] data)
+            {
+                // Empty; don't throw NotImplementedException
+            }
         }
     }
 }

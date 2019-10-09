@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -13,18 +14,18 @@ using System.Diagnostics;
 namespace System.Linq.Parallel
 {
     /// <summary>
-    /// Partitioned stream recipient that will merge the results. 
+    /// Partitioned stream recipient that will merge the results.
     /// </summary>
     internal class PartitionedStreamMerger<TOutput> : IPartitionedStreamRecipient<TOutput>
     {
-        private bool _forEffectMerge;
-        private ParallelMergeOptions _mergeOptions;
-        private bool _isOrdered;
+        private readonly bool _forEffectMerge;
+        private readonly ParallelMergeOptions _mergeOptions;
+        private readonly bool _isOrdered;
         private MergeExecutor<TOutput> _mergeExecutor = null;
-        private TaskScheduler _taskScheduler;
-        private int _queryId; // ID of the current query execution
+        private readonly TaskScheduler _taskScheduler;
+        private readonly int _queryId; // ID of the current query execution
 
-        private CancellationState _cancellationState;
+        private readonly CancellationState _cancellationState;
 
 #if DEBUG
         private bool _received = false;

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,7 +9,7 @@ using System.Reflection.Internal;
 namespace System.Reflection.Metadata.Ecma335
 {
     /// <summary>
-    /// Provides extension methods for working with certain raw elements of the Ecma 335 metadata tables and heaps.
+    /// Provides extension methods for working with certain raw elements of the ECMA-335 metadata tables and heaps.
     /// </summary>
     public static class MetadataReaderExtensions
     {
@@ -21,15 +22,15 @@ namespace System.Reflection.Metadata.Ecma335
         {
             if (reader == null)
             {
-                throw new ArgumentNullException("reader");
+                Throw.ArgumentNull(nameof(reader));
             }
 
-            if ((int)tableIndex >= TableIndexExtensions.Count)
+            if ((int)tableIndex >= MetadataTokens.TableCount)
             {
                 Throw.TableIndexOutOfRange();
             }
 
-            return (int)reader.TableRowCounts[(int)tableIndex];
+            return reader.TableRowCounts[(int)tableIndex];
         }
 
         /// <summary>
@@ -41,60 +42,69 @@ namespace System.Reflection.Metadata.Ecma335
         {
             if (reader == null)
             {
-                throw new ArgumentNullException("reader");
+                throw new ArgumentNullException(nameof(reader));
             }
 
-            switch (tableIndex)
+            return tableIndex switch
             {
-                case TableIndex.Module: return reader.ModuleTable.RowSize;
-                case TableIndex.TypeRef: return reader.TypeRefTable.RowSize;
-                case TableIndex.TypeDef: return reader.TypeDefTable.RowSize;
-                case TableIndex.FieldPtr: return reader.FieldPtrTable.RowSize;
-                case TableIndex.Field: return reader.FieldTable.RowSize;
-                case TableIndex.MethodPtr: return reader.MethodPtrTable.RowSize;
-                case TableIndex.MethodDef: return reader.MethodDefTable.RowSize;
-                case TableIndex.ParamPtr: return reader.ParamPtrTable.RowSize;
-                case TableIndex.Param: return reader.ParamTable.RowSize;
-                case TableIndex.InterfaceImpl: return reader.InterfaceImplTable.RowSize;
-                case TableIndex.MemberRef: return reader.MemberRefTable.RowSize;
-                case TableIndex.Constant: return reader.ConstantTable.RowSize;
-                case TableIndex.CustomAttribute: return reader.CustomAttributeTable.RowSize;
-                case TableIndex.FieldMarshal: return reader.FieldMarshalTable.RowSize;
-                case TableIndex.DeclSecurity: return reader.DeclSecurityTable.RowSize;
-                case TableIndex.ClassLayout: return reader.ClassLayoutTable.RowSize;
-                case TableIndex.FieldLayout: return reader.FieldLayoutTable.RowSize;
-                case TableIndex.StandAloneSig: return reader.StandAloneSigTable.RowSize;
-                case TableIndex.EventMap: return reader.EventMapTable.RowSize;
-                case TableIndex.EventPtr: return reader.EventPtrTable.RowSize;
-                case TableIndex.Event: return reader.EventTable.RowSize;
-                case TableIndex.PropertyMap: return reader.PropertyMapTable.RowSize;
-                case TableIndex.PropertyPtr: return reader.PropertyPtrTable.RowSize;
-                case TableIndex.Property: return reader.PropertyTable.RowSize;
-                case TableIndex.MethodSemantics: return reader.MethodSemanticsTable.RowSize;
-                case TableIndex.MethodImpl: return reader.MethodImplTable.RowSize;
-                case TableIndex.ModuleRef: return reader.ModuleRefTable.RowSize;
-                case TableIndex.TypeSpec: return reader.TypeSpecTable.RowSize;
-                case TableIndex.ImplMap: return reader.ImplMapTable.RowSize;
-                case TableIndex.FieldRva: return reader.FieldRvaTable.RowSize;
-                case TableIndex.EncLog: return reader.EncLogTable.RowSize;
-                case TableIndex.EncMap: return reader.EncMapTable.RowSize;
-                case TableIndex.Assembly: return reader.AssemblyTable.RowSize;
-                case TableIndex.AssemblyProcessor: return reader.AssemblyProcessorTable.RowSize;
-                case TableIndex.AssemblyOS: return reader.AssemblyOSTable.RowSize;
-                case TableIndex.AssemblyRef: return reader.AssemblyRefTable.RowSize;
-                case TableIndex.AssemblyRefProcessor: return reader.AssemblyRefProcessorTable.RowSize;
-                case TableIndex.AssemblyRefOS: return reader.AssemblyRefOSTable.RowSize;
-                case TableIndex.File: return reader.FileTable.RowSize;
-                case TableIndex.ExportedType: return reader.ExportedTypeTable.RowSize;
-                case TableIndex.ManifestResource: return reader.ManifestResourceTable.RowSize;
-                case TableIndex.NestedClass: return reader.NestedClassTable.RowSize;
-                case TableIndex.GenericParam: return reader.GenericParamTable.RowSize;
-                case TableIndex.MethodSpec: return reader.MethodSpecTable.RowSize;
-                case TableIndex.GenericParamConstraint: return reader.GenericParamConstraintTable.RowSize;
+                TableIndex.Module => reader.ModuleTable.RowSize,
+                TableIndex.TypeRef => reader.TypeRefTable.RowSize,
+                TableIndex.TypeDef => reader.TypeDefTable.RowSize,
+                TableIndex.FieldPtr => reader.FieldPtrTable.RowSize,
+                TableIndex.Field => reader.FieldTable.RowSize,
+                TableIndex.MethodPtr => reader.MethodPtrTable.RowSize,
+                TableIndex.MethodDef => reader.MethodDefTable.RowSize,
+                TableIndex.ParamPtr => reader.ParamPtrTable.RowSize,
+                TableIndex.Param => reader.ParamTable.RowSize,
+                TableIndex.InterfaceImpl => reader.InterfaceImplTable.RowSize,
+                TableIndex.MemberRef => reader.MemberRefTable.RowSize,
+                TableIndex.Constant => reader.ConstantTable.RowSize,
+                TableIndex.CustomAttribute => reader.CustomAttributeTable.RowSize,
+                TableIndex.FieldMarshal => reader.FieldMarshalTable.RowSize,
+                TableIndex.DeclSecurity => reader.DeclSecurityTable.RowSize,
+                TableIndex.ClassLayout => reader.ClassLayoutTable.RowSize,
+                TableIndex.FieldLayout => reader.FieldLayoutTable.RowSize,
+                TableIndex.StandAloneSig => reader.StandAloneSigTable.RowSize,
+                TableIndex.EventMap => reader.EventMapTable.RowSize,
+                TableIndex.EventPtr => reader.EventPtrTable.RowSize,
+                TableIndex.Event => reader.EventTable.RowSize,
+                TableIndex.PropertyMap => reader.PropertyMapTable.RowSize,
+                TableIndex.PropertyPtr => reader.PropertyPtrTable.RowSize,
+                TableIndex.Property => reader.PropertyTable.RowSize,
+                TableIndex.MethodSemantics => reader.MethodSemanticsTable.RowSize,
+                TableIndex.MethodImpl => reader.MethodImplTable.RowSize,
+                TableIndex.ModuleRef => reader.ModuleRefTable.RowSize,
+                TableIndex.TypeSpec => reader.TypeSpecTable.RowSize,
+                TableIndex.ImplMap => reader.ImplMapTable.RowSize,
+                TableIndex.FieldRva => reader.FieldRvaTable.RowSize,
+                TableIndex.EncLog => reader.EncLogTable.RowSize,
+                TableIndex.EncMap => reader.EncMapTable.RowSize,
+                TableIndex.Assembly => reader.AssemblyTable.RowSize,
+                TableIndex.AssemblyProcessor => reader.AssemblyProcessorTable.RowSize,
+                TableIndex.AssemblyOS => reader.AssemblyOSTable.RowSize,
+                TableIndex.AssemblyRef => reader.AssemblyRefTable.RowSize,
+                TableIndex.AssemblyRefProcessor => reader.AssemblyRefProcessorTable.RowSize,
+                TableIndex.AssemblyRefOS => reader.AssemblyRefOSTable.RowSize,
+                TableIndex.File => reader.FileTable.RowSize,
+                TableIndex.ExportedType => reader.ExportedTypeTable.RowSize,
+                TableIndex.ManifestResource => reader.ManifestResourceTable.RowSize,
+                TableIndex.NestedClass => reader.NestedClassTable.RowSize,
+                TableIndex.GenericParam => reader.GenericParamTable.RowSize,
+                TableIndex.MethodSpec => reader.MethodSpecTable.RowSize,
+                TableIndex.GenericParamConstraint => reader.GenericParamConstraintTable.RowSize,
 
-                default:
-                    throw new ArgumentOutOfRangeException("tableIndex");
-            }
+                // debug tables
+                TableIndex.Document => reader.DocumentTable.RowSize,
+                TableIndex.MethodDebugInformation => reader.MethodDebugInformationTable.RowSize,
+                TableIndex.LocalScope => reader.LocalScopeTable.RowSize,
+                TableIndex.LocalVariable => reader.LocalVariableTable.RowSize,
+                TableIndex.LocalConstant => reader.LocalConstantTable.RowSize,
+                TableIndex.ImportScope => reader.ImportScopeTable.RowSize,
+                TableIndex.StateMachineMethod => reader.StateMachineMethodTable.RowSize,
+                TableIndex.CustomDebugInformation => reader.CustomDebugInformationTable.RowSize,
+
+                _ => throw new ArgumentOutOfRangeException(nameof(tableIndex)),
+            };
         }
 
         /// <summary>
@@ -106,7 +116,7 @@ namespace System.Reflection.Metadata.Ecma335
         {
             if (reader == null)
             {
-                throw new ArgumentNullException("reader");
+                Throw.ArgumentNull(nameof(reader));
             }
 
             return (int)(reader.GetTableMetadataBlock(tableIndex).Pointer - reader.Block.Pointer);
@@ -116,57 +126,66 @@ namespace System.Reflection.Metadata.Ecma335
         {
             Debug.Assert(reader != null);
 
-            switch (tableIndex)
+            return tableIndex switch
             {
-                case TableIndex.Module: return reader.ModuleTable.Block;
-                case TableIndex.TypeRef: return reader.TypeRefTable.Block;
-                case TableIndex.TypeDef: return reader.TypeDefTable.Block;
-                case TableIndex.FieldPtr: return reader.FieldPtrTable.Block;
-                case TableIndex.Field: return reader.FieldTable.Block;
-                case TableIndex.MethodPtr: return reader.MethodPtrTable.Block;
-                case TableIndex.MethodDef: return reader.MethodDefTable.Block;
-                case TableIndex.ParamPtr: return reader.ParamPtrTable.Block;
-                case TableIndex.Param: return reader.ParamTable.Block;
-                case TableIndex.InterfaceImpl: return reader.InterfaceImplTable.Block;
-                case TableIndex.MemberRef: return reader.MemberRefTable.Block;
-                case TableIndex.Constant: return reader.ConstantTable.Block;
-                case TableIndex.CustomAttribute: return reader.CustomAttributeTable.Block;
-                case TableIndex.FieldMarshal: return reader.FieldMarshalTable.Block;
-                case TableIndex.DeclSecurity: return reader.DeclSecurityTable.Block;
-                case TableIndex.ClassLayout: return reader.ClassLayoutTable.Block;
-                case TableIndex.FieldLayout: return reader.FieldLayoutTable.Block;
-                case TableIndex.StandAloneSig: return reader.StandAloneSigTable.Block;
-                case TableIndex.EventMap: return reader.EventMapTable.Block;
-                case TableIndex.EventPtr: return reader.EventPtrTable.Block;
-                case TableIndex.Event: return reader.EventTable.Block;
-                case TableIndex.PropertyMap: return reader.PropertyMapTable.Block;
-                case TableIndex.PropertyPtr: return reader.PropertyPtrTable.Block;
-                case TableIndex.Property: return reader.PropertyTable.Block;
-                case TableIndex.MethodSemantics: return reader.MethodSemanticsTable.Block;
-                case TableIndex.MethodImpl: return reader.MethodImplTable.Block;
-                case TableIndex.ModuleRef: return reader.ModuleRefTable.Block;
-                case TableIndex.TypeSpec: return reader.TypeSpecTable.Block;
-                case TableIndex.ImplMap: return reader.ImplMapTable.Block;
-                case TableIndex.FieldRva: return reader.FieldRvaTable.Block;
-                case TableIndex.EncLog: return reader.EncLogTable.Block;
-                case TableIndex.EncMap: return reader.EncMapTable.Block;
-                case TableIndex.Assembly: return reader.AssemblyTable.Block;
-                case TableIndex.AssemblyProcessor: return reader.AssemblyProcessorTable.Block;
-                case TableIndex.AssemblyOS: return reader.AssemblyOSTable.Block;
-                case TableIndex.AssemblyRef: return reader.AssemblyRefTable.Block;
-                case TableIndex.AssemblyRefProcessor: return reader.AssemblyRefProcessorTable.Block;
-                case TableIndex.AssemblyRefOS: return reader.AssemblyRefOSTable.Block;
-                case TableIndex.File: return reader.FileTable.Block;
-                case TableIndex.ExportedType: return reader.ExportedTypeTable.Block;
-                case TableIndex.ManifestResource: return reader.ManifestResourceTable.Block;
-                case TableIndex.NestedClass: return reader.NestedClassTable.Block;
-                case TableIndex.GenericParam: return reader.GenericParamTable.Block;
-                case TableIndex.MethodSpec: return reader.MethodSpecTable.Block;
-                case TableIndex.GenericParamConstraint: return reader.GenericParamConstraintTable.Block;
+                TableIndex.Module => reader.ModuleTable.Block,
+                TableIndex.TypeRef => reader.TypeRefTable.Block,
+                TableIndex.TypeDef => reader.TypeDefTable.Block,
+                TableIndex.FieldPtr => reader.FieldPtrTable.Block,
+                TableIndex.Field => reader.FieldTable.Block,
+                TableIndex.MethodPtr => reader.MethodPtrTable.Block,
+                TableIndex.MethodDef => reader.MethodDefTable.Block,
+                TableIndex.ParamPtr => reader.ParamPtrTable.Block,
+                TableIndex.Param => reader.ParamTable.Block,
+                TableIndex.InterfaceImpl => reader.InterfaceImplTable.Block,
+                TableIndex.MemberRef => reader.MemberRefTable.Block,
+                TableIndex.Constant => reader.ConstantTable.Block,
+                TableIndex.CustomAttribute => reader.CustomAttributeTable.Block,
+                TableIndex.FieldMarshal => reader.FieldMarshalTable.Block,
+                TableIndex.DeclSecurity => reader.DeclSecurityTable.Block,
+                TableIndex.ClassLayout => reader.ClassLayoutTable.Block,
+                TableIndex.FieldLayout => reader.FieldLayoutTable.Block,
+                TableIndex.StandAloneSig => reader.StandAloneSigTable.Block,
+                TableIndex.EventMap => reader.EventMapTable.Block,
+                TableIndex.EventPtr => reader.EventPtrTable.Block,
+                TableIndex.Event => reader.EventTable.Block,
+                TableIndex.PropertyMap => reader.PropertyMapTable.Block,
+                TableIndex.PropertyPtr => reader.PropertyPtrTable.Block,
+                TableIndex.Property => reader.PropertyTable.Block,
+                TableIndex.MethodSemantics => reader.MethodSemanticsTable.Block,
+                TableIndex.MethodImpl => reader.MethodImplTable.Block,
+                TableIndex.ModuleRef => reader.ModuleRefTable.Block,
+                TableIndex.TypeSpec => reader.TypeSpecTable.Block,
+                TableIndex.ImplMap => reader.ImplMapTable.Block,
+                TableIndex.FieldRva => reader.FieldRvaTable.Block,
+                TableIndex.EncLog => reader.EncLogTable.Block,
+                TableIndex.EncMap => reader.EncMapTable.Block,
+                TableIndex.Assembly => reader.AssemblyTable.Block,
+                TableIndex.AssemblyProcessor => reader.AssemblyProcessorTable.Block,
+                TableIndex.AssemblyOS => reader.AssemblyOSTable.Block,
+                TableIndex.AssemblyRef => reader.AssemblyRefTable.Block,
+                TableIndex.AssemblyRefProcessor => reader.AssemblyRefProcessorTable.Block,
+                TableIndex.AssemblyRefOS => reader.AssemblyRefOSTable.Block,
+                TableIndex.File => reader.FileTable.Block,
+                TableIndex.ExportedType => reader.ExportedTypeTable.Block,
+                TableIndex.ManifestResource => reader.ManifestResourceTable.Block,
+                TableIndex.NestedClass => reader.NestedClassTable.Block,
+                TableIndex.GenericParam => reader.GenericParamTable.Block,
+                TableIndex.MethodSpec => reader.MethodSpecTable.Block,
+                TableIndex.GenericParamConstraint => reader.GenericParamConstraintTable.Block,
 
-                default:
-                    throw new ArgumentOutOfRangeException("tableIndex");
-            }
+                // debug tables
+                TableIndex.Document => reader.DocumentTable.Block,
+                TableIndex.MethodDebugInformation => reader.MethodDebugInformationTable.Block,
+                TableIndex.LocalScope => reader.LocalScopeTable.Block,
+                TableIndex.LocalVariable => reader.LocalVariableTable.Block,
+                TableIndex.LocalConstant => reader.LocalConstantTable.Block,
+                TableIndex.ImportScope => reader.ImportScopeTable.Block,
+                TableIndex.StateMachineMethod => reader.StateMachineMethodTable.Block,
+                TableIndex.CustomDebugInformation => reader.CustomDebugInformationTable.Block,
+
+                _ => throw new ArgumentOutOfRangeException(nameof(tableIndex)),
+            };
         }
 
         /// <summary>
@@ -178,7 +197,7 @@ namespace System.Reflection.Metadata.Ecma335
         {
             if (reader == null)
             {
-                throw new ArgumentNullException("reader");
+                Throw.ArgumentNull(nameof(reader));
             }
 
             return reader.GetMetadataBlock(heapIndex).Length;
@@ -193,7 +212,7 @@ namespace System.Reflection.Metadata.Ecma335
         {
             if (reader == null)
             {
-                throw new ArgumentNullException("reader");
+                Throw.ArgumentNull(nameof(reader));
             }
 
             return (int)(reader.GetMetadataBlock(heapIndex).Pointer - reader.Block.Pointer);
@@ -208,23 +227,14 @@ namespace System.Reflection.Metadata.Ecma335
         {
             Debug.Assert(reader != null);
 
-            switch (heapIndex)
+            return heapIndex switch
             {
-                case HeapIndex.UserString:
-                    return reader.UserStringStream.Block;
-
-                case HeapIndex.String:
-                    return reader.StringStream.Block;
-
-                case HeapIndex.Blob:
-                    return reader.BlobStream.Block;
-
-                case HeapIndex.Guid:
-                    return reader.GuidStream.Block;
-
-                default:
-                    throw new ArgumentOutOfRangeException("heapIndex");
-            }
+                HeapIndex.UserString => reader.UserStringHeap.Block,
+                HeapIndex.String => reader.StringHeap.Block,
+                HeapIndex.Blob => reader.BlobHeap.Block,
+                HeapIndex.Guid => reader.GuidHeap.Block,
+                _ => throw new ArgumentOutOfRangeException(nameof(heapIndex)),
+            };
         }
 
         /// <summary>
@@ -235,10 +245,10 @@ namespace System.Reflection.Metadata.Ecma335
         {
             if (reader == null)
             {
-                throw new ArgumentNullException("reader");
+                Throw.ArgumentNull(nameof(reader));
             }
 
-            return reader.UserStringStream.GetNextHandle(handle);
+            return reader.UserStringHeap.GetNextHandle(handle);
         }
 
         /// <summary>
@@ -249,10 +259,10 @@ namespace System.Reflection.Metadata.Ecma335
         {
             if (reader == null)
             {
-                throw new ArgumentNullException("reader");
+                Throw.ArgumentNull(nameof(reader));
             }
 
-            return reader.BlobStream.GetNextHandle(handle);
+            return reader.BlobHeap.GetNextHandle(handle);
         }
 
         /// <summary>
@@ -263,21 +273,21 @@ namespace System.Reflection.Metadata.Ecma335
         {
             if (reader == null)
             {
-                throw new ArgumentNullException("reader");
+                Throw.ArgumentNull(nameof(reader));
             }
 
-            return reader.StringStream.GetNextHandle(handle);
+            return reader.StringHeap.GetNextHandle(handle);
         }
 
         /// <summary>
         /// Enumerates entries of EnC log.
         /// </summary>
-        /// <exception cref="ArgumentNullException"><paramref name="reader"/> is null.</exception> 
+        /// <exception cref="ArgumentNullException"><paramref name="reader"/> is null.</exception>
         public static IEnumerable<EditAndContinueLogEntry> GetEditAndContinueLogEntries(this MetadataReader reader)
         {
             if (reader == null)
             {
-                throw new ArgumentNullException("reader");
+                throw new ArgumentNullException(nameof(reader));
             }
 
             for (int rid = 1; rid <= reader.EncLogTable.NumberOfRows; rid++)
@@ -296,7 +306,7 @@ namespace System.Reflection.Metadata.Ecma335
         {
             if (reader == null)
             {
-                throw new ArgumentNullException("reader");
+                throw new ArgumentNullException(nameof(reader));
             }
 
             for (int rid = 1; rid <= reader.EncMapTable.NumberOfRows; rid++)
@@ -306,17 +316,17 @@ namespace System.Reflection.Metadata.Ecma335
         }
 
         /// <summary>
-        /// Enumerate types that define one or more properties. 
+        /// Enumerate types that define one or more properties.
         /// </summary>
         /// <returns>
-        /// The resulting sequence corresponds exactly to entries in PropertyMap table, 
+        /// The resulting sequence corresponds exactly to entries in PropertyMap table,
         /// i.e. n-th returned <see cref="TypeDefinitionHandle"/> is stored in n-th row of PropertyMap.
         /// </returns>
         public static IEnumerable<TypeDefinitionHandle> GetTypesWithProperties(this MetadataReader reader)
         {
             if (reader == null)
             {
-                throw new ArgumentNullException("reader");
+                throw new ArgumentNullException(nameof(reader));
             }
 
             for (int rid = 1; rid <= reader.PropertyMapTable.NumberOfRows; rid++)
@@ -326,22 +336,77 @@ namespace System.Reflection.Metadata.Ecma335
         }
 
         /// <summary>
-        /// Enumerate types that define one or more events. 
+        /// Enumerate types that define one or more events.
         /// </summary>
         /// <returns>
-        /// The resulting sequence corresponds exactly to entries in EventMap table, 
+        /// The resulting sequence corresponds exactly to entries in EventMap table,
         /// i.e. n-th returned <see cref="TypeDefinitionHandle"/> is stored in n-th row of EventMap.
         /// </returns>
         public static IEnumerable<TypeDefinitionHandle> GetTypesWithEvents(this MetadataReader reader)
         {
             if (reader == null)
             {
-                throw new ArgumentNullException("reader");
+                throw new ArgumentNullException(nameof(reader));
             }
 
             for (int rid = 1; rid <= reader.EventMapTable.NumberOfRows; rid++)
             {
                 yield return reader.EventMapTable.GetParentType(rid);
+            }
+        }
+
+        /// <summary>
+        /// Given a type handle and a raw type kind found in a signature blob determines whether the target type is a value type or a reference type.
+        /// </summary>
+        public static SignatureTypeKind ResolveSignatureTypeKind(this MetadataReader reader, EntityHandle typeHandle, byte rawTypeKind)
+        {
+            if (reader == null)
+            {
+                throw new ArgumentNullException(nameof(reader));
+            }
+
+            var typeKind = (SignatureTypeKind)rawTypeKind;
+
+            switch (typeKind)
+            {
+                case SignatureTypeKind.Unknown:
+                    return SignatureTypeKind.Unknown;
+
+                case SignatureTypeKind.Class:
+                case SignatureTypeKind.ValueType:
+                    break;
+
+                default:
+                    // If read from metadata by the decoder the value would have been checked already.
+                    // So it is the callers error to pass in an invalid value, not bad metadata.
+                    throw new ArgumentOutOfRangeException(nameof(rawTypeKind));
+            }
+
+            switch (typeHandle.Kind)
+            {
+                case HandleKind.TypeDefinition:
+                    // WinRT projections don't apply to TypeDefs
+                    return typeKind;
+
+                case HandleKind.TypeReference:
+                    var treatment = reader.GetTypeReference((TypeReferenceHandle)typeHandle).SignatureTreatment;
+                    return treatment switch
+                    {
+                        TypeRefSignatureTreatment.ProjectedToClass => SignatureTypeKind.Class,
+                        TypeRefSignatureTreatment.ProjectedToValueType => SignatureTypeKind.ValueType,
+                        TypeRefSignatureTreatment.None => typeKind,
+                        _ => throw ExceptionUtilities.UnexpectedValue(treatment),
+                    };
+                case HandleKind.TypeSpecification:
+                    // TODO: https://github.com/dotnet/corefx/issues/8139
+                    // We need more work here in differentiating case because instantiations can project class
+                    // to value type as in IReference<T> -> Nullable<T>. Unblocking Roslyn work where the differentiation
+                    // feature is not used. Note that the use-case of custom-mods will not hit this because there is no
+                    // CLASS | VALUETYPE before the modifier token and so it always comes in unresolved.
+                    return SignatureTypeKind.Unknown;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(typeHandle), SR.Format(SR.UnexpectedHandleKind, typeHandle.Kind));
             }
         }
     }

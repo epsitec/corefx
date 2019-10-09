@@ -1,21 +1,23 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace System.Security.Cryptography.Encryption.Tests.Asymmetric
 {
-    public static class CryptoStreamTests
+    public static partial class CryptoStreamTests
     {
         [Fact]
         public static void Ctor()
         {
             var transform = new IdentityTransform(1, 1, true);
-            Assert.Throws<ArgumentException>(() => new CryptoStream(new MemoryStream(), transform, (CryptoStreamMode)12345));
-            Assert.Throws<ArgumentException>(() => new CryptoStream(new MemoryStream(new byte[0], writable: false), transform, CryptoStreamMode.Write));
-            Assert.Throws<ArgumentException>(() => new CryptoStream(new CryptoStream(new MemoryStream(new byte[0]), transform, CryptoStreamMode.Write), transform, CryptoStreamMode.Read));
+            AssertExtensions.Throws<ArgumentException>(null, () => new CryptoStream(new MemoryStream(), transform, (CryptoStreamMode)12345));
+            AssertExtensions.Throws<ArgumentException>(null, "stream", () => new CryptoStream(new MemoryStream(new byte[0], writable: false), transform, CryptoStreamMode.Write));
+            AssertExtensions.Throws<ArgumentException>(null, "stream", () => new CryptoStream(new CryptoStream(new MemoryStream(new byte[0]), transform, CryptoStreamMode.Write), transform, CryptoStreamMode.Read));
         }
 
         [Theory]
@@ -49,7 +51,7 @@ namespace System.Security.Cryptography.Encryption.Tests.Asymmetric
                 Assert.Throws<ArgumentOutOfRangeException>(() => encryptStream.Write(new byte[0], -1, 0));
                 Assert.Throws<ArgumentOutOfRangeException>(() => encryptStream.Write(new byte[0], 0, -1));
                 Assert.Throws<ArgumentOutOfRangeException>(() => encryptStream.Write(new byte[0], 0, -1));
-                Assert.Throws<ArgumentException>(() => encryptStream.Write(new byte[3], 1, 4));
+                AssertExtensions.Throws<ArgumentException>(null, () => encryptStream.Write(new byte[3], 1, 4));
 
                 byte[] toWrite = Encoding.UTF8.GetBytes(LoremText);
 
@@ -102,7 +104,7 @@ namespace System.Security.Cryptography.Encryption.Tests.Asymmetric
                 Assert.Throws<ArgumentOutOfRangeException>(() => decryptStream.Read(new byte[0], -1, 0));
                 Assert.Throws<ArgumentOutOfRangeException>(() => decryptStream.Read(new byte[0], 0, -1));
                 Assert.Throws<ArgumentOutOfRangeException>(() => decryptStream.Read(new byte[0], 0, -1));
-                Assert.Throws<ArgumentException>(() => decryptStream.Read(new byte[3], 1, 4));
+                AssertExtensions.Throws<ArgumentException>(null, () => decryptStream.Read(new byte[3], 1, 4));
 
                 using (StreamReader reader = new StreamReader(decryptStream))
                 {
@@ -131,6 +133,18 @@ namespace System.Security.Cryptography.Encryption.Tests.Asymmetric
                     LoremText + LoremText + LoremText + LoremText,
                     reader.ReadToEndAsync().GetAwaiter().GetResult());
             }
+
+            // Read/decrypt one byte at a time with ReadByte
+            stream = new MemoryStream(stream.ToArray()); // CryptoStream.Dispose disposes the stream
+            using (CryptoStream decryptStream = new CryptoStream(stream, decryptor, CryptoStreamMode.Read))
+            {
+                string expectedStr = LoremText + LoremText + LoremText + LoremText;
+                foreach (char c in expectedStr)
+                {
+                    Assert.Equal(c, decryptStream.ReadByte()); // relies on LoremText being ASCII
+                }
+                Assert.Equal(-1, decryptStream.ReadByte());
+            }
         }
 
         [Fact]
@@ -146,14 +160,85 @@ namespace System.Security.Cryptography.Encryption.Tests.Asymmetric
         }
 
         [Fact]
-        public static void MultipleDispose()
+        public static void Clear()
         {
             ICryptoTransform encryptor = new IdentityTransform(1, 1, true);
             using (MemoryStream output = new MemoryStream())
             using (CryptoStream encryptStream = new CryptoStream(output, encryptor, CryptoStreamMode.Write))
             {
-                encryptStream.Dispose();
+                encryptStream.Clear();
+                Assert.Throws<NotSupportedException>(() => encryptStream.Write(new byte[] { 1, 2, 3, 4, 5 }, 0, 5));
             }
+        }
+
+        [Fact]
+        public static void FlushAsync()
+        {
+            ICryptoTransform encryptor = new IdentityTransform(1, 1, true);
+            using (MemoryStream output = new MemoryStream())
+            using (CryptoStream encryptStream = new CryptoStream(output, encryptor, CryptoStreamMode.Write))
+            {
+                encryptStream.WriteAsync(new byte[] { 1, 2, 3, 4, 5 }, 0, 5);
+                Task waitable = encryptStream.FlushAsync(new Threading.CancellationToken(false));
+                Assert.False(waitable.IsCanceled);
+
+                encryptStream.WriteAsync(new byte[] { 1, 2, 3, 4, 5 }, 0, 5);
+                waitable = encryptStream.FlushAsync(new Threading.CancellationToken(true));
+                Assert.True(waitable.IsCanceled);
+            }
+        }
+
+        [Fact]
+        public static void FlushCalledOnFlushAsync_DeriveClass()
+        {
+            ICryptoTransform encryptor = new IdentityTransform(1, 1, true);
+            using (MemoryStream output = new MemoryStream())
+            using (MinimalCryptoStream encryptStream = new MinimalCryptoStream(output, encryptor, CryptoStreamMode.Write))
+            {
+                encryptStream.WriteAsync(new byte[] { 1, 2, 3, 4, 5 }, 0, 5);
+                Task waitable = encryptStream.FlushAsync(new Threading.CancellationToken(false));
+                Assert.False(waitable.IsCanceled);
+                waitable.Wait();
+                Assert.True(encryptStream.FlushCalled);
+            }
+        }
+
+        [Fact]
+        public static void MultipleDispose()
+        {
+            ICryptoTransform encryptor = new IdentityTransform(1, 1, true);
+
+            using (MemoryStream output = new MemoryStream())
+            {
+                using (CryptoStream encryptStream = new CryptoStream(output, encryptor, CryptoStreamMode.Write))
+                {
+                    encryptStream.Dispose();
+                }
+
+                Assert.False(output.CanRead);
+            }
+
+#if netcoreapp
+            using (MemoryStream output = new MemoryStream())
+            {
+                using (CryptoStream encryptStream = new CryptoStream(output, encryptor, CryptoStreamMode.Write, leaveOpen: false))
+                {
+                    encryptStream.Dispose();
+                }
+
+                Assert.False(output.CanRead);
+            }
+
+            using (MemoryStream output = new MemoryStream())
+            {
+                using (CryptoStream encryptStream = new CryptoStream(output, encryptor, CryptoStreamMode.Write, leaveOpen: true))
+                {
+                    encryptStream.Dispose();
+                }
+
+                Assert.True(output.CanRead);
+            }
+#endif
         }
 
         private const string LoremText =
@@ -170,6 +255,7 @@ namespace System.Security.Cryptography.Encryption.Tests.Asymmetric
         {
             private readonly int _inputBlockSize, _outputBlockSize;
             private readonly bool _canTransformMultipleBlocks;
+            private readonly object _lock = new object();
 
             private long _writePos, _readPos;
             private MemoryStream _stream;
@@ -194,31 +280,49 @@ namespace System.Security.Cryptography.Encryption.Tests.Asymmetric
 
             public int TransformBlock(byte[] inputBuffer, int inputOffset, int inputCount, byte[] outputBuffer, int outputOffset)
             {
-                _stream.Position = _writePos;
-                _stream.Write(inputBuffer, inputOffset, inputCount);
-                _writePos = _stream.Position;
+                lock (_lock)
+                {
+                    _stream.Position = _writePos;
+                    _stream.Write(inputBuffer, inputOffset, inputCount);
+                    _writePos = _stream.Position;
 
-                _stream.Position = _readPos;
-                int copied = _stream.Read(outputBuffer, outputOffset, outputBuffer.Length - outputOffset);
-                _readPos = _stream.Position;
-
-                return copied;
+                    _stream.Position = _readPos;
+                    int copied = _stream.Read(outputBuffer, outputOffset, outputBuffer.Length - outputOffset);
+                    _readPos = _stream.Position;
+                    return copied;
+                }
             }
 
             public byte[] TransformFinalBlock(byte[] inputBuffer, int inputOffset, int inputCount)
             {
-                _stream.Position = _writePos;
-                _stream.Write(inputBuffer, inputOffset, inputCount);
+                lock (_lock)
+                {
+                    _stream.Position = _writePos;
+                    _stream.Write(inputBuffer, inputOffset, inputCount);
 
-                _stream.Position = _readPos;
-                long len = _stream.Length - _stream.Position;
-                byte[] outputBuffer = new byte[len];
-                _stream.Read(outputBuffer, 0, outputBuffer.Length);
+                    _stream.Position = _readPos;
+                    long len = _stream.Length - _stream.Position;
+                    byte[] outputBuffer = new byte[len];
+                    _stream.Read(outputBuffer, 0, outputBuffer.Length);
 
-                _stream = new MemoryStream();
-                _writePos = 0;
-                _readPos = 0;
-                return outputBuffer;
+                    _stream = new MemoryStream();
+                    _writePos = 0;
+                    _readPos = 0;
+                    return outputBuffer;
+                }
+            }
+        }
+
+        public class MinimalCryptoStream : CryptoStream
+        {
+            public bool FlushCalled;
+
+            public MinimalCryptoStream(Stream stream, ICryptoTransform transform, CryptoStreamMode mode) : base(stream, transform, mode) { }
+
+            public override void Flush()
+            {
+                FlushCalled = true;
+                base.Flush();
             }
         }
 

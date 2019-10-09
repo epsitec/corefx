@@ -1,12 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms01.prms01
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms01.prms01;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -45,8 +44,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms01a.prms01a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms01a.prms01a;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -85,8 +82,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms01b.prms01b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms01b.prms01b;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -125,8 +120,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms01c.prms01c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms01c.prms01c;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -165,8 +158,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms02.prms02
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms02.prms02;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -210,8 +201,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms02a.prms02a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms02a.prms02a;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -255,8 +244,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms02b.prms02b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms02b.prms02b;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -301,8 +288,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms02c.prms02c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms02c.prms02c;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -346,8 +331,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms04.prms04
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms04.prms04;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -397,8 +380,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms04c.prms04c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms04c.prms04c;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -448,8 +429,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms05.prms05
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms05.prms05;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -504,8 +483,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms05c.prms05c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms05c.prms05c;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -560,8 +537,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms06.prms06
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms06.prms06;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -616,8 +591,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms06c.prms06c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms06c.prms06c;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -672,8 +645,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms07.prms07
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms07.prms07;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -715,8 +686,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms07a.prms07a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms07a.prms07a;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -758,8 +727,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms07b.prms07b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms07b.prms07b;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -802,8 +769,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms07c.prms07c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms07c.prms07c;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -845,8 +810,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms08.prms08
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms08.prms08;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -888,8 +851,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms08a.prms08a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms08a.prms08a;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -931,8 +892,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms08b.prms08b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms08b.prms08b;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -975,8 +934,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms08c.prms08c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms08c.prms08c;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -1018,8 +975,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms09.prms09
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms09.prms09;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -1056,8 +1011,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms09a.prms09a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms09a.prms09a;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -1094,8 +1047,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms09b.prms09b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms09b.prms09b;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -1133,8 +1084,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms09c.prms09c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms09c.prms09c;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use of Named Parameters</Title>
     // <Description>calling NPs with params in signatures</Description>
@@ -1171,8 +1120,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms10.prms10
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms10.prms10;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use named arguments to params array</Title>
     // <Description></Description>
@@ -1210,8 +1157,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms10a.prms10a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms10a.prms10a;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use named arguments to params array</Title>
     // <Description></Description>
@@ -1249,8 +1194,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms10b.prms10b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms10b.prms10b;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use named arguments to params array</Title>
     // <Description></Description>
@@ -1289,8 +1232,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms10c.prms10c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms10c.prms10c;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use named arguments to params array</Title>
     // <Description></Description>
@@ -1334,8 +1275,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms12.prms12
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms12.prms12;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use named arguments to params array</Title>
     // <Description></Description>
@@ -1371,8 +1310,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms12a.prms12a
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms12a.prms12a;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use named arguments to params array</Title>
     // <Description></Description>
@@ -1408,8 +1345,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms12b.prms12b
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms12b.prms12b;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use named arguments to params array</Title>
     // <Description></Description>
@@ -1446,8 +1381,6 @@ namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.
 
 namespace ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms12c.prms12c
 {
-    using ManagedTests.DynamicCSharp.Conformance.dynamic.namedandoptional.usage.prms.prms12c.prms12c;
-
     // <Area>Use of Named parameters</Area>
     // <Title>Use named arguments to params array</Title>
     // <Description></Description>

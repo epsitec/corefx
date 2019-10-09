@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Globalization;
 
@@ -61,13 +62,13 @@ namespace System.ComponentModel.DataAnnotations
         /// <summary>
         ///     Gets the DataType. If it equals DataType.Custom, <see cref="CustomDataType" /> should also be retrieved.
         /// </summary>
-        public DataType DataType { get; private set; }
+        public DataType DataType { get; }
 
         /// <summary>
         ///     Gets the string representing a custom data type. Returns a non-null value only if <see cref="DataType" /> is
         ///     DataType.Custom.
         /// </summary>
-        public string CustomDataType { get; private set; }
+        public string CustomDataType { get; }
 
         /// <summary>
         ///     Gets the default display format that gets used along with this DataType.
@@ -114,10 +115,9 @@ namespace System.ComponentModel.DataAnnotations
         /// <exception cref="InvalidOperationException"> is thrown if the current attribute is ill-formed.</exception>
         private void EnsureValidDataType()
         {
-            if (DataType == DataType.Custom && string.IsNullOrEmpty(CustomDataType))
+            if (DataType == DataType.Custom && string.IsNullOrWhiteSpace(CustomDataType))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture,
-                    SR.DataTypeAttribute_EmptyDataTypeString));
+                throw new InvalidOperationException(SR.DataTypeAttribute_EmptyDataTypeString);
             }
         }
     }

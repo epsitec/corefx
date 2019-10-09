@@ -1,29 +1,32 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Threading;
 using System.Xml;
 using System.Diagnostics;
 using System.Collections.Generic;
-using System.Security;
+using System.Runtime.CompilerServices;
 
 namespace System.Runtime.Serialization.Json
 {
     internal class JsonClassDataContract : JsonDataContract
     {
-        [SecurityCritical]
-        private JsonClassDataContractCriticalHelper _helper;
+        private readonly JsonClassDataContractCriticalHelper _helper;
 
-        [SecuritySafeCritical]
         public JsonClassDataContract(ClassDataContract traditionalDataContract)
             : base(new JsonClassDataContractCriticalHelper(traditionalDataContract))
         {
             _helper = base.Helper as JsonClassDataContractCriticalHelper;
         }
 
+        private JsonFormatClassReaderDelegate CreateJsonFormatReaderDelegate()
+        {
+            return new ReflectionJsonClassReader(TraditionalClassDataContract).ReflectionReadClass;
+        }
+
         internal JsonFormatClassReaderDelegate JsonFormatReaderDelegate
         {
-            [SecuritySafeCritical]
             get
             {
                 if (_helper.JsonFormatReaderDelegate == null)
@@ -32,12 +35,17 @@ namespace System.Runtime.Serialization.Json
                     {
                         if (_helper.JsonFormatReaderDelegate == null)
                         {
-#if !NET_NATIVE && MERGE_DCJS
-                            JsonFormatClassReaderDelegate tempDelegate = new JsonFormatReaderGenerator().GenerateClassReader(TraditionalClassDataContract);
+                            JsonFormatClassReaderDelegate tempDelegate;
+                            if (DataContractSerializer.Option == SerializationOption.ReflectionOnly)
+                            {
+                                tempDelegate = CreateJsonFormatReaderDelegate();
+                            }
+                            else
+                            {
+                                tempDelegate = new JsonFormatReaderGenerator().GenerateClassReader(TraditionalClassDataContract);
+                            }
+
                             Interlocked.MemoryBarrier();
-#else
-                            JsonFormatClassReaderDelegate tempDelegate = JsonDataContract.GetReadWriteDelegatesFromGeneratedAssembly(TraditionalClassDataContract).ClassReaderDelegate;
-#endif
                             _helper.JsonFormatReaderDelegate = tempDelegate;
                         }
                     }
@@ -46,9 +54,13 @@ namespace System.Runtime.Serialization.Json
             }
         }
 
+        private JsonFormatClassWriterDelegate CreateJsonFormatWriterDelegate()
+        {
+            return new ReflectionJsonFormatWriter().ReflectionWriteClass;
+        }
+
         internal JsonFormatClassWriterDelegate JsonFormatWriterDelegate
         {
-            [SecuritySafeCritical]
             get
             {
                 if (_helper.JsonFormatWriterDelegate == null)
@@ -57,12 +69,17 @@ namespace System.Runtime.Serialization.Json
                     {
                         if (_helper.JsonFormatWriterDelegate == null)
                         {
-#if !NET_NATIVE && MERGE_DCJS
-                            JsonFormatClassWriterDelegate tempDelegate = new JsonFormatWriterGenerator().GenerateClassWriter(TraditionalClassDataContract);
+                            JsonFormatClassWriterDelegate tempDelegate;
+                            if (DataContractSerializer.Option == SerializationOption.ReflectionOnly)
+                            {
+                                tempDelegate = CreateJsonFormatWriterDelegate();
+                            }
+                            else
+                            {
+                                tempDelegate = new JsonFormatWriterGenerator().GenerateClassWriter(TraditionalClassDataContract);
+                            }
+
                             Interlocked.MemoryBarrier();
-#else
-                            JsonFormatClassWriterDelegate tempDelegate = JsonDataContract.GetReadWriteDelegatesFromGeneratedAssembly(TraditionalClassDataContract).ClassWriterDelegate;
-#endif
                             _helper.JsonFormatWriterDelegate = tempDelegate;
                         }
                     }
@@ -71,27 +88,11 @@ namespace System.Runtime.Serialization.Json
             }
         }
 
-        internal XmlDictionaryString[] MemberNames
-        {
-            [SecuritySafeCritical]
-            get
-            { return _helper.MemberNames; }
-        }
+        internal XmlDictionaryString[] MemberNames => _helper.MemberNames;
 
-        internal override string TypeName
-        {
-            [SecuritySafeCritical]
-            get
-            { return _helper.TypeName; }
-        }
+        internal override string TypeName => _helper.TypeName;
 
-
-        private ClassDataContract TraditionalClassDataContract
-        {
-            [SecuritySafeCritical]
-            get
-            { return _helper.TraditionalClassDataContract; }
-        }
+        private ClassDataContract TraditionalClassDataContract => _helper.TraditionalClassDataContract;
 
         public override object ReadJsonValueCore(XmlReaderDelegator jsonReader, XmlObjectSerializerReadContextComplexJson context)
         {
@@ -112,8 +113,8 @@ namespace System.Runtime.Serialization.Json
             private JsonFormatClassReaderDelegate _jsonFormatReaderDelegate;
             private JsonFormatClassWriterDelegate _jsonFormatWriterDelegate;
             private XmlDictionaryString[] _memberNames;
-            private ClassDataContract _traditionalClassDataContract;
-            private string _typeName;
+            private readonly ClassDataContract _traditionalClassDataContract;
+            private readonly string _typeName;
 
             public JsonClassDataContractCriticalHelper(ClassDataContract traditionalDataContract)
                 : base(traditionalDataContract)

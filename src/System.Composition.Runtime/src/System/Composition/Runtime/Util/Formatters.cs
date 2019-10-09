@@ -1,11 +1,10 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace System.Composition.Runtime.Util
 {
@@ -14,7 +13,7 @@ namespace System.Composition.Runtime.Util
         public static string Format(object value)
         {
             if (value == null)
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
 
             if (value is string)
                 return "\"" + value + "\"";
@@ -24,7 +23,7 @@ namespace System.Composition.Runtime.Util
 
         public static string Format(Type type)
         {
-            if (type == null) throw new ArgumentNullException("type");
+            if (type == null) throw new ArgumentNullException(nameof(type));
 
             if (type.IsConstructedGenericType)
                 return FormatClosedGeneric(type);
@@ -34,11 +33,11 @@ namespace System.Composition.Runtime.Util
 
         private static string FormatClosedGeneric(Type closedGenericType)
         {
-            if (closedGenericType == null) throw new ArgumentNullException("closedGenericType");
-            if (!closedGenericType.IsConstructedGenericType) throw new ArgumentException();
+            Debug.Assert(closedGenericType != null);
+            Debug.Assert(closedGenericType.IsConstructedGenericType);
             var name = closedGenericType.Name.Substring(0, closedGenericType.Name.IndexOf("`"));
-            var args = closedGenericType.GenericTypeArguments.Select(t => Format(t));
-            return string.Format("{0}<{1}>", name, string.Join(Properties.Resources.Formatter_ListSeparatorWithSpace, args));
+            IEnumerable<string> args = closedGenericType.GenericTypeArguments.Select(t => Format(t));
+            return string.Format("{0}<{1}>", name, string.Join(SR.Formatter_ListSeparatorWithSpace, args));
         }
     }
 }

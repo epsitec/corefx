@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 //
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
@@ -9,12 +10,8 @@
 // =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-
 
 using Xunit;
-using CoreFXTestLibrary;
 
-using System;
-using System.Threading.Tasks;
-
-namespace System.Threading.Tasks.Test
+namespace System.Threading.Tasks.Tests
 {
     public sealed class ParallelInvokeTest
     {
@@ -26,7 +23,7 @@ namespace System.Threading.Tasks.Test
         private ActionType _actionType; // type of actions
 
         private Action[] _actions;
-        private double[] _results;  // global place to store the workload results for verication
+        private double[] _results;  // global place to store the workload results for verification
 
         #endregion
 
@@ -38,7 +35,7 @@ namespace System.Threading.Tasks.Test
             _actions = new Action[_count];
             _results = new double[_count];
 
-            // intialize actions 
+            // initialize actions
             for (int i = 0; i < _count; i++)
             {
                 int iCopy = i;
@@ -66,7 +63,7 @@ namespace System.Threading.Tasks.Test
         /// <summary>
         /// Actual Test.
         /// Call Parallel.Invoke with actions using different workloads
-        /// 
+        ///
         /// Expected: Each action was invoked and returned the expected result
         /// </summary>
         /// <returns></returns>
@@ -76,7 +73,7 @@ namespace System.Threading.Tasks.Test
             // verify result
 
             //Function point comparison cant be done by rounding off to nearest decimal points since
-            //1.64 could be represented as 1.63999999 or as 1.6499999999. To perform floating point comparisons, 
+            //1.64 could be represented as 1.63999999 or as 1.6499999999. To perform floating point comparisons,
             //a range has to be defined and check to ensure that the result obtained is within the specified range
             double minLimit = 1.63;
             double maxLimit = 1.65;
@@ -84,15 +81,15 @@ namespace System.Threading.Tasks.Test
             foreach (double r in _results)
             {
                 //If action is empty we are expected zero as result
-                Assert.False(_actionType == ActionType.Empty && r != 0, String.Format("Differ in results. Expected result to be Zero but got {0}", r));
+                Assert.False(_actionType == ActionType.Empty && r != 0, string.Format("Differ in results. Expected result to be Zero but got {0}", r));
 
-                Assert.False(_actionType != ActionType.Empty && (r < minLimit || r > maxLimit), String.Format("Differ in results. Expected result to lie between {0} and {1} but got {2}", minLimit, maxLimit, r));
+                Assert.False(_actionType != ActionType.Empty && (r < minLimit || r > maxLimit), string.Format("Differ in results. Expected result to lie between {0} and {1} but got {2}", minLimit, maxLimit, r));
             }
         }
 
         #region Helper Methods
 
-        // calcuate 1 + 1/(2*2) + 1/(3*3) + ... +  1/(n*n) = Math.Pow (Math.PI, 2) / 6
+        // calculate 1 + 1/(2*2) + 1/(3*3) + ... +  1/(n*n) = Math.Pow (Math.PI, 2) / 6
         private static double ZetaSequence(int n)
         {
             double result = 0;
@@ -129,7 +126,7 @@ namespace System.Threading.Tasks.Test
      #region Test Methods
     public static class TestMethods
     {
-   
+
         [Fact]
         public static void ParallelInvoke0()
         {

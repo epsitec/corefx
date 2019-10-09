@@ -1,9 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Text;
 
 namespace System.Net.Http.Headers
@@ -163,7 +165,7 @@ namespace System.Net.Http.Headers
 
         private CacheControlHeaderValue(CacheControlHeaderValue source)
         {
-            Contract.Requires(source != null);
+            Debug.Assert(source != null);
 
             _noCache = source._noCache;
             _noStore = source._noStore;
@@ -206,7 +208,7 @@ namespace System.Net.Http.Headers
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = StringBuilderCache.Acquire();
 
             AppendValueIfRequired(sb, _noStore, noStoreString);
             AppendValueIfRequired(sb, _noTransform, noTransformString);
@@ -230,14 +232,34 @@ namespace System.Net.Http.Headers
             {
                 AppendValueWithSeparatorIfRequired(sb, maxAgeString);
                 sb.Append('=');
-                sb.Append(((int)_maxAge.Value.TotalSeconds).ToString(NumberFormatInfo.InvariantInfo));
+                int maxAge = (int)_maxAge.GetValueOrDefault().TotalSeconds;
+                if (maxAge >= 0)
+                {
+                    sb.Append(maxAge);
+                }
+                else
+                {
+                    // In the corner case where the value is negative, ensure it uses
+                    // the invariant's negative sign rather than the current culture's.
+                    sb.Append(maxAge.ToString(NumberFormatInfo.InvariantInfo));
+                }
             }
 
             if (_sharedMaxAge.HasValue)
             {
                 AppendValueWithSeparatorIfRequired(sb, sharedMaxAgeString);
                 sb.Append('=');
-                sb.Append(((int)_sharedMaxAge.Value.TotalSeconds).ToString(NumberFormatInfo.InvariantInfo));
+                int sharedMaxAge = (int)_sharedMaxAge.GetValueOrDefault().TotalSeconds;
+                if (sharedMaxAge >= 0)
+                {
+                    sb.Append(sharedMaxAge);
+                }
+                else
+                {
+                    // In the corner case where the value is negative, ensure it uses
+                    // the invariant's negative sign rather than the current culture's.
+                    sb.Append(sharedMaxAge.ToString(NumberFormatInfo.InvariantInfo));
+                }
             }
 
             if (_maxStale)
@@ -246,7 +268,17 @@ namespace System.Net.Http.Headers
                 if (_maxStaleLimit.HasValue)
                 {
                     sb.Append('=');
-                    sb.Append(((int)_maxStaleLimit.Value.TotalSeconds).ToString(NumberFormatInfo.InvariantInfo));
+                    int maxStaleLimit = (int)_maxStaleLimit.GetValueOrDefault().TotalSeconds;
+                    if (maxStaleLimit >= 0)
+                    {
+                        sb.Append(maxStaleLimit);
+                    }
+                    else
+                    {
+                        // In the corner case where the value is negative, ensure it uses
+                        // the invariant's negative sign rather than the current culture's.
+                        sb.Append(maxStaleLimit.ToString(NumberFormatInfo.InvariantInfo));
+                    }
                 }
             }
 
@@ -254,7 +286,17 @@ namespace System.Net.Http.Headers
             {
                 AppendValueWithSeparatorIfRequired(sb, minFreshString);
                 sb.Append('=');
-                sb.Append(((int)_minFresh.Value.TotalSeconds).ToString(NumberFormatInfo.InvariantInfo));
+                int minFresh = (int)_minFresh.GetValueOrDefault().TotalSeconds;
+                if (minFresh >= 0)
+                {
+                    sb.Append(minFresh);
+                }
+                else
+                {
+                    // In the corner case where the value is negative, ensure it uses
+                    // the invariant's negative sign rather than the current culture's.
+                    sb.Append(minFresh.ToString(NumberFormatInfo.InvariantInfo));
+                }
             }
 
             if (_privateField)
@@ -270,7 +312,7 @@ namespace System.Net.Http.Headers
 
             NameValueHeaderValue.ToString(_extensions, ',', false, sb);
 
-            return sb.ToString();
+            return StringBuilderCache.GetStringAndRelease(sb);
         }
 
         public override bool Equals(object obj)
@@ -379,7 +421,7 @@ namespace System.Net.Http.Headers
         internal static int GetCacheControlLength(string input, int startIndex, CacheControlHeaderValue storeValue,
             out CacheControlHeaderValue parsedValue)
         {
-            Contract.Requires(startIndex >= 0);
+            Debug.Assert(startIndex >= 0);
 
             parsedValue = null;
 
@@ -408,7 +450,7 @@ namespace System.Net.Http.Headers
 
             // Cache-Control is a header supporting lists of values. However, expose the header as an instance of
             // CacheControlHeaderValue. So if we already have an instance of CacheControlHeaderValue, add the values
-            // from this string to the existing instances. 
+            // from this string to the existing instances.
             CacheControlHeaderValue result = storeValue;
             if (result == null)
             {
@@ -420,7 +462,7 @@ namespace System.Net.Http.Headers
                 return 0;
             }
 
-            // If we had an existing store value and we just updated that instance, return 'null' to indicate that 
+            // If we had an existing store value and we just updated that instance, return 'null' to indicate that
             // we don't have a new instance of CacheControlHeaderValue, but just updated an existing one. This is the
             // case if we have multiple 'Cache-Control' headers set in a request/response message.
             if (storeValue == null)
@@ -522,7 +564,7 @@ namespace System.Net.Http.Headers
         private static bool TrySetOptionalTokenList(NameValueHeaderValue nameValue, ref bool boolField,
             ref ObjectCollection<string> destination)
         {
-            Contract.Requires(nameValue != null);
+            Debug.Assert(nameValue != null);
 
             if (nameValue.Value == null)
             {
@@ -531,7 +573,7 @@ namespace System.Net.Http.Headers
             }
 
             // We need the string to be at least 3 chars long: 2x quotes and at least 1 character. Also make sure we
-            // have a quoted string. Note that NameValueHeaderValue will never have leading/trailing whitespaces.
+            // have a quoted string. Note that NameValueHeaderValue will never have leading/trailing whitespace.
             string valueString = nameValue.Value;
             if ((valueString.Length < 3) || (valueString[0] != '\"') || (valueString[valueString.Length - 1] != '\"'))
             {
@@ -557,7 +599,7 @@ namespace System.Net.Http.Headers
 
                 if (tokenLength == 0)
                 {
-                    // We already skipped whitespaces and separators. If we don't have a token it must be an invalid
+                    // We already skipped whitespace and separators. If we don't have a token it must be an invalid
                     // character.
                     return false;
                 }
@@ -584,7 +626,7 @@ namespace System.Net.Http.Headers
 
         private static bool TrySetTimeSpan(NameValueHeaderValue nameValue, ref TimeSpan? timeSpan)
         {
-            Contract.Requires(nameValue != null);
+            Debug.Assert(nameValue != null);
 
             if (nameValue.Value == null)
             {
@@ -639,7 +681,7 @@ namespace System.Net.Http.Headers
 
         private static void CheckIsValidToken(string item)
         {
-            HeaderUtilities.CheckValidToken(item, "item");
+            HeaderUtilities.CheckValidToken(item, nameof(item));
         }
 
         object ICloneable.Clone()

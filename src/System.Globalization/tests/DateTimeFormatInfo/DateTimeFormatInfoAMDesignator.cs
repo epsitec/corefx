@@ -1,62 +1,41 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Globalization;
 using Xunit;
 
 namespace System.Globalization.Tests
 {
     public class DateTimeFormatInfoAMDesignator
     {
-        // PosTest1: Call AMDesignator getter method should return correct value for InvariantInfo
         [Fact]
-        public void TestGetter()
+        public void AMDesignator_GetInvariantInfo_ReturnsExpected()
         {
-            VerificationHelper(DateTimeFormatInfo.InvariantInfo,
-                    "AM",
-                    false);
+            Assert.Equal("AM", DateTimeFormatInfo.InvariantInfo.AMDesignator);
         }
 
-        // PosTest2: Call AMDesignator setter method should return correct value
-        [Fact]
-        public void TestSetter()
+        [Theory]
+        [InlineData("")]
+        [InlineData("AA")]
+        [InlineData("A.M")]
+        public void AMDesignator_Set_GetReturnsExpected(string value)
         {
-            VerificationHelper(new DateTimeFormatInfo(),
-                    "AA",
-                    true);
+            var format = new DateTimeFormatInfo();
+            format.AMDesignator = value;
+            Assert.Equal(value, format.AMDesignator);
         }
 
-        // NegTest1: ArgumentNullException should be thrown when The property is being set to a null reference
         [Fact]
-        public void TestNull()
+        public void AMDesignator_SetNullValue_ThrowsArgumentNullException()
         {
-            Assert.Throws<ArgumentNullException>(() =>
-            {
-                new DateTimeFormatInfo().AMDesignator = null;
-            });
+            var format = new DateTimeFormatInfo();
+            AssertExtensions.Throws<ArgumentNullException>("value", () => format.AMDesignator = null);
         }
 
-        // NegTest2: InvalidOperationException should be thrown when The property is being set and 
-        // the DateTimeFormatInfo is read-only
         [Fact]
-        public void TestReadOnly()
+        public void AMDesignator_SetReadOnly_ThrowsInvalidOperationException()
         {
-            Assert.Throws<InvalidOperationException>(() =>
-            {
-                DateTimeFormatInfo.InvariantInfo.AMDesignator = "1";
-            });
-        }
-
-        private void VerificationHelper(DateTimeFormatInfo info, string expected, bool setter)
-        {
-            if (setter)
-            {
-                info.AMDesignator = expected;
-            }
-
-            string actual = info.AMDesignator;
-            Assert.Equal(expected, actual);
+            Assert.Throws<InvalidOperationException>(() => DateTimeFormatInfo.InvariantInfo.AMDesignator = "AA");
         }
     }
 }

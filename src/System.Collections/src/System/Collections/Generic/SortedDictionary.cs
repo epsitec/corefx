@@ -1,23 +1,27 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Serialization;
 
 namespace System.Collections.Generic
 {
     [DebuggerTypeProxy(typeof(IDictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {Count}")]
-    public class SortedDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary, IReadOnlyDictionary<TKey, TValue>
+    [Serializable]
+    [System.Runtime.CompilerServices.TypeForwardedFrom("System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
+    public class SortedDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary, IReadOnlyDictionary<TKey, TValue> where TKey : notnull
     {
-        private KeyCollection _keys;
+        [NonSerialized]
+        private KeyCollection? _keys;
+        [NonSerialized]
+        private ValueCollection? _values;
 
-        private ValueCollection _values;
+        private readonly TreeSet<KeyValuePair<TKey, TValue>> _set; // Do not rename (binary serialization)
 
-        private TreeSet<KeyValuePair<TKey, TValue>> _set;
-
-        public SortedDictionary() : this((IComparer<TKey>)null)
+        public SortedDictionary() : this((IComparer<TKey>?)null)
         {
         }
 
@@ -25,11 +29,11 @@ namespace System.Collections.Generic
         {
         }
 
-        public SortedDictionary(IDictionary<TKey, TValue> dictionary, IComparer<TKey> comparer)
+        public SortedDictionary(IDictionary<TKey, TValue> dictionary, IComparer<TKey>? comparer)
         {
             if (dictionary == null)
             {
-                throw new ArgumentNullException("dictionary");
+                throw new ArgumentNullException(nameof(dictionary));
             }
 
             _set = new TreeSet<KeyValuePair<TKey, TValue>>(new KeyValuePairComparer(comparer));
@@ -40,7 +44,7 @@ namespace System.Collections.Generic
             }
         }
 
-        public SortedDictionary(IComparer<TKey> comparer)
+        public SortedDictionary(IComparer<TKey>? comparer)
         {
             _set = new TreeSet<KeyValuePair<TKey, TValue>>(new KeyValuePairComparer(comparer));
         }
@@ -52,7 +56,7 @@ namespace System.Collections.Generic
 
         bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> keyValuePair)
         {
-            TreeSet<KeyValuePair<TKey, TValue>>.Node node = _set.FindNode(keyValuePair);
+            TreeSet<KeyValuePair<TKey, TValue>>.Node? node = _set.FindNode(keyValuePair);
             if (node == null)
             {
                 return false;
@@ -70,7 +74,7 @@ namespace System.Collections.Generic
 
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> keyValuePair)
         {
-            TreeSet<KeyValuePair<TKey, TValue>>.Node node = _set.FindNode(keyValuePair);
+            TreeSet<KeyValuePair<TKey, TValue>>.Node? node = _set.FindNode(keyValuePair);
             if (node == null)
             {
                 return false;
@@ -98,13 +102,13 @@ namespace System.Collections.Generic
             {
                 if (key == null)
                 {
-                    throw new ArgumentNullException("key");
+                    throw new ArgumentNullException(nameof(key));
                 }
 
-                TreeSet<KeyValuePair<TKey, TValue>>.Node node = _set.FindNode(new KeyValuePair<TKey, TValue>(key, default(TValue)));
+                TreeSet<KeyValuePair<TKey, TValue>>.Node? node = _set.FindNode(new KeyValuePair<TKey, TValue>(key, default(TValue)!));
                 if (node == null)
                 {
-                    throw new KeyNotFoundException();
+                    throw new KeyNotFoundException(SR.Format(SR.Arg_KeyNotFoundWithKey, key.ToString()));
                 }
 
                 return node.Item.Value;
@@ -113,10 +117,10 @@ namespace System.Collections.Generic
             {
                 if (key == null)
                 {
-                    throw new ArgumentNullException("key");
+                    throw new ArgumentNullException(nameof(key));
                 }
 
-                TreeSet<KeyValuePair<TKey, TValue>>.Node node = _set.FindNode(new KeyValuePair<TKey, TValue>(key, default(TValue)));
+                TreeSet<KeyValuePair<TKey, TValue>>.Node? node = _set.FindNode(new KeyValuePair<TKey, TValue>(key, default(TValue)!));
                 if (node == null)
                 {
                     _set.Add(new KeyValuePair<TKey, TValue>(key, value));
@@ -199,7 +203,7 @@ namespace System.Collections.Generic
         {
             if (key == null)
             {
-                throw new ArgumentNullException("key");
+                throw new ArgumentNullException(nameof(key));
             }
             _set.Add(new KeyValuePair<TKey, TValue>(key, value));
         }
@@ -213,10 +217,10 @@ namespace System.Collections.Generic
         {
             if (key == null)
             {
-                throw new ArgumentNullException("key");
+                throw new ArgumentNullException(nameof(key));
             }
 
-            return _set.Contains(new KeyValuePair<TKey, TValue>(key, default(TValue)));
+            return _set.Contains(new KeyValuePair<TKey, TValue>(key, default(TValue)!));
         }
 
         public bool ContainsValue(TValue value)
@@ -269,23 +273,23 @@ namespace System.Collections.Generic
         {
             if (key == null)
             {
-                throw new ArgumentNullException("key");
+                throw new ArgumentNullException(nameof(key));
             }
 
-            return _set.Remove(new KeyValuePair<TKey, TValue>(key, default(TValue)));
+            return _set.Remove(new KeyValuePair<TKey, TValue>(key, default(TValue)!));
         }
 
-        public bool TryGetValue(TKey key, out TValue value)
+        public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
         {
             if (key == null)
             {
-                throw new ArgumentNullException("key");
+                throw new ArgumentNullException(nameof(key));
             }
 
-            TreeSet<KeyValuePair<TKey, TValue>>.Node node = _set.FindNode(new KeyValuePair<TKey, TValue>(key, default(TValue)));
+            TreeSet<KeyValuePair<TKey, TValue>>.Node? node = _set.FindNode(new KeyValuePair<TKey, TValue>(key, default(TValue)!));
             if (node == null)
             {
-                value = default(TValue);
+                value = default(TValue)!;
                 return false;
             }
             value = node.Item.Value;
@@ -317,7 +321,7 @@ namespace System.Collections.Generic
             get { return (ICollection)Values; }
         }
 
-        object IDictionary.this[object key]
+        object? IDictionary.this[object key]
         {
             get
             {
@@ -336,40 +340,40 @@ namespace System.Collections.Generic
             {
                 if (key == null)
                 {
-                    throw new ArgumentNullException("key");
+                    throw new ArgumentNullException(nameof(key));
                 }
 
-                if (value == null && !(default(TValue) == null))
-                    throw new ArgumentNullException("value");
+                if (value == null && !(default(TValue)! == null)) // TODO-NULLABLE: default(T) == null warning (https://github.com/dotnet/roslyn/issues/34757)
+                    throw new ArgumentNullException(nameof(value));
 
                 try
                 {
                     TKey tempKey = (TKey)key;
                     try
                     {
-                        this[tempKey] = (TValue)value;
+                        this[tempKey] = (TValue)value!;
                     }
                     catch (InvalidCastException)
                     {
-                        throw new ArgumentException(SR.Format(SR.Arg_WrongType, value, typeof(TValue)), "value");
+                        throw new ArgumentException(SR.Format(SR.Arg_WrongType, value, typeof(TValue)), nameof(value));
                     }
                 }
                 catch (InvalidCastException)
                 {
-                    throw new ArgumentException(SR.Format(SR.Arg_WrongType, key, typeof(TKey)), "key");
+                    throw new ArgumentException(SR.Format(SR.Arg_WrongType, key, typeof(TKey)), nameof(key));
                 }
             }
         }
 
-        void IDictionary.Add(object key, object value)
+        void IDictionary.Add(object key, object? value)
         {
             if (key == null)
             {
-                throw new ArgumentNullException("key");
+                throw new ArgumentNullException(nameof(key));
             }
 
-            if (value == null && !(default(TValue) == null))
-                throw new ArgumentNullException("value");
+            if (value == null && !(default(TValue)! == null)) // TODO-NULLABLE: default(T) == null warning (https://github.com/dotnet/roslyn/issues/34757)
+                throw new ArgumentNullException(nameof(value));
 
             try
             {
@@ -377,16 +381,16 @@ namespace System.Collections.Generic
 
                 try
                 {
-                    Add(tempKey, (TValue)value);
+                    Add(tempKey, (TValue)value!);
                 }
                 catch (InvalidCastException)
                 {
-                    throw new ArgumentException(SR.Format(SR.Arg_WrongType, value, typeof(TValue)), "value");
+                    throw new ArgumentException(SR.Format(SR.Arg_WrongType, value, typeof(TValue)), nameof(value));
                 }
             }
             catch (InvalidCastException)
             {
-                throw new ArgumentException(SR.Format(SR.Arg_WrongType, key, typeof(TKey)), "key");
+                throw new ArgumentException(SR.Format(SR.Arg_WrongType, key, typeof(TKey)), nameof(key));
             }
         }
 
@@ -403,7 +407,7 @@ namespace System.Collections.Generic
         {
             if (key == null)
             {
-                throw new ArgumentNullException("key");
+                throw new ArgumentNullException(nameof(key));
             }
 
             return (key is TKey);
@@ -441,7 +445,7 @@ namespace System.Collections.Generic
         public struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>, IDictionaryEnumerator
         {
             private TreeSet<KeyValuePair<TKey, TValue>>.Enumerator _treeEnum;
-            private int _getEnumeratorRetType;  // What should Enumerator.Current return?
+            private readonly int _getEnumeratorRetType;  // What should Enumerator.Current return?
 
             internal const int KeyValuePair = 1;
             internal const int DictEntry = 2;
@@ -489,7 +493,7 @@ namespace System.Collections.Generic
                 _treeEnum.Reset();
             }
 
-            object IEnumerator.Current
+            object? IEnumerator.Current
             {
                 get
                 {
@@ -522,7 +526,7 @@ namespace System.Collections.Generic
                 }
             }
 
-            object IDictionaryEnumerator.Value
+            object? IDictionaryEnumerator.Value
             {
                 get
                 {
@@ -553,13 +557,13 @@ namespace System.Collections.Generic
         [DebuggerDisplay("Count = {Count}")]
         public sealed class KeyCollection : ICollection<TKey>, ICollection, IReadOnlyCollection<TKey>
         {
-            private SortedDictionary<TKey, TValue> _dictionary;
+            private readonly SortedDictionary<TKey, TValue> _dictionary;
 
             public KeyCollection(SortedDictionary<TKey, TValue> dictionary)
             {
                 if (dictionary == null)
                 {
-                    throw new ArgumentNullException("dictionary");
+                    throw new ArgumentNullException(nameof(dictionary));
                 }
                 _dictionary = dictionary;
             }
@@ -583,12 +587,12 @@ namespace System.Collections.Generic
             {
                 if (array == null)
                 {
-                    throw new ArgumentNullException("array");
+                    throw new ArgumentNullException(nameof(array));
                 }
 
                 if (index < 0)
                 {
-                    throw new ArgumentOutOfRangeException("index");
+                    throw new ArgumentOutOfRangeException(nameof(index), index, SR.ArgumentOutOfRange_NeedNonNegNum);
                 }
 
                 if (array.Length - index < Count)
@@ -603,22 +607,22 @@ namespace System.Collections.Generic
             {
                 if (array == null)
                 {
-                    throw new ArgumentNullException("array");
+                    throw new ArgumentNullException(nameof(array));
                 }
 
                 if (array.Rank != 1)
                 {
-                    throw new ArgumentException(SR.Arg_RankMultiDimNotSupported);
+                    throw new ArgumentException(SR.Arg_RankMultiDimNotSupported, nameof(array));
                 }
 
                 if (array.GetLowerBound(0) != 0)
                 {
-                    throw new ArgumentException(SR.Arg_NonZeroLowerBound);
+                    throw new ArgumentException(SR.Arg_NonZeroLowerBound, nameof(array));
                 }
 
                 if (index < 0)
                 {
-                    throw new ArgumentOutOfRangeException("arrayIndex", SR.ArgumentOutOfRange_NeedNonNegNum);
+                    throw new ArgumentOutOfRangeException(nameof(index), index, SR.ArgumentOutOfRange_NeedNonNegNum);
                 }
 
                 if (array.Length - index < _dictionary.Count)
@@ -626,26 +630,21 @@ namespace System.Collections.Generic
                     throw new ArgumentException(SR.Arg_ArrayPlusOffTooSmall);
                 }
 
-                TKey[] keys = array as TKey[];
+                TKey[]? keys = array as TKey[];
                 if (keys != null)
                 {
                     CopyTo(keys, index);
                 }
                 else
                 {
-                    object[] objects = (object[])array;
-                    if (objects == null)
-                    {
-                        throw new ArgumentException(SR.Argument_InvalidArrayType);
-                    }
-
                     try
                     {
+                        object[] objects = (object[])array;
                         _dictionary._set.InOrderTreeWalk(delegate (TreeSet<KeyValuePair<TKey, TValue>>.Node node) { objects[index++] = node.Item.Key; return true; });
                     }
                     catch (ArrayTypeMismatchException)
                     {
-                        throw new ArgumentException(SR.Argument_InvalidArrayType);
+                        throw new ArgumentException(SR.Argument_InvalidArrayType, nameof(array));
                     }
                 }
             }
@@ -685,7 +684,7 @@ namespace System.Collections.Generic
                 get { return false; }
             }
 
-            Object ICollection.SyncRoot
+            object ICollection.SyncRoot
             {
                 get { return ((ICollection)_dictionary).SyncRoot; }
             }
@@ -718,7 +717,7 @@ namespace System.Collections.Generic
                     }
                 }
 
-                object IEnumerator.Current
+                object? IEnumerator.Current
                 {
                     get
                     {
@@ -742,13 +741,13 @@ namespace System.Collections.Generic
         [DebuggerDisplay("Count = {Count}")]
         public sealed class ValueCollection : ICollection<TValue>, ICollection, IReadOnlyCollection<TValue>
         {
-            private SortedDictionary<TKey, TValue> _dictionary;
+            private readonly SortedDictionary<TKey, TValue> _dictionary;
 
             public ValueCollection(SortedDictionary<TKey, TValue> dictionary)
             {
                 if (dictionary == null)
                 {
-                    throw new ArgumentNullException("dictionary");
+                    throw new ArgumentNullException(nameof(dictionary));
                 }
                 _dictionary = dictionary;
             }
@@ -772,12 +771,12 @@ namespace System.Collections.Generic
             {
                 if (array == null)
                 {
-                    throw new ArgumentNullException("array");
+                    throw new ArgumentNullException(nameof(array));
                 }
 
                 if (index < 0)
                 {
-                    throw new ArgumentOutOfRangeException("index");
+                    throw new ArgumentOutOfRangeException(nameof(index), index, SR.ArgumentOutOfRange_NeedNonNegNum);
                 }
 
                 if (array.Length - index < Count)
@@ -792,22 +791,22 @@ namespace System.Collections.Generic
             {
                 if (array == null)
                 {
-                    throw new ArgumentNullException("array");
+                    throw new ArgumentNullException(nameof(array));
                 }
 
                 if (array.Rank != 1)
                 {
-                    throw new ArgumentException(SR.Arg_RankMultiDimNotSupported);
+                    throw new ArgumentException(SR.Arg_RankMultiDimNotSupported, nameof(array));
                 }
 
                 if (array.GetLowerBound(0) != 0)
                 {
-                    throw new ArgumentException(SR.Arg_NonZeroLowerBound);
+                    throw new ArgumentException(SR.Arg_NonZeroLowerBound, nameof(array));
                 }
 
                 if (index < 0)
                 {
-                    throw new ArgumentOutOfRangeException("arrayIndex", SR.ArgumentOutOfRange_NeedNonNegNum);
+                    throw new ArgumentOutOfRangeException(nameof(index), index, SR.ArgumentOutOfRange_NeedNonNegNum);
                 }
 
                 if (array.Length - index < _dictionary.Count)
@@ -815,26 +814,21 @@ namespace System.Collections.Generic
                     throw new ArgumentException(SR.Arg_ArrayPlusOffTooSmall);
                 }
 
-                TValue[] values = array as TValue[];
+                TValue[]? values = array as TValue[];
                 if (values != null)
                 {
                     CopyTo(values, index);
                 }
                 else
                 {
-                    object[] objects = (object[])array;
-                    if (objects == null)
-                    {
-                        throw new ArgumentException(SR.Argument_InvalidArrayType);
-                    }
-
                     try
                     {
+                        object?[] objects = (object?[])array;
                         _dictionary._set.InOrderTreeWalk(delegate (TreeSet<KeyValuePair<TKey, TValue>>.Node node) { objects[index++] = node.Item.Value; return true; });
                     }
                     catch (ArrayTypeMismatchException)
                     {
-                        throw new ArgumentException(SR.Argument_InvalidArrayType);
+                        throw new ArgumentException(SR.Argument_InvalidArrayType, nameof(array));
                     }
                 }
             }
@@ -874,7 +868,7 @@ namespace System.Collections.Generic
                 get { return false; }
             }
 
-            Object ICollection.SyncRoot
+            object ICollection.SyncRoot
             {
                 get { return ((ICollection)_dictionary).SyncRoot; }
             }
@@ -907,7 +901,7 @@ namespace System.Collections.Generic
                     }
                 }
 
-                object IEnumerator.Current
+                object? IEnumerator.Current
                 {
                     get
                     {
@@ -927,11 +921,12 @@ namespace System.Collections.Generic
             }
         }
 
-        internal sealed class KeyValuePairComparer : Comparer<KeyValuePair<TKey, TValue>>
+        [Serializable]
+        public sealed class KeyValuePairComparer : Comparer<KeyValuePair<TKey, TValue>>
         {
-            internal IComparer<TKey> keyComparer;
+            internal IComparer<TKey> keyComparer; // Do not rename (binary serialization)
 
-            public KeyValuePairComparer(IComparer<TKey> keyComparer)
+            public KeyValuePairComparer(IComparer<TKey>? keyComparer)
             {
                 if (keyComparer == null)
                 {
@@ -952,32 +947,32 @@ namespace System.Collections.Generic
 
     /// <summary>
     /// This class is intended as a helper for backwards compatibility with existing SortedDictionaries.
-    /// TreeSet has been converted into SortedSet<T>, which will be exposed publicly. SortedDictionaries
+    /// TreeSet has been converted into SortedSet{T}, which will be exposed publicly. SortedDictionaries
     /// have the problem where they have already been serialized to disk as having a backing class named
     /// TreeSet. To ensure that we can read back anything that has already been written to disk, we need to
     /// make sure that we have a class named TreeSet that does everything the way it used to.
-    /// 
+    ///
     /// The only thing that makes it different from SortedSet is that it throws on duplicates
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    internal sealed class TreeSet<T> : SortedSet<T>
+    [Serializable]
+    [System.Runtime.CompilerServices.TypeForwardedFrom("System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
+    public sealed class TreeSet<T> : SortedSet<T>
     {
         public TreeSet()
             : base()
         { }
 
-        public TreeSet(IComparer<T> comparer) : base(comparer) { }
+        public TreeSet(IComparer<T>? comparer) : base(comparer) { }
 
-        public TreeSet(ICollection<T> collection) : base(collection) { }
-
-        public TreeSet(ICollection<T> collection, IComparer<T> comparer) : base(collection, comparer) { }
+        private TreeSet(SerializationInfo siInfo, StreamingContext context) : base(siInfo, context) { }
 
         internal override bool AddIfNotPresent(T item)
         {
             bool ret = base.AddIfNotPresent(item);
             if (!ret)
             {
-                throw new ArgumentException(SR.Argument_AddingDuplicate);
+                throw new ArgumentException(SR.Format(SR.Argument_AddingDuplicate, item));
             }
             return ret;
         }

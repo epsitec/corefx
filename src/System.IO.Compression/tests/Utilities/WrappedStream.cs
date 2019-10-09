@@ -1,12 +1,17 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.IO;
 
 internal class WrappedStream : Stream
 {
-    internal WrappedStream(Stream baseStream, Boolean canRead, Boolean canWrite, Boolean canSeek, EventHandler onClosed)
+    private readonly Stream _baseStream;
+    private readonly EventHandler _onClosed;
+    private bool _canRead, _canWrite, _canSeek;
+
+    internal WrappedStream(Stream baseStream, bool canRead, bool canWrite, bool canSeek, EventHandler onClosed)
     {
         _baseStream = baseStream;
         _onClosed = onClosed;
@@ -20,7 +25,7 @@ internal class WrappedStream : Stream
 
     internal WrappedStream(Stream baseStream) : this(baseStream, null) { }
 
-    public override void Flush() { _baseStream.Flush(); }
+    public override void Flush() => _baseStream.Flush();
 
     public override int Read(byte[] buffer, int offset, int count)
     {
@@ -72,17 +77,22 @@ internal class WrappedStream : Stream
         else throw new NotSupportedException("This stream does not support writing");
     }
 
-    public override bool CanRead { get { return _canRead && _baseStream.CanRead; } }
+    public override bool CanRead => _canRead && _baseStream.CanRead;
 
-    public override bool CanSeek { get { return _canSeek && _baseStream.CanSeek; } }
+    public override bool CanSeek => _canSeek && _baseStream.CanSeek;
 
-    public override bool CanWrite { get { return _canWrite && _baseStream.CanWrite; } }
+    public override bool CanWrite => _canWrite && _baseStream.CanWrite;
 
-    public override long Length { get { return _baseStream.Length; } }
+    public override long Length => _baseStream.Length;
 
     public override long Position
     {
-        get { return _baseStream.Position; }
+        get
+        {
+            if (CanSeek)
+                return _baseStream.Position;
+            throw new NotSupportedException("This stream does not support seeking");
+        }
         set
         {
             if (CanSeek)
@@ -104,16 +114,11 @@ internal class WrappedStream : Stream
     {
         if (disposing)
         {
-            if (_onClosed != null)
-                _onClosed(this, null);
+            _onClosed?.Invoke(this, null);
             _canRead = false;
             _canWrite = false;
             _canSeek = false;
         }
         base.Dispose(disposing);
     }
-
-    private Stream _baseStream;
-    private EventHandler _onClosed;
-    private Boolean _canRead, _canWrite, _canSeek;
 }

@@ -1,139 +1,168 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 // ------------------------------------------------------------------------------
 // Changes to this file must follow the http://aka.ms/api-review process.
 // ------------------------------------------------------------------------------
 
-
 namespace System.Net
 {
     public delegate System.Net.AuthenticationSchemes AuthenticationSchemeSelector(System.Net.HttpListenerRequest httpRequest);
-    public sealed partial class HttpListener
+    public sealed partial class HttpListener : System.IDisposable
     {
         public HttpListener() { }
-        public System.Net.AuthenticationSchemes AuthenticationSchemes { get { return default(System.Net.AuthenticationSchemes); } set { } }
-        public System.Net.AuthenticationSchemeSelector AuthenticationSchemeSelectorDelegate { get { return default(System.Net.AuthenticationSchemeSelector); } set { } }
-        public System.Security.Authentication.ExtendedProtection.ServiceNameCollection DefaultServiceNames { get { return default(System.Security.Authentication.ExtendedProtection.ServiceNameCollection); } }
-        public System.Security.Authentication.ExtendedProtection.ExtendedProtectionPolicy ExtendedProtectionPolicy { get { return default(System.Security.Authentication.ExtendedProtection.ExtendedProtectionPolicy); } set { } }
-        public System.Net.HttpListener.ExtendedProtectionSelector ExtendedProtectionSelectorDelegate { get { return default(System.Net.HttpListener.ExtendedProtectionSelector); } set { } }
-        public bool IgnoreWriteExceptions { get { return default(bool); } set { } }
-        public bool IsListening { get { return default(bool); } }
-        public static bool IsSupported { get { return default(bool); } }
-        public System.Net.HttpListenerPrefixCollection Prefixes { get { return default(System.Net.HttpListenerPrefixCollection); } }
-        public string Realm { get { return default(string); } set { } }
-        public System.Net.HttpListenerTimeoutManager TimeoutManager { get { return default(System.Net.HttpListenerTimeoutManager); } }
-        public bool UnsafeConnectionNtlmAuthentication { get { return default(bool); } set { } }
+        public System.Net.AuthenticationSchemes AuthenticationSchemes { get { throw null; } set { } }
+        public System.Net.AuthenticationSchemeSelector AuthenticationSchemeSelectorDelegate { get { throw null; } set { } }
+        public System.Security.Authentication.ExtendedProtection.ServiceNameCollection DefaultServiceNames { get { throw null; } }
+        public System.Security.Authentication.ExtendedProtection.ExtendedProtectionPolicy ExtendedProtectionPolicy { get { throw null; } set { } }
+        public System.Net.HttpListener.ExtendedProtectionSelector ExtendedProtectionSelectorDelegate { get { throw null; } set { } }
+        public bool IgnoreWriteExceptions { get { throw null; } set { } }
+        public bool IsListening { get { throw null; } }
+        public static bool IsSupported { get { throw null; } }
+        public System.Net.HttpListenerPrefixCollection Prefixes { get { throw null; } }
+        public string Realm { get { throw null; } set { } }
+        public System.Net.HttpListenerTimeoutManager TimeoutManager { get { throw null; } }
+        public bool UnsafeConnectionNtlmAuthentication { get { throw null; } set { } }
         public void Abort() { }
-        public System.IAsyncResult BeginGetContext(System.AsyncCallback callback, object state) { return default(System.IAsyncResult); }
-        public System.Net.HttpListenerContext EndGetContext(System.IAsyncResult asyncResult) { return default(System.Net.HttpListenerContext); }
-        public System.Net.HttpListenerContext GetContext() { return default(System.Net.HttpListenerContext); }
-        public System.Threading.Tasks.Task<System.Net.HttpListenerContext> GetContextAsync() { return default(System.Threading.Tasks.Task<System.Net.HttpListenerContext>); }
+        public System.IAsyncResult BeginGetContext(System.AsyncCallback callback, object state) { throw null; }
+        public void Close() { }
+        public System.Net.HttpListenerContext EndGetContext(System.IAsyncResult asyncResult) { throw null; }
+        public System.Net.HttpListenerContext GetContext() { throw null; }
+        public System.Threading.Tasks.Task<System.Net.HttpListenerContext> GetContextAsync() { throw null; }
         public void Start() { }
         public void Stop() { }
+        void System.IDisposable.Dispose() { }
         public delegate System.Security.Authentication.ExtendedProtection.ExtendedProtectionPolicy ExtendedProtectionSelector(System.Net.HttpListenerRequest request);
     }
     public partial class HttpListenerBasicIdentity : System.Security.Principal.GenericIdentity
     {
-        public HttpListenerBasicIdentity(string username, string password) : base(default(string)) { }
-        public virtual string Password { get { return default(string); } }
+        public HttpListenerBasicIdentity(string username, string password) : base (default(System.Security.Principal.GenericIdentity)) { }
+        public virtual string Password { get { throw null; } }
     }
     public sealed partial class HttpListenerContext
     {
         internal HttpListenerContext() { }
-        public System.Net.HttpListenerRequest Request { get { return default(System.Net.HttpListenerRequest); } }
-        public System.Net.HttpListenerResponse Response { get { return default(System.Net.HttpListenerResponse); } }
-        public System.Security.Principal.IPrincipal User { get { return default(System.Security.Principal.IPrincipal); } }
+        public System.Net.HttpListenerRequest Request { get { throw null; } }
+        public System.Net.HttpListenerResponse Response { get { throw null; } }
+        public System.Security.Principal.IPrincipal User { get { throw null; } }
+        public System.Threading.Tasks.Task<System.Net.WebSockets.HttpListenerWebSocketContext> AcceptWebSocketAsync(string subProtocol) { throw null; }
+        public System.Threading.Tasks.Task<System.Net.WebSockets.HttpListenerWebSocketContext> AcceptWebSocketAsync(string subProtocol, int receiveBufferSize, System.TimeSpan keepAliveInterval) { throw null; }
+        public System.Threading.Tasks.Task<System.Net.WebSockets.HttpListenerWebSocketContext> AcceptWebSocketAsync(string subProtocol, int receiveBufferSize, System.TimeSpan keepAliveInterval, System.ArraySegment<byte> internalBuffer) { throw null; }
+        public System.Threading.Tasks.Task<System.Net.WebSockets.HttpListenerWebSocketContext> AcceptWebSocketAsync(string subProtocol, System.TimeSpan keepAliveInterval) { throw null; }
     }
-    public partial class HttpListenerException : System.Exception
+    public partial class HttpListenerException : System.ComponentModel.Win32Exception
     {
         public HttpListenerException() { }
         public HttpListenerException(int errorCode) { }
         public HttpListenerException(int errorCode, string message) { }
+        protected HttpListenerException(System.Runtime.Serialization.SerializationInfo serializationInfo, System.Runtime.Serialization.StreamingContext streamingContext) { }
+        public override int ErrorCode { get { throw null; } }
     }
     public partial class HttpListenerPrefixCollection : System.Collections.Generic.ICollection<string>, System.Collections.Generic.IEnumerable<string>, System.Collections.IEnumerable
     {
         internal HttpListenerPrefixCollection() { }
-        public int Count { get { return default(int); } }
-        public bool IsReadOnly { get { return default(bool); } }
-        public bool IsSynchronized { get { return default(bool); } }
+        public int Count { get { throw null; } }
+        public bool IsReadOnly { get { throw null; } }
+        public bool IsSynchronized { get { throw null; } }
         public void Add(string uriPrefix) { }
         public void Clear() { }
-        public bool Contains(string uriPrefix) { return default(bool); }
+        public bool Contains(string uriPrefix) { throw null; }
         public void CopyTo(System.Array array, int offset) { }
         public void CopyTo(string[] array, int offset) { }
-        public System.Collections.Generic.IEnumerator<string> GetEnumerator() { return default(System.Collections.Generic.IEnumerator<string>); }
-        public bool Remove(string uriPrefix) { return default(bool); }
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { return default(System.Collections.IEnumerator); }
+        public System.Collections.Generic.IEnumerator<string> GetEnumerator() { throw null; }
+        public bool Remove(string uriPrefix) { throw null; }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() { throw null; }
     }
     public sealed partial class HttpListenerRequest
     {
         internal HttpListenerRequest() { }
-        public string[] AcceptTypes { get { return default(string[]); } }
-        public int ClientCertificateError { get { return default(int); } }
-        public System.Text.Encoding ContentEncoding { get { return default(System.Text.Encoding); } }
-        public long ContentLength64 { get { return default(long); } }
-        public string ContentType { get { return default(string); } }
-        public System.Net.CookieCollection Cookies { get { return default(System.Net.CookieCollection); } }
-        public bool HasEntityBody { get { return default(bool); } }
-        public System.Collections.Specialized.NameValueCollection Headers { get { return default(System.Collections.Specialized.NameValueCollection); } }
-        public string HttpMethod { get { return default(string); } }
-        public System.IO.Stream InputStream { get { return default(System.IO.Stream); } }
-        public bool IsAuthenticated { get { return default(bool); } }
-        public bool IsLocal { get { return default(bool); } }
-        public bool IsSecureConnection { get { return default(bool); } }
-        public bool IsWebSocketRequest { get { return default(bool); } }
-        public bool KeepAlive { get { return default(bool); } }
-        public System.Net.IPEndPoint LocalEndPoint { get { return default(System.Net.IPEndPoint); } }
-        public System.Version ProtocolVersion { get { return default(System.Version); } }
-        public System.Collections.Specialized.NameValueCollection QueryString { get { return default(System.Collections.Specialized.NameValueCollection); } }
-        public string RawUrl { get { return default(string); } }
-        public System.Net.IPEndPoint RemoteEndPoint { get { return default(System.Net.IPEndPoint); } }
-        public System.Guid RequestTraceIdentifier { get { return default(System.Guid); } }
-        public string ServiceName { get { return default(string); } }
-        public System.Net.TransportContext TransportContext { get { return default(System.Net.TransportContext); } }
-        public System.Uri Url { get { return default(System.Uri); } }
-        public System.Uri UrlReferrer { get { return default(System.Uri); } }
-        public string UserAgent { get { return default(string); } }
-        public string UserHostAddress { get { return default(string); } }
-        public string UserHostName { get { return default(string); } }
-        public string[] UserLanguages { get { return default(string[]); } }
-        public System.IAsyncResult BeginGetClientCertificate(System.AsyncCallback requestCallback, object state) { return default(System.IAsyncResult); }
-        public System.Security.Cryptography.X509Certificates.X509Certificate2 EndGetClientCertificate(System.IAsyncResult asyncResult) { return default(System.Security.Cryptography.X509Certificates.X509Certificate2); }
-        public System.Security.Cryptography.X509Certificates.X509Certificate2 GetClientCertificate() { return default(System.Security.Cryptography.X509Certificates.X509Certificate2); }
-        public System.Threading.Tasks.Task<System.Security.Cryptography.X509Certificates.X509Certificate2> GetClientCertificateAsync() { return default(System.Threading.Tasks.Task<System.Security.Cryptography.X509Certificates.X509Certificate2>); }
+        public string[] AcceptTypes { get { throw null; } }
+        public int ClientCertificateError { get { throw null; } }
+        public System.Text.Encoding ContentEncoding { get { throw null; } }
+        public long ContentLength64 { get { throw null; } }
+        public string ContentType { get { throw null; } }
+        public System.Net.CookieCollection Cookies { get { throw null; } }
+        public bool HasEntityBody { get { throw null; } }
+        public System.Collections.Specialized.NameValueCollection Headers { get { throw null; } }
+        public string HttpMethod { get { throw null; } }
+        public System.IO.Stream InputStream { get { throw null; } }
+        public bool IsAuthenticated { get { throw null; } }
+        public bool IsLocal { get { throw null; } }
+        public bool IsSecureConnection { get { throw null; } }
+        public bool IsWebSocketRequest { get { throw null; } }
+        public bool KeepAlive { get { throw null; } }
+        public System.Net.IPEndPoint LocalEndPoint { get { throw null; } }
+        public System.Version ProtocolVersion { get { throw null; } }
+        public System.Collections.Specialized.NameValueCollection QueryString { get { throw null; } }
+        public string RawUrl { get { throw null; } }
+        public System.Net.IPEndPoint RemoteEndPoint { get { throw null; } }
+        public System.Guid RequestTraceIdentifier { get { throw null; } }
+        public string ServiceName { get { throw null; } }
+        public System.Net.TransportContext TransportContext { get { throw null; } }
+        public System.Uri Url { get { throw null; } }
+        public System.Uri UrlReferrer { get { throw null; } }
+        public string UserAgent { get { throw null; } }
+        public string UserHostAddress { get { throw null; } }
+        public string UserHostName { get { throw null; } }
+        public string[] UserLanguages { get { throw null; } }
+        public System.IAsyncResult BeginGetClientCertificate(System.AsyncCallback requestCallback, object state) { throw null; }
+        public System.Security.Cryptography.X509Certificates.X509Certificate2 EndGetClientCertificate(System.IAsyncResult asyncResult) { throw null; }
+        public System.Security.Cryptography.X509Certificates.X509Certificate2 GetClientCertificate() { throw null; }
+        public System.Threading.Tasks.Task<System.Security.Cryptography.X509Certificates.X509Certificate2> GetClientCertificateAsync() { throw null; }
     }
-    public sealed partial class HttpListenerResponse
+    public sealed partial class HttpListenerResponse : System.IDisposable
     {
         internal HttpListenerResponse() { }
-        public System.Text.Encoding ContentEncoding { get { return default(System.Text.Encoding); } set { } }
-        public long ContentLength64 { get { return default(long); } set { } }
-        public string ContentType { get { return default(string); } set { } }
-        public System.Net.CookieCollection Cookies { get { return default(System.Net.CookieCollection); } set { } }
-        public System.Net.WebHeaderCollection Headers { get { return default(System.Net.WebHeaderCollection); } set { } }
-        public bool KeepAlive { get { return default(bool); } set { } }
-        public System.IO.Stream OutputStream { get { return default(System.IO.Stream); } }
-        public System.Version ProtocolVersion { get { return default(System.Version); } set { } }
-        public string RedirectLocation { get { return default(string); } set { } }
-        public bool SendChunked { get { return default(bool); } set { } }
-        public int StatusCode { get { return default(int); } set { } }
-        public string StatusDescription { get { return default(string); } set { } }
+        public System.Text.Encoding ContentEncoding { get { throw null; } set { } }
+        public long ContentLength64 { get { throw null; } set { } }
+        public string ContentType { get { throw null; } set { } }
+        public System.Net.CookieCollection Cookies { get { throw null; } set { } }
+        public System.Net.WebHeaderCollection Headers { get { throw null; } set { } }
+        public bool KeepAlive { get { throw null; } set { } }
+        public System.IO.Stream OutputStream { get { throw null; } }
+        public System.Version ProtocolVersion { get { throw null; } set { } }
+        public string RedirectLocation { get { throw null; } set { } }
+        public bool SendChunked { get { throw null; } set { } }
+        public int StatusCode { get { throw null; } set { } }
+        public string StatusDescription { get { throw null; } set { } }
         public void Abort() { }
         public void AddHeader(string name, string value) { }
         public void AppendCookie(System.Net.Cookie cookie) { }
         public void AppendHeader(string name, string value) { }
+        public void Close() { }
         public void Close(byte[] responseEntity, bool willBlock) { }
         public void CopyFrom(System.Net.HttpListenerResponse templateResponse) { }
         public void Redirect(string url) { }
         public void SetCookie(System.Net.Cookie cookie) { }
+        void System.IDisposable.Dispose() { }
     }
     public partial class HttpListenerTimeoutManager
     {
         internal HttpListenerTimeoutManager() { }
-        public System.TimeSpan DrainEntityBody { get { return default(System.TimeSpan); } set { } }
-        public System.TimeSpan EntityBody { get { return default(System.TimeSpan); } set { } }
-        public System.TimeSpan HeaderWait { get { return default(System.TimeSpan); } set { } }
-        public System.TimeSpan IdleConnection { get { return default(System.TimeSpan); } set { } }
-        public long MinSendBytesPerSecond { get { return default(long); } set { } }
-        public System.TimeSpan RequestQueue { get { return default(System.TimeSpan); } set { } }
+        public System.TimeSpan DrainEntityBody { get { throw null; } set { } }
+        public System.TimeSpan EntityBody { get { throw null; } set { } }
+        public System.TimeSpan HeaderWait { get { throw null; } set { } }
+        public System.TimeSpan IdleConnection { get { throw null; } set { } }
+        public long MinSendBytesPerSecond { get { throw null; } set { } }
+        public System.TimeSpan RequestQueue { get { throw null; } set { } }
+    }
+}
+namespace System.Net.WebSockets
+{
+    public partial class HttpListenerWebSocketContext : System.Net.WebSockets.WebSocketContext
+    {
+        internal HttpListenerWebSocketContext() { }
+        public override System.Net.CookieCollection CookieCollection { get { throw null; } }
+        public override System.Collections.Specialized.NameValueCollection Headers { get { throw null; } }
+        public override bool IsAuthenticated { get { throw null; } }
+        public override bool IsLocal { get { throw null; } }
+        public override bool IsSecureConnection { get { throw null; } }
+        public override string Origin { get { throw null; } }
+        public override System.Uri RequestUri { get { throw null; } }
+        public override string SecWebSocketKey { get { throw null; } }
+        public override System.Collections.Generic.IEnumerable<string> SecWebSocketProtocols { get { throw null; } }
+        public override string SecWebSocketVersion { get { throw null; } }
+        public override System.Security.Principal.IPrincipal User { get { throw null; } }
+        public override System.Net.WebSockets.WebSocket WebSocket { get { throw null; } }
     }
 }

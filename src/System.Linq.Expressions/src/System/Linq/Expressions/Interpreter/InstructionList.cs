@@ -1,10 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // Enables instruction counting and displaying stats at process exit.
 // #define STATS
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
@@ -15,7 +15,7 @@ namespace System.Linq.Expressions.Interpreter
 {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1815:OverrideEqualsAndOperatorEqualsOnValueTypes")]
     [DebuggerTypeProxy(typeof(InstructionArray.DebugView))]
-    internal struct InstructionArray
+    internal readonly struct InstructionArray
     {
         internal readonly int MaxStackDepth;
         internal readonly int MaxContinuationDepth;
@@ -37,11 +37,6 @@ namespace System.Linq.Expressions.Interpreter
             Labels = labels;
         }
 
-        internal int Length
-        {
-            get { return Instructions.Length; }
-        }
-
         #region Debug View
 
         internal sealed class DebugView
@@ -50,21 +45,21 @@ namespace System.Linq.Expressions.Interpreter
 
             public DebugView(InstructionArray array)
             {
+                ContractUtils.RequiresNotNull(array, nameof(array));
                 _array = array;
             }
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            public InstructionList.DebugView.InstructionView[]/*!*/ A0
+            public InstructionList.DebugView.InstructionView[]/*!*/ A0 => GetInstructionViews(includeDebugCookies: true);
+
+            public InstructionList.DebugView.InstructionView[] GetInstructionViews(bool includeDebugCookies = false)
             {
-                get
-                {
-                    return InstructionList.DebugView.GetInstructionViews(
-                        _array.Instructions,
-                        _array.Objects,
-                        (index) => _array.Labels[index].Index,
-                        _array.DebugCookies
-                    );
-                }
+                return InstructionList.DebugView.GetInstructionViews(
+                    _array.Instructions,
+                    _array.Objects,
+                    (index) => _array.Labels[index].Index,
+                    includeDebugCookies ? _array.DebugCookies : null
+                );
             }
         }
         #endregion
@@ -95,36 +90,38 @@ namespace System.Linq.Expressions.Interpreter
 
             public DebugView(InstructionList list)
             {
+                ContractUtils.RequiresNotNull(list, nameof(list));
                 _list = list;
             }
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            public InstructionView[]/*!*/ A0
+            public InstructionView[]/*!*/ A0 => GetInstructionViews(includeDebugCookies: true);
+
+            public InstructionView[] GetInstructionViews(bool includeDebugCookies = false)
             {
-                get
-                {
-                    return GetInstructionViews(
+                return GetInstructionViews(
                         _list._instructions,
                         _list._objects,
                         (index) => _list._labels[index].TargetIndex,
-                        _list._debugCookies
+                        includeDebugCookies ? _list._debugCookies : null
                     );
-                }
             }
 
-            internal static InstructionView[] GetInstructionViews(IList<Instruction> instructions, IList<object> objects,
-                Func<int, int> labelIndexer, IList<KeyValuePair<int, object>> debugCookies)
+            internal static InstructionView[] GetInstructionViews(IReadOnlyList<Instruction> instructions, IReadOnlyList<object> objects,
+                Func<int, int> labelIndexer, IReadOnlyList<KeyValuePair<int, object>> debugCookies)
             {
                 var result = new List<InstructionView>();
                 int index = 0;
                 int stackDepth = 0;
                 int continuationsDepth = 0;
 
-                var cookieEnumerator = (debugCookies != null ? debugCookies : new KeyValuePair<int, object>[0]).GetEnumerator();
-                var hasCookie = cookieEnumerator.MoveNext();
+                IEnumerator<KeyValuePair<int, object>> cookieEnumerator = (debugCookies ?? Array.Empty<KeyValuePair<int, object>>()).GetEnumerator();
+                bool hasCookie = cookieEnumerator.MoveNext();
 
-                for (int i = 0; i < instructions.Count; i++)
+                for (int i = 0, n = instructions.Count; i < n; i++)
                 {
+                    Instruction instruction = instructions[i];
+
                     object cookie = null;
                     while (hasCookie && cookieEnumerator.Current.Key == i)
                     {
@@ -132,10 +129,10 @@ namespace System.Linq.Expressions.Interpreter
                         hasCookie = cookieEnumerator.MoveNext();
                     }
 
-                    int stackDiff = instructions[i].StackBalance;
-                    int contDiff = instructions[i].ContinuationsBalance;
-                    string name = instructions[i].ToDebugString(i, cookie, labelIndexer, objects);
-                    result.Add(new InstructionView(instructions[i], name, i, stackDepth, continuationsDepth));
+                    int stackDiff = instruction.StackBalance;
+                    int contDiff = instruction.ContinuationsBalance;
+                    string name = instruction.ToDebugString(i, cookie, labelIndexer, objects);
+                    result.Add(new InstructionView(instruction, name, i, stackDepth, continuationsDepth));
 
                     index++;
                     stackDepth += stackDiff;
@@ -145,7 +142,7 @@ namespace System.Linq.Expressions.Interpreter
             }
 
             [DebuggerDisplay("{GetValue(),nq}", Name = "{GetName(),nq}", Type = "{GetDisplayType(), nq}")]
-            internal struct InstructionView
+            internal readonly struct InstructionView
             {
                 private readonly int _index;
                 private readonly int _stackDepth;
@@ -213,6 +210,21 @@ namespace System.Linq.Expressions.Interpreter
             }
         }
 
+        // "Un-emit" the previous instruction.
+        // Useful if the instruction was emitted in the calling method, and covers the more usual case.
+        // In particular, calling this after an EmitPush() or EmitDup() costs about the same as adding
+        // an EmitPop() to undo it at compile time, and leaves a slightly leaner instruction list.
+        public void UnEmit()
+        {
+            Instruction instruction = _instructions[_instructions.Count - 1];
+            _instructions.RemoveAt(_instructions.Count - 1);
+
+            _currentContinuationsDepth -= instruction.ProducedContinuations;
+            _currentContinuationsDepth += instruction.ConsumedContinuations;
+            _currentStackDepth -= instruction.ProducedStack;
+            _currentStackDepth += instruction.ConsumedStack;
+        }
+
         /// <summary>
         /// Attaches a cookie to the last emitted instruction.
         /// </summary>
@@ -230,30 +242,12 @@ namespace System.Linq.Expressions.Interpreter
 #endif
         }
 
-        public int Count
-        {
-            get { return _instructions.Count; }
-        }
+        public int Count => _instructions.Count;
+        public int CurrentStackDepth => _currentStackDepth;
+        public int CurrentContinuationsDepth => _currentContinuationsDepth;
+        public int MaxStackDepth => _maxStackDepth;
 
-        public int CurrentStackDepth
-        {
-            get { return _currentStackDepth; }
-        }
-
-        public int CurrentContinuationsDepth
-        {
-            get { return _currentContinuationsDepth; }
-        }
-
-        public int MaxStackDepth
-        {
-            get { return _maxStackDepth; }
-        }
-
-        internal Instruction GetInstruction(int index)
-        {
-            return _instructions[index];
-        }
+        internal Instruction GetInstruction(int index) => _instructions[index];
 
 #if STATS
         private static Dictionary<string, int> _executedInstructions = new Dictionary<string, int>();
@@ -306,7 +300,7 @@ namespace System.Linq.Expressions.Interpreter
                 _maxStackDepth,
                 _maxContinuationDepth,
                 _instructions.ToArray(),
-                (_objects != null) ? _objects.ToArray() : null,
+                _objects?.ToArray(),
                 BuildRuntimeLabels(),
                 _debugCookies
             );
@@ -323,23 +317,23 @@ namespace System.Linq.Expressions.Interpreter
         private static Instruction s_null;
         private static Instruction s_true;
         private static Instruction s_false;
-        private static Instruction[] s_ints;
+        private static Instruction[] s_Ints;
         private static Instruction[] s_loadObjectCached;
 
         public void EmitLoad(object value)
         {
-            EmitLoad(value, null);
+            EmitLoad(value, type: null);
         }
 
         public void EmitLoad(bool value)
         {
-            if ((bool)value)
+            if (value)
             {
-                Emit(s_true ?? (s_true = new LoadObjectInstruction(value)));
+                Emit(s_true ?? (s_true = new LoadObjectInstruction(Utils.BoxedTrue)));
             }
             else
             {
-                Emit(s_false ?? (s_false = new LoadObjectInstruction(value)));
+                Emit(s_false ?? (s_false = new LoadObjectInstruction(Utils.BoxedFalse)));
             }
         }
 
@@ -351,7 +345,7 @@ namespace System.Linq.Expressions.Interpreter
                 return;
             }
 
-            if (type == null || type.GetTypeInfo().IsValueType)
+            if (type == null || type.IsValueType)
             {
                 if (value is bool)
                 {
@@ -364,12 +358,12 @@ namespace System.Linq.Expressions.Interpreter
                     int i = (int)value;
                     if (i >= PushIntMinCachedValue && i <= PushIntMaxCachedValue)
                     {
-                        if (s_ints == null)
+                        if (s_Ints == null)
                         {
-                            s_ints = new Instruction[PushIntMaxCachedValue - PushIntMinCachedValue + 1];
+                            s_Ints = new Instruction[PushIntMaxCachedValue - PushIntMinCachedValue + 1];
                         }
                         i -= PushIntMinCachedValue;
-                        Emit(s_ints[i] ?? (s_ints[i] = new LoadObjectInstruction(value)));
+                        Emit(s_Ints[i] ?? (s_Ints[i] = new LoadObjectInstruction(value)));
                         return;
                     }
                 }
@@ -416,7 +410,7 @@ namespace System.Linq.Expressions.Interpreter
 
             if (instruction != null)
             {
-                var newInstruction = instruction.BoxIfIndexMatches(index);
+                Instruction newInstruction = instruction.BoxIfIndexMatches(index);
                 if (newInstruction != null)
                 {
                     _instructions[instructionIndex] = newInstruction;
@@ -617,7 +611,7 @@ namespace System.Linq.Expressions.Interpreter
             {
                 Emit(new InitializeLocalInstruction.ImmutableValue(index, value));
             }
-            else if (type.GetTypeInfo().IsValueType)
+            else if (type.IsValueType)
             {
                 Emit(new InitializeLocalInstruction.MutableValue(index, type));
             }
@@ -627,14 +621,14 @@ namespace System.Linq.Expressions.Interpreter
             }
         }
 
-        internal void EmitInitializeParameter(int index, Type parameterType)
+        internal void EmitInitializeParameter(int index)
         {
-            Emit(Parameter(index, parameterType));
+            Emit(Parameter(index));
         }
 
-        internal static Instruction Parameter(int index, Type parameterType)
+        internal static Instruction Parameter(int index)
         {
-            return new InitializeLocalInstruction.Parameter(index, parameterType);
+            return new InitializeLocalInstruction.Parameter(index);
         }
 
         internal static Instruction ParameterBox(int index)
@@ -663,12 +657,12 @@ namespace System.Linq.Expressions.Interpreter
 
         public void EmitGetArrayItem()
         {
-            Emit(GetArrayItemInstruction.Instruction);
+            Emit(GetArrayItemInstruction.Instance);
         }
 
         public void EmitSetArrayItem()
         {
-            Emit(new SetArrayItemInstruction());
+            Emit(SetArrayItemInstruction.Instance);
         }
 
         public void EmitNewArray(Type elementType)
@@ -692,40 +686,17 @@ namespace System.Linq.Expressions.Interpreter
 
         public void EmitAdd(Type type, bool @checked)
         {
-            if (@checked)
-            {
-                Emit(AddOvfInstruction.Create(type));
-            }
-            else
-            {
-                Emit(AddInstruction.Create(type));
-            }
+            Emit(@checked ? AddOvfInstruction.Create(type) : AddInstruction.Create(type));
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters")]
         public void EmitSub(Type type, bool @checked)
         {
-            if (@checked)
-            {
-                Emit(SubOvfInstruction.Create(type));
-            }
-            else
-            {
-                Emit(SubInstruction.Create(type));
-            }
+            Emit(@checked ? SubOvfInstruction.Create(type) : SubInstruction.Create(type));
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters")]
         public void EmitMul(Type type, bool @checked)
         {
-            if (@checked)
-            {
-                Emit(MulOvfInstruction.Create(type));
-            }
-            else
-            {
-                Emit(MulInstruction.Create(type));
-            }
+            Emit(@checked ? MulOvfInstruction.Create(type) : MulInstruction.Create(type));
         }
 
         public void EmitDiv(Type type)
@@ -811,6 +782,11 @@ namespace System.Linq.Expressions.Interpreter
             Emit(new NumericConvertInstruction.Unchecked(from, to, isLiftedToNull));
         }
 
+        public void EmitConvertToUnderlying(TypeCode to, bool isLiftedToNull)
+        {
+            Emit(new NumericConvertInstruction.ToUnderlying(to, isLiftedToNull));
+        }
+
         public void EmitCast(Type toType)
         {
             Emit(CastInstruction.Create(toType));
@@ -819,6 +795,12 @@ namespace System.Linq.Expressions.Interpreter
         public void EmitCastToEnum(Type toType)
         {
             Emit(new CastToEnumInstruction(toType));
+        }
+
+        public void EmitCastReferenceToEnum(Type toType)
+        {
+            Debug.Assert(_instructions[_instructions.Count - 1] == NullCheckInstruction.Instance);
+            Emit(new CastReferenceToEnumInstruction(toType));
         }
 
         #endregion
@@ -839,14 +821,14 @@ namespace System.Linq.Expressions.Interpreter
             Emit(new DefaultValueInstruction(type));
         }
 
-        public void EmitNew(ConstructorInfo constructorInfo)
+        public void EmitNew(ConstructorInfo constructorInfo, ParameterInfo[] parameters)
         {
-            Emit(new NewInstruction(constructorInfo));
+            Emit(new NewInstruction(constructorInfo, parameters.Length));
         }
 
-        public void EmitByRefNew(ConstructorInfo constructorInfo, ByRefUpdater[] updaters)
+        public void EmitByRefNew(ConstructorInfo constructorInfo, ParameterInfo[] parameters, ByRefUpdater[] updaters)
         {
-            Emit(new ByRefNewInstruction(constructorInfo, updaters));
+            Emit(new ByRefNewInstruction(constructorInfo, parameters.Length, updaters));
         }
 
         internal void EmitCreateDelegate(LightDelegateCreator creator)
@@ -857,11 +839,6 @@ namespace System.Linq.Expressions.Interpreter
         public void EmitTypeEquals()
         {
             Emit(TypeEqualsInstruction.Instance);
-        }
-
-        public void EmitNullableTypeEquals()
-        {
-            Emit(NullableTypeEqualsInstruction.Instance);
         }
 
         public void EmitArrayLength()
@@ -945,7 +922,7 @@ namespace System.Linq.Expressions.Interpreter
 
         public void EmitCall(MethodInfo method)
         {
-            EmitCall(method, method.GetParameters());
+            EmitCall(method, method.GetParametersCached());
         }
 
         public void EmitCall(MethodInfo method, ParameterInfo[] parameters)
@@ -963,10 +940,6 @@ namespace System.Linq.Expressions.Interpreter
             Emit(NullableMethodCallInstruction.Create(method.Name, parameters.Length, method));
         }
 
-        public void EmitNullCheck(int stackOffset)
-        {
-            Emit(NullCheckInstruction.Create(stackOffset));
-        }
         #endregion
 
         #region Control Flow
@@ -1100,6 +1073,13 @@ namespace System.Linq.Expressions.Interpreter
             Emit(EnterTryCatchFinallyInstruction.CreateTryCatch());
         }
 
+        public EnterTryFaultInstruction EmitEnterTryFault(BranchLabel tryEnd)
+        {
+            var instruction = new EnterTryFaultInstruction(EnsureLabelIndex(tryEnd));
+            Emit(instruction);
+            return instruction;
+        }
+
         public void EmitEnterFinally(BranchLabel finallyStartLabel)
         {
             Emit(EnterFinallyInstruction.Create(EnsureLabelIndex(finallyStartLabel)));
@@ -1110,9 +1090,24 @@ namespace System.Linq.Expressions.Interpreter
             Emit(LeaveFinallyInstruction.Instance);
         }
 
-        public void EmitLeaveFault(bool hasValue)
+        public void EmitEnterFault(BranchLabel faultStartLabel)
         {
-            Emit(hasValue ? LeaveFaultInstruction.NonVoid : LeaveFaultInstruction.Void);
+            Emit(EnterFaultInstruction.Create(EnsureLabelIndex(faultStartLabel)));
+        }
+
+        public void EmitLeaveFault()
+        {
+            Emit(LeaveFaultInstruction.Instance);
+        }
+
+        public void EmitEnterExceptionFilter()
+        {
+            Emit(EnterExceptionFilterInstruction.Instance);
+        }
+
+        public void EmitLeaveExceptionFilter()
+        {
+            Emit(LeaveExceptionFilterInstruction.Instance);
         }
 
         public void EmitEnterExceptionHandlerNonVoid()

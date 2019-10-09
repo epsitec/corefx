@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -16,7 +17,7 @@ namespace System.Linq.Parallel
     /// <summary>
     /// This operator yields all of the distinct elements in a single data set. It works quite
     /// like the above set operations, with the obvious difference being that it only accepts
-    /// a single data source as input. 
+    /// a single data source as input.
     /// </summary>
     /// <typeparam name="TInputOutput"></typeparam>
     internal sealed class DistinctQueryOperator<TInputOutput> : UnaryQueryOperator<TInputOutput, TInputOutput>
@@ -42,7 +43,7 @@ namespace System.Linq.Parallel
 
         internal override QueryResults<TInputOutput> Open(QuerySettings settings, bool preferStriping)
         {
-            // We just open our child operator.  Do not propagate the preferStriping value, but 
+            // We just open our child operator.  Do not propagate the preferStriping value, but
             // instead explicitly set it to false. Regardless of whether the parent prefers striping or range
             // partitioning, the output will be hash-partitioned.
             QueryResults<TInputOutput> childResults = Child.Open(settings, false);
@@ -75,7 +76,7 @@ namespace System.Linq.Parallel
         //
 
         private void WrapPartitionedStreamHelper<TKey>(
-            PartitionedStream<Pair, TKey> hashStream,
+            PartitionedStream<Pair<TInputOutput, NoKeyMemoizationRequired>, TKey> hashStream,
             IPartitionedStreamRecipient<TInputOutput> recipient, CancellationToken cancellationToken)
         {
             int partitionCount = hashStream.PartitionCount;
@@ -115,11 +116,11 @@ namespace System.Linq.Parallel
         // then doesn't return elements it has already seen before.
         //
 
-        class DistinctQueryOperatorEnumerator<TKey> : QueryOperatorEnumerator<TInputOutput, int>
+        private class DistinctQueryOperatorEnumerator<TKey> : QueryOperatorEnumerator<TInputOutput, int>
         {
-            private QueryOperatorEnumerator<Pair, TKey> _source; // The data source.
-            private Set<TInputOutput> _hashLookup; // The hash lookup, used to produce the distinct set.
-            private CancellationToken _cancellationToken;
+            private readonly QueryOperatorEnumerator<Pair<TInputOutput, NoKeyMemoizationRequired>, TKey> _source; // The data source.
+            private readonly Set<TInputOutput> _hashLookup; // The hash lookup, used to produce the distinct set.
+            private readonly CancellationToken _cancellationToken;
             private Shared<int> _outputLoopCount; // Allocated in MoveNext to avoid false sharing.
 
             //---------------------------------------------------------------------------------------
@@ -127,7 +128,7 @@ namespace System.Linq.Parallel
             //
 
             internal DistinctQueryOperatorEnumerator(
-                QueryOperatorEnumerator<Pair, TKey> source, IEqualityComparer<TInputOutput> comparer,
+                QueryOperatorEnumerator<Pair<TInputOutput, NoKeyMemoizationRequired>, TKey> source, IEqualityComparer<TInputOutput> comparer,
                 CancellationToken cancellationToken)
             {
                 Debug.Assert(source != null);
@@ -147,7 +148,7 @@ namespace System.Linq.Parallel
 
                 // Iterate over this set's elements until we find a unique element.
                 TKey keyUnused = default(TKey);
-                Pair current = new Pair(default(TInputOutput), default(NoKeyMemoizationRequired));
+                Pair<TInputOutput, NoKeyMemoizationRequired> current = default(Pair<TInputOutput, NoKeyMemoizationRequired>);
 
                 if (_outputLoopCount == null)
                     _outputLoopCount = new Shared<int>(0);
@@ -158,12 +159,12 @@ namespace System.Linq.Parallel
                         CancellationState.ThrowIfCanceled(_cancellationToken);
 
                     // We ensure we never return duplicates by tracking them in our set.
-                    if (_hashLookup.Add((TInputOutput)current.First))
+                    if (_hashLookup.Add(current.First))
                     {
 #if DEBUG
                         currentKey = unchecked((int)0xdeadbeef);
 #endif
-                        currentElement = (TInputOutput)current.First;
+                        currentElement = current.First;
                         return true;
                     }
                 }
@@ -188,20 +189,20 @@ namespace System.Linq.Parallel
             return wrappedChild.Distinct(_comparer);
         }
 
-        class OrderedDistinctQueryOperatorEnumerator<TKey> : QueryOperatorEnumerator<TInputOutput, TKey>
+        private class OrderedDistinctQueryOperatorEnumerator<TKey> : QueryOperatorEnumerator<TInputOutput, TKey>
         {
-            private QueryOperatorEnumerator<Pair, TKey> _source; // The data source.
-            private Dictionary<Wrapper<TInputOutput>, TKey> _hashLookup; // The hash lookup, used to produce the distinct set.
-            private IComparer<TKey> _keyComparer; // Comparer to decide the key order.
+            private readonly QueryOperatorEnumerator<Pair<TInputOutput, NoKeyMemoizationRequired>, TKey> _source; // The data source.
+            private readonly Dictionary<Wrapper<TInputOutput>, TKey> _hashLookup; // The hash lookup, used to produce the distinct set.
+            private readonly IComparer<TKey> _keyComparer; // Comparer to decide the key order.
             private IEnumerator<KeyValuePair<Wrapper<TInputOutput>, TKey>> _hashLookupEnumerator; // Enumerates over _hashLookup.
-            private CancellationToken _cancellationToken;
+            private readonly CancellationToken _cancellationToken;
 
             //---------------------------------------------------------------------------------------
             // Instantiates a new distinction operator.
             //
 
             internal OrderedDistinctQueryOperatorEnumerator(
-                QueryOperatorEnumerator<Pair, TKey> source,
+                QueryOperatorEnumerator<Pair<TInputOutput, NoKeyMemoizationRequired>, TKey> source,
                 IEqualityComparer<TInputOutput> comparer, IComparer<TKey> keyComparer,
                 CancellationToken cancellationToken)
             {
@@ -226,7 +227,7 @@ namespace System.Linq.Parallel
 
                 if (_hashLookupEnumerator == null)
                 {
-                    Pair elem = new Pair(default(TInputOutput), default(NoKeyMemoizationRequired));
+                    Pair<TInputOutput, NoKeyMemoizationRequired> elem = default(Pair<TInputOutput, NoKeyMemoizationRequired>);
                     TKey orderKey = default(TKey);
 
                     int i = 0;
@@ -238,7 +239,7 @@ namespace System.Linq.Parallel
                         // For each element, we track the smallest order key for that element that we saw so far
                         TKey oldEntry;
 
-                        Wrapper<TInputOutput> wrappedElem = new Wrapper<TInputOutput>((TInputOutput)elem.First);
+                        Wrapper<TInputOutput> wrappedElem = new Wrapper<TInputOutput>(elem.First);
 
                         // If this is the first occurrence of this element, or the order key is lower than all keys we saw previously,
                         // update the order key for this element.

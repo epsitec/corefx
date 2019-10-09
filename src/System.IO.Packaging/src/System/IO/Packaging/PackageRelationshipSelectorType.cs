@@ -1,20 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-//-----------------------------------------------------------------------------
-//
-// Description:
-//  PackageRelationshipSelectorType enum - lists all the possible types based on which
-//  PackageRelationships can be selected. Currently we define just two of these -
-//  1. Id
-//  2. Type
-//
-//-----------------------------------------------------------------------------
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.IO.Packaging
 {
     /// <summary>
-    /// Enum to represent the different selector types for PackageRelationshipSelector  
+    /// Enum to represent the different selector types for PackageRelationshipSelector
     /// </summary>
     public enum PackageRelationshipSelectorType : int
     {
@@ -24,7 +15,7 @@ namespace System.IO.Packaging
         Id = 0,
 
         /// <summary>
-        /// Type 
+        /// Type
         /// </summary>
         Type = 1
     }

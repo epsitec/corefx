@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using Xunit;
 using System;
@@ -41,7 +42,18 @@ namespace System.Collections.Specialized.Tests
             var eqComp = new CaseInsensitiveEqualityComparer();
             var d1 = new OrderedDictionary(eqComp);
             d1.Add("foo", "bar");
-            Assert.Throws<ArgumentException>(() => d1.Add("FOO", "bar"));
+            AssertExtensions.Throws<ArgumentException>(null, () => d1.Add("FOO", "bar"));
+
+            // The equality comparer should also test for a non-existent key
+            d1.Remove("foofoo");
+            Assert.True(d1.Contains("foo"));
+
+            // Make sure we can change an existent key that passes the equality comparer
+            d1["FOO"] = "barbar";
+            Assert.Equal("barbar", d1["foo"]);
+
+            d1.Remove("FOO");
+            Assert.False(d1.Contains("foo"));
         }
 
         // public OrderedDictionary(int capacity, IEqualityComparer comparer);
@@ -103,6 +115,21 @@ namespace System.Collections.Specialized.Tests
             Assert.True(d2.IsReadOnly);
         }
 
+        [Fact]
+        public void AsReadOnly_AttemptingToModifyDictionary_Throws()
+        {
+            OrderedDictionary orderedDictionary = new OrderedDictionary().AsReadOnly();
+            Assert.Throws<NotSupportedException>(() => orderedDictionary[0] = "value");
+            Assert.Throws<NotSupportedException>(() => orderedDictionary["key"] = "value");
+
+            Assert.Throws<NotSupportedException>(() => orderedDictionary.Add("key", "value"));
+            Assert.Throws<NotSupportedException>(() => orderedDictionary.Insert(0, "key", "value"));
+
+            Assert.Throws<NotSupportedException>(() => orderedDictionary.Remove("key"));
+            Assert.Throws<NotSupportedException>(() => orderedDictionary.RemoveAt(0));
+            Assert.Throws<NotSupportedException>(() => orderedDictionary.Clear());
+        }
+
         // public ICollection Keys { get; }
         [Fact]
         public void KeysPropertyContainsAllKeys()
@@ -114,6 +141,11 @@ namespace System.Collections.Specialized.Tests
                 d["test_" + i] = i;
                 alreadyChecked[i] = false;
             }
+            ICollection keys = d.Keys;
+
+            Assert.False(keys.IsSynchronized);
+            Assert.NotSame(d, keys.SyncRoot);
+            Assert.Equal(d.Count, keys.Count);
 
             foreach (var key in d.Keys)
             {
@@ -125,6 +157,16 @@ namespace System.Collections.Specialized.Tests
                 Assert.True(number >= 0 && number < 1000);
                 alreadyChecked[number] = true;
             }
+
+            object[] array = new object[keys.Count + 50];
+            keys.CopyTo(array, 50);
+            for (int i = 50; i < array.Length; i++)
+            {
+                Assert.True(d.Contains(array[i]));
+            }
+
+            AssertExtensions.Throws<ArgumentNullException>("array", () => keys.CopyTo(null, 0));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("index", () => keys.CopyTo(new object[keys.Count], -1));
         }
 
         // bool System.Collections.ICollection.IsSynchronized { get; }
@@ -133,6 +175,23 @@ namespace System.Collections.Specialized.Tests
         {
             ICollection c = new OrderedDictionary();
             Assert.False(c.IsSynchronized);
+        }
+
+        [Fact]
+        public void SyncRootTests()
+        {
+            ICollection orderedDictionary1 = new OrderedDictionary();
+            ICollection orderedDictionary2 = new OrderedDictionary();
+
+            object sync1 = orderedDictionary1.SyncRoot;
+            object sync2 = orderedDictionary2.SyncRoot;
+
+            // Sync root objects for the same dictionaries are equivalent
+            Assert.Same(orderedDictionary1.SyncRoot, orderedDictionary1.SyncRoot);
+            Assert.Same(orderedDictionary2.SyncRoot, orderedDictionary2.SyncRoot);
+
+            // Sync root objects for different dictionaries are not equivalent
+            Assert.NotSame(sync1, sync2);
         }
 
         // bool System.Collections.IDictionary.IsFixedSize { get; }
@@ -191,7 +250,7 @@ namespace System.Collections.Specialized.Tests
                 d["test" + i] = 1337;
             }
 
-            Assert.Equal(null, d["asdasd"]);
+            Assert.Null(d["asdasd"]);
             Assert.Throws<ArgumentNullException>(() => { var a = d[null]; });
             Assert.Throws<ArgumentNullException>(() => { d[null] = 1337; });
         }
@@ -208,7 +267,13 @@ namespace System.Collections.Specialized.Tests
                 alreadyChecked[i] = false;
             }
 
-            foreach (var val in d.Values)
+            ICollection values = d.Values;
+
+            Assert.False(values.IsSynchronized);
+            Assert.NotSame(d, values.SyncRoot);
+            Assert.Equal(d.Count, values.Count);
+
+            foreach (var val in values)
             {
                 string sval = (string)val;
                 var p = sval.Split(new char[] { '_' });
@@ -218,6 +283,16 @@ namespace System.Collections.Specialized.Tests
                 Assert.True(number >= 0 && number < 1000);
                 alreadyChecked[number] = true;
             }
+
+            object[] array = new object[values.Count + 50];
+            values.CopyTo(array, 50);
+            for (int i = 50; i < array.Length; i++)
+            {
+                Assert.Equal(array[i], "bar_" + (i - 50));
+            }
+
+            AssertExtensions.Throws<ArgumentNullException>("array", () => values.CopyTo(null, 0));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("index", () => values.CopyTo(new object[values.Count], -1));
         }
 
         // public void Add(object key, object value);
@@ -243,12 +318,12 @@ namespace System.Collections.Specialized.Tests
             d.Add("5", "foo6");
             Assert.Equal("foo6", d["5"]);
 
-            Assert.Throws<ArgumentException>(() => d.Add((int)5, "foo"));
-            Assert.Throws<ArgumentException>(() => d.Add((double)5, "foo"));
-            Assert.Throws<ArgumentException>(() => d.Add((long)5, "foo"));
-            Assert.Throws<ArgumentException>(() => d.Add((short)5, "foo"));
-            Assert.Throws<ArgumentException>(() => d.Add((uint)5, "foo"));
-            Assert.Throws<ArgumentException>(() => d.Add("5", "foo"));
+            AssertExtensions.Throws<ArgumentException>(null, () => d.Add((int)5, "foo"));
+            AssertExtensions.Throws<ArgumentException>(null, () => d.Add((double)5, "foo"));
+            AssertExtensions.Throws<ArgumentException>(null, () => d.Add((long)5, "foo"));
+            AssertExtensions.Throws<ArgumentException>(null, () => d.Add((short)5, "foo"));
+            AssertExtensions.Throws<ArgumentException>(null, () => d.Add((uint)5, "foo"));
+            AssertExtensions.Throws<ArgumentException>(null, () => d.Add("5", "foo"));
 
             Assert.Throws<ArgumentNullException>(() => d.Add(null, "foobar"));
         }
@@ -267,7 +342,7 @@ namespace System.Collections.Specialized.Tests
             Assert.Equal(37, d[(object)13]);
             Assert.Throws<NotSupportedException>(() => { d["foo"] = "moooooooooaaah"; });
             Assert.Throws<NotSupportedException>(() => { d["asdasd"] = "moooooooooaaah"; });
-            Assert.Equal(null, d["asdasd"]);
+            Assert.Null(d["asdasd"]);
             Assert.Throws<ArgumentNullException>(() => { var a = d[null]; });
         }
 
@@ -324,7 +399,7 @@ namespace System.Collections.Specialized.Tests
 
             Assert.Throws<ArgumentNullException>(() => d.CopyTo(null, 0));
             Assert.Throws<ArgumentOutOfRangeException>(() => d.CopyTo(arr, -1));
-            Assert.Throws<ArgumentException>(() => d.CopyTo(arr, 3));
+            AssertExtensions.Throws<ArgumentException>(null, () => d.CopyTo(arr, 3));
 
             d.CopyTo(arr, 0);
             for (int i = 0; i < 2; i++)
@@ -343,21 +418,67 @@ namespace System.Collections.Specialized.Tests
             Assert.NotEqual(arr[1].Key, arr[2].Key);
         }
 
-        // public virtual IDictionaryEnumerator GetEnumerator();
-        // IEnumerator System.Collections.IEnumerable.GetEnumerator();
+        [Fact]
+        public void GetDictionaryEnumeratorTests()
+        {
+            var d = new OrderedDictionary();
+            for (int i = 0; i < 10; i++)
+            {
+                d.Add("Key_" + i, "Value_" + i);
+            }
+
+            IDictionaryEnumerator e = d.GetEnumerator();
+            for (int i = 0; i < 2; i++)
+            {
+                int count = 0;
+                while (e.MoveNext())
+                {
+                    DictionaryEntry entry1 = (DictionaryEntry)e.Current;
+                    DictionaryEntry entry2 = e.Entry;
+
+                    Assert.Equal(entry1.Key, entry2.Key);
+                    Assert.Equal(entry1.Value, entry1.Value);
+
+                    Assert.Equal(e.Key, entry1.Key);
+                    Assert.Equal(e.Value, entry1.Value);
+
+                    Assert.Equal(e.Value, d[e.Key]);
+                    count++;
+                }
+                Assert.Equal(count, d.Count);
+                Assert.False(e.MoveNext());
+                e.Reset();
+            }
+
+            e = d.GetEnumerator();
+            d["foo"] = "bar";
+            Assert.Throws<InvalidOperationException>(() => e.MoveNext());
+        }
+
         [Fact]
         public void GetEnumeratorTests()
         {
             var d = new OrderedDictionary();
-            IEnumerator e = d.GetEnumerator();
-            d["foo"] = "bar";
-            Assert.Throws<InvalidOperationException>(() => e.MoveNext());
-            e = d.GetEnumerator();
-            Assert.True(e.MoveNext());
-            var c = (DictionaryEntry)e.Current;
-            Assert.Equal("foo", c.Key);
-            Assert.Equal("bar", c.Value);
-            Assert.False(e.MoveNext());
+            for (int i = 0; i < 10; i++)
+            {
+                d.Add("Key_" + i, "Value_" + i);
+            }
+
+            IEnumerator e = ((ICollection)d).GetEnumerator();
+            for (int i = 0; i < 2; i++)
+            {
+                int count = 0;
+                while (e.MoveNext())
+                {
+                    DictionaryEntry entry = (DictionaryEntry)e.Current;
+
+                    Assert.Equal(entry.Value, d[entry.Key]);
+                    count++;
+                }
+                Assert.Equal(count, d.Count);
+                Assert.False(e.MoveNext());
+                e.Reset();
+            }
         }
 
         // public void Insert(int index, object key, object value);
@@ -372,7 +493,7 @@ namespace System.Collections.Specialized.Tests
             d.Insert(0, "foo", "bar");
             Assert.Equal("bar", d["foo"]);
             Assert.Equal("bar", d[0]);
-            Assert.Throws<ArgumentException>(() => d.Insert(0, "foo", "bar"));
+            AssertExtensions.Throws<ArgumentException>(null, () => d.Insert(0, "foo", "bar"));
 
             d.Insert(0, "aaa", "bbb");
             Assert.Equal("bbb", d["aaa"]);

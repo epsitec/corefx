@@ -1,5 +1,6 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Composition.Hosting.Core;
@@ -7,11 +8,8 @@ using System.Composition.Hosting.Providers.CurrentScope;
 using System.Composition.Hosting.Providers.ExportFactory;
 using System.Composition.Hosting.Providers.ImportMany;
 using System.Composition.Hosting.Providers.Lazy;
-using System.Composition.Hosting.Providers.Metadata;
-using System.Composition.Runtime;
+using System.Diagnostics;
 using System.Linq;
-
-using Microsoft.Internal;
 
 namespace System.Composition.Hosting
 {
@@ -21,14 +19,13 @@ namespace System.Composition.Hosting
     /// </summary>
     public sealed class CompositionHost : CompositionContext, IDisposable
     {
-        private static readonly string[] s_noBoundaries = EmptyArray<string>.Value;
+        private static readonly string[] s_noBoundaries = Array.Empty<string>();
 
         private readonly LifetimeContext _rootLifetimeContext;
 
         private CompositionHost(LifetimeContext rootLifetimeContext)
         {
-            Requires.NotNull(rootLifetimeContext, "rootLifetimeContext");
-
+            Debug.Assert(rootLifetimeContext != null);
             _rootLifetimeContext = rootLifetimeContext;
         }
 
@@ -47,7 +44,10 @@ namespace System.Composition.Hosting
         /// <returns>The container as an <see cref="CompositionHost"/>.</returns>
         public static CompositionHost CreateCompositionHost(IEnumerable<ExportDescriptorProvider> providers)
         {
-            Requires.NotNull(providers, "providers");
+            if (providers == null)
+            {
+                throw new ArgumentNullException(nameof(providers));
+            }
 
             var allProviders = new ExportDescriptorProvider[] {
                 new LazyExportDescriptorProvider(),

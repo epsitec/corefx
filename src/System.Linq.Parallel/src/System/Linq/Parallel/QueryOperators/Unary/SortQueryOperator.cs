@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -68,29 +69,11 @@ namespace System.Linq.Parallel
                 key2Comparer = new ReverseComparer<TKey2>(key2Comparer);
             }
 
-            IComparer<Pair> pairComparer = new PairComparer<TSortKey, TKey2>(_comparer, key2Comparer);
-            Func<TInputOutput, Pair> pairKeySelector =
-                (TInputOutput elem) => new Pair(_keySelector(elem), key2Selector(elem));
+            IComparer<Pair<TSortKey, TKey2>> pairComparer = new PairComparer<TSortKey, TKey2>(_comparer, key2Comparer);
+            Func<TInputOutput, Pair<TSortKey, TKey2>> pairKeySelector =
+                (TInputOutput elem) => new Pair<TSortKey, TKey2>(_keySelector(elem), key2Selector(elem));
 
-            return new SortQueryOperator<TInputOutput, Pair>(Child, pairKeySelector, pairComparer, false);
-        }
-
-        //---------------------------------------------------------------------------------------
-        // Accessor the the key selector.
-        //
-
-        internal Func<TInputOutput, TSortKey> KeySelector
-        {
-            get { return _keySelector; }
-        }
-
-        //---------------------------------------------------------------------------------------
-        // Accessor the the key comparer.
-        //
-
-        internal IComparer<TSortKey> KeyComparer
-        {
-            get { return _comparer; }
+            return new SortQueryOperator<TInputOutput, Pair<TSortKey, TKey2>>(Child, pairKeySelector, pairComparer, false);
         }
 
         //---------------------------------------------------------------------------------------
@@ -101,7 +84,7 @@ namespace System.Linq.Parallel
         internal override QueryResults<TInputOutput> Open(QuerySettings settings, bool preferStriping)
         {
             QueryResults<TInputOutput> childQueryResults = Child.Open(settings, false);
-            return new SortQueryOperatorResults<TInputOutput, TSortKey>(childQueryResults, this, settings, preferStriping);
+            return new SortQueryOperatorResults<TInputOutput, TSortKey>(childQueryResults, this, settings);
         }
 
 
@@ -114,7 +97,7 @@ namespace System.Linq.Parallel
             for (int i = 0; i < outputStream.PartitionCount; i++)
             {
                 outputStream[i] = new SortQueryOperatorEnumerator<TInputOutput, TKey, TSortKey>(
-                    inputStream[i], _keySelector, _comparer);
+                    inputStream[i], _keySelector);
             }
 
             recipient.Receive<TSortKey>(outputStream);
@@ -144,18 +127,16 @@ namespace System.Linq.Parallel
     internal class SortQueryOperatorResults<TInputOutput, TSortKey> : QueryResults<TInputOutput>
     {
         protected QueryResults<TInputOutput> _childQueryResults; // Results of the child query
-        private SortQueryOperator<TInputOutput, TSortKey> _op; // Operator that generated these results
+        private readonly SortQueryOperator<TInputOutput, TSortKey> _op; // Operator that generated these results
         private QuerySettings _settings; // Settings collected from the query
-        private bool _preferStriping; // If the results are indexible, should we use striping when partitioning them
 
         internal SortQueryOperatorResults(
             QueryResults<TInputOutput> childQueryResults, SortQueryOperator<TInputOutput, TSortKey> op,
-            QuerySettings settings, bool preferStriping)
+            QuerySettings settings)
         {
             _childQueryResults = childQueryResults;
             _op = op;
             _settings = settings;
-            _preferStriping = preferStriping;
         }
 
         internal override bool IsIndexible
@@ -170,8 +151,8 @@ namespace System.Linq.Parallel
 
         private class ChildResultsRecipient : IPartitionedStreamRecipient<TInputOutput>
         {
-            private IPartitionedStreamRecipient<TInputOutput> _outputRecipient;
-            private SortQueryOperator<TInputOutput, TSortKey> _op;
+            private readonly IPartitionedStreamRecipient<TInputOutput> _outputRecipient;
+            private readonly SortQueryOperator<TInputOutput, TSortKey> _op;
             private QuerySettings _settings;
 
             internal ChildResultsRecipient(IPartitionedStreamRecipient<TInputOutput> outputRecipient, SortQueryOperator<TInputOutput, TSortKey> op, QuerySettings settings)
@@ -196,30 +177,19 @@ namespace System.Linq.Parallel
     {
         private readonly QueryOperatorEnumerator<TInputOutput, TKey> _source; // Data source to sort.
         private readonly Func<TInputOutput, TSortKey> _keySelector; // Key selector used when sorting.
-        private readonly IComparer<TSortKey> _keyComparer; // Key comparison logic to use during sorting.
 
         //---------------------------------------------------------------------------------------
         // Instantiates a new sort operator enumerator.
         //
 
         internal SortQueryOperatorEnumerator(QueryOperatorEnumerator<TInputOutput, TKey> source,
-            Func<TInputOutput, TSortKey> keySelector, IComparer<TSortKey> keyComparer)
+            Func<TInputOutput, TSortKey> keySelector)
         {
             Debug.Assert(source != null);
             Debug.Assert(keySelector != null, "need a key comparer");
-            Debug.Assert(keyComparer != null, "expected a compiled operator");
 
             _source = source;
             _keySelector = keySelector;
-            _keyComparer = keyComparer;
-        }
-        //---------------------------------------------------------------------------------------
-        // Accessor for the key comparison routine.
-        //
-
-        public IComparer<TSortKey> KeyComparer
-        {
-            get { return _keyComparer; }
         }
 
         //---------------------------------------------------------------------------------------

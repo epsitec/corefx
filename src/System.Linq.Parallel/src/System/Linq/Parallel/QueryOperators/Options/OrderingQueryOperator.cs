@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
@@ -14,22 +15,19 @@ namespace System.Linq.Parallel
 {
     /// <summary>
     /// Represents operators AsOrdered and AsUnordered. In the current implementation, it
-    /// simply turns on preservation globally in the query. 
+    /// simply turns on preservation globally in the query.
     /// </summary>
     /// <typeparam name="TSource"></typeparam>
     internal sealed class OrderingQueryOperator<TSource> : QueryOperator<TSource>
     {
-        // Turns on order (AsOrdered) or turns off order (AsUnordered)
-        private bool _orderOn;
-        private QueryOperator<TSource> _child;
-        private OrdinalIndexState _ordinalIndexState;
+        private readonly QueryOperator<TSource> _child;
+        private readonly OrdinalIndexState _ordinalIndexState;
 
         public OrderingQueryOperator(QueryOperator<TSource> child, bool orderOn)
             : base(orderOn, child.SpecifiedQuerySettings)
         {
             _child = child;
             _ordinalIndexState = _child.OrdinalIndexState;
-            _orderOn = orderOn;
         }
 
         internal override QueryResults<TSource> Open(QuerySettings settings, bool preferStriping)

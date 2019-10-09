@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +11,8 @@ namespace System.Diagnostics
 {
     public sealed partial class FileVersionInfo
     {
+        private static readonly char[] s_versionSeparators = new char[] { '.' };
+
         private FileVersionInfo(string fileName)
         {
             _fileName = fileName;
@@ -40,10 +43,20 @@ namespace System.Diagnostics
         /// <returns>true if the file is a managed assembly; otherwise, false.</returns>
         private bool TryLoadManagedAssemblyMetadata()
         {
+            // First make sure it's a file we can actually read from.  Only regular files are relevant,
+            // and attempting to open and read from a file such as a named pipe file could cause us to
+            // hang (waiting for someone else to open and write to the file).
+            Interop.Sys.FileStatus fileStatus;
+            if (Interop.Sys.Stat(_fileName, out fileStatus) != 0 ||
+                (fileStatus.Mode & Interop.Sys.FileTypes.S_IFMT) != Interop.Sys.FileTypes.S_IFREG)
+            {
+                throw new FileNotFoundException(SR.Format(SR.IO_FileNotFound_FileName, _fileName), _fileName);
+            }
+
             try
             {
                 // Try to load the file using the managed metadata reader
-                using (FileStream assemblyStream = File.OpenRead(_fileName))
+                using (FileStream assemblyStream = new FileStream(_fileName, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 0x1000, useAsync: false))
                 using (PEReader peReader = new PEReader(assemblyStream))
                 {
                     if (peReader.HasMetadata)
@@ -51,7 +64,7 @@ namespace System.Diagnostics
                         MetadataReader metadataReader = peReader.GetMetadataReader();
                         if (metadataReader.IsAssembly)
                         {
-                            LoadManagedAssemblyMetadata(metadataReader);
+                            LoadManagedAssemblyMetadata(metadataReader, peReader.PEHeaders.IsExe);
                             return true;
                         }
                     }
@@ -62,22 +75,30 @@ namespace System.Diagnostics
         }
 
         /// <summary>Load our fields from the metadata of the file as represented by the provided metadata reader.</summary>
-        /// <param name="metadataReader">The metadata reader for the CLI file this represents.</param>
-        private void LoadManagedAssemblyMetadata(MetadataReader metadataReader)
+        /// <param name="metadataReader">The metadata reader for the CLI file this represents.</param>\
+        /// <param name="isExe">true if the assembly represents an executable; false if it's a dll.</param>
+        private void LoadManagedAssemblyMetadata(MetadataReader metadataReader, bool isExe)
         {
             AssemblyDefinition assemblyDefinition = metadataReader.GetAssemblyDefinition();
 
-            // Set the internal and original names based on the file name.
-            _internalName = _originalFilename = Path.GetFileName(_fileName);
+            // Set the internal and original names based on the assembly name.  We avoid using the
+            // current filename for determinism and better alignment with behavior on Windows.
+            string assemblyName = metadataReader.GetString(assemblyDefinition.Name);
+            if (!assemblyName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) &&
+                !assemblyName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            {
+                assemblyName += isExe ? ".exe" : ".dll";
+            }
+            _internalName = _originalFilename = assemblyName;
 
-            // Set the product version based on the assembly's version (this may be overwritten 
+            // Set the product version based on the assembly's version (this may be overwritten
             // later in the method).
             Version productVersion = assemblyDefinition.Version;
-            _productVersion = productVersion.ToString(4);
+            _productVersion = productVersion.ToString();
             _productMajor = productVersion.Major;
             _productMinor = productVersion.Minor;
-            _productBuild = productVersion.Build;
-            _productPrivate = productVersion.Revision;
+            _productBuild = productVersion.Build != -1 ? productVersion.Build : 0;
+            _productPrivate = productVersion.Revision != -1 ? productVersion.Revision : 0;
 
             // "Language Neutral" is used on Win32 for unknown language identifiers.
             _language = "Language Neutral";
@@ -99,6 +120,8 @@ namespace System.Diagnostics
             _isPreRelease = false;
             _isPrivateBuild = false;
             _isSpecialBuild = false;
+
+            bool sawAssemblyInformationalVersionAttribute = false;
 
             // Everything else is parsed from assembly attributes
             MetadataStringComparer comparer = metadataReader.StringComparer;
@@ -123,34 +146,14 @@ namespace System.Diagnostics
                     }
                     else if (comparer.Equals(typeNameHandle, "AssemblyFileVersionAttribute"))
                     {
-                        string versionString = string.Empty;
-                        GetStringAttributeArgumentValue(metadataReader, attr, ref versionString);
-                        Version v;
-                        if (Version.TryParse(versionString, out v))
-                        {
-                            _fileVersion = v.ToString(4);
-                            _fileMajor = v.Major;
-                            _fileMinor = v.Minor;
-                            _fileBuild = v.Build;
-                            _filePrivate = v.Revision;
-
-                            // When the managed compiler sees an [AssemblyVersion(...)] attribute, it uses that to set 
-                            // both the assembly version and the product version in the Win32 resources. If it doesn't 
-                            // see an [AssemblyVersion(...)], then it sets the assembly version to 0.0.0.0, however it 
-                            // sets the product version in the Win32 resources to whatever was defined in the 
-                            // [AssemblyFileVersionAttribute(...)] if there was one.  Without parsing the Win32 resources,
-                            // we can't differentiate these two cases, so given the rarity of explicitly setting an 
-                            // assembly's version number to 0.0.0.0, we assume that if it is 0.0.0.0 then the attribute 
-                            // wasn't specified and we use the file version.
-                            if (_productVersion == "0.0.0.0")
-                            {
-                                _productVersion = _fileVersion;
-                                _productMajor = _fileMajor;
-                                _productMinor = _fileMinor;
-                                _productBuild = _fileBuild;
-                                _productPrivate = _filePrivate;
-                            }
-                        }
+                        GetStringAttributeArgumentValue(metadataReader, attr, ref _fileVersion);
+                        ParseVersion(_fileVersion, out _fileMajor, out _fileMinor, out _fileBuild, out _filePrivate);
+                    }
+                    else if (comparer.Equals(typeNameHandle, "AssemblyInformationalVersionAttribute"))
+                    {
+                        GetStringAttributeArgumentValue(metadataReader, attr, ref _productVersion);
+                        ParseVersion(_productVersion, out _productMajor, out _productMinor, out _productBuild, out _productPrivate);
+                        sawAssemblyInformationalVersionAttribute = true;
                     }
                     else if (comparer.Equals(typeNameHandle, "AssemblyProductAttribute"))
                     {
@@ -166,6 +169,81 @@ namespace System.Diagnostics
                     }
                 }
             }
+
+            // When the managed compiler sees an [AssemblyVersion(...)] attribute, it uses that to set
+            // both the assembly version and the product version in the Win32 resources. If it doesn't
+            // see an [AssemblyVersion(...)], then it sets the assembly version to 0.0.0.0, however it
+            // sets the product version in the Win32 resources to whatever was defined in the
+            // [AssemblyFileVersionAttribute(...)] if there was one (unless there is an AssemblyInformationalVersionAttribute,
+            // in which case it always uses that for the product version).  Without parsing the Win32 resources,
+            // we can't differentiate these two cases, so given the rarity of explicitly setting an
+            // assembly's version number to 0.0.0.0, we assume that if it is 0.0.0.0 then the attribute
+            // wasn't specified and we use the file version.
+
+            if (!sawAssemblyInformationalVersionAttribute && _productVersion == "0.0.0.0")
+            {
+                _productVersion = _fileVersion;
+                _productMajor = _fileMajor;
+                _productMinor = _fileMinor;
+                _productBuild = _fileBuild;
+                _productPrivate = _filePrivate;
+            }
+        }
+
+        /// <summary>Parses the version into its constituent parts.</summary>
+        private static void ParseVersion(string versionString, out int major, out int minor, out int build, out int priv)
+        {
+            // Relatively-forgiving parsing of a version:
+            // - If there are more than four parts (separated by periods), all results are deemed 0
+            // - If any part fails to parse completely as an integer, no further parts are parsed and are left as 0.
+            // - If any part partially parses as an integer, that value is used for that part.
+            // - Whitespace is treated like any other non-digit character and thus isn't ignored.
+            // - Each component is parsed as a ushort, allowing for overflow.
+
+            string[] parts = versionString.Split(s_versionSeparators);
+            major = minor = build = priv = 0;
+            if (parts.Length <= 4)
+            {
+                bool endedEarly;
+                if (parts.Length > 0)
+                {
+                    major = ParseUInt16UntilNonDigit(parts[0], out endedEarly);
+                    if (!endedEarly && parts.Length > 1)
+                    {
+                        minor = ParseUInt16UntilNonDigit(parts[1], out endedEarly);
+                        if (!endedEarly && parts.Length > 2)
+                        {
+                            build = ParseUInt16UntilNonDigit(parts[2], out endedEarly);
+                            if (!endedEarly && parts.Length > 3)
+                            {
+                                priv = ParseUInt16UntilNonDigit(parts[3], out endedEarly);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>Parses a string as a UInt16 until it hits a non-digit.</summary>
+        /// <param name="s">The string to parse.</param>
+        /// <returns>The parsed value.</returns>
+        private static ushort ParseUInt16UntilNonDigit(string s, out bool endedEarly)
+        {
+            endedEarly = false;
+            ushort result = 0;
+
+            for (int index = 0; index < s.Length; index++)
+            {
+                char c = s[index];
+                if (c < '0' || c > '9')
+                {
+                    endedEarly = true;
+                    break;
+                }
+                result = (ushort)((result * 10) + (c - '0')); // explicitly allow for overflow, as this is the behavior employed on Windows
+            }
+
+            return result;
         }
 
         /// <summary>Gets the name of an attribute.</summary>
@@ -228,7 +306,7 @@ namespace System.Diagnostics
             BlobReader signatureReader = reader.GetBlobReader(signature);
             BlobReader valueReader = reader.GetBlobReader(attr.Value);
 
-            const ushort Prolog = 1; // two-byte "prolog" defined by Ecma 335 (II.23.3) to be at the beginning of attribute value blobs
+            const ushort Prolog = 1; // two-byte "prolog" defined by ECMA-335 (II.23.3) to be at the beginning of attribute value blobs
             if (valueReader.ReadUInt16() == Prolog)
             {
                 SignatureHeader header = signatureReader.ReadSignatureHeader();

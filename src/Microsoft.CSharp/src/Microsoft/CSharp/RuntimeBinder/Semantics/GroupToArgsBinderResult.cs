@@ -1,67 +1,43 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System.Collections.Generic;
 
 namespace Microsoft.CSharp.RuntimeBinder.Semantics
 {
-    internal partial class ExpressionBinder
+    internal readonly partial struct ExpressionBinder
     {
         // ----------------------------------------------------------------------------
         // This class takes an EXPRMEMGRP and a set of arguments and binds the arguments
         // to the best applicable method in the group.
         // ----------------------------------------------------------------------------
 
-        internal class GroupToArgsBinderResult
+        internal sealed class GroupToArgsBinderResult
         {
-            public MethPropWithInst BestResult;
-            public MethPropWithInst GetBestResult() { return BestResult; }
-            public MethPropWithInst AmbiguousResult;
-            public MethPropWithInst GetAmbiguousResult() { return AmbiguousResult; }
-            public MethPropWithInst InaccessibleResult;
-            public MethPropWithInst GetInaccessibleResult() { return InaccessibleResult; }
-            public MethPropWithInst UninferrableResult;
-            public MethPropWithInst GetUninferrableResult() { return UninferrableResult; }
-            public MethPropWithInst InconvertibleResult;
+            public MethPropWithInst BestResult { get; set; }
+
+            public MethPropWithInst InaccessibleResult { get; }
+
+            public MethPropWithInst UninferableResult { get; }
+
             public GroupToArgsBinderResult()
             {
                 BestResult = new MethPropWithInst();
-                AmbiguousResult = new MethPropWithInst();
                 InaccessibleResult = new MethPropWithInst();
-                UninferrableResult = new MethPropWithInst();
-                InconvertibleResult = new MethPropWithInst();
-                _inconvertibleResults = new List<MethPropWithInst>();
+                UninferableResult = new MethPropWithInst();
             }
-
-            private List<MethPropWithInst> _inconvertibleResults;
-
-            /////////////////////////////////////////////////////////////////////////////////
-
-            public void AddInconvertibleResult(
-                MethodSymbol method,
-                AggregateType currentType,
-                TypeArray currentTypeArgs)
-            {
-                if (InconvertibleResult.Sym == null)
-                {
-                    // This is the first one, so set it for error reporting usage.
-                    InconvertibleResult.Set(method, currentType, currentTypeArgs);
-                }
-                _inconvertibleResults.Add(new MethPropWithInst(method, currentType, currentTypeArgs));
-            }
-
-            /////////////////////////////////////////////////////////////////////////////////
 
             private static int NumberOfErrorTypes(TypeArray pTypeArgs)
             {
                 int nCount = 0;
-                for (int i = 0; i < pTypeArgs.Size; i++)
+                for (int i = 0; i < pTypeArgs.Count; i++)
                 {
-                    if (pTypeArgs.Item(i).IsErrorType())
+                    if (pTypeArgs[i] == null)
                     {
                         nCount++;
                     }
                 }
+
                 return nCount;
             }
 
@@ -72,36 +48,36 @@ namespace Microsoft.CSharp.RuntimeBinder.Semantics
 
                 if (leftErrors == rightErrors)
                 {
-                    int max = pTypeArgs1.Size > pTypeArgs2.Size ? pTypeArgs2.Size : pTypeArgs1.Size;
+                    int max = pTypeArgs1.Count > pTypeArgs2.Count ? pTypeArgs2.Count : pTypeArgs1.Count;
 
-                    // If we dont have a winner yet, go through each element's type args.
+                    // If we don't have a winner yet, go through each element's type args.
                     for (int i = 0; i < max; i++)
                     {
-                        if (pTypeArgs1.Item(i).IsAggregateType())
+                        if (pTypeArgs1[i] is AggregateType aggArg1)
                         {
-                            leftErrors += NumberOfErrorTypes(pTypeArgs1.Item(i).AsAggregateType().GetTypeArgsAll());
+                            leftErrors += NumberOfErrorTypes(aggArg1.TypeArgsAll);
                         }
-                        if (pTypeArgs2.Item(i).IsAggregateType())
+                        if (pTypeArgs2[i] is AggregateType aggArg2)
                         {
-                            rightErrors += NumberOfErrorTypes(pTypeArgs2.Item(i).AsAggregateType().GetTypeArgsAll());
+                            rightErrors += NumberOfErrorTypes(aggArg2.TypeArgsAll);
                         }
                     }
                 }
                 return rightErrors < leftErrors;
             }
 
-            public bool IsBetterUninferrableResult(TypeArray pTypeArguments)
+            public bool IsBetterUninferableResult(TypeArray pTypeArguments)
             {
-                if (UninferrableResult.Sym == null)
+                if (UninferableResult.Sym == null)
                 {
-                    // If we dont even have a result, then its definitely better.
+                    // If we don't even have a result, then its definitely better.
                     return true;
                 }
                 if (pTypeArguments == null)
                 {
                     return false;
                 }
-                return IsBetterThanCurrent(UninferrableResult.TypeArgs, pTypeArguments);
+                return IsBetterThanCurrent(UninferableResult.TypeArgs, pTypeArguments);
             }
         }
     }

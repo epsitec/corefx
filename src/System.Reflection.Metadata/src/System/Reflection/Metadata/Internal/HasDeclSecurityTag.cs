@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Runtime.CompilerServices;
 
@@ -37,19 +38,13 @@ namespace System.Reflection.Metadata.Ecma335
         {
             uint tokenType = handle.Type;
             uint rowId = (uint)handle.RowId;
-            switch (tokenType >> TokenTypeIds.RowIdBitCount)
+            return (tokenType >> TokenTypeIds.RowIdBitCount) switch
             {
-                case TokenTypeIds.TypeDef >> TokenTypeIds.RowIdBitCount:
-                    return rowId << NumberOfBits | TypeDef;
-
-                case TokenTypeIds.MethodDef >> TokenTypeIds.RowIdBitCount:
-                    return rowId << NumberOfBits | MethodDef;
-
-                case TokenTypeIds.Assembly >> TokenTypeIds.RowIdBitCount:
-                    return rowId << NumberOfBits | Assembly;
-            }
-
-            return 0;
+                TokenTypeIds.TypeDef >> TokenTypeIds.RowIdBitCount => rowId << NumberOfBits | TypeDef,
+                TokenTypeIds.MethodDef >> TokenTypeIds.RowIdBitCount => rowId << NumberOfBits | MethodDef,
+                TokenTypeIds.Assembly >> TokenTypeIds.RowIdBitCount => rowId << NumberOfBits | Assembly,
+                _ => 0,
+            };
         }
     }
 }

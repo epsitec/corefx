@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -39,7 +40,7 @@ namespace System.Net.Http.Tests
             Assert.Null(productInfo.Product);
             Assert.Equal("(this is a comment)", productInfo.Comment);
 
-            Assert.Throws<ArgumentException>(() => { new ProductInfoHeaderValue((string)null); });
+            AssertExtensions.Throws<ArgumentException>("comment", () => { new ProductInfoHeaderValue((string)null); });
             Assert.Throws<FormatException>(() => { new ProductInfoHeaderValue("invalid comment"); });
             Assert.Throws<FormatException>(() => { new ProductInfoHeaderValue(" (leading space)"); });
             Assert.Throws<FormatException>(() => { new ProductInfoHeaderValue("(trailing space) "); });
@@ -148,8 +149,8 @@ namespace System.Net.Http.Tests
         [Fact]
         public void GetRangeLength_DifferentInvalidScenarios_AllReturnZero()
         {
-            CheckInvalidGetProductInfoLength(" p/1.0", 0); // no leading whitespaces allowed
-            CheckInvalidGetProductInfoLength(" (c)", 0); // no leading whitespaces allowed
+            CheckInvalidGetProductInfoLength(" p/1.0", 0); // no leading whitespace allowed
+            CheckInvalidGetProductInfoLength(" (c)", 0); // no leading whitespace allowed
             CheckInvalidGetProductInfoLength("(invalid", 0);
             CheckInvalidGetProductInfoLength("product/", 0);
             CheckInvalidGetProductInfoLength("product/(1.0)", 0);

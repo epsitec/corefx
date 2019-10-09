@@ -1,11 +1,11 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using Validation;
 
 namespace System.Collections.Immutable
 {
@@ -157,13 +157,25 @@ namespace System.Collections.Immutable
         [Pure]
         public static ImmutableDictionary<TKey, TValue> ToImmutableDictionary<TSource, TKey, TValue>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TValue> elementSelector, IEqualityComparer<TKey> keyComparer, IEqualityComparer<TValue> valueComparer)
         {
-            Requires.NotNull(source, "source");
-            Requires.NotNull(keySelector, "keySelector");
-            Requires.NotNull(elementSelector, "elementSelector");
-            Contract.Ensures(Contract.Result<ImmutableDictionary<TKey, TValue>>() != null);
+            Requires.NotNull(source, nameof(source));
+            Requires.NotNull(keySelector, nameof(keySelector));
+            Requires.NotNull(elementSelector, nameof(elementSelector));
 
             return ImmutableDictionary<TKey, TValue>.Empty.WithComparers(keyComparer, valueComparer)
                 .AddRange(source.Select(element => new KeyValuePair<TKey, TValue>(keySelector(element), elementSelector(element))));
+        }
+
+        /// <summary>
+        /// Returns an immutable copy of the current contents of the builder's collection.
+        /// </summary>
+        /// <param name="builder">The builder to create the immutable dictionary from.</param>
+        /// <returns>An immutable dictionary.</returns>
+        [Pure]
+        public static ImmutableDictionary<TKey, TValue> ToImmutableDictionary<TKey, TValue>(this ImmutableDictionary<TKey, TValue>.Builder builder)
+        {
+            Requires.NotNull(builder, nameof(builder));
+
+            return builder.ToImmutable();
         }
 
         /// <summary>
@@ -241,8 +253,7 @@ namespace System.Collections.Immutable
         [SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures")]
         public static ImmutableDictionary<TKey, TValue> ToImmutableDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source, IEqualityComparer<TKey> keyComparer, IEqualityComparer<TValue> valueComparer)
         {
-            Requires.NotNull(source, "source");
-            Contract.Ensures(Contract.Result<ImmutableDictionary<TKey, TValue>>() != null);
+            Requires.NotNull(source, nameof(source));
 
             var existingDictionary = source as ImmutableDictionary<TKey, TValue>;
             if (existingDictionary != null)
@@ -296,8 +307,8 @@ namespace System.Collections.Immutable
         [Pure]
         public static bool Contains<TKey, TValue>(this IImmutableDictionary<TKey, TValue> map, TKey key, TValue value)
         {
-            Requires.NotNull(map, "map");
-            Requires.NotNullAllowStructs(key, "key");
+            Requires.NotNull(map, nameof(map));
+            Requires.NotNullAllowStructs(key, nameof(key));
             return map.Contains(new KeyValuePair<TKey, TValue>(key, value));
         }
 
@@ -327,8 +338,8 @@ namespace System.Collections.Immutable
         [Pure]
         public static TValue GetValueOrDefault<TKey, TValue>(this IImmutableDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue)
         {
-            Requires.NotNull(dictionary, "dictionary");
-            Requires.NotNullAllowStructs(key, "key");
+            Requires.NotNull(dictionary, nameof(dictionary));
+            Requires.NotNullAllowStructs(key, nameof(key));
 
             TValue value;
             if (dictionary.TryGetValue(key, out value))

@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
@@ -29,27 +30,27 @@ namespace Microsoft.Win32.RegistryTests
             Assert.Throws<ArgumentNullException>(() => Registry.SetValue(keyName: null, valueName: "test", value: "test"));
 
             // Should throw if passed string does NOT start with one of the valid base key names
-            Assert.Throws<ArgumentException>(() => Registry.SetValue("HHHH_MMMM", "test", "test"));
+            AssertExtensions.Throws<ArgumentException>("keyName", null, () => Registry.SetValue("HHHH_MMMM", "test", "test"));
 
             // Should throw if passed string which only starts with one of the valid base key names but actually it isn't valid.
-            Assert.Throws<ArgumentException>(() => Registry.SetValue("HKEY_LOCAL_MACHINE_FOOBAR", "test", "test"));
+            AssertExtensions.Throws<ArgumentException>("keyName", null, () => Registry.SetValue("HKEY_LOCAL_MACHINE_FOOBAR", "test", "test"));
 
             // Should throw if key length above 255 characters but prior to V4, the limit is 16383
             const int maxValueNameLength = 16383;
-            Assert.Throws<ArgumentException>(() => Registry.SetValue(TestRegistryKey.Name, new string('a', maxValueNameLength + 1), 5));
+            AssertExtensions.Throws<ArgumentException>("name", null, () => Registry.SetValue(TestRegistryKey.Name, new string('a', maxValueNameLength + 1), 5));
 
             // Should throw if passed value is array with uninitialized elements
-            Assert.Throws<ArgumentException>(() => Registry.SetValue(TestRegistryKey.Name, "StringArr", value: new string[1]));
+            AssertExtensions.Throws<ArgumentException>(null, () => Registry.SetValue(TestRegistryKey.Name, "StringArr", value: new string[1]));
 
             // Should throw because only String[] (REG_MULTI_SZ) and byte[] (REG_BINARY) are supported.
             // RegistryKey.SetValue does not support arrays of type UInt32[].
-            Assert.Throws<ArgumentException>(() => Registry.SetValue(TestRegistryKey.Name, "IntArray", new[] { 1, 2, 3 }));
+            AssertExtensions.Throws<ArgumentException>(null, () => Registry.SetValue(TestRegistryKey.Name, "IntArray", new[] { 1, 2, 3 }));
         }
 
         public static IEnumerable<object[]> TestValueTypes { get { return TestData.TestValueTypes; } }
 
         [Theory]
-        [MemberData("TestValueTypes")]
+        [MemberData(nameof(TestValueTypes))]
         public void SetValueWithValueTypes(string valueName, object testValue)
         {
             Registry.SetValue(TestRegistryKey.Name, valueName, testValue);
@@ -112,9 +113,13 @@ namespace Microsoft.Win32.RegistryTests
         public static IEnumerable<object[]> TestEnvironment { get { return TestData.TestEnvironment; } }
 
         [Theory]
-        [MemberData("TestEnvironment")]
+        [MemberData(nameof(TestEnvironment))]
         public void SetValueWithEnvironmentVariable(string valueName, string envVariableName, string expectedVariableValue)
         {
+            // ExpandEnvironmentStrings is converting "C:\Program Files (Arm)" to "C:\Program Files (x86)".
+            if (envVariableName == "ProgramFiles" && PlatformDetection.IsArmProcess)
+                return; // see https://github.com/dotnet/corefx/issues/28856
+
             string value = "%" + envVariableName + "%";
             Registry.SetValue(TestRegistryKey.Name, valueName, value);
 

@@ -1,11 +1,10 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
-using System.Text;
 using Xunit;
 
-namespace System.Text.EncodingTests
+namespace System.Text.Tests
 {
     // GetByteCount(System.Char[],System.Int32,System.Int32,System.Boolean)
     public class EncoderGetByteCount2
@@ -61,7 +60,7 @@ namespace System.Text.EncodingTests
 
             int ret1 = encoder.GetByteCount(chars, 0, chars.Length, true);
             int ret2 = encoder.GetByteCount(chars, 0, chars.Length, false);
-            // If the last character is a surrogate and the encoder is flushing its state, it will return a fallback character. 
+            // If the last character is a surrogate and the encoder is flushing its state, it will return a fallback character.
             // When the encoder isn't flushing its state then it holds on to the remnant bytes between calls so that if the next
             // bytes passed in form a valid character you'd get that char as a result
             if (IsHighSurrogate(chars[chars.Length - 1]))
@@ -92,7 +91,7 @@ namespace System.Text.EncodingTests
             VerificationHelper(encoder, chars, 1, chars.Length - 1, false, chars.Length - 1, "003.4");
         }
 
-        // PosTest4: Call GetByteCount to get byte count of an ASCII character array by using unicode encoder
+        // PosTest4: Call GetByteCount to get byte count of an ASCII character array by using Unicode encoder
         [Fact]
         public void PosTest4()
         {
@@ -106,7 +105,7 @@ namespace System.Text.EncodingTests
             VerificationHelper(encoder, chars, chars.Length - 1, 1, false, 2, "004.4");
         }
 
-        // PosTest5: Call GetByteCount to get byte count of an unicode character array by using unicode encoder
+        // PosTest5: Call GetByteCount to get byte count of an Unicode character array by using Unicode encoder
         [Fact]
         public void PosTest5()
         {
@@ -120,45 +119,10 @@ namespace System.Text.EncodingTests
         }
         #endregion
 
-        #region Nagetive Test Cases
-        // NegTest1: ArgumentNullException should be thrown when chars is a null reference
-        [Fact]
-        public void NegTest1()
-        {
-            VerificationHelper<ArgumentNullException>(Encoding.UTF8.GetEncoder(), null, 0, 0, true, typeof(ArgumentNullException), "101.1");
-        }
-
-        // NegTest2: ArgumentOutOfRangeException should be thrown when index or count is less than zero.
-        [Fact]
-        public void NegTest2()
-        {
-            VerificationHelper<ArgumentOutOfRangeException>(Encoding.UTF8.GetEncoder(), new char[1], 0, -1, true, typeof(ArgumentOutOfRangeException), "102.1");
-            VerificationHelper<ArgumentOutOfRangeException>(Encoding.UTF8.GetEncoder(), new char[1], -1, 0, true, typeof(ArgumentOutOfRangeException), "102.2");
-        }
-
-        // NegTest3: ArgumentOutOfRangeException should be thrown when index and count do not denote a valid range in char
-        [Fact]
-        public void NegTest3()
-        {
-            VerificationHelper<ArgumentOutOfRangeException>(Encoding.UTF8.GetEncoder(), new char[1], 0, 2, true, typeof(ArgumentOutOfRangeException), "103.1");
-            VerificationHelper<ArgumentOutOfRangeException>(Encoding.UTF8.GetEncoder(), new char[1], 1, 1, true, typeof(ArgumentOutOfRangeException), "103.2");
-        }
-        #endregion
-
         private void VerificationHelper(Encoder encoder, char[] chars, int index, int count, bool flush, int expected, string errorno)
         {
             int ret = encoder.GetByteCount(chars, index, count, flush);
             Assert.Equal(expected, ret);
-        }
-
-        private void VerificationHelper<T>(Encoder encoder, char[] chars, int index, int count, bool flush, Type expected, string errorno) where T : Exception
-        {
-            string str = new string(chars);
-
-            Assert.Throws<T>(() =>
-            {
-                int ret = encoder.GetByteCount(chars, index, count, flush);
-            });
         }
 
         private bool IsHighSurrogate(char c)

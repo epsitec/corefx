@@ -1,5 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
 using System.Linq;
@@ -14,14 +15,14 @@ namespace System.Net.Http.Tests
         [Fact]
         public void Ctor_NameNull_Throw()
         {
-            Assert.Throws<ArgumentException>(() => { NameValueWithParametersHeaderValue nameValue = new NameValueWithParametersHeaderValue(null); });
+            AssertExtensions.Throws<ArgumentException>("name", () => { NameValueWithParametersHeaderValue nameValue = new NameValueWithParametersHeaderValue(null); });
         }
 
         [Fact]
         public void Ctor_NameEmpty_Throw()
         {
             // null and empty should be treated the same. So we also throw for empty strings.
-            Assert.Throws<ArgumentException>(() => { NameValueWithParametersHeaderValue nameValue = new NameValueWithParametersHeaderValue(string.Empty); });
+            AssertExtensions.Throws<ArgumentException>("name", () => { NameValueWithParametersHeaderValue nameValue = new NameValueWithParametersHeaderValue(string.Empty); });
         }
 
         [Fact]
@@ -42,7 +43,7 @@ namespace System.Net.Http.Tests
         public void Parameters_AddNull_Throw()
         {
             NameValueWithParametersHeaderValue nameValue = new NameValueWithParametersHeaderValue("name");
-            
+
             Assert.Throws<ArgumentNullException>(() => { nameValue.Parameters.Add(null); });
         }
 
@@ -207,7 +208,7 @@ namespace System.Net.Http.Tests
         [Fact]
         public void Parse_SetOfInvalidValueStrings_Throws()
         {
-            CheckInvalidParse("custom会");
+            CheckInvalidParse("custom\u4F1A");
             CheckInvalidParse("custom; name=value;");
             CheckInvalidParse("custom; name1=value1; name2=value2;");
             CheckInvalidParse(null);
@@ -235,7 +236,7 @@ namespace System.Net.Http.Tests
         [Fact]
         public void TryParse_SetOfInvalidValueStrings_ReturnsFalse()
         {
-            CheckInvalidTryParse("custom会");
+            CheckInvalidTryParse("custom\u4F1A");
             CheckInvalidTryParse("custom; name=value;");
             CheckInvalidTryParse("custom; name1=value1; name2=value2;");
             CheckInvalidTryParse(null);

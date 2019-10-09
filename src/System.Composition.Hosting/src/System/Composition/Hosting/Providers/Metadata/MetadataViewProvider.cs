@@ -1,23 +1,19 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Composition.Hosting.Core;
-using System.Composition.Hosting.Util;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Internal;
 
 namespace System.Composition.Hosting.Providers.Metadata
 {
     internal static class MetadataViewProvider
     {
-        private static readonly MethodInfo s_getMetadataValueMethod = typeof(MetadataViewProvider).GetTypeInfo().GetDeclaredMethod("GetMetadataValue");
+        private static readonly MethodInfo s_getMetadataValueMethod = typeof(MetadataViewProvider).GetTypeInfo().GetDeclaredMethod(nameof(GetMetadataValue));
 
         // While not called through the composition pipeline, we use the dependency mechanism to surface errors
         // with appropriate context information.
@@ -27,7 +23,7 @@ namespace System.Composition.Hosting.Providers.Metadata
                 return m => (TMetadata)m;
 
             if (!typeof(TMetadata).GetTypeInfo().IsClass)
-                throw new CompositionFailedException(string.Format(Properties.Resources.MetadataViewProvider_InvalidViewImplementation, typeof(TMetadata).Name));
+                throw new CompositionFailedException(SR.Format(SR.MetadataViewProvider_InvalidViewImplementation, typeof(TMetadata).Name));
 
             var ti = typeof(TMetadata).GetTypeInfo();
             var dictionaryConstructor = ti.DeclaredConstructors.SingleOrDefault(ci =>
@@ -75,7 +71,7 @@ namespace System.Composition.Hosting.Providers.Metadata
                     .Compile();
             }
 
-            throw new CompositionFailedException(string.Format(Properties.Resources.MetadataViewProvider_InvalidViewImplementation, typeof(TMetadata).Name));
+            throw new CompositionFailedException(SR.Format(SR.MetadataViewProvider_InvalidViewImplementation, typeof(TMetadata).Name));
         }
 
         private static TValue GetMetadataValue<TValue>(IDictionary<string, object> metadata, string name, DefaultValueAttribute defaultValue)
@@ -88,8 +84,10 @@ namespace System.Composition.Hosting.Providers.Metadata
                 return (TValue)defaultValue.Value;
 
             // This could be significantly improved by describing the target metadata property.
-            var message = string.Format(Properties.Resources.MetadataViewProvider_MissingMetadata, name);
-            throw ThrowHelper.CompositionException(message);
+            var message = SR.Format(SR.MetadataViewProvider_MissingMetadata, name);
+            var ex = new CompositionFailedException(message);
+            Debug.WriteLine(SR.Diagnostic_ThrowingException, ex.ToString());
+            throw ex;
         }
     }
 }

@@ -1,15 +1,15 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
-using System.Security;
 
 namespace System.Numerics
 {
     internal static partial class BigIntegerCalculator
     {
         // Executes different exponentiation algorithms, which are
-        // basically based on the classic square-and-multiply method.
+        // based on the classic square-and-multiply method.
 
         // https://en.wikipedia.org/wiki/Exponentiation_by_squaring
 
@@ -59,10 +59,13 @@ namespace System.Numerics
 
             while (power != 0)
             {
-                if ((power & 1) == 1)
-                    resultLength += valueLength;
-                if (power != 1)
-                    valueLength += valueLength;
+                checked
+                {
+                    if ((power & 1) == 1)
+                        resultLength += valueLength;
+                    if (power != 1)
+                        valueLength += valueLength;
+                }
                 power = power >> 1;
             }
 

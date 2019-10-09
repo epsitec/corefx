@@ -1,8 +1,6 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-using System;
-using System.Collections;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.Collections.Specialized
 {
@@ -21,7 +19,7 @@ namespace System.Collections.Specialized
         /// <devdoc>
         /// Returns the object at the given index
         /// </devdoc>
-        object this[int index] { get; set; }
+        object? this[int index] { get; set; }
 
         // Returns an IDictionaryEnumerator for this dictionary.
         new IDictionaryEnumerator GetEnumerator();
@@ -30,7 +28,7 @@ namespace System.Collections.Specialized
         /// <devdoc>
         /// Inserts the given object, with the given key, at the given index
         /// </devdoc>
-        void Insert(int index, object key, object value);
+        void Insert(int index, object key, object? value);
 
         /// <devdoc>
         /// Removes the object and key at the given index
@@ -38,4 +36,3 @@ namespace System.Collections.Specialized
         void RemoveAt(int index);
     }
 }
-

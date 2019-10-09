@@ -1,45 +1,44 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 // ------------------------------------------------------------------------------
 // Changes to this file must follow the http://aka.ms/api-review process.
 // ------------------------------------------------------------------------------
-
 
 namespace System.Reflection.Emit
 {
     public sealed partial class DynamicMethod : System.Reflection.MethodInfo
     {
-        [System.Security.SecuritySafeCriticalAttribute]
-        public DynamicMethod(string name, System.Reflection.MethodAttributes attributes, System.Reflection.CallingConventions callingConvention, System.Type returnType, System.Type[] parameterTypes, System.Reflection.Module m, bool skipVisibility) { }
-        [System.Security.SecuritySafeCriticalAttribute]
-        public DynamicMethod(string name, System.Reflection.MethodAttributes attributes, System.Reflection.CallingConventions callingConvention, System.Type returnType, System.Type[] parameterTypes, System.Type owner, bool skipVisibility) { }
-        [System.Security.SecuritySafeCriticalAttribute]
-        public DynamicMethod(string name, System.Type returnType, System.Type[] parameterTypes) { }
-        [System.Security.SecuritySafeCriticalAttribute]
-        public DynamicMethod(string name, System.Type returnType, System.Type[] parameterTypes, bool restrictedSkipVisibility) { }
-        [System.Security.SecuritySafeCriticalAttribute]
-        public DynamicMethod(string name, System.Type returnType, System.Type[] parameterTypes, System.Reflection.Module m) { }
-        [System.Security.SecuritySafeCriticalAttribute]
-        public DynamicMethod(string name, System.Type returnType, System.Type[] parameterTypes, System.Reflection.Module m, bool skipVisibility) { }
-        [System.Security.SecuritySafeCriticalAttribute]
-        public DynamicMethod(string name, System.Type returnType, System.Type[] parameterTypes, System.Type owner) { }
-        [System.Security.SecuritySafeCriticalAttribute]
-        public DynamicMethod(string name, System.Type returnType, System.Type[] parameterTypes, System.Type owner, bool skipVisibility) { }
-        public override System.Reflection.MethodAttributes Attributes { get { return default(System.Reflection.MethodAttributes); } }
-        public override System.Reflection.CallingConventions CallingConvention { get { return default(System.Reflection.CallingConventions); } }
-        public override System.Type DeclaringType { get { return default(System.Type); } }
-        public bool InitLocals { get { return default(bool); } set { } }
-        public override string Name { get { return default(string); } }
-        public override System.Reflection.ParameterInfo ReturnParameter { get { return default(System.Reflection.ParameterInfo); } }
-        public override System.Type ReturnType { get { return default(System.Type); } }
-        [System.Security.SecuritySafeCriticalAttribute]
-        public sealed override System.Delegate CreateDelegate(System.Type delegateType) { return default(System.Delegate); }
-        [System.Security.SecuritySafeCriticalAttribute]
-        public sealed override System.Delegate CreateDelegate(System.Type delegateType, object target) { return default(System.Delegate); }
-        public System.Reflection.Emit.ILGenerator GetILGenerator() { return default(System.Reflection.Emit.ILGenerator); }
-        [System.Security.SecuritySafeCriticalAttribute]
-        public System.Reflection.Emit.ILGenerator GetILGenerator(int streamSize) { return default(System.Reflection.Emit.ILGenerator); }
-        public override System.Reflection.ParameterInfo[] GetParameters() { return default(System.Reflection.ParameterInfo[]); }
-        public override string ToString() { return default(string); }
+        public DynamicMethod(string name, System.Reflection.MethodAttributes attributes, System.Reflection.CallingConventions callingConvention, System.Type? returnType, System.Type[]? parameterTypes, System.Reflection.Module m, bool skipVisibility) { }
+        public DynamicMethod(string name, System.Reflection.MethodAttributes attributes, System.Reflection.CallingConventions callingConvention, System.Type? returnType, System.Type[]? parameterTypes, System.Type owner, bool skipVisibility) { }
+        public DynamicMethod(string name, System.Type? returnType, System.Type[]? parameterTypes) { }
+        public DynamicMethod(string name, System.Type? returnType, System.Type[]? parameterTypes, bool restrictedSkipVisibility) { }
+        public DynamicMethod(string name, System.Type? returnType, System.Type[]? parameterTypes, System.Reflection.Module m) { }
+        public DynamicMethod(string name, System.Type? returnType, System.Type[]? parameterTypes, System.Reflection.Module m, bool skipVisibility) { }
+        public DynamicMethod(string name, System.Type? returnType, System.Type[]? parameterTypes, System.Type owner) { }
+        public DynamicMethod(string name, System.Type? returnType, System.Type[]? parameterTypes, System.Type owner, bool skipVisibility) { }
+        public override System.Reflection.MethodAttributes Attributes { get { throw null; } }
+        public override System.Reflection.CallingConventions CallingConvention { get { throw null; } }
+        public override System.Type? DeclaringType { get { throw null; } }
+        public bool InitLocals { get { throw null; } set { } }
+        public override System.RuntimeMethodHandle MethodHandle { get { throw null; } }
+        public override string Name { get { throw null; } }
+        public override System.Type? ReflectedType { get { throw null; } }
+        public override System.Reflection.ParameterInfo ReturnParameter { get { throw null; } }
+        public override System.Type ReturnType { get { throw null; } }
+        public override System.Reflection.ICustomAttributeProvider ReturnTypeCustomAttributes { get { throw null; } }
+        public sealed override System.Delegate CreateDelegate(System.Type delegateType) { throw null; }
+        public sealed override System.Delegate CreateDelegate(System.Type delegateType, object? target) { throw null; }
+        public System.Reflection.Emit.ParameterBuilder? DefineParameter(int position, System.Reflection.ParameterAttributes attributes, string? parameterName) { throw null; }
+        public override System.Reflection.MethodInfo GetBaseDefinition() { throw null; }
+        public override object[] GetCustomAttributes(bool inherit) { throw null; }
+        public override object[] GetCustomAttributes(System.Type attributeType, bool inherit) { throw null; }
+        public System.Reflection.Emit.ILGenerator GetILGenerator() { throw null; }
+        public System.Reflection.Emit.ILGenerator GetILGenerator(int streamSize) { throw null; }
+        public override System.Reflection.MethodImplAttributes GetMethodImplementationFlags() { throw null; }
+        public override System.Reflection.ParameterInfo[] GetParameters() { throw null; }
+        public override object? Invoke(object? obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder? binder, object?[]? parameters, System.Globalization.CultureInfo? culture) { throw null; }
+        public override bool IsDefined(System.Type attributeType, bool inherit) { throw null; }
+        public override string ToString() { throw null; }
     }
 }

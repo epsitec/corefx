@@ -1,9 +1,9 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Dynamic;
+using System.Numerics.Hashing;
 
 namespace Microsoft.CSharp.RuntimeBinder
 {
@@ -20,19 +20,17 @@ namespace Microsoft.CSharp.RuntimeBinder
         /// <summary>
         /// The flags for the argument.
         /// </summary>
-        internal CSharpArgumentInfoFlags Flags { get { return _flags; } }
-        private CSharpArgumentInfoFlags _flags;
+        internal CSharpArgumentInfoFlags Flags { get; }
 
         /// <summary>
         /// The name of the argument, if named; otherwise null.
         /// </summary>
-        internal string Name { get { return _name; } }
-        private string _name;
+        internal string Name { get; }
 
         private CSharpArgumentInfo(CSharpArgumentInfoFlags flags, string name)
         {
-            _flags = flags;
-            _name = name;
+            Flags = flags;
+            Name = name;
         }
 
         /// <summary>
@@ -46,11 +44,16 @@ namespace Microsoft.CSharp.RuntimeBinder
         }
 
         // Accessor helpers.
-        internal bool UseCompileTimeType { get { return (Flags & CSharpArgumentInfoFlags.UseCompileTimeType) != 0; } }
-        internal bool LiteralConstant { get { return (Flags & CSharpArgumentInfoFlags.Constant) != 0; } }
-        internal bool NamedArgument { get { return (Flags & CSharpArgumentInfoFlags.NamedArgument) != 0; } }
-        internal bool IsByRef { get { return (Flags & CSharpArgumentInfoFlags.IsRef) != 0; } }
-        internal bool IsOut { get { return (Flags & CSharpArgumentInfoFlags.IsOut) != 0; } }
-        internal bool IsStaticType { get { return (Flags & CSharpArgumentInfoFlags.IsStaticType) != 0; } }
+        internal bool UseCompileTimeType => (Flags & CSharpArgumentInfoFlags.UseCompileTimeType) != 0;
+
+        internal bool LiteralConstant => (Flags & CSharpArgumentInfoFlags.Constant) != 0;
+
+        internal bool NamedArgument => (Flags & CSharpArgumentInfoFlags.NamedArgument) != 0;
+
+        internal bool IsByRefOrOut => (Flags & (CSharpArgumentInfoFlags.IsRef | CSharpArgumentInfoFlags.IsOut)) != 0;
+
+        internal bool IsOut => (Flags & CSharpArgumentInfoFlags.IsOut) != 0;
+
+        internal bool IsStaticType => (Flags & CSharpArgumentInfoFlags.IsStaticType) != 0;
     }
 }

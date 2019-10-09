@@ -1,7 +1,9 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Xunit;
@@ -9,11 +11,12 @@ using Xunit;
 public partial class ThreadPoolBoundHandleTests
 {
     [Fact]
+    [PlatformSpecific(TestPlatforms.Windows)] // ThreadPoolBoundHandle.BindHandle is not supported on Unix
     public unsafe void SingleOperationOverSingleHandle()
     {
         const int DATA_SIZE = 2;
 
-        SafeHandle handle = HandleFactory.CreateAsyncFileHandleForWrite(@"SingleOverlappedOverSingleHandle.tmp");
+        SafeHandle handle = HandleFactory.CreateAsyncFileHandleForWrite(Path.Combine(TestDirectory, @"SingleOverlappedOverSingleHandle.tmp"));
         ThreadPoolBoundHandle boundHandle = ThreadPoolBoundHandle.BindHandle(handle);
 
         OverlappedContext result = new OverlappedContext();
@@ -30,7 +33,7 @@ public partial class ThreadPoolBoundHandleTests
 
             if (retval == 0)
             {
-                Assert.Equal(DllImport.ERROR_IO_PENDING, Marshal.GetLastWin32Error());                
+                Assert.Equal(DllImport.ERROR_IO_PENDING, Marshal.GetLastWin32Error());
             }
 
             // Wait for overlapped operation to complete
@@ -46,11 +49,12 @@ public partial class ThreadPoolBoundHandleTests
     }
 
     [Fact]
+    [PlatformSpecific(TestPlatforms.Windows)] // ThreadPoolBoundHandle.BindHandle is not supported on Unix
     public unsafe void MultipleOperationsOverSingleHandle()
     {
         const int DATA_SIZE = 2;
 
-        SafeHandle handle = HandleFactory.CreateAsyncFileHandleForWrite(@"MultipleOperationsOverSingleHandle.tmp");
+        SafeHandle handle = HandleFactory.CreateAsyncFileHandleForWrite(Path.Combine(TestDirectory, @"MultipleOperationsOverSingleHandle.tmp"));
         ThreadPoolBoundHandle boundHandle = ThreadPoolBoundHandle.BindHandle(handle);
 
         OverlappedContext result1 = new OverlappedContext();
@@ -103,12 +107,13 @@ public partial class ThreadPoolBoundHandleTests
     }
 
     [Fact]
+    [PlatformSpecific(TestPlatforms.Windows)] // ThreadPoolBoundHandle.BindHandle is not supported on Unix
     public unsafe void MultipleOperationsOverMultipleHandles()
     {
         const int DATA_SIZE = 2;
 
-        SafeHandle handle1 = HandleFactory.CreateAsyncFileHandleForWrite(@"MultipleOperationsOverMultipleHandle1.tmp");
-        SafeHandle handle2 = HandleFactory.CreateAsyncFileHandleForWrite(@"MultipleOperationsOverMultipleHandle2.tmp");
+        SafeHandle handle1 = HandleFactory.CreateAsyncFileHandleForWrite(Path.Combine(TestDirectory, @"MultipleOperationsOverMultipleHandle1.tmp"));
+        SafeHandle handle2 = HandleFactory.CreateAsyncFileHandleForWrite(Path.Combine(TestDirectory, @"MultipleOperationsOverMultipleHandle2.tmp"));
         ThreadPoolBoundHandle boundHandle1 = ThreadPoolBoundHandle.BindHandle(handle1);
         ThreadPoolBoundHandle boundHandle2 = ThreadPoolBoundHandle.BindHandle(handle2);
 
@@ -174,12 +179,13 @@ public partial class ThreadPoolBoundHandleTests
     }
 
     [Fact]
+    [PlatformSpecific(TestPlatforms.Windows)] // ThreadPoolBoundHandle.BindHandle is not supported on Unix
     public unsafe void FlowsAsyncLocalsToCallback()
     {   // Makes sure that we flow async locals to callback
 
         const int DATA_SIZE = 2;
 
-        SafeHandle handle = HandleFactory.CreateAsyncFileHandleForWrite(@"AsyncLocal.tmp");
+        SafeHandle handle = HandleFactory.CreateAsyncFileHandleForWrite(Path.Combine(TestDirectory, @"AsyncLocal.tmp"));
         ThreadPoolBoundHandle boundHandle = ThreadPoolBoundHandle.BindHandle(handle);
 
         OverlappedContext context = new OverlappedContext();
@@ -191,7 +197,7 @@ public partial class ThreadPoolBoundHandleTests
 
         int? result  = null;
         IOCompletionCallback callback = (_, __, ___) => {
-            
+
             result = asyncLocal.Value;
             OnOverlappedOperationCompleted(_, __, ___);
         };
@@ -227,7 +233,7 @@ public partial class ThreadPoolBoundHandleTests
         // Signal original thread to indicate overlapped completed
         result.Event.Set();
     }
-    
+
     private class OverlappedContext
     {
         public readonly ManualResetEvent Event = new ManualResetEvent(false);

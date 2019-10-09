@@ -1,11 +1,12 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 // =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 //
-// A helper class for firing ETW events related to the Coordination Data Structure 
-// sync primitives. This provider is used by CDS sync primitives in both mscorlib.dll 
-// and system.dll. The purpose of sharing the provider class is to be able to enable 
+// A helper class for firing ETW events related to the Coordination Data Structure
+// sync primitives. This provider is used by CDS sync primitives in both mscorlib.dll
+// and system.dll. The purpose of sharing the provider class is to be able to enable
 // ETW tracing on all CDS sync types with a single ETW provider GUID, and to minimize
 // the number of providers in use.
 //
@@ -40,41 +41,11 @@ namespace System.Threading
         private const EventKeywords ALL_KEYWORDS = (EventKeywords)(-1);
 
         //-----------------------------------------------------------------------------------
-        //        
+        //
         // CDS Synchronization Event IDs (must be unique)
         //
 
-        private const int SPINLOCK_FASTPATHFAILED_ID = 1;
-        private const int SPINWAIT_NEXTSPINWILLYIELD_ID = 2;
         private const int BARRIER_PHASEFINISHED_ID = 3;
-
-        /////////////////////////////////////////////////////////////////////////////////////
-        //
-        // SpinLock Events
-        //
-
-        [Event(SPINLOCK_FASTPATHFAILED_ID, Level = EventLevel.Warning)]
-        public void SpinLock_FastPathFailed(int ownerID)
-        {
-            if (IsEnabled(EventLevel.Warning, ALL_KEYWORDS))
-            {
-                WriteEvent(SPINLOCK_FASTPATHFAILED_ID, ownerID);
-            }
-        }
-
-        /////////////////////////////////////////////////////////////////////////////////////
-        //
-        // SpinWait Events
-        //
-
-        [Event(SPINWAIT_NEXTSPINWILLYIELD_ID, Level = EventLevel.Informational)]
-        public void SpinWait_NextSpinWillYield()
-        {
-            if (IsEnabled(EventLevel.Informational, ALL_KEYWORDS))
-            {
-                WriteEvent(SPINWAIT_NEXTSPINWILLYIELD_ID);
-            }
-        }
 
 
         //
@@ -86,7 +57,6 @@ namespace System.Threading
         // Barrier Events
         //
 
-        [SecuritySafeCritical]
         [Event(BARRIER_PHASEFINISHED_ID, Level = EventLevel.Verbose, Version = 1)]
         public void Barrier_PhaseFinished(bool currentSense, long phaseNum)
         {
@@ -95,19 +65,25 @@ namespace System.Threading
                 // WriteEvent(BARRIER_PHASEFINISHED_ID, currentSense, phaseNum);
 
                 // There is no explicit WriteEvent() overload matching this event's bool+long fields.
-                // Therefore calling WriteEvent() would hit the "params" overload, which leads to an 
-                // object allocation every time this event is fired. To prevent that problem we will 
-                // call WriteEventCore(), which works with a stack based EventData array populated with 
+                // Therefore calling WriteEvent() would hit the "params" overload, which leads to an
+                // object allocation every time this event is fired. To prevent that problem we will
+                // call WriteEventCore(), which works with a stack based EventData array populated with
                 // the event fields.
                 unsafe
                 {
                     EventData* eventPayload = stackalloc EventData[2];
 
-                    Int32 senseAsInt32 = currentSense ? 1 : 0; // write out Boolean as Int32
-                    eventPayload[0].Size = sizeof(int);
-                    eventPayload[0].DataPointer = ((IntPtr)(&senseAsInt32));
-                    eventPayload[1].Size = sizeof(long);
-                    eventPayload[1].DataPointer = ((IntPtr)(&phaseNum));
+                    int senseAsInt32 = currentSense ? 1 : 0; // write out Boolean as Int32
+                    eventPayload[0] = new EventData
+                    {
+                        Size = sizeof(int),
+                        DataPointer = ((IntPtr)(&senseAsInt32))
+                    };
+                    eventPayload[1] = new EventData
+                    {
+                        Size = sizeof(long),
+                        DataPointer = ((IntPtr)(&phaseNum))
+                    };
 
                     WriteEventCore(BARRIER_PHASEFINISHED_ID, 2, eventPayload);
                 }
